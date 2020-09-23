@@ -1,0 +1,258 @@
+RTEAS: A Real-Time Algorithm for Extracting Attack Scenarios from Intrusion Alert Stream
+Maryam AmirHaeri, Rasool Jalili
+Network Security Center, Department of Computer Engineering, Sharif University of Technology, Tehran, Iran {haeri@ce., jalili@}sharif.edu
+
+Abstract
+Intrusion Detection Systems (IDSs) are one of the mostly used security tools in computer networks. They seem to be a promising technology, yet they pose some serious drawbacks: When utilized in large and high traffic networks, IDSs generate high volume of low level alerts which is hardly manageable. In addition, IDSs usually generate redundant or even irrelevant (false) alerts. One technique proposed to circumvent such drawbacks is alert correlation, which extracts useful and high-level alerts, and helps in making timely decisions when a security breach occurs. In this paper, we propose a real-time algorithm for mining attack scenarios from the stream of alerts. The algorithm has a relatively good performance, both in speed and memory consumption. We applied our algorithm to DARPA 2000 intrusion detection scenario specific dataset. The experiment shows that it can extract attack strategies efficiently.
+
+Keywords
+Alert correlation, Multistep attack scenario, Intrusion detection, Stream mining. producing a more abstract and high-level view of intrusion occurrences in the network from low-level IDS alerts. Another area in which alert correlation comes in handy is detecting multistep attacks (also known as attack scenarios). A multistep attack is defined as a sequence of simple attacks that are performed successively to reach some goal. In each step of the attack, some vulnerability--which is prerequisite to this step--is exploited. After the step is fulfilled, the attacker gains some consequences that are prerequisites to the next step. Multistep attacks proceed in this manner. IDSs generate alerts for each step of the attack, but they cannot detect the whole scenario. By alert correlation, it is possible to detect a multistep attack from such sequence of alerts. To recap, alert correlation can help the security administrator to reduce the number of alerts, decrease false-positive rate, group alerts based on alert similarities, extracting attack strategies, and predicting the next step of the attacks. In this paper, we introduce a data mining approach to intrusion alert correlation. The problem of discovering attack strategies is reduced to a streammining problem. Such reduction has already been presented in the literature: as we will mention in the next section, suggested data mining methods for extracting frequent attack scenarios, though their approach was rather inefficient. We still need more
+
+1. Introduction
+In recent years, adversarial activity against computer networks has been increased. In addition to growth in number, the attacks have become much more complex. While preventing every attack is quite impossible, there is a promising tool which can detect attacks with high precision: Intrusion Detection System (IDS). Based on the detection method, IDSs are divided into two categories: anomaly detection and misuse detection. Anomaly detection IDSs are trained to recognize normal traffic, and if some traffic deviates from normal, an alarm is raised. They tend to have high false-positive rate. Misuse detection IDSs have an attack signature database, and if the traffic matches a signature, an alarm is raised. Hence, they cannot recognize new attacks and they tend to have high false-negative rate. It is convenient to exploit both IDS types to compensate each other's weaknesses. Using one or several types of IDSs in large and high-traffic networks results in a huge number of alerts, which is hard to manage. Furthermore, the generated alerts have high rate of false positive and they include redundant alerts. In addition, the IDS alerts are low level and they do not exhibit the attack strategy. Therefore, we have to extract useful information from these alerts to have a better view on the network events. Alert correlation is the process of
+
+40
+
+RTEAS: A Real-Time Algorithm for Extracting Attack Scenarios from Intrusion Alert Stream consists of three components: (1) association-rule miner, (2) frequent-episode miner and (3) cluster miner. This method incorporates general data mining methods, so it is inefficient for this application. As an example, it uses Apriori algorithm to extract frequent episodes, which is very time consuming. Li et al. [7] proposed a sequence-mining approach which is based on statistical filtering. Filtering is utilized for eliminating scattered and irrelevant alerts. Although this algorithm can mine frequent attack sequences, it is incapable of discovering infrequent ones.
+
+efficient algorithms as there are a plethora of alerts and we need real-time responses to intrusions. In our proposed method we find local frequent alerts and merge them by previous correlated frequent alerts according to the causal correlation matrix (CCM), and detect sequence of alerts of a multi-step attack. The rest of this paper is organized as follows: The next section briefly discusses the related work on alert correlation. Section 3 discusses the proposed algorithm and presents an illustrative example. In Section 4 we present the experimental results. The last section concludes the paper.
+
+2. Related Work
+Valeur et al. [1] proposed a comprehensive approach to alert correlation. They defined alert correlation as a multistep process, which includes preprocessing, reconstructing attack session, attack prioritization, effect analysis and reporting intrusion. However, most proposed alert correlation methods do not consider all of these processes. Pietraszek [2], Smith et al. [3], and Morin et al. [4] just focus on reducing the number of alerts and the rate of false positive. Some concentrate on clustering similar alerts (as in Cuppens et al. [5], and Peng et al. [6]) and others focus on discovering attack strategies (as in Li et al. [7], Zhu et al. [8], and Al-Mamory et al. [9]). Several approaches utilize prerequisite relations among alerts. One of the earliest of such attempts is JIGSAW Templeton et al. [10]. JIGSAW is a language for describing attacks. All attacks and their prerequisites and consequences are described by this language. Morin et al. [11] introduced M2D2 which is a formal data model for intrusion alert correlation. They put together some motivating and relevant concepts to construct a model. This model helps in decreasing false-positive rate and increase the quality of the final alerts. Al-Mamory et al. [9] proposed a different approach to discovering attack scenarios. They express the similarity between the "construction of attack graph from alerts" and "compiling a program and generating its machine code". In this method, attack scenarios are described by an attribute contextfree grammar: the attributes denote prerequisites and consequences of attacks. After receiving the alert stream, an SLR parser is used to generate the parse tree. Finally the attack graphs are constructed similar to generating executable code. Zhu et al. [8] utilized neural networks for extracting attack scenarios without using prior knowledge. A multilayer perceptron is used to find the causal correlation between two alerts. By receiving each new alert, the causal correlations determine which previous alert should be correlated to the new alert. Shin et al. [12] presented a data mining framework for alert correlation. Their framework
+
+3. RTEAS
+In this section we introduce a real-time method for extracting attack scenarios from the stream of IDS alerts. Subsection 3-1 describes several data mining terms we use later. Subsection 3-2 is dedicated to formalization of our model. In Subsection 3-3, we outline the proposed algorithm.
+
+3.1. Data Mining Terminology
+The basic terms and expressions used in the other parts of this paper, though familiar to the data mining community, might be unfamiliar to security experts are defined. ˇ Itemset: A non-empty set of items. ˇ Sequential Pattern: An ordered list of items in a data stream. ˇ Support Count: The frequency of an itemset in a data set. ˇ Minimum Support Count (min_sup): The minimum number of an item in a data set in order to consider that item as frequent. ˇ Frequent Itemset: An itemset whose support count is at least min_sup. ˇ Frequent Sequential Pattern: A pattern s = s1 , s2 ,... , sn which, for all 1  i < j  n ,
+
+si  si +1 , and item si has occurred at least
+min_sup times before item s j in the data stream. ˇ Super-pattern: A pattern which has all items of another pattern in the same order. Formally, pattern s = s1 , s2 ,... , sn is a super-pattern of pattern t = t1 , t2 ,... , tm if there exists m indices
+
+1  i1 < i2 < L < im  n 1  j  m , si j = t j .
+ˇ ˇ
+
+such that for every
+
+Proper Super-pattern: A pattern which is superpattern of another pattern, but is not equal to it. Maximal Sequential Pattern (MSP): A frequent sequential pattern which none of its proper superpatterns are frequent.
+
+3.2. A Formal Description of the Model
+We assume a network in which several IDSs are deployed. IDSs generate a stream of alerts, which is
+
+6th Intl. ISC Conf. on Information Security and Cryptology, October 2009, University of Isfahan collected at a central place for further investigation (i.e. alert correlation). This stream should be sorted based on the timestamp of the alerts. We formally describe an alert as a binary string. In other words, the set of possible alerts is A  {0,1} . Each alert is assigned an ID, which distinguishes its "type". For instance, all alerts of type Sadmind_Ping are assigned the same alert ID. Let I D  be the set of possible alert types. Define a function @ : A  I D , which takes an alert and returns its type (We use @ --pronounced AT--as a mnemonic for "Alert Type"). As a convention, to distinguish alerts from alert types, we hereafter use lowercase Greek letters for alerts, and lowercase Latin letters for alert types. To construct attack scenarios, the correlation of any two alert types is required. Some approaches use prior knowledge to determine the correlation (as in Al-Mamory et al. [9], and Bahreini et al. [13]) while others use statistical analysis (as in Li et al. [7] and Zhu et al. [8]). The correlation should reflect the causal relationships of alert types. For instance, if alert type a  I D is a prerequisite to alert type b  I D but the inverse is not true, the correlation of a and b should be much higher than the correlation of b and a . To emphasis this property, we hereafter refer to correlation as "causal correlation", and denote it by function  : I D  [0,1] (Note that unlike correlation coefficient,  cannot be negative). The above description is then formally translated into  (a , b )   (b , a ) . We use prior knowledge to compute causal correlation. We use a matrix to store causal correlations of alert types (Similar to Li et al. [7], Zhu et al. [8], and Valdes et al. [14]). A Causal Correlation Matrix (CCM) for alert types a1 , a2 ,K , an  I D is defined as an n × n matrix whose (i , j ) -element is  (ai , a j ) , where 1  i , j  n . This matrix is almost always asymmetric. We say two alert types are correlated if their causal correlation is not less than a certain threshold. Formally, let  be the causal correlation threshold, adjusted by network administrator. Alert types a1 , a2  I D (in the specified order) are correlated if and only if  (a1 , a2 )   . Two alerts are correlated if their corresponding alert types are correlated. That is, alerts  ,   A (in the specified order) are correlated if and only if  (@( ),@(  ))   . We define a Correlated Frequent Sequential Pattern (CFSP) as a sequential pattern in which every two adjacent alerts are correlated. Our approach to find CFSPs is quite simple: An alert is deemed important if it is frequent. Thus, we first find MSPs and add them to MSP_Table. Based on the definition of MSP, the MSPs of each window contain all frequent sequential patterns (FSPs) of it. So, keeping track of MSPs instead of FSPs helps in saving memory. Then we check whether each subpattern of an MSP is CFSP, by verifying the correlation condition described above. If an FSP is found to be a CFSP, we add it to CFSP_Table. This general rule has two exceptions: There are frequent alerts which are unimportant (like "stop words" in the case of search engines), and there are infrequent alerts which are very important. Both cases should be recognized beforehand, through experience and trial-and-error. The system administrator can give an "importance factor" to each alert type, based on which its minimum support count is raised (in the former case) or lowered (in the latter case). We define the importance factor function I : I D  (0, +) . The function takes and alert type, and returns its importance. The more important an alert, the lesser its associated "minimum support count". In the initialization step, the algorithm computes I (a ) for each alert type a  I D , and computes min_sup a based on I (a ) and a system-wide parameter min_sup . There is still one more problem: Finding FSPs in a stream of alerts is a very resource-intensive task (It is infeasible if the stream is long, which is almost always the case). To overcome this limitation, algorithms split the stream into windows, and find FSPs in each window separately. The window size (L) can be either a time interval or the alert count. In the former case, the window contains a number of alerts raised in fixed time intervals. In the latter case, the window contains a fixed number of alerts. We adopt the second approach. Suppose that 1 ,  2 ,... is a stream of alerts. We can divide the window-based algorithms into three broad categories: ˇ Sliding window: In this approach, once the algorithm is done with a window, the window "slides"  alerts in the stream ( 1    L ). That is, if [ i ,  i +1 , ...,  i + L -1 ] is a window, the next window will be [ i +  ,  i +  +1 ,...,  i +  + L -1 ] . Any two adjacent windows share L -  alerts. Landmark window: In this approach, a "landmark" alert is selected, and every window contains alerts from the landmark up until now. That is, if  i is the landmark alert, and t is the current alert, the windows will be [ i ] ,
+
+41
+
+ˇ
+
+[ i ,  i +1 ] , ..., [ i ,  i +1 , ..., t ] . Note that if the landmark alert is the first one, the last landmark window is the whole alert stream. ˇ Damped window: This approach is similar to the sliding-window model, but it gives "weights" to each window in computations. In general, the more recent a window, the higher the weight. Our approach is similar to the sliding-window
+
+42
+
+RTEAS: A Real-Time Algorithm for Extracting Attack Scenarios from Intrusion Alert Stream
+
+Algorithm 1: RTEAS Inputs: ˇ Alert stream (alerts are collected from all sensors or IDSs in the network and sorted by their occurrence time). ˇ Window size (L) ˇ Minimum Support Count (min_sup) ˇ Importance Factor (Function I : I D  (0, +) ) ˇ Retrospect Factor () ˇ Causal correlation Matrix (CCM) ˇ Correlation Threshold () Outputs: ˇ Attack Scenarios Algorithm: Initialization (Required once): i. For each alert type a  I D in the stream, compute I ( a ) . ii. Calculate min_supa according to min_sup and I ( a ) . 1. LET i  1 . 2. LET Q   . 3. On receipt of each new alert  4. Let Q  Q ||  . 5. IF Q = L THEN 6. 7. 8. 9. Sort alerts in Q based on their timestamps. LET windowi  Q . LET Q   . Find MSPs in windowi , and add them to MSP_Table.
+
+10. Compute CFSPs from MSPs, and add them to CFSP_Table. 11. FOR j = 1 TO min(i - 1,  ) DO 12. LET CFSPi be any CFSP in CFSP_Table belonging to windowi . 13. LET CFSP j be any CFSP in CFSP_Table belonging to windowi - j . 14. LET a and b be the first and the last alert type of CFSPi and CFSP j , respectively. 15. IF  (a, b)   THEN 16. Add CFSPi || CFSP j to CFSP_Table. 17. END IF 18. END FOR 19. LET i  i + 1 . 20. END IF
+
+model, but it borrows ideas from the other two models. We describe the similarities after justifying our choice of parameters. The sliding window deals with two parameters:  and L . At one extreme,  = 1 . At the other extreme,  = L . For a stream with N alerts, the choices
+
+N  L   windows, respectively. It is obvious that in large data streams, the latter choice outperforms the former by a factor of L , but it is less accurate. In order not to sacrifice accuracy in favor of performance, we introduced the retrospect factor (). This parameter determines how
+
+correspond
+
+to
+
+N - L +1
+
+and
+
+6th Intl. ISC Conf. on Information Security and Cryptology, October 2009, University of Isfahan many prior windows should be looked back in order to find longer correlated patterns. Subsection 3.3 gives a more detailed description. Experimental results (Section 4) show that, by picking  and L wisely, the loss of accuracy due to the adoption of  = L is negligible.
+
+43
+
+3.4. Exemplifying the Algorithm
+We illustrate the operation of the algorithm by a simple example: Take L = 10 , min_sup = 3 ,  = 0.5 , and suppose that CCM is as shown in Table 1. Suppose that the importance factor of all alerts is equal. Consider the following stream, where each letter represents an alert type:
+
+3.3. Algorithm Outline
+Algorithm 1 is an outline of RTEAS. We tried to make the outline as readable as possible, yet there are some technicalities to be explained. We will go through the algorithm step-by-step: ˇ Steps i-ii (Initialization): In these steps, the algorithm computes min_supa for each alert type a  I D . The computation can be tweaked based on the network environment, but a naďve ˇ suggestion is let min_supa    I (a)  . Step 1­2: Step 1 sets the current window number ( i  1 ). Step 2 sets the sequence--in which we temporarily store alerts--to empty ( Q   ). The sequence holds alerts until its size equals L. Steps 3­4: The algorithm blocks at this step, until an alert receives. The alert triggers steps 3­21 (We used event-based model to simplify the algorithm. It can be easily translated into pollbased model). In step 4, we concatenate the newly-received alert to Q ( Q  Q ||  , where the binary operator || denotes concatenation). Step 5: Checks whether the size of the temporary sequence is L. If so, there are enough alerts to form a window, and we proceed to steps 6­21. Steps 6­8: The alerts are sorted based on their timestamps, copied to a window, and the temporary sequence is freed. Step 9: MSPs of current window are mined and added to MSP_Table. This table stores MSPs as well as the window number in which they are found. Step 10: Each FSPs of current window is checked whether it is CFSP according to the CCM. Add the current CFSPs to the CFSP_Table. Step 11-18: After Finding the current CFSPs CFSP_Table should be examined that if the current CFSPs can be correlated to recent CFSPs. If the last alert of each recent CFSP is correlated to the first alert of current CFSP, then current CFSP is concatenated to recent CFSP. A recent CFSP is a CFSP that the difference between its window number and current window number is less than the Retrospect Factor (). For each CFSP the window number of the last alert are stored as its window number. This step helps us to aggregate the previous alert to the current alert and construct multistep attack scenarios. Step 19: The current window marker (i) is increased by 1.
+min_sup
+
+AKAKACDAKK | BCBBCCCDCF | FDDAFDAFAD
+Alert A B C D K F Table 1 the causal correlation matrix (CCM) A B C D K F 0.2 0.7 0.1 0.3 0.6 0.2 0.2 0.3 0.1 0.8 0.1 0.7 0.4 0.1 0.2 0.7 0.3 0.4 0.3 0.4 0.1 0.3 0.8 0.2 0.3 0.2 0.9 0.1 0.4 0.3 0.1 0.9 0.2 0.5 0.1 0.3
+
+By receiving the first window, its MSPs are calculated, as shown in Table 2.
+Window number 1 Table 2 MSPs(a) Maximal Sequential Pattern AK
+
+ˇ
+
+ˇ
+
+ˇ
+
+Then we should extract CFSPs from MSPs. In the first window, AK is a frequent pattern, but for extracting attack scenarios, being frequent is not sufficient, the alerts should also be correlated. So if alert A is followed by alert type K in a CFSP , alert type K should be correlated to alert A according to the CCM. All CFSPs are extracted from MSPs in this stage. CFSPs of this phase are shown in Table 3.
+Table 3 CFSPs(a) Correlated Frequent Window number Sequential Pattern A 1 K 1 AK 1
+
+ˇ
+
+ˇ
+
+ˇ
+
+After receiving the next window, MSPs of this window are calculated first (Table 4), and then CFSPs are generated. In this window BC is a frequent pattern but according to the correlation matrix C is not correlated to B . Thus BC is not added to CFSP_Table. Now all longer CFSPs should be generated from CFSP_Table. For example AK is a CFSP that occurred in the first window, and C is a CFSP which occurred in the second window. So AK is raised before C . Also according to the correlation matrix, C is correlated to K so AKC is a CFSP . All of CSPs are generated and added to CFSP_Table in this manner, as shown in Table 5.
+
+ˇ
+
+44
+
+RTEAS: A Real-Time Algorithm for Extracting Attack Scenarios from Intrusion Alert Stream
+Table 4 MSPs (b) Maximal Sequential Pattern AK BC
+
+Window number 1 2
+
+Table 5 CFSPs (b) Correlated Frequent Window number Sequential Pattern A 1 K 1 AK 1 B 2 C 2 AB 2 KC 2 AKC 2
+
+The third window is processed as described above. MSPs and CFSPs after receiving the third window are demonstrated in Tables 6 and 7.
+Table 6 MSPs (c) Maximal Sequential Pattern AK BC FD,A
+
+Window number 1 2 3
+
+Table 7 CFSPs (c) Correlated Frequent Window number Sequential Pattern A 1 K 1 AK 1 B 2 C 2 AB 2 KC 2 AKC 2 F 3 D 3 FD 3 BF 3 ABF 3 BD 3 BFD 3 ABFD 3 CD 3 KCD 3 AKCD 3
+
+2. Testing the existence of sadmind demon on live IPs. 3. Exploiting sadmind vulnerability and breaking into vulnerable hosts. 4. Installing DDoS software via telnet, rcp or rsh. 5. Starting a DDoS attack. To use the DARPA dataset for testing our alert correlation algorithm, the packet dumps should be replayed, and some IDS must be deployed to raise the alerts. In order not to re-invent the wheel, we used a ready version: RealSecure IDS alert log [16]. This alert log was produced by playing back the "Insidetcpdump" of LLDDOS1.0. The Input parameter of our algorithm is set as follows: ˇ Window Size: L = 20 There is a trade off in determining the L : If L is too large, the computation of all frequent patterns will be very time and space consuming, and thus the algorithm will be inefficient. Also we should wait until L alerts are generated. Therefore, it will be impossible to act in real time. On the other hand, if L is selected too small, the precision of algorithm suffers. We use some heuristic to determine the window size. L is selected such that there is no more than some number (e.g. 6) of alert types in each window. ˇ Causal Correlation Matrix: the CCM is filled with values determined by prior knowledge as shown in Table 8. ˇ Correlation Threshold:  = 0.5 . ˇ Retrospect Factor:  = 3 . ˇ Importance Factor: I (a ) = 3 for each critical alert types, I (a ) = 2 for typical alert types and
+
+I (a ) = 1 for non trivial alerts.
+ˇ Minimum Support Count: min_sup = 4 .
+
+min_supa are Calculated as follows:
+0.25 × min_sup if I ( a ) = 3  min_supa =  min_sup if I ( a ) = 2  3 × min_sup if I ( a ) = 1  Some alerts are unimportant like Email_Ehlo so the importance factor ( I ) of these alert are low and they almost ignored because of their high min_sup threshold. By ignoring Email_Ehlo alerts the number of alerts reduces 56 percents. Thus considering different importance factor is leads to have efficient algorithm. Also the Stream_DoS alert is an important alert that may not be frequent so we set the importance factor ( I ) of this alert to 3. After setting parameters we ran the algorithm on dataset. The following sequences are detected as a multistep attack scenario: ˇ Sadmind_Ping, Sadmind_Amslverify_Overflow, Admind, Rsh, MStream_Zombie, Stream_DoS.
+
+4. Experiments
+We tested our algorithm using the DARPA 2000 dataset [15]. This dataset contains two attack scenarios. We describe the first scenario (LLDDOS1.0) and the results of its usage in the algorithm. LLDDOS1.0 is a packet dump corresponding to a multistep attack scenario with five phases: 1. Sweeping IPs, which finds live IPs in the target network.
+
+6th Intl. ISC Conf. on Information Security and Cryptology, October 2009, University of Isfahan Sadmind_Ping, Admind, Sadmind_Amslverify_Overflow, Rsh, MStream_Zombie, Stream_DoS. The RealSecure generates the fallowing alerts for each phase of this multistage attack scenario [8, 17]. 1. IP sweep: Since RealSecure ignores ICMP ping, no alert is generated for this phase. 2. Probing sadmind service: For this phase RealSecure raises a number of Sadmind_Ping alerts. 3. Exploiting sadmind vulnerability: In this phase two alert types are raised: a. Sadmind_Amslverify_Overflow: This alert is raised because of exploiting sadmind vulnerability and trying to break into the sadmind service. b. Admind: It is raised for illegal access to Solaris administration. Since alert types Sadmind_Amslverify_Overflow and Admind are usually raised by a single attack step, ˇ each of them can be considered as a prerequisite to the other. This fact is reflected in the Causal Correlation Matrix: This is why both of the extracted attack scenarios are valid. 4. Installing DDos Trojan: Rsh and MStream_Zombie are alerts raised in this step. 5. Launching DDos attack: Finally a Stream_DoS alert is raised. Some approaches do not detect this alert since it occurs only once. We are able to detect it because we value this alert type by increasing its importance factor. The details of detecting each step of the attack is as follows: The Sadmind_Ping was detected in window 10, Sadmind_Amslverify_Overflow is frequent in windows 11, the pattern Rsh  MStream_Zombie is detected in windows 13 and 14, and Stream_DoS is raised in window 15.
+
+45
+
+Table 8 CCM Sadmind Amslverify Overflow TelnetTerminaltype Mstream Zombie TelnetXdisplay Sadmind Ping SSH Detected Email Almail Overflow Email Debug TelnetEnvAll
+0 0.1 0 0 0 0 0 0 0 0.1 0.1 0.1 0 0 0 0 0.4 0 0
+
+HTTP Shells
+
+HTTP Cisco
+
+Alert
+Sadmind Ping TelnetTerminaltype Email Almail Overflow Email Ehlo FTP User FTP Pass FTP Syst HTTP Java HTTP Shells Admind Sadmind Amslverify Overflow Rsh Mstream Zombie HTTP Cisco SSH Detected Email Debug TelnetXdisplay TelnetEnvAll Stream DoS
+
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+
+0 0.9 0.8 0 0 0.3 0.4 0.5 0 0 0 0 0 0 0 0 0 0 0
+
+0 0.8 0.9 0.7 0.4 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+
+0 0.9 0.7 0.8 0.2 0.7 0.7 0.7 0 0 0 0 0 0 0.2 0.1 0 0 0
+
+0 0.7 0.8 0.9 0.7 0.7 0.7 0.1 0 0 0 0 0 0 0 0 0 0 0
+
+0 0.9 0.7 0.9 0.7 0.6 0.6 0.1 0 0 0 0 0 0 0 0.1 0 0 0
+
+0 0.7 0.6 0.9 0.8 0.6 0.6 0.1 0 0 0 0 0 0 0 0 0 0 0
+
+0 0 0 0.5 0 0 0 0.5 0.1 0 0 0 0 0 0 0 0 0 0
+
+0 0 0 0 0 0 0 0.2 0 0 0 0 0 0 0 0 0 0 0
+
+0.6 0.3 0 0.2 0 0 0 0 0 0.8 0.7 0 0 0 0 0 0 0 0
+
+0.5 0.2 0 0.1 0 0 0 0 0 0.8 0.6 0 0 0 0 0 0 0 0
+
+0.3 0.2 0.1 0.1 0 0 0 0 0 0.9 0.7 0.6 0 0 0 0 0 0 0
+
+0.1 0.1 0 0 0 0 0 0 0 0.7 0.6 0.1 0.7 0 0 0 0.5 0.6 0
+
+0 0 0 0.2 0.2 0 0.1 0 0 0 0 0 0 0.1 0 0 0 0 0
+
+0 0.2 0 0.6 0 0 0.1 0 0 0 0 0 0 0 0.1 0 0 0 0
+
+0.1 0.1 0.1 0.6 0.1 0.1 0 0 0 0 0 0 0 0 0.4 0 0 0 0
+
+0.1 0 0 0 0 0 0 0 0 0.1 0.1 0.1 0 0 0 0 0 0 0
+
+0.6 0 0 0 0 0 0
+
+Our scenario is comparable to the attack graph extracted by algorithm proposed in Zhu et al. [8], and Ning et al. [17]. "Fig. 1" shows the attack graph of
+
+Zhu et al. [8], and "Fig. 2" demonstrates the hyperalert correlation graph of Ning et al. [17].
+
+Stream DoS
+0 0 0 0 0 0 0 0 0 0 0 0
+
+HTTP Java
+
+Email Ehlo
+
+FTP User
+
+FTP Pass
+
+FTP Syst
+
+Admind
+
+Rsh
+
+46
+
+RTEAS: A Real-Time Algorithm for Extracting Attack Scenarios from Intrusion Alert Stream
+
+Sadmind_Ping
+
+Sadmind_Amslverify_Overflow Admind
+
+Rsh
+
+Mstream_Zombie
+
+Fig. 1. attack graph for LLDOS1.0 extracted by Zhu et al. [8].
+
+Sadmind Ping
+
+Sadmind_Amsl verify_ Overflow
+
+Rsh
+
+Mstream Zombie
+
+Stream DoS
+
+Fig. 2. A hyper-alert correlation graph discovered in LLDOS1.0 by Ning et al. [17]. Computational Intelligence and Industrial Application, 2008. PACIIA '08. Pacific-Asia Workshop on. 2008. Li, W., et al., A novel algorithm SF for mining attack scenarios model, in Proceedings of IEEE International Conference on e-Business Engineering (ICEBE'06). 2006, IEEE Computer Society. Zhu, B. and A.A. Ghorbani, Alert Correlation for Extracting Attack Strategies. International Journal of Network Security, 2006. 3(3): p. 244­258. Al-Mamory, S.O. and H. Zhang, IDS alerts correlation using grammar-based approach. Journal in Computer Virology, 2008. Templeton, S.J. and K. Levitt, A Requires/Provides Model for Computer Attacks, in Proceedings of New Security Paradigms Workshop. 2000. Morin, B., et al. M2D2: A Formal Data Model for IDS Alert Correlation. in Proceedings of the 5th International Symposium on Recent Advances in Intrusion Detection (RAID 2002). 2002. Shin, M.S. and K.J. Jeong. An Alert Data Mining Framework for Network-Based Intrusion Detection System. 2006: Springer-Verlag. Bahreini, P., M. AmirHaeri, and R. Jalili, A Probabilistic Approach to Intrusion Alert Correlation, in Proceedings of 5th International ISC Conference on Information Security & Cryptology. 2008. Valdes, A. and K. Skinner, Probabilistic Alert Correlation, in Proceedings of the 4th International Symposium on Recent Advances in Intrusion Detection. 2001, Springer-Verlag.
+
+5. Conclusion
+This paper proposed a real-time approach to correlation of IDS alerts. We mapped the problem of extracting attack scenarios to a stream-mining problem and introduced an algorithm (RTEAS) for extracting attack strategies from the alert stream. We tested RTEAS by DRPA 2000 intrusion detection scenario specific dataset. The results show that the algorithm can efficiently extract the attack scenarios. As a suggestion for future work, we propose exploiting data mining approaches to compute the correlation of alert types instead of using prior knowledge (or combining the two approaches).
+[7]
+
+[8] [9] [10] [11]
+
+References
+[1] Valeur, F., et al., A Comprehensive Approach to Intrusion Detection Alert Correlation. IEEE Transactions on Dependable and Secure Computing, 2004. 1(3): p. 146-169. Pietraszek, T., Using Adaptive Alert Classification to Reduce False Positives in Intrusion Detection, in Recent Advances in Intrusion Detection. 2004. p. 102124. Smith, R., et al., Using Unsupervised Learning for Network Alert Correlation, in Advances in Artificial Intelligence. 2008, Springer Berlin / Heidelberg. p. 308-319. Morin, B., et al. M2D2: A Formal Data Model for IDS Alert Correlation. in Proceedings of the 5th International Symposium on Recent Advances in Intrusion Detection (RAID 2002). 2002. Cuppens, F. and A. Mičge, Alert Correlation in a Cooperative Intrusion Detection Framework, in Proceedings of the 2002 IEEE Symposium on Security and Privacy. 2002, IEEE Computer Society. Peng, X., et al., An Alert Correlation Method Based on Improved Cluster Algorithm, in Proceedings of
+
+[12] [13]
+
+[2]
+
+[14]
+
+[3]
+
+[4]
+
+[15] MIT Lincoln Laboratory, 2000 Darpa Intrusion Detection Scenario Specific Data Sets. 2000. [16] North Carolina State University Cyber Defense
+
+Laboratory, Tiaa: A Toolkit for Intrusion Alert Analysis. [cited 2009 May 24]; Available from:
+http://discovery.csc.ncsu.edu/software/correlator/ver1. 0/. [17] Ning, P., Y. Cui, and D. Reeves, Analyzing Intensive Intrusion Alerts Via Correlation. 2002, North Carolina State University at Raleigh.
+
+[5]
+
+[6]
+
+

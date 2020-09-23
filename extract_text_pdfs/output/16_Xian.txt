@@ -1,0 +1,1016 @@
+A Privacy-Preserving Multi-step Attack Correlation
+Algorithm
+Minyi XIANl,Yongtang ZHANG l,2*
+I. Department of computer science and technology, Guangdong Neusoft Institute, Foshan, China
+2. Jiangxi Microsoft Technology Center, Nanchang, China
+172594911@qq.com, 1141760796@qq.com
+
+Abstract-Traditional
+multi-step
+attack
+correlation
+approaches based on intrusion alerts face the challenge of
+recognizing attack scenarios because these approaches require
+complex pre-defined association rules as well as a high
+dependency on expert knowledge. Meanwhile, they barely
+consider the privacy issues. Under such circumstance, a novel
+algorithm is proposed to construct multi-step attack scenarios
+based on discovering attack behavior sequential patterns. It
+analyzes time sequential characteristics of attack behaviors and
+implements a support evaluation method. An optimized
+candidate attack sequence generation method is applied to solve
+the problem of pre-defined association rules complexity as well as
+expert knowledge dependency. An enhanced k-anonymity method
+is applied on this algorithm to realize privacy-preserving feature
+Experimental results indicate that the algorithm has
+comparatively better performance and accuracy on multi-step
+attack correlation and reaches a well balance between efficiency
+and privacy issues.
+Keywords-Network
+
+Security;
+
+Multi-step
+
+Attack;
+
+intrusion
+
+Detection; Sequential Pattern; Privacy-protection; Data Mining
+
+I.
+
+Introduction
+
+According to the National Internet Emergency Center (CNCERT/CC)
+network security situation analysis reports, most attacks are complex,
+multi-step attack [1]. Such attacks have generally targeted attacks,
+devastating huge and difficult to detect features. Moreover, the
+
+process IS often attacked by a serIes of attacks steps closely
+associated with the composition, such as intrusion detection,
+vulnerability analysis, network penetration, privilege escalation
+attack embodiment; the back door opened and cleared logs and so on.
+Accordingly, the disclosure attack sequence for identifYing the major
+signiticance of the attack.
+In recent years, research associate in the field of network
+security alarm more and more attention. In response to the
+increasingly difficult security situation, the security co-organized
+between the analysis and prevention is necessary. Privacy issues
+become safety data sharing and collaborative analysis of one of the
+major obstacle towards practical applications [10, lll. However, the
+alarm associated with the conventional method of analysis based on
+the analysis considered data security requirements are usually a
+variety of password-based method has high computational
+complexity [12, 131.
+A Privacy-Preserving Multi-step Attack Correlation (PPMAC)
+algorithm is proposed in this paper to discover attack behavior
+sequential patterns on the protected alert set. With the target of
+finding out attack sequences of global multi-step attacks, this method
+can be used to predict invaders' future moves, and thus take proper
+actions to decrease the impact from such intrusions efficiently. With
+affordable computation cost, PPMAC has been proven to be more
+efficient than traditional ones in attack scenarios construction with
+consideration of sensitive information protection in alert set.
+
+II. PPMAC Briefing
+This section illustrates the framework ofPPMAC, as described in Fig. 1.
+PPMACENGIN
+
+Privacy-preserving Agent
+
+Protected
+Alerts for
+Multi-step
+Attack
+Correlation
+
+Global Attack
+Sequence
+Generator
+Candidate
+Attack
+Sequence DB
+
+Sequential
+Patterns of
+Multi-step
+Attacks as A
+Feedback
+
+Monitor
+
+Maximal
+Attack
+Behavior Set
+Handler
+Maximal
+Attack
+Sequence
+Miner
+
+Fig I PPMAC framework
+
+Network domains are on the left side. PPMAC engine, the
+
+978-1-4673-9613-4/16/$31.00 ©2016 IEEE
+
+secure third-party mufti-step attack
+
+1389
+
+correlation processor as well as
+
+analyzer, is on the right side, interacting with the network domain
+through the function units of privacy-preserving agent and monitor.
+PPMAC engine is composed of four functional units to realize
+correlation:
+(I) Global Attack Sequence Generator: to generate global
+sequence of attack behaviors according to the order of start-time
+attribute of alerts, which is mapped into attack signature identifiers of
+consecutive integers.
+(2) Candidate Attack Sequence DB: to store the selected
+candidate attack sequences from the global attack sequence.
+(3) Maximal Attack Behavior Set Handler: to produce all the
+maximal attack behaviors with minimum support, the pre-defined
+parameter.
+(4) Maximal Attack Sequence Miner: to discover multi-step
+attack scenarios from protected alert set based on attack behavior
+sequence analysis. The mining results can be fed back to network
+domains through monitor to defend complex intrusions.
+Considering the different level of sensitivity of variant attributes
+in the alert, this paper improves the k-anonymity method[2.ll l , a
+classical privacy preserving method so as to preserve the alerts'
+semantic as much as possible during the process of attributes
+anonymization.
+
+III. PPMAC Algorithms
+The method to mine attack behavior sequential patterns is based on
+the essence that various multi-step attack behaviors initiated by
+attackers always appear in ordered sequences. That is, attackers
+would perform certain action before carrying out next move, as logic.
+The attack scenario in LLDOS 1.0[16] illustrates the general
+character of multi-step attacks explicitly.
+Consequently, the
+sequential pattern analysis of alerts could be used to correlate various
+suspicious activities that, if considered separately, would not have
+enough evidence to detect complicated multi-step attacks.
+Some terms are defined to clarify the PPMAC Algorithm:
+Definition 1 Attribute Vector: the attribute vector of each
+intrusion alert is defined as: {date, start-time, protocol, source-iP,
+destination-iP, source-port, destination-port, attack-type}, with a
+short term al={at/" "', ats}
+Definition 2 Alert Set: triggered by lDSs when some intrusion
+events are detected. Let AL be the alert set with a finite number of
+attribute vectors al.
+Definition 3 k-anonymity: let sd={sd/, "', sdj, 0<1;;i8 be
+a vector of selected attributes from aI, which are the sensitive items
+to be protected, sd ~ al. SD is the set of sd, as a sub set extracted
+from AL, that is SD ~ AL. AL satisfies k-anonymity if and only if
+each vector in SD accordingly, appears with at least k occurrences.
+Stepl: Protect sensitive alert attributes by the improved
+k-anonymity method k-anonymity method, One of the major
+privacy-preserving methods, generally uses quasi-identifier to
+support judging whether k-anonymity properties are met. In the
+purpose of preserving privacy in intrusion alerts, the sensitive
+attributes are the private items, instead of the quasi-identifier.
+k-anonymity method is applied on selected sensitive attributes in
+SD, while all other attributes remain unchanged. The discrete values
+of sensitive alert attributes in AL are replaced by their generalization
+values which are predefined based on domain's security policy. For
+example, the original destination-iP, which is one of the main private
+attributes, is generalized to its subnet address with 24bit mask or even
+16bit mask. Uncertainty is introduced into the alert set but alert
+regulations are kept for mining.
+
+Generalized alert set ALe' as the output of privacy-preserving
+agent, will be sent to PPMAC engine for multi-step attack correlation
+analysis.
+Step2: Multi-step attack correlation algorithm
+This step is to discover maximal attack sequences, based on
+Apriori -like theory.
+(a) Mapping and grouping
+
+To make the mining process more efficient, a one-to-one
+mapping table between attack-type strings and a series of consecutive
+integers is setup. That is, the integers represent the attack signature
+identifier accordingly. All values of attack-type of alerts in ALe are
+converted to integers according to the mapping rule.
+Definition.4 Attack Set S: {s1, s2, "', sg}: the set of attack
+signature identifier according to the attack types reported by lDSs.
+There are generally some relationships among the alert attributes
+in different steps of a mufti-step attack process, such as same
+destination port number or Same into hop network segment of
+destination IP address. All alerts in ALe are classified into groups by
+protected destination-iP segments, which can recognize single-hop
+and mufti-hop attacks.
+(b) Constructing global attack sequence
+
+After mapping and grouping, the global attack sequence
+generator is for generating global attack sequence.
+Definition 5 Attack Sequence <ap a2' "', an>: a sequence of
+attack behaviors, where ai (1 ;;ii ;;in) ES.
+Sort all alerts in each group by start-time ascending after
+mapping and grouping procedure, to have the global attack sequences
+by groups.
+(c) Producing candidate attack sequence set
+
+An attack scenario is a collection of intrusion events that have
+occurred closely within a pre-defined time window. Therefore, an
+iteration process is designed to retrieve the candidate attack sequence
+set:
+a) Initiate the time window with its beginning side at the
+start-time ofthe first alert in the global attack sequence:
+b) Pick up all alerts in which the start-time is in the scope of
+time window:
+c) Move the time window to the start-time of next alert:
+d) Repeat step a) and c) till the end side of the time window
+reaches the end ofthe sequence.
+After applying the process in each global sequence, the attack
+steps which fall the same attack scenario time window form a
+candidate attack sequence. The candidate attack sequence set is
+obtained through big data, and then is stored in the sequence matrix
+database.
+The set of candidate attack sequence is denoted as CAS, and the
+candidate attack sequences in CAS are denoted as casp ' 1 ;;ip;;iTS
+(d) Getting maximal attack behavior set
+
+Definition 6 Sequence support:
+
+Given two attack sequences
+
+A=<aj' a2' "', an>andB=<b j • b 2, .... b m > (mi";n), ifaj=b j
+and A is the subsequence of B (A can be reached by deleting some
+data from B without changing any orders), it is represented as
+sequence A contained in sequence B, or sequence B supports
+sequence A, denoted as B t A.
+
+In a set of attack sequence, attack sequence is maximal if it is
+not contained in any other sequences. The key target of mining attack
+behavior sequential patterns is to find the maximal attack sequences
+among all candidate attack sequences by group. Each of the maximal
+attack sequences will represent an attack Scenario. Support
+evaluation method is applied to deduce the maximal attack
+
+1390
+
+sequences.
+Definition 7 Support of Attack Sequence SUPAS : the ratio of
+between the number of candidate attack sequences supporting the
+attack sequence A, denoted as CS, and the number of total candidate
+attack sequences, denoted as TS, given in Eq. 1:
+
+The number of rows of Cv is denoted as ICyl and the candidate
+maximal
+
+Cy(q),l:::; q:::;
+
+(])
+
+Definition 8 Support of Attack Behavior SUPAB : the ratio
+between the number of a certain attack behavior aj in the global
+attack sequence, denotes as AB , and the number of total behaviors
+contained in this global attack sequence, denoted as TB, given in Eq.
+
+all
+
+a 21
+
+all
+
+°31
+
+all
+
+ax l
+
+a 21
+
+all
+
+a 21
+
+Gx1
+
+a(._I)1
+
+ax l
+
+2:
+
+SUPAB (a
+
+AB
+
+j )
+
+= - x 100%
+TB
+
+(J ~h~g)
+
+(2)
+
+Cl' =
+
+Attack behaviors which satisfy the predefined minimum support
+threshold (min_sup) are called maximal attack behaviors.
+The procedure to get maximal attack behavior set is the process
+to produce attack sequence with only one behavior (] -sequence) as
+well, denoted as L/. The maximal attack behavior set handler
+produces L / as Algorithm 1 shows. The number of total maximal
+attack behaviors is denoted as TA.
+for Ileach attack behavior ai in the attack set S
+If SUPAB (a,) ~min_sup
+then a, belongs to L1
+end if
+end for
+Algorithm I Pseudo code for retrieving L,
+
+As described above, a conclusion can be drawn that the elements
+in the maximal attack sequences must be the ones in the maximal
+attack behavior set.
+(e) Discovering maximal attack sequences
+
+The maximal attack sequence miner looks for small attack
+scenarios, and gets larger attack scenarios progressively. This process
+is composed of two procedures: producing candidate maximal attack
+sequence set Cy and corresponding maximal attack sequence set L y '
+where y denotes the length or the attack behavior number of the
+maximal attack sequence. This process will end on the condition that
+no new sequence can be derived from Ly to Cy+ 1 ' which discovers all
+the maximal attack sequences of Ly in the given intrusion event
+sequences.
+a) Assume L y _/ as shown in Eq. 3:
+
+attack
+
+sequences
+
+ICkl·
+
+In
+
+Cy
+
+are
+
+denoted
+
+as
+
+, y=2
+
+all
+
+G 12
+
+a l(y_2)
+
+al(y-I)
+
+a 2(y_l)
+
+all
+
+a12
+
+a l(y_2)
+
+a l (y-l)
+
+al(y-l)
+
+all
+
+a l2
+
+a l(y_2)
+
+a l (y_!)
+
+Gx(y-l)
+
+a 21
+
+a 22
+
+a 2(y_2)
+
+a 2(y_ l )
+
+al(y-l)
+
+a 21
+
+a 22
+
+a 2(y_2)
+
+a 2(y_l)
+
+a 4(y_l)
+
+a 21
+
+a 22
+
+a 2(y_2)
+
+a 2(y_l)
+
+a,(y_l)
+
+a(x-l)l
+
+a(x- I)2
+
+a(x- IXy-2)
+
+a(x-l)(y-l)
+
+a x(y_ l )
+
+y:2:3
+
+(4)
+
+b) Scan the candidate attack sequence set from top to bottom and
+read one attack sequence each time, in which process the support
+count of each candidate maximal attack sequence in Cy are increased
+while it is contained in the attack sequence. Obtain the maximal
+attack sequences of Ly ' by deleting those candidate sequences whose
+support count less than min_sup. The pseudo code for retrieving Ly is
+shown in Algorithm 2.
+for Ileach candidate attack sequence CAS (p) in CAS
+for Ileach candidate maximal attack sequence C, (q) in C,
+if CAS (p) ICy (q)
+then SUPAS (Cl' (q)) increases
+end if
+end for
+end for
+for Ileach candidate maximal attack sequence Cy (q) in Cy
+if SUPAS (Cy (q)) ~min_sup
+then Cy (q) belongs to Ly
+end if
+end for
+Algorithm 2 Pseudo code for retrieving Ly
+
+a2l
+
+, y
+
+= 2,
+
+c) The algorithm ends until no new sequence can be derived
+from Ly to Cy+/'
+All the maximal attack sequences discovered by PPMAC
+algorithm will be fed back to network domains through the monitor.
+
+x:S: TA
+(3)
+
+N.
+
+a 11 a l2 ... al(y_l)
+a 2l a 22 ... a 2(y-l)
+
+, y 2': 3, x:S: TA
+
+The candidate maximal attack sequence set Cy is generated by
+joining the maximal attack sequence patterns in the previous pass as
+shown in Eq. 4:
+
+Experimental Results
+
+This section includes validation of the effectiveness and scalability of
+PPMAC on multi-step attack correlation, and then compares the
+performance of PPMAC with two traditional sequential pattern
+mining algorithms: AprioriAll and GSP. All the experiments are
+processed with DEF CON 9 datasets[15], one of the most
+authoritative datasets of attack performed scenarios from DEF CON
+organization.
+Experiments have been performed in an intranet environment,
+where TCP Replay, an open source replaying toolkit, is applied to
+import the network flows into the deployed SNORT[14]. Table 1
+
+1391
+
+summarizes part of raw intrusion alerts information.
+Table I
+
+DDOS Mstream Client to Handler
+
+A.
+
+Raw intrusion alerts (partial)
+
+BAD-TRAFFIC Loopback IP
+BAD-TRAFFIC SYN to Multicast Address
+BAD-TRAFFIC TCP Port 0 Traffic
+TCP Port Sweep
+SNMP Request UDP
+Fragmentation Overlap
+SCANFTN
+Community SIP TCP/IP Message Flooding
+Directed to SIP Proxy
+ICMP Tcmpenum
+BAD-TRAFFIC Loopback Traffic
+SNMP Message Community String Attempt
+
+Effectiveness
+Experiments are designed to evaluate the capability of PPMAC
+
+Nnmbers of Alerts
+before Correlation
+
+Types of Intrusion Alerts
+
+785
+
+on discovering multi-step attack behavior sequences.
+
+42
+150
+218
+5
+687
+91
+240
+
+destination-I? and destination-port are considered as the main private
+
+136
+
+attributes, which could show intranet topology and services running
+
+791
+49
+327
+
+on it. Transformations are made to these attributes by the
+
+We
+
+collected the
+
+original
+
+experimental
+
+data
+
+from
+
+the
+
+experimental data set contains 5290 intrusion alarm records. Table 2
+shows the experimental data of the intrusion alarm after the original
+intrusion alarm and privacy protection. In the experiment,
+
+privacy-preserving agent according to the improved k-anonymity
+method with k=2.
+
+Table 2 Example ofraw intrusion alerts & protected intrusion alerts (k=2)
+Protocol
+
+Source-IP
+
+Source-port
+
+TCP
+
+10.10.1.20
+
+TCP
+
+raw intrusion alerts
+
+protected intrusion alerts (k=2)
+
+Destination-IP
+
+Destination-port
+
+Destination-IP
+
+44355
+
+10.10.2.254
+
+8080
+
+10.10**
+
+147.4.10.50
+
+166
+
+127.2.19.7
+
+2844
+
+127.2.19'
+
+TCP
+
+110.121.50.119
+
+25978
+
+127.2.19.20
+
+2844
+
+127.2.19'
+
+TCP
+
+123.122.12.120
+
+43345
+
+10.10.3.254
+
+63322
+
+10.10**
+
+Attack-type
+
+Destination-port
+
+Community SIP TCPlIP Message
+Flooding Directed to SIP Proxy
+BAD-TRAFFIC SYN to Multicast
+Address
+BAD-TRAFFIC SYN to Multicast
+Address
+BAD-TRAFFIC Loopback Traffic
+
+The multi-step attack correlation results of PPMAC are shown
+In
+
+Table 3. We have only compared with algorithm GSP have as
+
+o PPMAC
+
+AprioriAll discovered too many attack scenario fragments, which
+would exhausting computation.
+Table 3
+
+Comparison of attack scenario recognition (k=2)
+Q)
+
+s
+
+Comparison Items
+
+PPMAC
+
+Number of Real Attack Scenarios
+
+47
+
+49
+
+Number of discovered Attack Scenarios
+
+46
+
+43
+
+',=
+.,..,
+§
+
+Number of correct Attack Scenarios
+
+44
+
+38
+
+~
+
+False Positive Ratio
+
+8.4%
+
+11.6%
+
+False Negative Ratio
+
+12.1%
+
+20.5%
+
+GSP
+
+3
+2
+1
+0
+
+O. 25
+
+The comparatively better result of correct multi-step attack
+scenarios is achieved by PPMAC performing on the protected
+datasets, which shows no capability loss on discovering attack
+scenarios after privacy preserving process. The reason is that the
+attributes of attack-type are fully involved in the process of
+discovering attack behavior sequences. Meanwhile, PPMAC has
+lower false positive ratio and false negative ratio than GSP, credit to
+our novel method of producing candidate maximal attack sequences.
+
+B.
+
+(W=2hours) 1 - - - - - -
+
+DGSP
+
+(a) Attack Scenario Time Window is 2 hours
+
+14
+~
+
+~ 12
++-'
+;:::l
+
+c
+
+10
+
+o PPMAC
+o GSP
+
+CW=6hours)
+
+• AprioriAll
+
+8
+6
+
+Scalability
+
+4
+
+On the experimental dataset, we used the range from 1% to
+0.25% on minimum support value (min-sup). The runtime of
+PPMAC, GSP and AprioriAll algorithm within the assigned min-sup
+range is shown in Fig.2.
+
+2
+
+o
+0.25
+(b) Attack Scenario Time Window is 6 hours
+Fig. 2 Scalability: min-sup affection on runtime within different methods
+
+As proven in experiments, PPMAC is averagely around 10% to
+500% faster than AprioriAll. When W is smaller and min-sup is
+higher, GSP is around 30% faster than PPMAC, as PPMAC requires
+protecting the sensitive attributes in original alerts. With the
+
+1392
+
+decreasing min-sup, more maximal attack behaviors in sequence, as
+well as more candidate maximal attack sequences are generated.
+Performance advantages of PPMAC are thus benefited from its
+optimized method of producing candidate maximal attack sequence
+set. The runtime gap between the two methods becomes bigger.
+Generally, the total runtime of PPMAC increases with a decreasing
+min-sup.
+10
+
+'"
+[/J
+
+QJ
+
++-'
+
+;::J
+
+~
+.r-<
+
+E
+
+'..../
+
+5
+
+QJ
+
+4
+
+.r-<
+
+3
+
+E
+
++-'
+
+.r-<
+~
+
+;::J
+
+~
+
+o min sup 1%
+o min-sup=O. 33%
+
+9 -
+
+8
+7
+6
+
+2
+1
+0
+
+-
+
+,
+
+• min-sup=O. 25%
+
+-
+
+f - :~
+f - .~
+
+. . . . . 1.
+ill ,,··Ill ~i'
+2
+
+4
+
+6
+
+~:
+
+8
+
+Fr'i
+
+10
+
+Attack Scenario Time Window
+
+f-:
+
+~
+r-:
+f-:
+
+[1]Zhang S. Li.T. Chan X. ct al. Building network attack graph for alert causal
+[2] Zhou J. Henchman M. Reynolds B. et al. Modeling network intrusion detection
+alerts for correlation[J].ACM Transactions on Information and System Security.
+
+QJ
+
+;::l
+~
+
+'M
+
+a
+
+QJ
+
+a
+
+'M
+
++-'
+
+'M
+
+~
+
+;::l
+~
+
+14
+12
+10
+8
+6
+4
+2
+0
+
+2007. 10 (I): 4-34.
+[3] Mange F. Multistep attack detection and alert correlation in intrusion detection
+system [J].Tnformation Security and Assurance. 2011. 200: 101-110.
+[4] Ning P. Cui Y. Reeves D S. et al. Techniques and tools for analyzing intrusion
+alerts [J]. ACM Transactions on Information and System Security. 2014. 7 (2):
+273-318.
+[5] Debar H. Wispy A. Aggregation and correlation or intrusion-detection alerts [J].
+Lecture Notes in Computer Science. 2011. 2212: 85-98.
+[6] Morin B. Debar H. Correlation of intrusion symptoms: an application of
+chronicles[J]. Lecture Notes in Computer Science.
+
+2013. 2820: 91-112.
+
+Biographies
+
+18
++-'
+
+This work was supported by the Guangdong Province ordinary
+university innovation project "network security technology and
+network attack and defense trammg platform construction"
+(NO.2014KTSCX212), 2014 Youth Innovative Talents Project (Nat
+ural Science) of Education Department of Guangdong Province(2014
+KQNCX249) and Jiangxi Province Education Department Science
+and technology research projects "big data under the government data
+security" (NO.G.T.T13355). And thanks to the experimental
+environment of Jiangxi Microsoft Technical Center.
+
+correlation [J].Computers & Security. 2008. 27(5-6): 188-196.
+
+Fig. 3 shows the execution time of finding maximal attack
+sequences in the experimental dataset with various attack scenario
+time windows and min-sup values through PPMAC. In general,
+increased time window leads to the extended length of candidate
+attack sequences while decreased min-sup leads to the growth of
+initial maximal attack behaviors. Joint effort of both factors should be
+held liable for the rapid increment of processing time.
+The effectiveness of alerts number versus the runtime is shown
+in Fig. 4. It illustrates that the time cost keeps roughly linear in spite
+of the different range of alert number.
+
+if)
+
+ACKNOWLEDGMENT
+
+References
+
+12
+
+Fig. 3 Scalability: time window/support versus mntime in PPMAC
+
+'" 16
+
+explaining mufti-step attack scenarios.Privacy guarantees accelerate
+the research developments in the according area, and make it more
+feasible to discover hidden multi-hop attacks across network
+domains, which could be a promising direction.
+
+o time
+
+Minyi XIAN was born in 1981; she was graduated from
+Sun Vat-sen University as master of computer
+application, and granted professional qualification of
+network planning designer. She is currently working in
+Guangdong Neusoft Institute
+as lecturer.
+and
+researching in the directions of communications,
+wireless sensor network applications, network security
+and offensive and defensive techniques.
+Email: 172594911@qq.com
+
+[) time
+• time
+
+500
+
+5000
+
+Number of Alerts
+
+10000
+
+Fig 4 Scalability: PPMAC linear performance in different situations (minimum
+support=O 25%)
+
+V. Conclusions and Future Work
+Sequential pattern mining technique is considered as an essential part
+of alert correlation and analysis field. In this paper, we have proposed
+a novel method, PPMAC, which could discover multi-step attack
+behavior patterns and in the meantime, prevent the risk of sensitive
+information disclosure during the process. On the basis of this,
+experiments are executed and testing data prove that PPMAC has
+obviously better performance and accuracy in recognizing and
+
+1393
+
+Yongtang ZHANG was born in 1981; he was a master's
+degree in 2005, graduated from the Central China
+Normal University Network and Communication
+Engineering. He is currently working in Guangdong
+Neusoft Institute associate professor, systems analysts
+Jiangxi Microsoft Technology Center. At present the
+main research directions for communications and
+wireless sensor network applications, network security
+and offensive and defensive techniques.
+Email: 1141760796@qq.com.
+
+

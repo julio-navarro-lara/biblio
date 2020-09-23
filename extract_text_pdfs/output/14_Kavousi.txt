@@ -1,0 +1,602 @@
+SECURITY AND COMMUNICATION NETWORKS Security Comm. Networks (2013) Published online in Wiley Online Library (wileyonlinelibrary.com). DOI: 10.1002/sec.786
+
+RESEARCH ARTICLE
+
+A Bayesian network-based approach for learning attack strategies from intrusion alerts
+Fatemeh Kavousi and Behzad Akbari*
+Department of Electrical and Computer Engineering, Tarbiat Modares University, Tehran, Iran
+
+ABSTRACT
+A tremendous number of low-level alerts reported by information security systems clearly reflect the need for an advanced alert correlation system to reduce alert redundancy, correlate security alerts, detect attack strategies, and take appropriate actions against upcoming attacks. Up to now, a variety of alert correlation methods have been suggested. However, most of them rely on a priori and hard-coded domain expert knowledge that leads to their difficult implementation and limited capabilities of detecting new attack strategies. To overcome the drawbacks of these approaches, the recent trend of research in alert correlation has gone towards extracting attack strategies through automatic analysis of intrusion alerts. In line with the recent researches, in this paper, we present new algorithms to automatically mine attack behavior patterns from historical alerts as accurately and efficiently as possible. Our system is composed of two main components. The first offline component automatically generates correlation rules by analyzing the previously observed alerts using a Bayesian causality analysis mechanism. Then, in the online alert correlation component, alerts are correlated using a hierarchical scheme and based on the extracted rules. Our experimental results clearly show efficiency of the proposed method in learning new attack strategies. Copyright Š 2013 John Wiley & Sons, Ltd.
+KEYWORDS network security; intrusion detection; alert correlation; causal discovery; Bayesian network; attack pattern recognition *Correspondence Behzad Akbar, Department of Electrical and Computer Engineering, Tarbiat Modares University, Tehran, Iran. E-mail: b.akbari@modares.ac.ir
+
+1. INTRODUCTION
+With the immense popularity of Internet services and applications, the number and sophistication of network attacks have also increased drastically. So, security management has become one of the major challenges for network administrators. To promote security of the networks, many technologies and security mechanisms aimed at prevention or detection of attacks have been developed, such as firewalls, antiviruses, authentication and access control services, and intrusion detection systems (IDSs). Because of their complementary natures, implementing intrusion prevention and detection systems in a network can provide a good protection for the IT infrastructure. However, a huge number of alerts triggered by these systems coupled with their low quality make it challenging for security administrators to do an appropriate and effective analysis and handle security incidences in a timely manner. So, it is required to use an efficient way to aggregate redundant alerts, intelligently correlate them, discover attack strategies, and forecast forthcoming attacks. To address these problems, alert correlation techniques have been proposed to provide security administrator with
+
+a concise and high-level view of the security state of the protected network. Recently, much research has been carried out in the field of alert correlation. But, the majority of the existing approaches rely on complex correlation rule definition or other forms of hard-coded domain knowledge that must be accurately predefined by experts. In practice, manual generation of such information not only requires a large amount of expert knowledge and experience but also can be prohibitively time consuming and error prone. Moreover, dependence of these approaches on the expert knowledge limits their capability in detecting new attack strategies. To overcome the drawbacks of the knowledge-based approaches, the most recent researches in alert correlation have gone towards extracting attack strategies through automatic analysis of intrusion alerts. One of the main challenges of the latter approach is to extract the necessary constraints and alert relationships that define a multistage attack to accurately and quickly identify the instances of that attack in the future. In line with the recent researches, in this paper, we present a new technique to automatically mine attack behavior patterns from the previously observed alerts. In the current study, we are interested in causal discovery theory and
+
+Copyright Š 2013 John Wiley & Sons, Ltd.
+
+A Bayesian network-based approach for alerts correlation
+
+F. Kavousi and B. Akbari
+
+specifically in Bayesian networks [1], because it requires no expert knowledge. Moreover, using of Bayesian networks provides an opportunity to incorporate prior knowledge about attacks with attack behavior patterns learned from history alerts. Also, new attack strategies can be learned automatically by updating alert Bayesian network based on the new observations. Our alert correlation engine has two components: (i) an offline component that periodically learns multistep attack activity patterns from historical alerts using a Bayesian causality analysis and (ii) an online component that correlates alerts in real-time using a hierarchical method and based on the attack behavior patterns extracted by the offline component. The reminder of paper is structured as follows: Section 2 reviews related literatures. In Section 3, we explain the overall architecture of our proposed alert correlation model. The two main components of our model, the offline attack pattern recognition component and online alert correlation component, are described in Sections 4 and 5, respectively. The results of our experiments are given in Section 6. Finally, Section 7 concludes the paper and outlines some future works.
+
+2. RELATED WORK
+Most of the existing approaches in alert correlation can be categorized as similarity-based, scenario-based, precondition/ postcondition­based, or statistical causality analysis approaches. In similarity-based methods [2­6], the correlation probability between alerts is estimated on the basis of the similarity of their attributes. Methods in this category can be classified into two subgroups: knowledge-based methods [2,3] that require some expert knowledge in the form of alert type similarity to find correlated alerts and inference-based methods [4­6] that specify the causally related alerts by using statistical or machine-learning techniques. For example, in [4], the correlation probability between two alerts is approximated using multilayer perceptron or support vector machine based on their similarity vector. Ahmadinejad and Jalili [5,6] proposed a similar method for alert correlation. However, they applied a boosting algorithm in the classification step. Moreover, they suggested a novel approach of using time windows to decrease the number of comparisons and improve the accuracy of correlation. The inference-based methods mentioned above only need a small part of expert knowledge for training classifier. The similarity-based methods are easy to implement and can detect new attack strategies. However, because these methods are not interpretable, they usually have not the ability to predict the next step of the attack and also suffer from performance issues. In scenario-based methods, alerts are correlated on the basis of the predefined attack scenarios that can either be specified by expert or learned from training datasets using machine-learning techniques. So, like similarity-based methods, scenario-based methods can be categorized into two subgroups knowledge-based [7­10] and inferencebased methods [11­13]. Attack scenarios can be modeled using a language [7], an attack graph [8,9], attack pattern
+
+trees [11­13], or Petri Nets [10]. Knowledge-based methods have a good accuracy at detecting welldocumented attacks. But, the main drawback of them is that they cannot detect new attack scenarios. Moreover, building an explicit attack scenario database not only requires extensive expert knowledge but also can be a troublous and error-prone process. In contrast, inference-based methods require no expert knowledge and can automatically learn new attack strategies. However, the accuracy of these methods heavily depends on the quality and comprehensiveness of the training dataset that should include various multistep attack instances. Furthermore, the accuracy and performance of these methods in correlating alerts of known attacks are lower compared with the methods in the first subgroup. The ability to predict forthcoming attacks is one of the main advantages of scenario-based approach. Precondition/postcondition-based (rule-based) methods [14­16] correlate alerts on the basis of the causal relationships between prerequisites and consequences of individual alerts. The basic idea behind these methods is that there are logical links between the postcondition of an earlier attack step and the precondition of the next one. Thus, if postcondition of an earlier alert satisfies the precondition of another alert, these methods correlate them. This approach requires less knowledge of attacks compared with scenario-based approach. Besides, methods in this category are able to detect new attack scenarios as long as there is a comprehensive and up-to-date library of attack steps. However, it is expensive to build and maintain a complete library of attack steps as there are a large number of attack types. In contrast with scenario-based and rule-based methods, statistical causality analysis approaches automatically analyze the causality among alerts without relying on prior expert knowledge. Qin and Lee [17] analyze statistical and temporal patterns between aggregated alerts, (i.e., hyper alerts), using Granger causality test, which is a time series-based causality analysis to identify the causally related alerts. Although this technique is useful in correlating alerts of unknown attacks, it is not an applicable solution for the online correlation process. Few works [18­22] have also been proposed to extract the causal relationships between alerts using Bayesian networks. In addition to the aforementioned approaches, some researches proposed hybrid methods for alert correlation. For example, Ahmadinejad et al. [23] presented a hybrid model for correlating alerts of known and unknown attacks. The model proposed by them contains two main parts: an attack graph-based method that quickly correlates alerts of known attacks and a similarity-based method that helps attack graph-based method to correlate alerts of unknown attacks.
+
+3. PROPOSED BAYESIAN-BASED CORRELATION ENGINE
+Figure 1 demonstrates general architecture of the proposed model for alert correlation, which consists of two main
+Security Comm. Networks (2013) Š 2013 John Wiley & Sons, Ltd. DOI: 10.1002/sec
+
+F. Kavousi and B. Akbari
+
+A Bayesian network-based approach for alerts correlation
+
+New Alert
+
+Alerts database
+
+Alert preprocessing
+
+Alert fusion
+
+Attack thread reconstruction
+
+Attack scenario
+
+Alerts relevance analysis Attack pattern recognition component
+
+Correlation Base
+
+Attack scenario reconstruction Alert correlation component
+
+Figure 1. Overview of the alert correlation system.
+
+components, namely, offline attack pattern recognition component and online alert correlation component. In the offline component, the aim is to mine multistep attack patterns from historical alerts stored in the alert database. For this purpose, we first aggregate alerts corresponding to the same attack step and refer to attacks performed by an attacker against the same target. Then, we automatically infer the causal relationships between different alert types from aggregated alerts using a Bayesian networkbased approach. Because the Bayesian network-learning process is time consuming, it is performed in an offline mode. The patterns learned by this component are stored in a data structure called correlation knowledge base that holds information necessary to identify causally related alerts. The online alert correlation component processes alerts in real time to correlate them and reconstruct attack scenarios based on the attack behavior patterns learned by the offline component. It first combines repetitive alerts from same or different sensors to reduce redundancy of alerts (alert fusion). It then aggregates fused alerts belonging to the same attack step into hyper alerts to increase their abstraction level and provide more synthetic information for the following module (attack thread reconstruction). This can speed up the correlation process and make the output more intelligible. Ultimately, it correlates causally related hyper alerts and reconstructs attack scenarios on the basis of the relationships identified in the correlation knowledge base (attack scenario reconstruction). In the following, we will have a brief introduction to the Bayesian networks first. Then, we will describe the attack pattern recognition component and alert correlation component in details in Sections 4 and 5. 3.1. Introduction to Bayesian networks Bayesian networks are one of the most widely used graphical models for representing and reasoning about the probabilistic causal relationships between variables. A
+Security Comm. Networks (2013) Š 2013 John Wiley & Sons, Ltd. DOI: 10.1002/sec
+
+Bayesian network is usually represented as a directed acyclic graph, where each node represents a random variable of interest and edges describe the causal or dependence relations between variables. Learning a Bayesian network from data consists of the induction of its two different components: (i) the graphical structure of the Bayesian network, that is, the dependence relations between variables, and (ii) the parameters of the network, that is, the strength of these relationships, which are encoded in conditional probability tables associated with each variable. The conditional probability table of a variable contains probabilities of the variable being in a specific state given the states of its parents. Because it is fairly easy and straightforward to learn the parameters from data given the network structure, the main challenge in the Bayesian network-learning process is the learning of the network structure. In the context of alert correlation, an alert Bayesian network describes the prepare-for relations between alert types (attack steps). Children alerts can be viewed as a direct cause of the parent alerts, i.e., consequent attack step. The occurrence probability of the children alerts can be estimated given the state of their parents. So, Bayesian networks can be used as a powerful tool to model attack transition patterns and predict possible upcoming attacks.
+
+4. OFFLINE ATTACK PATTERN RECOGNITION
+As stated before, the aim of the offline component is to extract attack activity patterns to be later used for runtime correlation of alerts. Unlike expert knowledge-based methods, we automatically generate correlation rules by analyzing the previously observed alerts using a Bayesian network-based approach. In the proposed framework, this process is performed in two steps: preprocessing and relevance analysis, which will be described in the following sections.
+
+A Bayesian network-based approach for alerts correlation
+
+F. Kavousi and B. Akbari
+
+4.1. Alert preprocessing The motivation of the preprocessing step is to lessen redundancy of information embodied in low-level alerts. To this aim, the alert preprocessing module follows a simple strategy to aggregate alerts that are triggered by an attacker who runs the same exploit against a single target several times to estimate the right values of some parameters (e.g., the offsets and memory addresses in a buffer overflow attack). The temporal difference between such alerts usually does not exceed a specific threshold. Here, a time window parameter TWT is defined in this paper, which is known as threading time window. The preprocessing module keeps a sliding window of alerts ordered chronologically in a queue. When a new alert arrives, this module scans the queue to find those of the existing alerts that can be merged with the new alert. If the protocol, the alert type, the source IP, and the destination IP of two alerts are all matched, they are considered as parts of the same thread and are merged into a single metaalert, and the search ends. The timestamp of the new metaalert is set to the timestamp of the earlier alert. Other attributes of the meta-alert are assigned the union of the values of the corresponding attributes in the merged alerts. When the new alert does not match with none of the existing alerts, it is pushed into the queue for matching with next alerts. 4.2. Relevance analysis After preprocessing raw alerts, we infer the causal relations between alert types from the history aggregated alerts. During this step, we also extract equality constraints that significantly contribute to the degree of relevance of two alert types. An equality constraint defines the relationships that exist among the attribute values of two alerts when the earlier alert prepares for the later one [24]. Definition 1. Given a pair of alert types (T1, T2), an order p equality constraint for (T1, T2) is a conjunction of equalities in the form of u1 = v1    uP = vP, where u1, . . ., up are attribute names in T1 and v1, . . ., vp are attribute names in T2 (symbols `=' and `^' denote `equality' and `logical AND', respectively). Given a type T1 alert a1 and a type T2 alert a2, we will say that a1 and a2 satisfy the equality constraint if a1. u1 = a2. v1    a1. up = a2. vp.
+
+In the aforementioned definition, an attribute name means an alert feature such as source IP address, destination IP address, and source port, and for example, a1. u1 indicates the value of the feature u1 in alert a1. There may be more than one equality constraint for a pair of alert types. In this case, if a type T1 alert a1 prepares for a type T2 alerta2, then a1 and a2 should at least realize one of the constraints. So, given a stream of aggregated alerts, we first derive all possible causal relationships between alert types together with their corresponding equality constraints; then, we encode the extracted information in a data structure called alert type graph. Definition 2. Given a set of alert types  = {T1, . . .,Tn}, an alert type graph ATG over T is a quadruple (T, E, P, CM), where ˇ ((T, E), P) is a Bayesian network ((T, E) is a directed acyclic graph over T and P denotes the set of parameters of the network). ˇ (Ti, Tj) 2 E if and only if there exists a causal relationship from Ti to Tj. ˇ CM is a mapping that maps each edge (Ti, Tj) 2 E to its corresponding set of equality constraints. Example. Figure 2 illustrates a simple example of an alert type graph for alert types A­D. Here, n1­n4 are labels for alert types. Each edge is also labeled with the corresponding set of equality constraints. As see in the figure, for example, there are two equality constraints {n1. SrcIP = n2. SrcIP    n1. DestIP = n2. DestIP} and {n1. DestIP = n2. SrcIP} associated with (A, B), which means that if a type A alert prepares for a type B alert, they must satisfy at least one of these two constraints. We adopt a three-phase approach to construct alert type graph from historical alerts: ˇ Learning a super-structure: in the first step, we approximate a structural constraint for alert type graph by estimating the correlation probability between alert types. The structural constraint called super-structure can speed up the Bayesian network-learning process, because it restricts the search to networks that are a subgraph of the learned super-structure.
+
+Figure 2. An example of alert type graph.
+Security Comm. Networks (2013) Š 2013 John Wiley & Sons, Ltd. DOI: 10.1002/sec
+
+F. Kavousi and B. Akbari
+
+A Bayesian network-based approach for alerts correlation
+
+ˇ Transaction data formulation: this step concerns history of observations and the super-structure learned in the previous step and formulates transaction data for each alert type. ˇ Bayesian network learning: finally, alert type graph is constructed from transaction data by using a Bayesian network-learning algorithm by considering the superstructure learned in the first step. In the following, we explain each of the above steps in details. 4.2.1. Learning a super-structure A super-structure S can be represented by S = (T, ES, CMS) in which: ˇ (T, ES) is a directed graph whose nodes are alert types and edges represent the possible causal relations between nodes.
+
+ˇ CMS is a mapping that maps each edge (Ti, Tj) 2 ES to a set of equality constraints corresponding to (Ti, Tj). So, the problem of learning a super-structure includes two subtasks: (i) finding the possible causal relationships between alert types and (ii) extracting the corresponding set of equality constraints for each alert type pair. Algorithm 1 explains the steps of learning a super-structure S from a stream of preprocessed alerts. As shown in the algorithm, to examine the existence of causal relationship from Ti to Tj and to determine its corresponding set of equality constraints EqCSetij, in the first step (lines 5­7), we should evaluate the influence of each first-order equality constraint ec on the relation between Ti and Tj (the list of first-order equality constraints used in this paper are shown in Table I). This requires the calculation of P(Tj, {ec}|Ti). Let EqCSet be a set of equality constraints for (Ti, Tj); then P(Tj, EqCSet|Ti) is computed by Equation (1).
+
+Security Comm. Networks (2013) Š 2013 John Wiley & Sons, Ltd. DOI: 10.1002/sec
+
+A Bayesian network-based approach for alerts correlation
+
+F. Kavousi and B. Akbari
+
+Table I. List of first-order equality constraints. Equality constraints Equality of source IP addresses (SrcIP = SrcIP) Equality of destination IP addresses (DestIP = DestIP) Equality of source port numbers (SrcPort = SrcPort) Equality of destination port numbers (DestPort = DestPort) Alerts IP chain (DestIP = SrcIP) Reverse IP chain (SrcIP = DestIP)
+
+Ŕ Á Nijc P Tj ; EqCSet jTi ź Ni
+
+(1)
+
+Where, Ni is the number of alerts of type Ti, and Nijc indicates the number of times that a type Ti alert a followed by a type Tj alert b, such that: ˇ a and b are within the same predefined time window TWL. The size of this time window is selected on the basis of the observation that usually in multistep attacks, the time between two consecutive attack steps does not exceed a specified threshold. ˇ a and b satisfy at least one of the equality constraints in EqCSet. With the values of P(Tj, {ec}|Ti) and P(Tj), we can distinguish three kinds of equality constraints: ˇ If P(Tj, {ec}|Ti) = P(Tj), then ec is an irrelevant equality constraint and does not influence the occurrence probability of type Tj alerts after type Ti alerts. ˇ If P(Tj, {ec}|Ti) < P(Tj), then ec is a relevant equality constraint with negative influence. In other words, considering this equality constraint decreases the incidence probability of type Tj alerts after type Ti alerts. ˇ If P(Tj, {ec}|Ti) > P(Tj), then ec is a relevant equality constraint with positive influence. It means that considering this equality constraint increases the incidence probability of type Tj alerts after type Ti alerts. At the end of this step, the set of all relevant equality constraints with positive influence is elected and enters the next step. In the second step (lines 8­14), the set of higher-order equality constraints are constructed by conjunction of the selected first-order equality constraints, and their influence on the relation between Ti and Tj are evaluated (each p-order equality constraint is constructed by conjunction of p first-order equality constraints). In this step, the procedure only considers conjunctions that contain `DestIP = DestIP' or `DestIP = SrcIP' as a constraint. It is carried out on the basis of this observation that for attacks that involved in a same multistep attack, they usually have the same destination IPs, or
+
+the target of the previous alerts is equal to the source of the next one. After investigating all possible equality constraints, the set of relevant equality constraints with positive influence is selected as candidate equality constraints C. Then, for each ec 2 C, the procedure computes a factor called `minimum conditional correlativity' for Ti and Tj , which indicates the minimum correlation between alerts of type Tj with alerts of type Ti with respect to ec (the details of computation of this factor will be described at the end of this section). If the calculated minimum conditional correlativity for ec does not satisfy a specified threshold t, ec is removed from C. As a result, at the end of this step, C will be the set of all relevant equality constraints with positive influence that satisfy threshold t. Finally, in the last step (15­18), C is divided into two partitions C1 and C2, where C1 is the set of all ec 2 C that contain `DestIP = DestIP' constraint and C2 = C Ŕ C1. Afterwards, from each subset, an equality constraint that maximizes the minimum conditional correlativity factor is chosen and added into EqCSetij. To build super-structure S, the algorithm starts with an empty graph. It determines EqCSetij for each alert type pair (Ti, Tj) by using the procedure described earlier. Then, it adds edge (Ti, Tj) to graph S if EqCSetij is not null. 4.2.2. Minimum conditional correlativity factor Let Ti and Tj be two alert types and EqCSet be a set of equality constraints for (Ti, Tj). The minimum conditional correlativity between Ti and Tj with respect to EqCSet is calculated using Equation (2). Ŕ Á Min Cond Cor Ti ; Tj jEqCSet ź min Corijc đk Ţ
+k
+
+(2)
+
+in which Corijc(k) is the probability of the kth correlation between Ti and Tj where a type Ti alert a followed by a type Tj alert b, such that they are in the same time window TWL and realize at least one of the equality constraints in EqCSet. In this case, the correlation probability between alerts a and b is estimated based on their similarity vector. The features described in the succeeding texts are used in constructing a similarity vector: Feature1: source IP similarity. When the sources of two alerts belong to the same subnet, it is more probable that they are triggered by the same attacker. As stated in [3], `this probability may increase exponentially as the matching address becomes longer': 8 if perfect match; return 1 > > > > > > if class C match; return 0:8 Ŕ Á < Similarity IPi ; IPj ź if class B match; return 0:4 > > > if class A match; return 0:2 > > > : else; return 0
+Security Comm. Networks (2013) Š 2013 John Wiley & Sons, Ltd. DOI: 10.1002/sec
+
+F. Kavousi and B. Akbari
+
+A Bayesian network-based approach for alerts correlation
+
+Feature2: destination IP similarity. The similarity between two destination IP addresses is evaluated as Feature1. Feature3: alert IP chain. If the target of the earlier alert matches the source of the later one, this feature will be 1; otherwise, it will be 0. Feature4: reverse IP chain. When the source IP address of the previous alert and the destination IP address of the newer alert are the same, the value of this feature will be 1; otherwise, it will be 0. Feature5: source port similarity. If two alerts have the same source port numbers, this feature will be set to 1; otherwise, it will be set to 0. Feature6: destination port similarity. For two alerts with the same destination port numbers, this feature will be set to 1; otherwise, it will be set to 0. Feature7: time similarity. It is computed as follows:
+Ŕ Á Similarity Timei ; Timej 8   Timei Ŕ Timej  < TWT > < 1;    Timei Ŕ Timej   ź  > ; Timei Ŕ Timej TWT : 1Ŕ TWL Ŕ TWT
+
+weight values have been selected on the basis of the values used in some papers such as [13,25] and slightly tuned through some experiments. They can be adjusted to more realistic values through more experiments. 4.2.3. Transaction data formulation After finding a super-structure S = (T, ES, CMS), we first need to preprocess the observed data to convert it to a structured format that can be easily used in the Bayesian network-learning process. During this step, for each alert type Ti, we formulate a transaction data Di, which will be used to investigate the causal relationships of other alert types to Ti. Pseudocode of the transaction data formulation procedure for alert type Ti is illustrated in Algorithm 2. As seen in the algorithm, we first define the candidate parent set of Ti as follows: CPTi ź ÁŔ Á Tj ; EqCSet  Tj ; Ti 2 ES &&EqCSet Ŕ EqCSetij ÁÉ Ŕ 2 2 ČŔ
+
+(4)
+
+Time1 and Timej denote the timestamps of the two alerts. Feature8: alert type chain. The value of this feature will be P(Tj, EqCSet|Ti). After constructing the similarity vector, the correlation probability between alerts a and b is calculated by Equation (5).
+n X
+
+ak Featurek đa; bŢ
+n X k ź1
+
+cor đa; bŢ ź
+
+k ź1
+
+(5) ak
+
+Featurek(a,b) and ak represent the value and the weight of kth feature, respectively. Table II gives the weight vector. The
+
+where CPTi denotes the candidate parent set Ti. In other words, each node in S that has an edge to Ti along with a non-empty subset of the corresponding equality constraints will be considered as a candidate parent for Ti. Now, let P = {Tj|(Tj,Ti) 2 ES} (i.e., the set of all nodes in S that have an edge to Ti) and GSeq be the sequence of chronologically ordered alerts whose types belong to the set P  {Ti}. We split GSeq into subsequences according to TWL. In the case that a target alert (an instance of Ti) is observed within a window, we shift the window to left until it ends on the target alert (Figure 3). This is carried out to make sure that all the alerts that prepare for the target alert are present in a single window. Consequently, some alerts may be considered in two windows simultaneously. For example in Figure 3, two windows w3 and w4 have overlap in alert 4. Then, each window wk is mapped to a Boolean vector n o vk ź n1 ; n2 ; . . . ; njCPT jţ1 , which actually represents
+i
+
+the occurrence (ni = 1) or non-occurrence (ni = 0) of each
+
+Table II. The weight values for features. Featurek ak Feature1 0.15 Feature2 0.2 Feature3 0.15 Feature4 0.1 Feature5 0.02 Feature6 0.08 Feature7 0.05 Feature8 0.25
+
+W1
+1 2 1
+
+W2
+3
+
+W3
+4
+
+W4
+3 1 2 2 4 1 Host 1 172.16.112.10 Host 2 172.16.112.50
+
+Target Alerts 1 3 1 4 1 4 2 1 1
+
+Figure 3. Data observation preprocessing.
+Security Comm. Networks (2013) Š 2013 John Wiley & Sons, Ltd. DOI: 10.1002/sec
+
+A Bayesian network-based approach for alerts correlation
+
+F. Kavousi and B. Akbari
+
+candidate parent cp 2 CPTi and target alert Ti within it. During this process, each vector is also tagged by the ID of the observed target alert. If no target alert has been observed, the label 0 is assigned. An example of the transaction data for alert type Ti is shown in Table III. Because observations are related to different hosts, so we should apply the transaction data formulation procedure described earleir for each host independently and then gather
+
+all constructed vectors in a single table Di. Lastly, we will merge vectors that are labeled with the same target alert (label 6ź 0) in a single vector. Each element of the resulting vector will be the maximum of the corresponding elements in the merged vectors. The resulting vector replaces the merged vectors in Di. As a result of the aforementioned process, we form a set of transaction data for each alert type and fed them into the
+Security Comm. Networks (2013) Š 2013 John Wiley & Sons, Ltd. DOI: 10.1002/sec
+
+F. Kavousi and B. Akbari
+
+A Bayesian network-based approach for alerts correlation
+
+Table III. An example of transaction data set for alert type Ti. CPTi ;1 w1 w2 ... wk 0 0 . . .. 1 CPTi ;2 0 1 ... 0 ... ... ... ... ... CPTi ; jCPT j i 1 0 ... 1 Ti 1 0 ... 1
+
+causal discovery engine for analysis. The causal discovery engine will generate the causal network model based on the transaction data set.
+
+4.2.4. Bayesian network learning This section explains how to construct the causal network model (i.e., alert type graph) from transaction data D = {D1,D2, . . .,Dn} and on the basis of the superstructure S learned in the first step. As shown in Algorithm 3, for each alert type Ti, its parent set could be selected only from a predetermined candidate parent set CPTi : In other words, for each alert type Ti, we will have PaTi CPTi ; where PaTi denotes the parent set of Ti. Our Bayesian network-learning algorithm inspired from MMPC algorithm [26], infers the causal relationships
+
+Security Comm. Networks (2013) Š 2013 John Wiley & Sons, Ltd. DOI: 10.1002/sec
+
+A Bayesian network-based approach for alerts correlation
+
+F. Kavousi and B. Akbari
+
+between alert types by using some conditional independence tests. Let cp = (Tj,EqCSet) be a candidate parent for Ti, and Z CPTi nfcpg; the algorithm invokes a function to test IndDi đcp; Ti jZ Ţ that returns true if Ti is conditionally independent from cp given Z. Function Assoc(cp; Ti|Z, Di) estimates the strength of association (dependence) of cp and Ti given Z by using statistical tests on the training data Di. To implement this function, we applied mutual information as a measure of statistical dependence between random variables. Definition 3. The mutual information between two random variables X, Y is defined as [27]: I đX ; Y Ţ ź X
+x;y
+
+IndDi đcp; Ti jZ Ţ , đAssocđcp; Ti jZ ; Di Ţ ź 0Ţ
+
+Definition 5. Function MinAssoc(cp; Ti|Z, Di) represents the minimum association of cp and Ti relative to Z and is defined as follows: MinAssocđcp; Ti jZ ; Di Ţ ź min Assocđcp; Ti jS; Di Ţ (10)
+SZ
+
+Pđx; yŢ log
+
+Pđx; yŢ PđxŢPđyŢ
+
+(6)
+
+where P(x,y) represents joint probability distribution of variables X, Y and P(x) and P(y) denote their marginal probability distributions. Definition 4. The conditional mutual information between two variables X, Y with respect to the set of evidence variables (conditioning set) Z is defined as [27]: I đX ; Y jZ Ţ ź X
+x;y;z
+
+Our Bayesian network-learning algorithm (Algorithm 3) starts with an empty graph ATG and builds the causal network model (alert type graph) during two phases. In the first phase, the forward phase, candidate edges are added sequentially to the graph ATG by using a heuristic called Max­Min. With this heuristic, in each iteration, the graph is augmented by an edge like (P,X), where Ŕ  Á đX ; PŢ ź arg max MinAssoc k; yPay ; Dy
+y2T ; k 2CPy
+
+(11)
+
+Pđx; y; zŢ log
+
+Pđx; yjzŢ PđxjzŢPđyjzŢ
+
+(7)
+
+Intuitively, mutual information I(X, Y) denotes the amount of information that can be gained about Y, by observing the value of the variable X and vice versa. Similarly, conditional mutual information between variables X, Y with respect to the set of evidence variables Z measures volume of information flow between two variables X, Y given Z. Given the actual probability distributions of variables, it would be claimed that X and Y are independent if I(X, Y) = 0. But in practice, in the Bayesian network-learning process, we do not have access to the real distributions of variables and instead use the empirical distributions estimated from available data. Therefore, a normal practice is usually to use ID(X, Y), which approximates I(X, Y) from data D and claim that X and Y are independent when ID(X,Y) < e. (e > 0 is a small threshold and must be set up suitably). We similarly use ID(X, Y|Z) and declare that X and Y are conditionally independent given Z when ID(X, Y|Z) < e. To implement function Assoc(cp; Ti|Z, Di), we first approximate conditional mutual information between cp and Ti given Z based on Di; then, we apply relations (8) and (9) to calculate the value of this function.
+& Assocđcp; Ti jZ ; Di Ţ ź 0; IDi đcp; Ti jZ Ţ Ŕ e; IDi đcp; Ti jZ Ţ < e IDi đcp; Ti jZ Ţe
+
+The idea of this heuristic is to select an edge that its corresponding nodes remain very associated together in spite of our best efforts to make them independent. Phase I continues until the maximum minimum association reaches zero. In the backward phase, the algorithm tries to eliminate false positives of the first phase. To achieve this, for each Ti and each subset SPaTi nfpag; it tests whether IndDi đpa; Ti jSŢ: We applied a set of optimizations to improve the computational performance of the algorithm. (1) In the Bayesian network-learning algorithms, once a subset of variables Z is found such that Ind(X; Y|Z), it is claimed that there is no edge between X and Y. So, as soon as a variable cp reaches a minimum association of zero with Ti, it is crossed out from CPTi and is not considered in the next iterations (line 8). Our experiments showed that most of the variables are removed in the first iterations. Also, in computing the MinAssoc function in line 9, when a conditioning-set SPaTi is found such that Assoc(cp; Ti|S, Di) = 0, we do not need to continue testing other subsets, similarly in line 20. (2) Caching the results of the subsequent calls to the MinAssoc function, which reduces the number of independence tests and accordingly the running time drastically. Assume that in iteration n variable P is added to Pax, so we will have PaX(n + 1) = PaX (n)  {P}. In iteration (n + 1), the minimum association for any cp 2 CPX \ {P} with X relative to PaX (n + 1) can be written as follows:  min Assocđcp; X jS; DX Ţ;
+
+(8)  Ŕ Á2 e ź b Â 1 Ŕ MinCondCor Tj ; Ti jEqCset Ţ (9)
+
+min
+
+where b > 0 is a small value that is determined experimentally. We assume that
+
+SPaX đnŢ
+
+ min Assocđcp; X jSfPg; DX Ţ
+
+SPaX đnŢ
+
+Security Comm. Networks (2013) Š 2013 John Wiley & Sons, Ltd. DOI: 10.1002/sec
+
+F. Kavousi and B. Akbari
+
+A Bayesian network-based approach for alerts correlation
+
+The first part, that is, MinAssoc(cp; X|PaX(n), DX), is calculated in iteration n and can be cached to be used in the next iteration. In this manner, at iteration (n + 1), we can update MinAssoc(cp; X|PaX, DX) by testing only the newly created subsets of PaX for further minimizing the association. Example trace. We now provide an example to give a better picture of our algorithm. Assume that the Bayesian network shown in Figure 4(a) represents the actual causal relationships between alert types and Figure 4(b) is the super-structure learned for this network (the equality constraints are not shown here for simplicity). Also, suppose that the sample data D is representative enough so that all of the conditional independence tests performed by the algorithm return the right results. Given this assumption, we can determine the result of each test Ind(X; Y|Z) only by looking at Figure 4(a) and checking whether Dsep(X; Y|Z). The results of this algorithm after each iteration (the forward phase) are shown in Figure 5. The edge selected by the Max­Min heuristic is colored by red, and the set of edges has been added to the attack type graph (i.e., EATG) colored by green. As seen in this figure, initially EATG = . In the first iteration, during the evaluation of the MinAssoc function, it is found that Dsep (B; E|{}). and thus edge (B, E) is crossed out from super-structure. Variables F and E are found to be independent, and edge (F, E) is removed, too. The edge (A, T) is also selected by the Max­Min heuristic and enters EATG, and A is added to PaT. In the next iteration, (T, I) is selected by the heuristic and enters EATG. By selecting this edge and adding T to PaI, variables C and I are found to be independent conditioned on T. So, in the third iteration, (C, I) is crossed out. Other iterations follow the similar procedure. After 12 iterations, the algorithm enters the backward phase. It discovers that Dsep(A; T|{C,D}) and removes edge (A, T) from EATG as a false positive. Consequently, the output of the algorithm will be the same as the original graph shown in Figure 4(a).
+
+(ii) attack thread reconstruction, and (iii) attack scenario reconstruction. In the following, we first define a few terms that will be used in the reminder sections of the paper, and then, we explain each of the correlation steps in detail. Hyper alert. Hyper alert is a set of alerts with the same alert type and the same source or destination IP addresses and scattered in the same threading time window TWT. Let A = (a1,a2, . . .,an) be the sequence of alerts merged into a single hyper alert ha and a1. Type = a2. Type =  = an. Type = at. In this case, ha can be represented by 6-tuples ha = (HAID,AT,AID,SIP,DIP,T), in which AT ź at AID ź fai :IDj8ai 2 A; 1ing SIP ź fai :SrcIPj8ai 2 A; 1ing DIP ź fai :DestIPj8ai 2 A; 1ing T ź a1 :Time and HAID is a unique ID identifying the hyper alert. We can distinguish three types of hyper alerts: Type I hyper alert. Let A = (a1,a2, . . .,an) be the sequence of alerts merged into a single hyper alert ha. Then, ha is a type I hyper alert if đa1 :SrcIP ź a2 :SrcIP ź  ź an :SrcIPŢ đa1 :DestIP ź a2 :DestIP ź  ź an :DestIPŢ According to the definition, a type I hyper alert aggregates alerts that are triggered by an attacker who targets the same host multiple times using the same exploit to guess the right values of certain parameters. Type II hyper alert. Let A = (a1,a2, . . .,an) be the sequence of alerts merged into a single hyper alert ha. Then, ha is a type II hyper alert if đa1 :SrcIP ź a2 :SrcIP ź  ź an :SrcIPŢ Ŕ Á ai; aj 2 A : ai :DestIP 6ź aj :DestIP In other words, a type II hyper alert refers to alerts that are triggered by an adversary who runs the same exploit against several targets (1:n attacks). Type III hyper alert. Let A = (a1,a2, . . .,an) be the sequence of alerts merged into a single hyper alert ha. Then, ha is a type III hyper alert if
+
+5. ONLINE ALERT CORRELATION
+As stated before, the online alert correlation component correlates related alerts in three main steps: (i) alert fusion,
+
+A B F C T D H B C F
+
+A D T H
+
+E
+
+E
+
+I
+
+J
+
+I
+
+J
+
+(a)
+
+(b)
+
+Figure 4. (a) Original causal network and (b) super-structure learned by our algorithm.
+Security Comm. Networks (2013) Š 2013 John Wiley & Sons, Ltd. DOI: 10.1002/sec
+
+A Bayesian network-based approach for alerts correlation
+
+F. Kavousi and B. Akbari
+
+Iteration 1
+
+Iteration 2
+(T , I ) is selected.
+
+Iteration 3
+(C , I ) is removed since Ind (C; I | {T}) . ( D, H ) is selected.
+
+( B, E) & ( F , E) are removed since Ind ( B, E | {}) and Ind ( F ; E | {}).
+(A, T ) is selected.
+
+Iteration 4
+(A, H ) is removed since Ind (A; H | {D}).
+
+Iteration 5
+
+Iteration 6
+
+(C , F ) is selected.
+
+(A, F ) is removed since Ind (A; F | {C}). ( H , I ) is selected.
+
+(A, I ) & ( D, I ) are removed
+since Ind (A; I | {T , H }) and Ind ( D; I | {T, H }). ( B, F ) is selected.
+
+Iteration 7
+
+( F , B) is removed
+since AddArc ( F , B) makes cycle. (C , T ) is selected.
+
+Iteration 8 (A, D) is selected.
+
+Iteration 9 ( H , J ) is selected.
+
+Iteration 10
+
+Iteration 11
+
+Iteration 12
+
+( D, J ) & (A, J ) are removed
+since Ind ( D; J | {H }) and Ind (A;J |{H }). ( D, T ) is selected.
+
+(A, C ) is selected.
+
+Figure 5. Example trace of the proposed Bayesian network-learning algorithm (forward phase).
+
+đa1 :DestIP ź a2 :DestIP ź  ź an :DestIPŢ Ŕ Á ai ; aj 2 A : ai :SrcIP 6ź aj :SrcIP This type of hyper alerts refers to alerts corresponding to the n:1 attacks in which multiple attackers run the same exploit against a single target (e.g., distributed denial of service (DDoS) attacks).
+
+time window represents the average max delay of repetitive alerts caused by the same attack and usually does not exceed from 2 or 3 s. Repetitive alerts are merged in a single meta-alert whose timestamp is set to the timestamp of the earlier alert, and other attributes of the meta-alert are assigned the union of the values of the respective attributes of the merged alerts. 5.2. Attack thread reconstruction
+
+5.1. Alert fusion In the first step of alert correlation, the alert fusion module combines repetitive alerts raised by same or different security systems as a result of detection of the same attack incidence. Two alerts are considered as repeated alerts if the protocol, the source IP, the destination IP, and their source and destination ports are same and they are close enough to fall in the same fusion time window. The length of this In this step, we aim to reconstruct attack threads by aggregating alerts that have been triggered for the same attack step. For this purpose, we use the concept of the hyper alert introduced in Section 5. When a new alert arrives, it is compared with the previous hyper alerts that have been received in its time window to determine to which hyper alert it belongs. According to the definition of hyper alert, a necessary condition to correlate a new alert anew with an
+Security Comm. Networks (2013) Š 2013 John Wiley & Sons, Ltd. DOI: 10.1002/sec
+
+F. Kavousi and B. Akbari
+
+A Bayesian network-based approach for alerts correlation
+
+existent hyper alert ha is that anew.Type = ha.AT. But recall that in the alert fusion step, some alerts with different alert types may be fused into one, and thus, we may have some alerts with more than one alert type. So, we use incomplete matching method in type comparison. In other words, if anew. Type  ha. AT 6ź , we assume that their types match. Sometimes, we may have more than one hyper alert that has the required conditions for correlating with new alert. In this case, we should compute the average correlativity of the new alert with them and select the one whose alerts have the highest average correlativity with new alert (during this step, to compute the correlativity between alerts, we assume that the value of the alert type chain attribute is equal to 1). Upon finding the host hyper alert, it will be updated by adding the new alert. If no hyper alert can be identified as host of the new alert, a new hyper alert is created and the new alert will be placed there. 5.3. Attack scenario reconstruction After processing raw alerts with alert fusion and attack thread reconstruction modules, the number of alerts will be reduced significantly. To further reduce number of
+
+alerts and to build attack scenarios, the attack scenario reconstruction module correlates hyper alerts representing different attack steps of the same multistep attack. To discover related hyper alerts, this module relies on the knowledge provided by the correlation base, which actually is a set of alert type graphs learned by the offline component. An online alert correlation engine must have the ability to reconstruct attack scenarios incrementally. So, one issue is to determine how long an attack scenario should be kept active for probable expansions. We have considered a time window TWCor as correlation time window that is fixed by expert and defines the keep active period of the scenarios. An attack scenario is considered stable if it has not been modified for a period longer than TWCor. Current active scenarios are periodically checked, and the stable ones are removed from the list of active scenarios. Pseudocode of the attack scenario reconstruction procedure is shown in Algorithm 4. When a new hyper alert is received, the algorithm explores the active scenario list looking for scenarios that can be host of the new hyper alert. A scenario scen can be host of the new hyper alert hanew if one identifies ha 2 scen such that there exists a causal relationship from ha to hanew.
+
+Security Comm. Networks (2013) Š 2013 John Wiley & Sons, Ltd. DOI: 10.1002/sec
+
+A Bayesian network-based approach for alerts correlation
+
+F. Kavousi and B. Akbari
+
+Definition 6. Given two hyper alerts ha1 and ha2, we say that there is a causal relationship from ha1 to ha2, if there are a 2 ha1 and b 2 ha2, such that ˇ b.Time Ŕ a.Time  TWCor. ˇ There exists a causal relation from a.Type to b.Type according to the correlation knowledge base. ˇ a and b satisfy at least one of the equality constraints corresponding to (a.Type, b.Type). Thus, to find host of the new hyper alert, we should identify hyper alerts that have a causal relationship with the new hyper alert according to the the definition 6. Note that sometimes inserting a new hyper alert will be lead to merge several of the existing attack scenarios. For example, let us consider a situation in which there are two scenarios scen1 and scen2 that can be hosts of hanew. In this case, both scen1 and scen2 are updated with hanew, and then, they are merged into one scenario. If none of the existing scenarios can be host of the new hyper alert, a new scenario is created which will contain the new hyper alert. To accelerate the correlation process, the algorithm allocates a distinct queue to each alert type. Alerts in the same queue are of the same type and scattered within the same correlation window TWCor. Proceeding in this way, when a new hyper alert hanew arrives, the algorithm only needs to search queues that there is a causal relationship from their corresponding alert type to hanew.AT.
+
+6. EXPERIMENTAL RESULTS
+To evaluate the proposed alert correlation method, we performed some experiments with the DARPA 2000 [28] and SOTM34 [29] datasets. The purpose of these experiments is to demonstrate the effectiveness of the method for discovering new attack strategies, correlating alerts, and reconstructing attack scenarios. 6.1. Method validation This section reports the results of experiments we conducted on DARPA 2000 dataset to validate our proposed method. It is a well-documented intrusion detection evaluation dataset that has been applied in many researches, and thus, it is the best existing option for evaluating alert correlation methods. DARPA 2000 dataset contains two attack scenarios: LLDOS1.0 and LLDOS2.0.2. In the both scenarios, a relatively novice attacker runs a DDoS attack at a US government site by using a scripted attack. We tested our method using both scenarios. Alert log files [30] generated by RealSecure IDS were used in our experiments. 6.1.1. LLDOS1.0 scenario The first attack scenario includes five distinct phases as follows.
+
+ˇ Phase 1: the attacker performs a scripted IPsweep on multiple class C subnets of the Eyrie Air Force Base (AFB) to identify which hosts are `up'. Attack script probes the following subnets via sending ICMP echo requests in the sweep and listening to ICMP echo replies: 172.16.12.0/24, 172.16.13.0/24, 172.16.115.0/ 24 (all in the inside part of the AFB network) and 172.16.114.0/24 (in the DMZ part of the network). ˇ Phase 2: the hosts discovered in the previous phase are probed using the `ping' option of the `sadmind' exploit program. This can tell the attacker which hosts are running the `sadmind' remote administration tool and thus might be vulnerable to the exploit. ˇ Phase 3: the adversary tries to penetrate into the vulnerable machines. For this purpose, he/she runs the Solaris sadmind Remote-To-Root exploit several times, each time with different parameters. ˇ Phase 4: entering this phase, the adversary has successfully gained root access to three Solaris hosts at AFB. Then, the attacker uses `telnet' and `rcp' to install the trojan mstream server on the compromised machines. The attack script also installs the mstream master software on one of the victims. After installing the DDoS software, the attacker uses `rsh' to activate first the master and then the servers. ˇ Phase 5: eventually, the attacker telnets to the victim on which the master is running and then from there, issues command `mstream 131.84.1.31 5' to mstream servers that have registered with it. This command causes that all three servers simultaneously launch a DDoS attack with duration 5 s against the given IP address. There are two tcpdump file for each attack scenario in DARPA2000 dataset. An `Inside Tcpdump' file that contains the traffic dumped by the sniffer on the `inside' network and a `DMZ Tcpdump' file containing the traffic dumped by the sniffer located in the `DMZ' part of the network. As a result of replaying the `Inside Tcpdump' file for LLDOS1.0, RealSecure generates 922 alerts among which 61 alerts are caused by attack. Other alerts are false alerts related to the background traffic. We used the alerts generated for the inside part to learn attack transition patterns and produce correlation rules. Figure 6 displays alert type graph generated by the offline component for this scenario. Table IV also shows the values of the parameters that have been determined experimentally. In addition to the graph shown in Figure 6, the offline component also produced a few connected alert type graphs for the background alerts. But, there is no connection between them and the alert type graph generated for DDoS attack. After training the alert type graphs, we fed them into the online alert correlation component to show how it works. The attack scenario extracted for LLDOS1.0 (inside part) is illustrated in Figure 7. The nodes in the attack scenario graph are hyper alerts. Each node is labeled with the alert type (attack type) followed by type of the hyper alert. The first stage of the attack is not included in this scenario
+Security Comm. Networks (2013) Š 2013 John Wiley & Sons, Ltd. DOI: 10.1002/sec
+
+F. Kavousi and B. Akbari
+
+A Bayesian network-based approach for alerts correlation
+
+n1: Sadmind_Ping {n1.SrcIP = n2.SrcIP n1.SrcPort = n2.SrcPort n1.DestIP = n2.DestIP n1.DestPort = n2.DestPort} n2: Admind {n2.SrcIP = n3.SrcIP n2.DestIP = n3.DestIP n2.DestPort = n3.DestPort} n3: Sadmind_Amslverify_Overflow {n3.SrcIP = n4.SrcIP n3.DestIP = n4.DestIP}, {n3.DestIP = n4.SrcIP n3.SrcIP = n4.DestIP} {n3.DestIP = n5.SrcIP} n4: Rsh n6: TelnetXdisplay {n6.DestIP = n5.SrcIP} {n6.SrcIP = n7.SrcIP n6.SrcPort = n7.SrcPort n6.DestIP = n7.DestIP n6.DestPort = n7.DestPort} n7: TelnetEnvAll n8: Stream_DoS
+
+{n8.DestIP = n9.SrcIP}
+
+n5: Mstream_Zombie
+
+n9: Port_Scan
+
+Figure 6. Alert type graph for LLDOS1.0 (inside part).
+
+Table IV. The values of the parameters used in our experiments. Correlation threshold (t) 0.4 TWL 50 min  0.2 Threading window 5 min Correlation window (TWCor) 60 min
+
+Sadmind_Ping, Admind (I)
+
+Sadmind_Ping, Admind (II)
+
+Sadmind_Amslverify_Overflow, Admind (II)
+
+Rsh (III)
+
+Rsh (II) Mstream_Zombie (III) TelnetXdisplay, TelnetEnvAll, TelnetTermineltype(I)
+
+Stream_DoS
+
+Port_Scan
+
+Mstream_Zombie (II)
+
+Figure 7. LLDOS1.0 attack scenario (inside part).
+
+because RealSecure does not report any alert for the ICMP probing activities. But, three `Sadmind_Ping' and `Admind' alerts with the same source IP are triggered for phase 2 when the attacker tries to identify vulnerable machines. Timestamps of the `Sadmind_Ping' and `Admind' alerts and the values of their attributes reveal that
+Security Comm. Networks (2013) Š 2013 John Wiley & Sons, Ltd. DOI: 10.1002/sec
+
+RealSecure reports two different alerts for a single attack that are fused into one `Sadmind_Ping, Admind' metaalert by using the alert fusion module. So, we will have three such meta-alerts from the same source. The two of them are located in the same threading window and thus, are aggregated into one hyper alert `Sadmind_Ping,
+
+A Bayesian network-based approach for alerts correlation
+
+F. Kavousi and B. Akbari
+
+Admind (II)' by attack thread reconstruction module. In the next phase, the IDS generates several `Admind' and `Sadmind_Amslverify_Overflow' alerts in response to the remote buffer overflow attack. Again, RealSecure reports two different alerts for a single attack that are fused into one meta-alert. All of the alerts raised for this step have the same source IP and scattered within the same time window and thus, are aggregated into a single hyper alert `Sadmind_Amslverify_Overflow, Admind (II)'. Several `Rsh', `Mstream_Zombie' alerts are issued for the fourth phase when the attacker tries to install Mstream DDoS software on the compromised machines. In Figure 7, they are indicated with three hyper alerts `Rsh (III)', `Rsh (II)', and `Mstream_Zombie (III)'. Finally, RealSecure generates five types of alerts `TelnetTerminaltype', `TelnetXdisplay', `TelnetEnvAll', `Mstream_Zombie', and `Stream_DoS' for the last step of the attack. Among these, the telnet alerts are fused into one meta-alert `TelnetXdispaly, TelnetEnvAll, TelnetTerminaltype' by alert fusion module. The `Mstream_Zombie' alerts are aggregated into one single hyper alert `Mstream_Zombie (II)' by the attack thread reconstruction module. But about the `Stream_DoS' alert, it has not been inserted in the attack scenario graph because of using spoofed IP addresses by the attacker. Mistakenly, this alert has been correlated with a `Port_scan' alert in a separated scenario. We have used two measures false positive correlation and false negative correlation rates to assess the accuracy of our method. False positive correlation (FPC) rate: indicates the percentage of the falsely correlated alert pairs among all the correlated alert pairs. FPC ź #Falsely correlated pairs #Correlated pairs
+
+Table VI. Alerts reduction rates for LLDOS1.0. Alert fusion Inside (%) DMZ (%) 13.34 15.71 Attack thread reconstruction 53.32 53.26 Attack scenario reconstruction 10.72 7.98
+
+Sum 63.88 63.75
+
+engine receives alerts from different resources, the alert fusion module will have more impact on reducing number of alerts. After the attack thread reconstruction step, by correlating alerts into hyper alerts, the number of alerts was reduced by 53.32%. Therefore, before the attack scenario reconstruction step, the alert reduction rate totally reached to 59.54%, which could considerably increase speed and accuracy of the correlation process. Figure 8 shows the error rate (FPC and FNC rates) when the value of time window TWL changes. As seen in the figure, the false positive correlation rate is always less than 1.75%, which is related to the correlation between `Stream_DoS' and `Port_scan' alerts. The false negative correlation rate is also usually less than 3.35% (two errors), and in the worst case, it does not exceed 5% (three errors). We repeated this experiment for different values of b and t parameters. The results showed that if we choose an appropriate value for TWL, small changes in the values of b and t parameters would not have a considerable impact on the accuracy of the proposed method. 6.1.2. LLDOS2.0.2 scenario Similar to LLDOS1.0, the second scenario of DARPA 2000 dataset also contains five phases, which starts by probing and ends with a DDoS attack. The major difference between these two scenarios is that in LLDOS2.0.2, the adversary probes for host's platform and operating system
+5 4.5
+FPC Rate FNC Rate
+
+False negative correlation (FNC) rate: indicates the percentage of the falsely missed alert pairs among all the alert pairs that really have a causal relationship. FNC ź #Falsely missed pairs #Related pairs
+Error rate (%)
+
+4 3.5 3 2.5 2 1.5 1
+
+Table V shows the error rate for LLDOS1.0. The alert reduction rates for this scenario are also shown in Table VI. As we see for example, by correlating alerts of the inside part, after the alert fusion step, the number of raw alerts was reduced by 13.34%. Although, when the correlation
+
+Table V. Error rates for LLDOS1.0. Inside #Related alerts FPC rate (%) FNC rate (%) 61 1.67 1.67 DMZ 95 0 2.10
+
+0.5 0 20 30 40 50 60 90 120 150 180
+
+Learning time window length (minute)
+Figure 8. Error rate for LLDOS1.0 (inside part) when length of time window changes.
+Security Comm. Networks (2013) Š 2013 John Wiley & Sons, Ltd. DOI: 10.1002/sec
+
+F. Kavousi and B. Akbari
+
+A Bayesian network-based approach for alerts correlation
+
+by doing DNS HINFO queries, rather than sweeping IPs and rpc ports. Moreover, the attacker uses a more stealthy way to penetrate into vulnerable hosts. To do so, he or she breaks into one host at Eyrie first and then fans out from there, rather than attacking each host individually. By replaying the `Inside-tcpdump' file for LLDOS2.0.2, RealSecure raises 494 alerts, among which 24 alerts are caused by the attack. Figures 9 and 10, respectively, represent the alert type graph and the attack scenario generated for this
+
+scenario. In the first phase of the attack, the adversary probes 172.16.115.20, which is the Eyrie's public DNS server via DNS HINFO query. Realsecure does not report any alert for this step. So like to LLDOS1.0, it is not included in the resulted attack scenario. But, a few `Admind' and `Sadmind_Amslverify_Overflow' alerts are issued for phase 2, in which the attacker successfully breaks into the Eyrie's DNS server via the sadmind exploit. The alert fusion module detects these alerts as duplicate alerts reported for a single
+
+n1: Admind {n1.SrcIP = n2.SrcIP
+
+} n2: Sadmind_Amslverify_Overflow n2.SrcIP = n3.SrcIP
+
+{n3.SrcIP = n4.SrcIP
+
+n3: FTP_Put
+
+} n3.SrcIP = n7.SrcIP n4: FTP_User {n4.SrcIP = n5.SrcIP n7: Mstream_Zombie
+
+{n3.SrcIP = n8.SrcIP }
+
+n8:TelnetXDisplay
+
+} n5: FTP_Pass {n5.SrcIP = n6.SrcIP
+
+{n8.SrcIP = n9.SrcIP
+
+n10: Stream_DoS
+
+} } n6: FTP_Syst n9:TelnetEnvAll
+
+{n10.DestIP = n11.SrcIP}
+
+n11: Port_Scan
+
+Figure 9. Alert type graph for LLDOS2.0.2 (inside part).
+
+Admind, Sadmind_Amslverify_Overflow (I)
+
+FTP_Put, FTP_User, FTP_Pass (I)
+
+Admind, Sadmind_Amslverify_Overflow (I)
+
+FTP_Put, FTP_User, FTP_Pass (II)
+
+TelnetXdisplay , TelnetEnvAll, TelnetTermineltype (I)
+
+Mstream_Zombie (I)
+
+TelnetXdisplay , TelnetEnvAll , TelnetTermineltype (III) Mstream_Zombie (I) Mstream_Zombie (I) Stream_DoS Port_Scan
+
+Figure 10. LLDOS2.0.2 attack scenario (inside part).
+Security Comm. Networks (2013) Š 2013 John Wiley & Sons, Ltd. DOI: 10.1002/sec
+
+A Bayesian network-based approach for alerts correlation
+
+F. Kavousi and B. Akbari
+
+attack. Thus, it combines them into one meta-alert `Admind, Sadmind_Amslverify'. Three types of alerts `FTP_Put', `FTP_User', and `FTP_Pass' are generated for phase 3 when the attacker uploads the attack script, the mstream server software, and the mstream master software on the compromised machine by using FTP. As shown in Figure 10, the ftp alerts are fused into a single meta-alert `FTP_Put, FTP_User, FTP_Pass' by the alert fusion module. In phase 4, the attacker telnets to 172.16.115.20, starts DDoS master, and initiates probing and breaking into other Eyrie hosts. At the end of this step, the attack script successfully installs mstream server software on another Solaris host. Realsecure detects this attack step by issuing the following alert types: `Sadmind_Amslverify_Overflow', `Admind', `FTP_Put', `FTP_User', `FTP_Pass', and `Mstream_Zombie'. They are indicated with three hyper alerts `Admind, Sadmind_Amslverify_Overflow (I)', `FTP_Put, FTP_User, FTP_Pass (II)', and `Mstream_Zombie (I)' in Figure 10. In the final phase, the attacker uses telnet to startup first the master and then the mstream servers. Then, he or she issues command `mstream 131.84.1.31 5' to mstream servers to launch a DDoS attack with duration 5 s against the given IP address. The IDS reports five alert types `TelnetTerminalType', `TelnetXdisplay', `TelnetEnvAll', `Mstream_Zombie', and `Stream_DoS' for this step. As seen in Figure 10, excepting the `Stream_DoS' alert, our proposed method could correctly correlate other alerts. Although the pattern recognition component could not discover the causal relation among `TelnetTerminaltype' alert and the attack scenario (Figure 9), but because in the alert fusion step, this alert has been merged with `TelnetXdisplay' and `TelnetEnvAll' alerts, the alert correlation component finally could correlate them with attack scenario. The `Stream_DoS' alert has been missed in the attack scenario graph because the attacker again used the IP address spoofing technique. Similar to LLDOS1.0, this alert has been mistakenly correlated with a `Port_Scan' alert in a separated scenario. The error rate and alert reduction rate for LLDOS2.0.2 (both inside and DMZ parts) are shown in Tables VII and VIII, respectively. The false negative correlation rate for the inside part is 4.35% (one error). Because the `Stream_DoS' alert has not been included in the
+Table VII. Error rate for LLDOS2.0.2. Inside #Related alerts FPC rate (%) FNC rate (%) 24 11.54 4.35 DMZ 10 0 0
+
+attack scenario. The false positive correlation rate for the inside network is equal to 11.54% (three errors). One error is related to the correlation between `Stream_DoS' and `Port_Scan' alerts. Two others are caused by the attack thread reconstruction module. Like the first scenario, in LLDOS2.0.2, the attacker installs the mstream DDoS software on the hosts located in the inside network. So, there is no `Stream_DoS', `Mstream_Zombie', `TelnetXdisplay', and `TelnetEnvAll' alerts for DMZ part. The false negative and false positive correlation rates for DMZ part are both equal to 0%. Figure 11 shows the error rate when the length of time window TWL changes. As we can see in the figure, the false negative correlation rate is usually equal to 4.35%, which is related to the `Stream_DoS' alert. As stated before, our proposed method could not correlate this alert with the attack scenario. The false positive correlation rate is also usually equal to 11.54%. Among this, one error is due to the false correlation between `Stream_DoS' and `Port_Scan' alerts. Two others are caused by the false positive in the attack thread reconstruction module. To evaluate the impact of parameters b and t, we repeated this experiment for different values of b and t. According to the results, it was confirmed that the best value for TWL is equal to 50 min, which in all cases has resulted in the minimum error rate. The best values for b and t parameters are [0.15­0.2] and [0.35­0.4], respectively. The results also showed that if an appropriate value is selected for TWL, small changes in the values of b and t parameters would not have a considerable impact on the accuracy of the proposed method. 6.2. Performance evaluation In this section, we aim to evaluate the performance of the both offline and online components. Because DARPA 2000 is not intensive enough, it could not be an appropriate option for performance testing. Thus, we employed the
+35
+FPC Rate FNC Rate
+
+30 25
+
+Error rate (%)
+
+20 15 10 5 0
+
+Table VIII. Alerts reduction rate for LLDOS2.0.2. Alert Attack thread fusion reconstruction Inside (%) DMZ (%) 18.01 17.91 51.85 51.84 Attack scenario reconstruction Sum 11.28 8.23 64.98 63.72
+
+20 30 40 50 60
+
+90
+
+120
+
+150
+
+180
+
+Learning time window length (minute)
+Figure 11. Error rate for LLDOS2.0.2 (inside part) when length of time window changes.
+Security Comm. Networks (2013) Š 2013 John Wiley & Sons, Ltd. DOI: 10.1002/sec
+
+F. Kavousi and B. Akbari
+
+A Bayesian network-based approach for alerts correlation
+
+SOTM34 dataset provided by the netForensics Honeynet team [29]. The dataset contains a snortsyslog file with 69039 entries that covers the alerts triggered by Snort IDS during about 1 month. Our experiments were run on a 2.53-GHz Intel(R) Core(TM) i5 CPU. The first 10,000 alerts of snortsyslog file belonging to 53 different alert types were used for training the offline component. Figure 12 displays the processing time of the offline component. As we see, the processing time grows almost linearly with the number of alerts. It takes about 127 s for the offline component to process these 10,000 alerts. After generating alert type graphs, the performance of the online component was tested using the alerts produced during the first 40 h of the network traffic. The average processing times of the alerts produced at each hour are shown in Figure 13. As we can see, the correlation process takes on average 0.92 ms to correlate the alerts triggered during the first hour (444 alerts) and less than 0.3 ms for the next hours. This result shows the time efficiency of the proposed algorithm for the online phase. It must be noted that
+
+the rate of alert generation equal to the rate at the peak hour in Figure 13, one alert in 8 s or about 10,000 alerts per day, is common in today enterprise data centers. Moreover, according to the results with our low-speed computer, it seems the processing time of the proposed algorithm will not be much on a server with higher processing power ever for networks or data centers with high rate IDS alerts. 6.3. Discussion Because there is no standard method for evaluating alert correlation systems, developers of different systems employ different testing methodologies in their evaluations. Additionally, there is no accuracy evaluation in some of the papers that propose a new alert correlation method. Some papers also used sensors that are not freely available. As a result, it is not practically feasible to do fair quantitative comparisons between alternate approaches. But, some of the advantages and limitations of the proposed method over the existing approaches are discussed in this section. Most of the existing methods for alert correlation can be generally classified as knowledge-based approaches or inference-based approaches. As previously mentioned, the main drawback of the knowledge-based approaches is their reliance on human expert knowledge. This issue is more prominent especially in scenario-based and rulebased approaches in which alerts are correlated on the basis of the predefined attack scenarios or preconditions and postconditions of the attacks that have been defined by experts. So, the ability of these approaches in correlating alerts will be limited by the expert knowledge. On the other hand, manual generation and maintenance of such attack information are a troublous and time-costly procedure. Unlike knowledge-based approaches, our proposed method requires no expert knowledge. It automatically learns attack transition patterns only by statistical analysis of attack occurrences and the similarity of their attributes. The second group includes methods that correlate alerts by using statistical or machine-learning techniques. Most of the methods in this group suffer from performance issues and are not fast enough to work online. But, our method has the ability to quickly correlate alerts on the basis of the correlation rules generated by the offline component. Compared with [4­6], although these methods do not require a large amount of expert knowledge, but they need a certain degree of knowledge about the similarity measurement for training the classifier. In these methods, training patterns should be manually generated and labeled by expert, which could be a difficult task, whereas in our method, this process is performed automatically and does not need any human knowledge and intervention. Our work in this paper is slightly similar to [22]. However, we proposed different algorithms for extracting the causal relationships between alert types and also for online alert correlation. Unlike [22], in the offline attack pattern recognition component, we focus on direct causal relationship between alert types. This can give us a better picture of the attack strategies followed by attackers. In the online
+
+140 120 100
+
+Time (sec)
+
+80 60 40 20 0
+
+0
+
+2000
+
+4000
+
+6000
+
+8000
+
+10000
+
+Number of alerts
+Figure 12. Performance of the offline component.
+
+1
+
+Average processing time (ms)
+
+0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 0 5 10 15 20 25 30 35 40
+
+Time line (hh)
+Figure 13. Performance of the online component.
+Security Comm. Networks (2013) Š 2013 John Wiley & Sons, Ltd. DOI: 10.1002/sec
+
+A Bayesian network-based approach for alerts correlation
+
+F. Kavousi and B. Akbari
+
+alert correlation component, we used a hierarchical scheme for correlating alerts. As was shown in our experiments, after the alert fusion and the attack thread reconstruction steps, the number of alerts was reduced approximately 50%­60%. This can speed up the attack scenario reconstruction procedure. Compared with [22], we have proposed a more efficient algorithm for reconstructing attack scenarios that eliminates the need to compare a newly received alert with all of the previous ones in its correlation time window. Therefore, when length of the correlation time window increases, the performance of our method is less degraded. Moreover, the attack scenarios generated by our method are more abstracted and thus more intelligible for network administrator. In terms of accuracy, our method could correlate `Telnet', `FTP_User', and `FTP_Pass' alerts, whereas to the best of our knowledge, excepting [5,6] (which both use the same approach), in none of the existing approaches, these alerts have been not correctly correlated. A constraint with our method is that it is assumed that the alerts raised for different steps of the same attack have the same destination IPs or the destination of the earlier alert is equal to the source of the next one. This requires that the source and destination addresses of the alerts be available and trustworthy. However, it may not be the case in some scenarios in which the attacker uses IP spoofing technique to hide his identity. So, when an attacker uses a spoofed IP address, some alerts could not be correlated with other alerts in the corresponding attack scenario. Most of the inference-based approaches suffer from this issue. One solution for this problem is to incorporate expert knowledge with attack behavior patterns learned from historical alerts. This needs to extend the method in such a way that it can automatically update alert type graphs on the basis of the new observations. So, it would be possible to first generate an initial alert type graph by using the existing knowledge about attacks and then learn new attack strategies by adapting it on the basis of the patterns extracted from historical alerts.
+
+quickly correlate alerts and predict possible forthcoming attacks in a real-time system. We evaluated the method using DARPA 2000 and SOTM34 datasets. The results of experiments showed that our proposed method has a great potential to learn new attack strategies. As a future work, we plan to revise the method in such a way that it can dynamically update its knowledge about attack behavior patterns by adapting alert type graphs based on the new observations. Also, we plan to deploy our method in a heterogeneous environment and study the ability of our method for correlating alerts output by heterogeneous security devices.
+
+ACKNOWLEDGMENT
+This work has been supported in part by the Iran Telecommunication Research Center (ITRC) under contract number T-500-18130.
+
+REFERENCES
+1. Spirtes P, Glymour C, Scheines R. Causation, prediction, and search. Springer/Verlag: 1993; 1st edition, MIT Press: Cambridge. 2. Valdes A, Skinner K. Probabilistic alert correlation. Recent Advances in Intrusion Detection (RAID) LNCS; 2001; 2212: 54­68. 3. Lee S, Chung B, Kim H, Lee Y, Park C, Yoon H. Realtime analysis of intrusion detection alerts via correlation. Computers& Security 2006; 25(3):169­183. 4. Zhu B, Ghorbani AA. Alert correlation for extracting attack strategies. International Journal of Network Security 2006; 3(3):244­258. 5. Ahmadinejad SH, Jalili S. Alert correlation using correlation probability estimation and time windows. International Conference on Computer Technology and Development (ICCTD) 2009; 2: 170­175. 6. Ahmadinejad SH, Jalili S. Correlating alerts into compressed graphs using an attribute-based method and time windows. Communications in Computer and Information Science, Security Technology 2009; 58:18­25. 7. Cuppens F, Ortalo R. LAMBDA: a language to model a database for detection of attacks. Recent Advances in Intrusion Detection (RAID) LNCS; 2000; 1907: 197­216. 8. Wang L, Liu A, Jajodia S. Using attack graphs for correlating, hypothesizing and predicting intrusion alerts. Computer Communications 2006; 29(15):2917­2933. 9. Zhang S, Li J, Chen X, Fan L. Building network attack graph for alert causal correlation. Journal of computers & security 2008; 27(5­6):188­196. 10. Yu D, Frincke D. A novel framework for alert correlation and understanding. International Conference on
+Security Comm. Networks (2013) Š 2013 John Wiley & Sons, Ltd. DOI: 10.1002/sec
+
+7. CONCLUSION AND FUTURE WORK
+In this paper, we proposed a new method for alert correlation that aimed at addressing the problems of detecting new attack strategies and difficulty of complex correlation rule definition and maintenance. Our proposed system consists of two main components: the offline component that concerns history of observations and extracts the attack transition patterns automatically by using a new Bayesian network-learning algorithm and the online component that correlates alerts and reconstructs attack scenarios by using a hierarchical method and on the basis of the extracted patterns. Unlike knowledge-based approaches, our method requires no expert knowledge and generates correlation rules only by statistical analysis of attack occurrences and the similarity of their attributes. Also, the attack transition patterns learned by the offline component can help us to
+
+F. Kavousi and B. Akbari
+
+A Bayesian network-based approach for alerts correlation
+
+11.
+
+12.
+
+13.
+
+14.
+
+15.
+
+16.
+
+17.
+
+18.
+
+19.
+
+20.
+
+Applied Cryptography and Network Security (ACNS) LNCS; 2004; 3089: 452­466. Li Z, Zhang A, Lei J, Wang L. Real-time correlation of network security alerts. Proceedings of the 4th IEEE International Conference on e-Business Engineering (ICEBE) 2007; 73­80. Wang L, Li Z, Ma J, Ma Y, Zhang A. Automatic attack plan recognition from intrusion alerts. Proceedings of the 8th ACIS International Conference on Software Engineering, Artificial Intelligence, Networking, and Parallel/Distributed Computing 2007; 1171­1175. Wang L, Li Z, Li D, Lei J. Attack scenario construction with a new sequential mining technique. Proceedings of the 8th ACIS International Conference on Software Engineering, Artificial Intelligence, Networking, and Parallel/Distributed Computing 2007; 872­877. Templeton SJ, Levitt K. A requires/provides model for computer attacks. Proceedings of the 3rd ACM workshop on New security paradigms 2000; 31­38. Cuppens F, Miege A. Alert correlation in a cooperative intrusion detection framework. Proceedings of the 2002 IEEE Symposium on Security and Privacy 2002; 202­215. Ning P, Cui Y, Reeves DS. Constructing attacks scenarios through correlation of intrusion alerts. Proceedings of the 9th ACM conference on Computer and communications security 2002; 245­254. Qin X, Lee W. Statistical causality analysis of INFOSEC alert data. Recent Advances in Intrusion Detection (RAID) LNCS; 2003; 2820: 73­93. Qin X, Lee W. Discovering novel attack strategies from INFOSEC alerts. Proceedings of the 9th European symposium on Research in computer security 2004. Benferhat S, Mokhtari A. A naive Bayes approach for detecting coordinated attacks. Proceedings of annual IEEE international computer software and applications conference 2008; 704­709. Jemili F, Zaghdoud M, Ahmed MB. Hybrid intrusion detection and prediction multi agent system
+
+21.
+
+22.
+
+23.
+
+24.
+
+25.
+
+26.
+
+27.
+
+28.
+
+29. 30.
+
+(HIDPAS). International Journal of Computer Science and Information Security (IJCSIS) 2009; 5:153­172. Tabia K, Leray P. Bayesian network-based approaches for severe attack prediction and handling IDSs' reliability. Information processing and management of uncertainty in knowledge-based systems 2010; 81:632­642. Ren H, Stakhanova N, Ghorbani AA. An online adaptive approach to alert correlation. Proceedings of the 17th International Conference on Detection of Intrusions and Malware, and Vulnerability Assessment LNCS; 2010; 6201: 153­172. Ahmadinejad SH, Jalili S, Abadi M. A hybrid model for correlating alerts of known and unknown attack scenarios and updating attack graphs. Computer Networks 2011; 55:2221­2240. Ning P, Xu D, Healey CG, Amant RS. Building attack scenarios through integration of complementary alert correlation methods. Proceedings of the 11th Annual Network and Distributed System Security Symposium 2004; 97­111. Wang L, Ghorbani A, Li Y. Automatic multi-step attack pattern discovering. International Journal of Network Security 2010; 10(2):142­152. Tsamardinos I, Brown LE, Aliferis CF. The max-min hill-climbing Bayesian network structure learning algorithm. Machine Learning 2006; 65(1):31­78. Cheng J, Greiner R, Kelly J, Bell D, Liu W. Learning Bayesian networks from data: an information-theory based approach. Artificial Intelligence 2002; 137:43­90. MIT Lincoln Laboratory, 2000 DARPA Intrusion Detection Evaluation DataSets, http://www.ll.mit.edu/mission/ communications/ist/corpora/ideval/data/2000data.html, 2000. NetForensics Honeynet team: Honeynet traffic logs, http://old.honeynet.org/scans/scan34, 2005. North Carolina State University Cyber Defense Laboratory, TIAA: a toolkit for intrusion alert analysis, http://discovery.csc.ncsu.edu/software/correlator/ ver1.0, 2005.
+
+Security Comm. Networks (2013) Š 2013 John Wiley & Sons, Ltd. DOI: 10.1002/sec
+
+

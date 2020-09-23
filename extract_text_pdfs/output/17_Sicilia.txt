@@ -1,0 +1,573 @@
+Querying Streams of Alerts
+for Knowledge-Based Detection of Long-Lived
+Network Intrusions
+Miguel-Angel Sicilia(B) , Javier Bermejo-Higuera, Elena Garc´ıa-Barriocanal,
+Salvador Sánchez-Alonso, Daniel Dom´ınguez-Álvarez,
+and Miguel Monzón-Fernández
+University of Alcalá, Polytechnic Building, Ctra. Barcelona Km. 33.6,
+28871 Alcalá de Henares, Madrid, Spain
+{msicilia,javier.bermejo,elena.garciab,salvador.sanchez}@uah.es,
+{d.domingueza,miguel.monzon}@edu.uah.es
+
+Abstract. Intrusion detection relies on the analysis of flows of network
+and system events that are checked against signatures or models of normality to raise alerts. However, these alerts are often the result of having detected a single step in the unfolding sequence of activities of an
+attacker, and techniques relying on simple alerting fall short in recognizing or preventing subsequent actions. Here we present the design and
+prototype implementation of a novel intrusion detection approach based
+on agents that are triggered in reaction to alerts that use attack patterns
+as working hypotheses. Those agents query the real-time stream of alerts,
+matching them with a particular attack pattern and a graph model of the
+network being monitored. The architecture for that system scales using
+the distributed streaming framework of Apache Kafka and a lightweight
+agent container, allowing for long-lived monitoring of attack hypotheses,
+each of them embodied in a single agent. The approach is tested against
+synthetic flows of data representing single-node and multi-step “island
+hopping” scenarios.
+Keywords: Intrusion detection
+Asynchronous agents
+
+1
+
+·
+
+Attack patterns
+
+·
+
+Stream queries
+
+·
+
+Introduction
+
+Current Intrusion Detection Systems (IDS) work on real-time streams of
+data. A stream can be considered an infinite sequence of append-only (info,
+timestamp) pairs, where the tuple represents a piece of data about an event, be
+it at the system, network or application level. Considering this, the fundamental
+task of an IDS (as for example Snort [15]) deployed in a single network node
+(or in a subnetwork in the case of other kind of detection systems [11]) is that
+of contrasting the stream of raw events with a set of rules or models with the
+purpose of detecting suspicious or anomalous evidence and deliver alerts from
+c Springer International Publishing AG 2017
+⃝
+H. Christiansen et al. (Eds.): FQAS 2017, LNAI 10333, pp. 186–197, 2017.
+DOI: 10.1007/978-3-319-59692-1 16
+
+Querying Streams of Alerts for Knowledge-Based Detection
+
+187
+
+them. This also in general applies to more complex systems that aggregate and
+correlate events, e.g. Log Managers (LM) as GrayLog1 or Splunk2 , or Security
+Event and Information Management (SIEM) systems as OSSIM3 .
+Alert data produced by these systems can also be considered a stream, a
+derived one in which events are yet qualified (and usually enriched or combined)
+by some other component. Typically, IDS, LM or SIEM systems classify the
+alerts they produce using some form of taxonomy or tagging, a priority indicator,
+and provide some additional references to external information that refers to
+the knowledge used to craft the rule or filter. This is the base information on
+which decision-making and response is currently supported. Existing research
+has proposed the use of ontologies for a better description of the alerts and their
+context [19], but they are not widely deployed to date.
+Significant progress on intrusion detection has resulted in a variety of detection techniques. However, many of them rely on an approach that use rules or
+filters that require seeing one or a number of event simultaneously, due to the
+rule firing paradigm as in e.g. [16]. This does not fit well with the detection
+of convoluted, multi-step attack patterns, that may span days or even months.
+Concretely, the emergence of Advanced Persistent Threats (APT) requires new
+approaches [4] in which detection becomes a long-term process and uses some
+form of adversarial knowledge, that is currently only available via descriptions
+of attack patterns in semi-structured form.
+In this paper, we present the model, design and prototype implementation
+of an approach to long-term intrusion detection that combines three sources of
+information: an adversarial knowledge model extracted from known attack patterns, a model of the network structure and status, and a semantically homogeneous stream of data. Decision processes on what is an intrusion take place
+along an undefined time span, instead of as an instantaneous rule firing event.
+The main element of the approach is that of agents that hypothesize that a given
+attack pattern is unfolding, and query the continuous stream of data in search for
+evidence, that is matched against the representation of the attack pattern itself.
+As a result of using a network model that conveys data on network paths and
+vulnerability scores, it is also able to produce predictions on estimated highly
+likely adverse events. This is achieved by the ability to integrate models similar
+to those of the Cauldron system [9].
+The model scales by relying on state-of-the-art SIEM or LM for the aggregation of real-time events, and then uses message brokering systems and independent agents instead of a monolithic knowledge-based approach, allowing for
+scalability and flexibility in updating the set of adversarial models.
+The rest of this paper is structured as follows. Section 2 briefly surveys previous related work on intrusion detection models. Then, the agent and query
+model is described in Sect. 3. Section 4 reports the prototype implementation of
+
+1
+2
+3
+
+https://www.graylog.org/.
+https://www.splunk.com.
+https://www.alienvault.com/products/ossim.
+
+188
+
+M.-A. Sicilia et al.
+
+that model on scalable technologies and a setup for experimentation and testing.
+Finally, conclusions and outlook are provided in Sect. 5.
+
+2
+
+Related Work
+
+In this section we first briefly revise existing surveys on intrusion detection techniques, and then succinctly discuss the two main features of the presented approach: using a knowledge-based agent model and scalability.
+2.1
+
+Existing Surveys and Approaches to Pattern Detection
+
+There are many surveys related to intrusion detection, reflecting the volume and
+variety of the literature in the topic. Some of them are restricted to some particular technique of machine intelligence or type of network, but only a few adopt
+a more general scope. Among them, in the report [1] we can find a broader taxonomy. Following that, our approach can be considered a higher level approach
+based on programmed signatures, and using state-modeling and in some sense
+expert-system based as it combines diﬀerent models. But it is also compound in
+the sense that the events produced by any other computational technique [24]
+can be used as input. The work of Cuppens and Miege [6] approach alert correlation using abduction on scenarios, and are thus similar to the graph based
+method described here, but they do not tackle with the monitoring and querying
+aspects of the stream of alerts.
+2.2
+
+Agent-Based Systems and Intrusion Detection
+
+The idea of using multi-agent systems for intrusion detection has been around
+for more than two decades. Early ideas on that topic focused on the autonomous
+capacity of agents to monitor hosts and then interchange information among
+them using transceiver architectures [2,18]. However, the role of those agents
+has been largely taken over by IDS software that is now widely deployed across
+networks. This is the reason why we aim at complementing IDS software as in
+many other more recent approaches that add some agent-based collaboration
+[12] rather than implementing the IDS using agents [7]. In other direction, the
+aggregation and correlation of events is now the role of also widely used SIEM or
+LM systems [25]. For that reason, we use a narrower approach to agents, as a way
+of decoupling query and reasoning, complementing the deployment of the just
+mentioned software pieces for the particular purpose of long-term monitoring,
+similarly as for example in [5].
+2.3
+
+Scalability of Intrusion Detection
+
+IDS are optimized to cope with high volumes of network packets, and there have
+been proposals to use specialized hardware-software architectures as GPUs for
+the task [22]. As our approach complements the IDS and SIEM deployment, it
+
+Querying Streams of Alerts for Knowledge-Based Detection
+
+189
+
+focuses on scalability at another point in the architecture, after the aggregation
+of events done by LM or SIEM [20]. It is thus a sort of analytic task that could
+be scaled in clusters with approaches as those described in [21].
+
+3
+
+Proposed Model
+
+The model proposed is based on a functional architecture as depicted in Fig. 1.
+The model is based on assuming that alerting and logs are centrally managed
+in a LM or similar system. Then, an event queue (EQ) is used as a buﬀer for
+the agents that query the incoming flow of alerts. In other direction, a network
+model is gathered from the network, represented as a labeled graph. That graph
+may incorporate information from routers and firewalls along with vulnerability
+status of nodes, similarly to the models used in [9]. All that diﬀerent models
+are used by three kind of agents with a clear separation of concerns. These are
+described in the following subsections, together with a third source of knowledge,
+that of attack hypotheses (i.e. representations of attack patterns).
+
+Fig. 1. Functional architecture of the proposed solution
+
+3.1
+
+Attack Patterns
+
+The key characteristic of the approach presented here is that it is knowledgebased in the sense that it queries events, network models and the current provisional hypothesis driven by an attack pattern. This requires that the steps in
+that attack pattern are expressed in the same vocabulary. The Common Attack
+Pattern Enumeration and Classification (CAPEC) taxonomy provides a sort of
+ontology for describing attack steps [13], but requires some additional formalization. Most of the patterns found in CAPEC are actually basic, single step, but
+some can serve as a basis for a more complete language, possibly adapting also
+
+190
+
+M.-A. Sicilia et al.
+
+other patterns that can be found in the literature, for example, those typical in
+worm infection [14]. The Malware Attribute Enumeration and Characterization
+(MAEC) framework links malware description to patterns making use of CAPEC
+for describing the relevant behaviour with a high-level malware taxonomy [10].
+The pattern itself can be represented as a directed acyclic graph (DAG)
+of steps, each of which correspond to a directly or indirectly observable event,
+with one or several start states. Formally, we will consider for each pattern i
+a graph Φi = (S, T ) where S is the set of nodes representing steps and T the
+set of arcs that represent possible following events and are tagged with ontology
+properties, e.g. type(tk ) with tk ∈ T may be same guarding the transition so
+that it constrains it to an event in the same node as the previous, or other
+to represent that the attack unfolds to a diﬀerent node (or other possible relations). Each node sj ∈ S is tagged with kind(sj ) that represents a term in
+the taxonomy or ontology of alert types. Initial steps are explicitly labeled as
+init(sj ). For example, CAPEC-28 “fuzzing” pattern can be represented as a
+simple sequence of detection events. However, the current description of attack
+patterns is mainly described from the attacker’s perspective. This makes that
+for example other fuzzing patterns are also in CAPEC are not formally crossreferenced, e.g. CAPEC-215 that is specific of fuzzing on Web servers. Figure 2
+provides an integrated view of both patterns using the security controls referenced as “detective”.
+
+Fig. 2. Example simple pattern from CAPEC-28 and CAPEC-215
+
+In CAPEC, it is possible to extract relationships among detectable events also
+indirectly via CanFollow relationships, but these are still used rather sparsely
+in the database.
+It should be noted that the patterns represented in the kind of models
+described impose some constraints on the modeling of attacker behaviour. They
+could be extended for example to probabilistic graphs to incorporate more information, or allow for relating patterns among them as variants or clusters of
+typical co-occurring attacker behaviour. However, here we stick to the basic
+graph model as the first proof of concept of the architecture.
+
+Querying Streams of Alerts for Knowledge-Based Detection
+
+3.2
+
+191
+
+Stream Queues and Classification
+
+It is assumed that events across the network are gathered in a sort of log management (LM) system or a SIEM, which may do some sort of initial processing
+or interpretation of events produced by independent systems as IDSs.
+All the interesting events considered by the LM are then sent to a stream
+queue that serves as a single source of events for the rest of the system. Events in
+the sequence of events E are in the form ei = (inf o, timestamp). The required
+fields in inf o are only the location of the event (typically, the address of the
+host aﬀected), and the kind of the event.
+Diﬀerent intrusion detection systems use diﬀerent vocabularies for reporting the types of alerts in kind. The first task is thus that of classifying events
+according to some sort of ontology, so that other agents use a single, consistent
+terminology. That ontology is the same as that used in attack pattern graphs
+Φ to label the nodes, e.g. kind(sj ). The use of an ontology language in formal
+logics allows for the application of subsumption and reasoning in general when
+deciding graph traversal, but flat hierarchies can also be used for simplicity.
+As an example, the following Snort rule fragment detects a particular kind
+of sniﬃng activity.
+alert icmp $EXTERNAL_NET any -> $HOME_NET any
+(msg:"PROTOCOL-ICMP PING Sniffer Pro/NetXRay network scan";
+itype:8; content:"Cinco Network, Inc.";
+...classtype:misc-activity; ...)
+However, the classtype is in this case non informative. The ontology would
+mediate in transforming an event triggered by this alert into a kind sniffing
+(or a subclass of it), so that it can be matched against graphs as depicted in
+Fig. 2. This will be the main task of classifier agents, as described below.
+3.3
+
+Spawning Monitoring Agents
+
+A first agent spawner takes the database of attack patterns [Φ] and attempts to
+match the current event in the stream with the start states of attack patterns.
+Each pair (Φi , a) is an hypothesis that an attacker is starting his activity based
+on the evidence given by event a with the intention captured in Φi .
+It should be noted that eventually diﬀerent agents under diﬀerent hypotheses
+may be working on the same stream of events. This requires the scalability of
+the system with a worst case complexity of O(init([Φ]) × |E|) with init([Φ])
+the amount of start states in the pattern database. It is diﬃcult to estimate
+the actual average workload needed as some agents may live for long periods of
+time. This requires a lightweight approach with small overhead to the concurrent
+activity of monitoring agents.
+
+192
+
+3.4
+
+M.-A. Sicilia et al.
+
+Long-Lived Queries Using Attack Graphs
+
+Each monitoring agent takes the current network graph G as the baseline, initially annotating the node with the triggering event.
+The graph G = (N, A) is a network model of nodes ni and their connectivity
+that may be of a complex nature4 . In general, it is required that it is capable of
+answering two basic questions described in Table 1, in order for the algorithm to
+decide on the progress in the pattern.
+Table 1. Primitives for the graph model G
+Verb
+
+Result
+
+reachable(ni , nj )
+
+Node is reachable from other node
+
+vulnerable(ni , mj ) Node is vulnerable to given attack mechanism mj
+
+It should be noted that vulnerability can be implemented in flexible terms.
+An option may be that of using some global scoring as CVSS that has been
+used as a belief elsewhere [8], or a more informed combination of such with some
+measure or estimation of weakness to the given mechanism of attack category.
+Reachability can be interpreted in a crisp sense as network reachability, but it
+can also be combined with some score measuring the attack surface of the node.
+The process of querying the stream of data can then be seen as a graph matching algorithm. Given an attack pattern Φ taken as working hypothesis, the process
+is that of taking the next event from the stream of alerts and consider if the
+alert represents a possible event under the current annotated network graph G.
+Algorithm 1 describes the main elements of the algorithmic approach.
+Algorithm 1. Match alert stream under hypothesis φ
+1: procedure Match-alert(a, G, Φ)
+◃ Match next alert to current state
+2:
+loc, kind ← inf o(a)
+3:
+next ← targets(G, kind)
+◃ Potential nodes for given alert
+4:
+if loc ∈next ∧matches(a, Φ) then
+◃ Match with attack graph
+5:
+G, n ← annotate(G, a)
+6:
+end if
+7:
+if istarget(G, n, Φ) ∨curtime() > LIM IT then
+◃ Check finalization
+8:
+alert(self )
+9:
+self destruct()
+10:
+end if
+11: end procedure
+
+4
+
+It should be noted that this graph in general has ‘self loops’ as in general the same
+node is accessible to an attacker in an unfolding situation.
+
+Querying Streams of Alerts for Knowledge-Based Detection
+
+193
+
+The targets function queries the network graph G for nodes that are
+reachable and vulnerable for the current state of the unfolding attack. Reachability is checked against the network restrictions (subnetworks, firewalls), and
+vulnerability is relative to the attack mechanism kind. Then, if the node aﬀected
+by the event is in that potential set of targets, the attack graph is used to check
+if the inclusion of the event in the graph conforms to the pattern. Eventually,
+the graph model is annotated for upcoming iterations. Termination is considered
+after some timeout or when a leave in the attack graph is reached.
+The process can be seen as a continuous query to the stream of events followed by queries that match the attack graph and the network graph. Finally,
+prediction can be done by querying the next steps in the pattern graph, then
+matching with the current state of the network graph.
+
+4
+
+Implementation and Experimental Evaluation
+
+4.1
+
+Prototype Architecture
+
+The prototype has been deployed using Apache Kafka5 , a fault-tolerant and
+scalable queue system as the stream back-end of the alert system. This serves
+as the source of alerts (records in Kafka) and simulates the infrastructure that
+in practice will be provided by a SIEM or LM system.
+The agent system was implemented using the aiomas framework in Python,
+that abstracts RPC (remote procedure call) and network messaging together
+with concurrent programming using asyncio standard libraries, providing light
+coroutine primitives and scalability to thousands of agents in one or several containers. Classifiers and triggerers are grouped as Kafka consumers thus providing
+eﬀective load balancing, while monitoring are not, as all the events need to be
+broadcasted to them.
+The network graph G is handled using networkx, after querying a Neo4j
+graph database. Attack pattern graphs Φ are also handled with networkx but
+in this case, using graphviz text files as input just as a convenience format, as
+they are typically very small in size, and the ones extracted from CAPEC are
+uncomplicated.
+The ClassifierAgent uses a mapping of the following alert type classifications with a terminology extracted from the indicators in CAPEC patterns:
+– Snort 2.9.9 default classifications6 .
+– Suricata 3.2.1. classification metadata7 .
+A total of 28 terms were extracted from the three sources of information. This
+may seem a rather small amount, but it should be noted that some indicators
+are not considered alerts as they have also legitimate uses, and the descriptions of the patterns are not complete in many cases. There are alert types that
+5
+6
+7
+
+https://kafka.apache.org/.
+http://manual-snort-org.s3-website-us-east-1.amazonaws.com/.
+https://github.com/inliniac/suricata/blob/master/classification.config.
+
+194
+
+M.-A. Sicilia et al.
+
+require additional context-specific information as Suricata’s policy-violation
+that refers to corporate security policies (and are thus unspecific in nature), and
+others generic as misc-activity that have not been included.
+The classifier agent simply inspects the raw source Kafka topic (a topic is a
+category of records), substitutes the kind field of the events and then submits
+the alert to the processed queue, that is used by the TriggererAgent. That
+agent matches the next event to initial states of attack graphs and eventually
+spawns new MonitoringAgents under the hypothesis of a particular graph Φi
+with the network graph annotated in the location node of that event with the
+given kind term.
+Finally, MonitoringAgents subscribe to the processed stream of events and
+follows the above-described algorithm looking for potential unfolding attacks.
+These agents inspect the same topic as the triggerer agent, so that it is possible
+that the same event is used both for starting and hypothesis check and also as
+evidence for an intermediate step in an existing check.
+4.2
+
+Evaluation with Graph Models from CAPEC
+
+Evaluating intrusion detection for high-level attack patterns is challenging due
+to a complete lack of datasets. There are datasets and proposals for datasets
+synthesis [17] for particular classes of scenarios, but not in the case of multi-step
+patterns that are the focus of our proposal. It is thus impractical to attempt to
+evaluate the approach using the usual performance indicators as precision, recall
+or false negatives or positives.
+As a consequence, the evaluation of the approach has been done in two steps.
+The first step was that of assessing the modeling approach using meta and
+standard CAPEC patterns. The second was that of generating synthetic traﬃc
+from hypothetical attackers simulated using agent-based modeling.
+The analysis of CAPEC 2.9 descriptions (using its downloadable XML serialization) found only 202 occurrences of the type=‘‘Detective’’ attribute for
+capec:Security Control elements, with many of them repeated. Most of them
+did not have a direct mapping to the taxonomy of alerts extracted from IDS
+classifications, and many of them were sitting at the application level, including
+indicators related to anomalous SQL or Web traﬃc. In any case, information for
+building the complete graphs was incomplete, as detective indicators rarely covered all the capec:Attack Step phases in the attack but were generic or related
+only to its inception.
+The implementation used the miniKanren embedded Domain Specific Language (DSL) for logic programming [3], available for many languages (here we
+have used the logpy8 implementation of miniKanren). The language is expressive enough for the above-presented simple queries that match the annotated
+state of the network graph with the attack pattern, and provides a declarative
+environment for its augmentation.
+8
+
+https://github.com/logpy/logpy.
+
+Querying Streams of Alerts for Knowledge-Based Detection
+
+195
+
+The core query needed is that of locating the next network nodes that are
+aﬀected by k in the current (hcurr , k) pair representing the host and alert type
+of the next stream alert. The following code shows the basic two parallel goals
+accounting for events expected on the same or other host, according to the
+pattern hypothesis (h and k2 are fresh variables).
+res = run(0, h,
+conde(
+[hosts(h, True), vulnerable(h, k),
+affected(h, k2), same(k2, k)],
+
+[(hosts, h, True), (vulnerable, h, k),
+(affected, h2, k2), (other, k2, k),
+(equalo, (h, h2), False)] ))
+That basic query entails that the actual hcurr is among the responses, the
+event has to be annotated. Further, other elements in h can be considered predicted or at-risk nodes (the query for a given bound k can be driven by the most
+critical vulnerabilities, for instance). An interesting consequence of the progressive graph traversal is that each agent does not need to have its own copy of the
+full network model, but only of those nodes that are reachable from the set of
+nodes already involved, so that graph is built stepwise.
+The most interesting patterns are those that are informally called “island
+hopping” attacks, in which an attacker breaks into a host then uses that host
+as a platform to break into others. This has been simulated using the mesa9
+agent-based modeling (ABM) framework. ABM libraries allow for the explicit
+modeling of adversarial behaviour, which is key in experimenting with attack
+pattern detection.
+
+5
+
+Conclusions and Outlook
+
+As security threats in cyberspace become more pervasive and complex, there is
+a need for knowledge-based approaches to intrusion detection. The adversarial
+and persistent nature of complex attacks requires the capability of long-term
+monitoring under adversarial hypotheses.
+In this paper, we have reported a model and implementation of an agentbased system that combines a knowledge model based on known attack patterns
+with querying and matching a semantically homogeneous stream of events with
+a graph model representing the network and its constraints. The model has
+the following relevant features: (a) it integrates with current state of the art
+technology that combines IDS events into LM or SIEM systems, (b) it scales
+to larger networks and net flows by using queuing systems and decentralizing
+the monitoring process, and (c) it is able to operate with diﬀerent hypotheses in
+parallel and along long time spans, becoming a promising approach to convoluted
+and persistent attacks. The main limitation of the approach presented is that of
+9
+
+https://github.com/projectmesa/mesa.
+
+196
+
+M.-A. Sicilia et al.
+
+the current lack of elaboration of attack patterns, which are described in semistructured form and have diﬀerent degrees of elaboration, which makes diﬃcult
+in practice its translation to graph models. Also, matching event classifications
+from IDS to a common vocabulary is challenging, so more work is needed in
+establishing a complete and consistent language for querying investigative events.
+The approach presented here can be extended in a number of ways. There
+are a number of elements in the architecture that could be used as additional
+information for the decision-making process. These may include considering vulnerability scores as probabilities, a priori probabilities for attack pattern graphs
+and vagueness in priority scores in alert events. However, the lack of empirical datasets for convoluted patterns constrains the possible contrast of such
+approaches to date. In other direction, the interaction of the approach presented
+with a feedback cycle as that implemented for single-step detection in the AI 2
+system [23] has the potential of overcoming the limitations of encoding attack
+patterns manually.
+Acknowledgements. This research has been conducted in the frame of the project
+“Sistema de Analı́tica Predictiva para Defensa en el Ciberespacio basada en escenarios reproducibles” (PREDECIBLE), programme “DN8644-COINCIDENTE”, funded
+by the National Armaments Directorate of the Ministry of Defence of Spain (PREDECIBLE, project number 10032/15/005600, DN8644-COINCIDENTE).
+
+References
+1. Axelsson, S.: A survey and taxonomy, vol. 99. Chalmers University of Technology,
+Technical report (2000)
+2. Balasubramaniyan, J.S., Garcı́a-Fernandez, J.O., Isacoﬀ, D., Spaﬀord, E., Zamboni, D.: An architecture for intrusion detection using autonomous agents. In:
+Proceeding of the 14th Annual Computer Security Applications Conference,
+pp. 13–24. IEEE (1998)
+3. Byrd, W.E.: Techniques, applications, and implementations (Doctoral dissertation,
+Department of Computer Science, Indiana University) (2009)
+4. Chen, P., Desmet, L., Huygens, C.: A study on advanced persistent threats. In:
+Decker, B., Zúquete, A. (eds.) CMS 2014. LNCS, vol. 8735, pp. 63–72. Springer,
+Heidelberg (2014). doi:10.1007/978-3-662-44885-4 5
+5. Coppolino, L., D’Antonio, S., Formicola, V., Romano, L.: Integration of a system for critical infrastructure protection with the OSSIM SIEM platform: a
+dam case study. In: Flammini, F., Bologna, S., Vittorini, V. (eds.) SAFECOMP
+2011. LNCS, vol. 6894, pp. 199–212. Springer, Heidelberg (2011). doi:10.1007/
+978-3-642-24270-0 15
+6. Cuppens, F., Miege, A.: Alert correlation in a cooperative intrusion detection
+framework. In: Proceeding of the IEEE Symposium on Security and Privacy,
+pp. 202–215. IEEE (2002)
+7. Helmer, G., Wong, J.S., Honavar, V., Miller, L., Wang, Y.: Lightweight agents for
+intrusion detection. J. Syst. Softw. 67(2), 109–122 (2003)
+8. Houmb, S.H., Franqueira, V.N., Engum, E.A.: Quantifying security risk level from
+CVSS estimates of frequency and impact. J. Syst. Softw. 83(9), 1622–1634 (2010)
+
+Querying Streams of Alerts for Knowledge-Based Detection
+
+197
+
+9. Jajodia, S., Noel, S., Kalapa, P., Albanese, M., Williams, J.: mission-centric cyber
+situational awareness with defense in depth. In: Military Communications Conference, 2011-MILCOM, pp. 1339–1344. IEEE (2011)
+10. Lee, A., Varadharajan, V., Tupakula, U.: On malware characterization and attack
+classification. In Proceedings of the First Australasian Web Conference, vol. 144,
+pp. 43–47. Australian Computer Society (2013)
+11. Liao, H.J., Lin, C.H.R., Lin, Y.C., Tung, K.Y.: Intrusion detection system: a comprehensive review. J. Network Comput. Appl. 36(1), 16–24 (2013)
+12. Mishra, A., Nadkarni, K., Patcha, A.: Intrusion detection in wireless ad hoc networks. IEEE Wirel. Commun. 11(1), 48–60 (2004)
+13. Pauli, J., Engebretson, P.H.: Towards a specification prototype for hierarchy-driven
+attack patterns. In: Fifth International Conference on Information Technology:
+New Generations, ITNG 2008, pp. 1168-1169. IEEE (2011)
+14. Robiah, Y., Rahayu, S.S., Sahib, S., Zaki, M.M., Faizal, M.A., Marliza, R.: An
+improved traditional worm attack pattern. In: International Symposium in Information Technology (ITSim), vol. 2, pp. 1067–1072. IEEE (2010)
+15. Roesch, M.: Lightweight intrusion detection for networks. In: Lisa, vol. 99, no. 1,
+pp. 229–238 (1999)
+16. Sadighian, A., Fernandez, J.M., Lemay, A., Zargar, S.T.: ONTIDS: a highly flexible context-aware and ontology-based alert correlation framework. In: Danger,
+J.-L., Debbabi, M., Marion, J.-Y., Garcia-Alfaro, J., Zincir Heywood, N. (eds.)
+FPS -2013. LNCS, vol. 8352, pp. 161–177. Springer, Cham (2014). doi:10.1007/
+978-3-319-05302-8 10
+17. Shiravi, A., Shiravi, H., Tavallaee, M., Ghorbani, A.A.: Toward developing a systematic approach to generate benchmark datasets for intrusion detection. Comput.
+Secur. 31(3), 357–374 (2012)
+18. Spaﬀord, E.H., Zamboni, D.: Intrusion detection using autonomous agents. Comput. Networks 34(4), 547–570 (2000)
+19. Undercoﬀer, J., Joshi, A., Pinkston, J.: Modeling computer attacks: an ontology for intrusion detection. In: Vigna, G., Kruegel, C., Jonsson, E. (eds.) RAID
+2003. LNCS, vol. 2820, pp. 113–135. Springer, Heidelberg (2003). doi:10.1007/
+978-3-540-45248-5 7
+20. Vaarandi, R., Niziski, P.: Comparative analysis of open-source log management
+solutions for security monitoring and network forensics. In: Proceedings of the 2013
+European Conference on Information Warfare and Security, pp. 278–287 (2013)
+21. Vallentin, M., Sommer, R., Lee, J., Leres, C., Paxson, V., Tierney, B.: The NIDS
+cluster: scalable, stateful network intrusion detection on commodity hardware.
+In: Kruegel, C., Lippmann, R., Clark, A. (eds.) RAID 2007. LNCS, vol. 4637,
+pp. 107–126. Springer, Heidelberg (2007). doi:10.1007/978-3-540-74320-0 6
+22. Vasiliadis, G., Antonatos, S., Polychronakis, M., Markatos, E.P., Ioannidis, S.:
+Gnort: high performance network intrusion detection using graphics processors. In:
+Lippmann, R., Kirda, E., Trachtenberg, A. (eds.) RAID 2008. LNCS, vol. 5230,
+pp. 116–134. Springer, Heidelberg (2008). doi:10.1007/978-3-540-87403-4 7
+23. Veeramachaneni, K., Arnaldo, I., Korrapati, V., Bassias, C., Li, K.: AI 2 training a
+big data machine to defend. In: IEEE International Conference on Intelligent Data
+and Security (IDS), pp. 49–54 (2016)
+24. Wu, S.X., Banzhaf, W.: The use of computational intelligence in intrusion detection
+systems: a review. Appl. Soft Comput. 10(1), 1–35 (2010)
+25. Zuech, R., Khoshgoftaar, T.M., Wald, R.: Intrusion detection and big heterogeneous data: a survey. J. Big Data 2(1), 3 (2015)
+
+

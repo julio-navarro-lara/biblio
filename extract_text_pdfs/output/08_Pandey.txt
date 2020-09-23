@@ -1,0 +1,732 @@
+The Fourth International Conference on Information Assurance and Security
+
+ACML : Capability Based Attack Modeling Language
+Navneet Kumar Pandey, S. K. Gupta, Shaveta Leekha
+Indian Institute of Technology Delhi, India
+{npandey,skg, mcs052943}@cse.iitd.ac.in
+Abstract
+
+on similarity between alert attributes, using pre-deﬁned attack scenarios, pre/post-conditions of attacks, using multiple networks and auditing tools. Each technique has its own
+advantages and disadvantages[20]. For example, similarity based approaches lack on ﬁnding attack step sequence,
+pre-deﬁned attack scenario work well only for known scenarios, pre-post condition based approaches can detect new
+scenario but deﬁning these conditions is itself error-prone
+and enumeration of these conditions is non trivial task, and
+multiple information source based approaches suffer from
+sheer volume of data to process.
+As stated in the require/provide model[17], the early attacks in a multistage intrusion acquire certain advantages.
+Information about the system under attack and ability to
+perform actions on that system are some of the advantages
+gained. These are in turn used to support the later attacks
+that require them. Capability model [21] captures this notion of attacker capability and use it for logical alert correlation. However the model is manual and requires human
+intervention to execute the process.
+In our previous work [14], we have offered some improvements to the deﬁnition of capability. Speciﬁcally, we
+reﬁned the deﬁnition of a capability with temporal attributes
+to avoid ambiguity. We also deﬁned several algebraic operations and relations to formalize the deﬁnition of capability
+and inference rules. We showed the usage and beneﬁt of
+these algebraic properties.
+As capability is an abstract term, therefore it is strongly
+needed to customize the model according to network environment and other system preferences. Languages are
+the best tool to express these preferences. It formalizes the
+meaning of elements used in language and make it is less
+ambiguous. Language also helps in making the correlation
+process modular and simple. This makes system easily understandable for even non security expert. This approach
+helps in facilitating the process ﬂexibility and easy enhancement.
+In this paper, we propose a Attack Capability Modelling
+framework (ACMF) to semi-automate the whole capability
+model based correlation process with the help of algebra
+for attack capability deﬁned in [21]. The framework mini-
+
+In this paper, we propose Attack capability modelling
+language (ACML) used for capability model proposed by
+Zhau et. al. is a speciﬁcation and description language
+that has been utilized to express the capability gained by attacker at each step in the intrusion process. These capabilities have been deﬁned using the IDS alerts. Moreover the
+language also provides for the speciﬁcation of compete attack scenarios in terms of capabilities of the intruder. This,
+in turn, helps to determine the state of the system, in terms
+of the extent of inﬁltration. ACML helps to avoid ambiguity
+in capability speciﬁcations while sharing among developers. We also propose Attack capability modelling framework (ACMF) which forms the basis of a capability modelbased semi-automated alert correlation process, which has
+been used to detect and identify the attack scenarios from
+IDS alerts. The framework consists of the tools for the implementation of the algebraic structure of capability, as deﬁned in Pandey et al., which are needed for the correlation algorithm. Additionally, the language also has features
+for customizing the deﬁnitions of these structures as well
+as for customizing the correlation algorithm. To verify the
+expressiveness of the language and its suitability in describing attack capability model, experimental result of standard
+benchmark has been discussed.
+Keywords: - Intrusion detection, Capability model, Attack scenario, Attack language, ACML.
+
+1 Introduction
+Most of the existing intrusion detection systems (IDS) often generate large numbers of alerts which contain numerous false positives and non relevant positives [15]. Non relevant positives are alerts that correctly identify an attack,
+but the attack fails to meet its objective [19]. Alert correlation techniques aim to aggregate and combine the outputs of
+single/multiple IDS to provide a concise and broad view of
+the security state of network [11]. Several alert correlation
+techniques have been proposed, including approaches based
+
+978-0-7695-3324-7/08 $25.00 © 2008 IEEE
+DOI 10.1109/IAS.2008.26
+
+Jingmin Zhou
+University of California, Devis, USA
+zhouji@cs.ucdavis.edu
+
+147
+
+mizes the human intervention which is required for processing IDS alerts for the purpose of identifying attack scenarios.
+We also propose novel Attack Capability Modelling language (ACML), which is a speciﬁcation language of capability model. The objective of developing ACML is to
+provide ﬂexibility to security concerns in customizing the
+whole capability model. With a customized model, the performance of the system can easily be enhanced. ACML
+speciﬁcations help to avoid ambiguity which enables the
+utilization and reusability of the experience and knowledge
+of security professionals in the ﬁeld of attack correlation.
+With this, the system can also be adaptive to optimization.
+The remainder of this paper is organized as follows: Section 2 discusses the related work on alert correlation and attack languages.Section 3 presents the capability model. We
+present proposed ACMF in Section 1. Section 5 provides
+the detail of proposed ACML. In section 6, we discuss our
+experiences with the language and knowledge base used.
+Finally, Section 7 draws conclusions and outlines some directions for future work.
+
+security professionals in the ﬁeld of attack correlation.
+Recently attack languages are focus of research due
+to need to representing, classifying, and sharing information about penetrations, exploits, and intrusion techniques. STATL[8] has identiﬁed six different classes of
+attack languages based on their scopes and goals. These
+attack languages are: (i) Event languages such as tcpdump
+[16],(ii) Response languages, (iii) Reporting languages such
+as Common Intrusion Speciﬁcation Language (CISL) [18]
+and the Intrusion Detection Message Exchange Format
+(IDMEF) [6], (iv) Correlation languages such as UCSB’s
+STATL [8] and rule-based reasoning, as in SRI’s P-Best [9],
+(v) Exploit languages such as NASL[7] and CASL[2], and
+(vi) Detection languages such as Russel [12] .
+ADeLe[10] and LAMBDA [5] are predicate based multipurpose languages used as exploit, detect and correlation
+languages. ADeLe is also a response language.
+
+3 Capability Model
+Capability is an abstract notion that describes the ability of an attacker that is the access and information gained
+by an attacker during intrusion. In our model capability
+is a six-tuple (source, destination, credential, action, (service, property), interval). Source and destination are network addresses, where source is the network address of the
+attacker and destination as the network address of the system on which the attacker is able to gain some accesses.
+Source and destination addresses can be IP addresses, Ethernet addresses or Host names. Credential is the privilege
+using which actions are performed e.g. root, system, user
+etc. Action represents activity performed by an attacker on
+services e.g. read, write, communicate etc. Services are the
+objects to which the access or information is gained e.g. IIS
+3.0, \etc\passwd etc. and version, content etc are the properties of the services. Each service is associated with one
+or more properties and an action usually operate on certain
+property of a service. Interval represents duration for which
+capability is valid.
+Capability model is based on the require/provide model
+in which acquired capability of the previous attacks is used
+to satisfy the prerequisite of subsequent attacks. Capability
+model based Correlation process has two main components
+i.e. (i)H-alert (ii) M-attack. H-alert is three tuple (require,
+provide, raw) and represents transformed object of alert in
+terms of capability where require is the set of capabilities
+that are required for alert to be a true attack and provide is
+a set capabilities that are gained after an alert has been generated. Raw contain other information which is available
+in alert message such as time of alert generated, trafﬁc direction etc. An M- attack is three tuple (haste, capset, tmpstmp) which is collection of correlated alerts where haset
+is set of alerts (h-alerts), capset is set of capabilities pro-
+
+2 Related Work & Contribution
+This work is based on the capability model for attack correlation proposed by Zhou et. al[21]. The capability model
+uses capability obtained by an intruder as the basic building block to abstract intrusion detection alerts and correlate
+these alerts. The model is similar to the requires/provides
+model suggested by Templeton and Levitt [17]. The requires/provides model deﬁnes logical relations between different attacks and proposes a JIGSAW language to correlate
+attacks based on simple predicates of system states.
+In our previous work [14], we proposed several algebraic
+operations, relations that exist between capabilities and derived inference rules to deﬁne logical association between
+two capabilities. These relations are helpful in understanding the capabilities properly and for deﬁning the semantics
+of algebraic operations which in turn are used in correlation
+algorithm. These algebraic structures eventually make the
+correlation process modular.
+In this work, we propose a novel framework for modeling attack capability using a language. This framework will
+eventually semi-automate the correlation process based on
+capability model as discussed above. The framework minimizes the human intervention which is required for processing IDS alerts for the purpose of identifying attack scenarios. The proposed ACML is a novel language which
+provides ﬂexibility in setting up the security concerns as
+required for the customization of capability model. The
+system can also be adaptive to optimization, with the customized model. ACML speciﬁcations also enables the utilization and reusability of the experience and knowledge of
+
+148
+
+vided by h-alerts in haset and tmpstmp is the time of last
+correlated alert which can be considered as timestamp of
+M-attack.
+
+three types of libraries i.e. operation Library, Relation library and Inference Library. It contains two relational databases i.e. conﬂict knowledge base and Inference knowledge base. These databases will be used
+by the relation and inference library. These libraries
+are loosely coupled modules. Various APIs have been
+provided in the language to make the customization of
+these libraries feasible. Detail of this module has been
+discussed in section 5.4.
+
+4 Attack capability modelling Framework
+The main objective of the ACMF is to detect intrusion
+scenarios using the capability model described in the previous section. The framework consumes ﬁrst level security
+alerts and provides reports that identify multistep attack scenarios discovered in the alert stream. Figure 1 presents an
+integrated correlation process using capability model. The
+whole process can be divided into ﬁve modules as given
+below-
+
+5. Correlator module :- Correlator module contains three
+standard algorithms for correlation as deﬁned in [14].
+However, the objective of making it a separate module
+is to provide ﬂexibility and scope of customization. As
+given in [14], this algorithm needs basic algebraic operations which are provided through standard algebraic
+library. This module also needs the attribute speciﬁcations from Attribute speciﬁcation module and H-alert
+stream from H-alert speciﬁcation module for correlation, as shown in ﬁgure 1. Correlator module also
+makes use of Attack scenario speciﬁcations to identify
+the threat level of an attack. As an output, this module
+generates the attack scenarios after correlation.
+
+1. Attribute speciﬁcation :- In this module, the speciﬁcations and taxonomy for capability and its attributes
+are collected from the user. This module contains two
+parts as shown in example 5.1. First part contains deﬁnitions of capability while the second part contains the
+relations between attributes. The speciﬁcations is part
+of ACML (see section 5). The result obtained after the
+syntax-checking and parsing of these speciﬁcations is
+provided to the H-alert speciﬁcation module and the
+Correlator module.
+
+5 Attack capability modelling language
+
+2. H-alert speciﬁcation module :- The system takes IDS
+alerts to construct an attack scenario. In this module, alerts which are generated by IDS (in IDMEF format) will be converted to H-alerts. Figure 2 shows
+the details of this module. In this module H-alert db
+is a relational database which contains the valid Halerts corresponding to raw alerts. Initially it may
+be empty and whenever a new H-alert comes in, it
+is checked whether a corresponding H-alert exists in
+this database. If the corresponding H-alert exists then
+its reference id is send to next module. If not, the
+programmer would have to write a H-alert speciﬁcation for it in ACML. After parsing, the valid H-alert is
+stored in H-alert db and its reference id is sent to next
+module.
+
+The description of the lexical structure of the ACML
+speciﬁes the format of comments, set of keywords, delimiters, separators to specify how one program statement is separated from the next and the generic identiﬁers and constant matching patterns used in identifying instructions during program parsing. Identiﬁers
+in ACML are unquoted strings beginning with a letter, followed by any combination of letters, digits, and
+the characters ’, reserved words excluded. These
+identiﬁers are of two types, ﬁrst which start with a upper case letter and the other one that start with a lower
+case letter. For example, Read is ﬁrst type of identiﬁer and write is of second type. The set of reserved
+words is the set of terminals appearing in the grammar. Those reserved words that consist of non-letter
+characters are called symbols, and they are treated in a
+different way from those that are similar to identiﬁers.
+The lexer follows rules familiar from languages like C
+and Java, including longest match and spacing conventions. Language allows both kind of comments same
+as C++ language.
+
+3. Attack Scenario speciﬁcation :- This module contains
+speciﬁcations of known attack scenarios in terms of
+capabilities. It comprises of a set of alert IDs (of all
+alerts that could possibly represent any of the steps in
+the complete attack) along with the set of require and
+provide capabilities. Each require capability is tagged
+with its sequence number which is assigned in chronological order for each multi-step attack scenario. Detail about H-alert speciﬁcation is given in section5.2.
+
+ACM language provide several additional built-in data
+types and literals along with that available in C
+Language such as String literals String, IP4Address,
+IP6Address, Ethernet Address, Port number (e.g.
+WellKnownPorts, RegisteredPort, DynamicPort ),
+
+4. Standard algebraic library :- This module contains the
+different algebraic structures deﬁned in [14]. There are
+
+149
+
+Figure 1. Attack Capability Modelling framework (ACMF).
+We are representing the syntax in a very abstract way
+due to space limitation. In the syntax, optional items are
+enclosed in square brackets’[’, ’]’, items that may appear
+zero or more times are enclosed in curly braces ’{’,’}’, literals start with lower case letters represent keyword whereas
+those starts with upper case letters are non-terminal, literals
+enclosed with quotation mark represents symbols/terminals
+of the language and. Literals enclosed with angular bracket
+represent placeholders for code blocks.
+Attribute Speciﬁcation is in two part i.e. (i) attribute definition and (ii) connexion, where attribute deﬁnition parts
+comes ﬁrst, followed by connexion part (see example 5.1).
+
+Valid Halert db
+Insert
+H-Alert
+IDS Alert
+
+Correspond
+H-Alert Exist
+in db
+
+Yes
+
+No
+
+Make
+New Alert
+
+H-Alert
+Lexer & Parser
+
+Output
+(H-alert id)
+
+Valid Attribute
+& Connexions
+
+Figure 2. H-alert speciﬁcation module.
+Time, Interval etc.. Moreover, language also support
+user deﬁned types in the declaration and speciﬁcation
+section 5.1. The language also supports Structure and
+Union data types (as deﬁned in C-Language) which
+will build over built-in data types.
+
+5.1
+
+Attribute deﬁnition As shown in section 3, deﬁnition of
+capability contains ﬁve types of attributes i.e. (i) Address (source and destination address), (ii) Action (ii)
+Credential (iv) Service and property (v) Interval.
+
+Attribute Speciﬁcation
+
+However for address and interval attributes several
+built-in types are deﬁned, user can also deﬁne its
+own format. For example, timestamp and interval are
+built-in types for interval attribute; user may deﬁne
+rightOpenInterval data type for right open ended interval (see example 5.1).
+
+To make a customized capability model, ﬁrst step is to
+deﬁne terminology of the attributes of capability. Some
+instances of these attributes can be semantically interconnected and can form some association. Therefore to capture such notion a separate speciﬁcation is required. These
+speciﬁcations contain basic deﬁnitions and interrelations of
+attributes which is used in H-alert speciﬁcation (see section
+5.2) and Correlator as shown in framework (see ﬁgure 1).
+Following is the syntax of Attribute speciﬁcation.
+
+As shown in the Attribute speciﬁcation syntax except
+address and interval, declaration of other attribute is
+mandatory. Credential group is similar as user group in
+Linux and it’s identiﬁer must be start with upper case
+character, whereas credential user is simple user and
+it’s identiﬁer starts with lower case character. Service
+is deﬁned along with it’s attributes. Size of attribute
+and it’s type will depend on service type. Following
+example gives the general outline of speciﬁcation.
+
+AttributeSection ::= attributes AttributeID ’{’
+actions ":-" ListOfActionNames ’;’
+credentialGroup ":-" ListofCredGroups ’;’
+credentialUser ":-" ListofCredUsers ’;’
+{ServiceDeclaration}
+[AddressDeclaration]
+[IntervalDeclaration]
+’}’
+ConnexionsSection ::= connexions ’{’
+[ActionConnexionDeclaration]
+[CredentialConnexionDeclaration]
+[ServiceConnexionDeclaration]
+’}’
+
+Example 5.1 A sample Attribute speciﬁcation.
+attributes secureLabAttributes
+{
+action:-Read(read,list,know,rdPrmisn), Write(write
+,append),Run(block,pause,delay,execute);
+
+150
+
+5.2.1 H-alert
+
+credentialGroup:-Admin,User,Guest,Seclab,Updaters;
+credentialUser:-root(Admin),navneet (User,
+Updaters),default(Guest);
+service webserver {
+int version; action perittedAction;
+RegisterPort portNumber;
+string origin; string lanaguageSupport[]; }
+address homenet {
+IPAddress mynetwork; IPAddress subnetmask;
+IPAddress proxyIP; Port proxyPort;
+}
+address externalnet {
+IPAddress exnetid; IPAddress subnetMask; }
+interval rightOpenInterval { Time endtime; }
+
+H-alert is a abstraction of raw alert generated by various
+security devices like NIDS, HIDS etc. in terms of capability. H-alert in capability based ACML model consists of:
+(i)Require capability set:- It is a set of capabilities that are
+required for alert to be a true attack. (ii) Provide capability set:-It is a set of capabilities that can be seized after an
+alert has been generated. (iii)Direction:- It stores the information about packet/alert direction. A NIDS alert differs
+from a HIDS alert in that it is generated from some network
+packets that have a direction property.
+In the ACMF, Correlator module requires the alerts to be
+in the form of capability. Most of the IDS generate alert
+in IDMEF format. From IDMEF alert generating H-alert
+speciﬁcation is simple and require little human intervention
+as most of values of the IDMEF ﬁelds is directly mapped
+with H-alert’s attribute. ACML provide ﬂexibility to automatically generate partially ﬁlled H-alert template. For each
+alert there is there is a corresponding mapping of H-alert
+template in the plug-in form. This loosely coupled design
+facilitates easier replacement of the template for customization. As generating H-alert template of every alert is tedious
+task, therefore the modular design plays important role by
+providing higher degree of reuse of the framework .
+
+}
+connexions /*Connextion Section*/
+{ ActionConnexions :- list<know,block(pause,delay),
+write[modify,append];
+CredentialConnexions:-default < user;
+ServiceConnexions:-Server[WebSer,FileSer];
+}
+
+Connexions Second part of this speciﬁcation(connexion
+part) shows relation and associations between attributes. Connexion are allowed to deﬁne only in the
+action, credential and service attributes. There is facility to deﬁne three types of connexions here. These
+connexions can be deﬁned in service, credential (credential user) and action. (i) Division:- att1 (attA, attB,
+attC) means att1 is union of attA, attB and attC but
+the attributes (attA, attB, AttC) may not be semantically independent. This notation (division) also applies in those cases where it is not clear whether attributes (i.e. attA, attB attC) posses any dependency
+between each other. For example, let’s take a connexion in action attribute is block (pause, delay). Action
+delay shows if attacker has capability to pause a service and also able to delay it then attacker can do block
+by ﬁrst pausing it and then delaying it for inﬁnite time.
+In this case it is assumed that security administrator is
+unclear about the relation between pause and delay action. (ii) Partition:- att1 [attA, attB] means att1 can be
+partitioned into two attributes such that deducting attA
+from att1 will give attB. For example, let’s take a connexion in action attribute write [modify, append]. In
+this case write action is the combination of modify and
+append action. In this modify and append are semantically independent actions. (iii) Inclusion:- Inclusion
+means that att1¡att2 if attribute att1 semantically include att2. For example, in the Window OS context,
+default credential semantically contained in administrator credential.
+
+5.2
+
+5.2.2 Syntax
+H-alert speciﬁcation contains inclusion of external libraries
+followed by HSet which represents the set of H-alerts. Syntax of this speciﬁcation is as follows:{’#’include ’<’ Lib_ID ’>’}
+HSet set_name
+’{’
+<Global variables>
+<Function & Predicate definitions>
+Halert Name ([Parameters] )
+’{’ AlertId ID1 ’;’
+ReqCapbility ’{’ <Capability_Set> ’}’
+ProCapability ’{’ <Capability_Set> ’}’
+Direction forward / reverse ’;’
+’}’
+’}’
+
+HSet contains zero or more global variable and user deﬁned
+functions with H-alert deﬁnitions. In the function and predicate deﬁnition part function contains user deﬁned function and procedures. Language also contains set of predicates on all the attribute of capability (i.e. in address, action, credential, service & property, interval) like Subset,
+Union, Deduct, Overlap, Not subset, IsComposite, IsSameType etc. Each H-alert will have an AlertID (assigned by
+IDS) and require and provide capability set. Direction ﬁeld
+in H-alert contains direction information i.e. either forward
+or reverse (As alert is direction sensitive [21]).
+An H-alert must contain at least one require and one provide capability. CapabilitySet is the set of capabilities i.e.
+one or more Capability. Each capability is six tuple along
+
+H-Alert Speciﬁcation
+
+Alerts are automatic messages generated when a user requests to be notiﬁed of new search results ﬁtting their criteria. Security Alerts provide timely information about current security issues and exploits.
+
+151
+
+with two additional ﬁelds (i)mode (ii)optional. In the capability model, capability is categorized into two type i.e.
+(i)Direct and (ii)Indirect. Direct capability are those which
+has been gained directly by doing intrusion action. Implication of direct capability also provide capability and which is
+known as indirect capability. Mode ﬁeld contains the value
+”direct” or ”indirect” based on the type applied. Optional
+ﬁeld represents whether this capability is mandatary for correlation. Following is the syntax of capability.
+
+i.e. it also has require and provide capability sections. In
+contrast to alert speciﬁcation which can be considered as locally deﬁned without a priori knowledge of complete attack
+scenario, attack scenario speciﬁcation contains temporal relationship among the capabilities speciﬁed in require capability set along with the information/story of whole attack
+process. To represent the relationship among capabilities
+of require capability set, each capability is tagged with the
+sequence id based on their temporal order in complete multistep attack scenario. It also contains the veriﬁcation part
+which helps in the identiﬁcation of security state. Following
+is the attack scenario speciﬁcation syntax.
+
+Capability ::= Capability CapID
+’{’ SourceAddress AddressType srcID ’;’
+DestAddress AddressType destID ’;’
+action actionID ’;’
+credential credID ’;’
+service serviceName ’;’
+property propID ’;’
+mode direct/indirect ’;’
+optional true/false ’;’
+’}’
+
+{’#’include ’<’ Lib_ID ’>’}
+<Global Declaration>
+<Function definitions>
+HattackSecnario Name ([Parameters] )
+’{’ AlertId IDs[] ’;’
+ReqCapbility
+’{’ <CapabilitySet with sequence id> ’}’
+ProCapability
+’{’ <CapabilitySet> ’}’
+verification_prdicates()
+’{’ <predicates> ’}’
+’}’
+
+Following example shows the H-alert speciﬁcation for illegal NFS mount alert generated given in [4]. Speciﬁcation
+shows that illegal NFS mount require two capability (i) accessLevel i.e. capability to be able to communicate in the
+target host . and (ii) mountedpartition i.e. able to execute
+the nfs service via nfsd daemon. After required capability
+will be satisﬁed then it will provide a canacess capability
+which represents the capability to access any ﬁle in the target host.
+
+Following example shows the illegal ﬁle access attack
+given in [3] where unauthorized user try to read secret ﬁle.
+To do this, he ﬁrst create a ﬁle then block the printer by
+opening paper tray. After giving ”lpr-s” command to print
+this ﬁle he override the link with the soft link of secret ﬁle.
+Then he unblock printer and get the secret ﬁle. Attack scenario Speciﬁcation corresponding to this attack contains array of AlertId which represent alerts required to trigger this
+attack. From the speciﬁcation it is clear that to do IllegalFileAcess attack four capability is require i.e capability to
+block and unblock printer, capability to print ﬁle and capability to make soft link in the target host. After doing this
+attack, attacker will gain access to read any ﬁle in the target
+access. Veriﬁcation of this attack can be done by checking
+the delay in the printing process which is mentioned in the
+veriﬁcation block of speciﬁcation.
+As value of source and destination address are same in
+all capabilities therefore we have removed it from example
+given below.
+
+#include <IDMEFParser>
+HSet MIRADOR_Alert_Set
+{ HAlert NFSMount(Alert IDMEF_Alert)
+{ AlertId= MIR0163
+ReqCapability {
+capability accessLevel {
+SourceAddress sc=IDMEF_Alert.source;
+DestAddress dt=IDMEF_Alert.destination;
+action communicate;
+credential user=belongsTo(anyUser);
+service IP; property reply;
+mode direct; optional false;
+}
+capability mountedPartition {
+SourceAddress sc=IDMEF_Alert.source;
+DestAddress dt=IDMEF_Alert.destination;
+action execute;
+credential user=belongsTo(AdminGroup);
+service process=nfsd; property version;
+mode direct; optional false;
+}}
+ProCapability {
+capability canaccess {
+SourceAddress sc=IDMEF_Alert.source;
+DestAddress dt=IDMEF_Alert.destination;
+action read;
+credential user=IDMEF_Alert.User;
+service Dir; property content;
+mode indirect; optional false;
+} } } }
+
+5.3
+
+#include<IDMEFparser>
+HAlert IllegalFileAccess(Alert IDMEF_Alert)
+{ AlertId= {MIR0X,MIR0Y}
+ReqCapability {
+capability blockPrinter {
+action block;
+credential user=IDMEF_Alert.User;
+service process=cups; property version;
+mode direct; optional false;
+sequence 01;
+}
+capability unblockPrinter {
+action unblock;
+credential user=IDMEF_Alert.User;
+service process=cups; property version;
+mode direct; optional false;
+sequence 02;
+}
+
+Attack Scenario Speciﬁcation
+
+Attack scenario speciﬁcation contains complete speciﬁcation of attack scenarios in capability terms. Structure of
+this speciﬁcation is almost equivalent to alert speciﬁcation
+
+152
+
+Conﬂict knowledge base stores this information which is
+provided by security ofﬁcers. The main information source
+for this knowledge base is network architecture, OS, services running etc. For example at the same time at a particular port SSH and HTTP service cannot run in a server.
+(ii) Inference Knowledge base:- Inferences are major component which represent causal relationship on the basis of
+known evidence. There are three kind of relation described
+in section 5.4. This information is also ﬁlled by security personal from their past experience and system environment.
+(iii) H-alert db:- H-alert db contains syntactically and consistent H-alert speciﬁed by user using H-alert speciﬁcation.
+As discussed in section 4 whenever user will extract H-alert
+from IDS alert through ACML after parsing and consistency
+checking valid H-alert will be stored in H-alert db. While
+correlation H-alert will be fetched by its identiﬁer.
+
+capability canPrintlpr {
+action print;
+credential user=IDMEF_Alert.User;
+service File; property path;
+mode direct; optional false;
+sequence 01A;
+}
+capability makeLink {
+action create;
+credential user=IDMEF_Alert.User;
+service File; property softlink;
+mode direct; optional false;
+sequence 02A;
+}}
+ProCapability {
+capability canaccess {
+action read;
+credential user=IDMEF_Alert.User;
+service Dir="\"; property content;
+mode indirect;
+optional false;
+}}
+direction forward;
+}
+verificiation() {
+printdelay();
+}}
+
+6 Application of the model
+
+Developing speciﬁcation for multi-step attack scenarios is
+time-consuming and the quality of the speciﬁcation depends
+on the speciﬁer’s experience and knowledge. Therefore it
+is important to identify methods for building new attack
+templates based on previously deﬁned ones in term of capability. Attack scenarios not only help in identifying attack state but also help to characterize common attack techniques from detection point of view. This speciﬁcation facilitates in designing the database of known attack scenarios
+which provide reusability of the experience.
+
+5.4
+
+Standard
+Base
+
+Library
+
+and
+
+We have obtained the IDS alerts for our experiment from
+Ning [13] which are produced by NIDS RealSecure [RealSecure Network Sensor 6.0] on the DARPA 2000 intrusion detection evaluation( IDEVAL) dataset [1]. This data is
+a common benchmark to test IDS and alert correlation models. Basic capability model given in [21] also used same
+dataset and developed the capabilities for all 28 different
+alert signatures.
+The designed language has expressive power to represent the alerts from various NIDS into the basic capability model. The language is tested on the alerts (mentioned
+above) and is able to reduce the alert into the basic capability model which captures 12 documented multistage intrusions in dataset. The language is generic and can be used
+for even customized capability model. Language is also
+providing the ﬂexibility to represent the algebraic model of
+capability given in [14] and also support their variants of
+correlation algorithm. We are also planning to test in other
+dataset like Honeypot database. Moreover we have further
+plan to include heterogeneous security monitoring devices.
+The grammar of ACML is simple, unambiguous and
+easy to understand even for beginners. We have implemented lexical analyzer, parser and pretty printer for all type
+of speciﬁcation of ACML. We are in the process of implanting fully ﬂedged framework for and Graphical user interface
+for the same.
+
+Knowledge
+
+Framework also accompanied by libraries of standard
+deﬁnitions of algebraic structures given in ﬁgure 1. These
+structures help in designing the correlation process in a systematic and modular fashion. These structures are divided
+into three classes i.e. operations, relations and inferences.
+The detail deﬁnition of these operations can be found in
+[14]. To make ACMF more useful, these libraries are made
+modular and loosely coupled. To facilitate the customization of algebraic structures deﬁned in these libraries, they
+are being used as plug-in modules.
+Framework has three type of knowledge base (i) Conﬂict
+knowledge base (ii) Inference knowledge base (iii) H-alert
+db. Except H-alert database, other knowledge is entered
+manually. H-alert is entered through H-alert speciﬁcation
+module. The descriptions of these knowledge bases are as
+follows (i) Conﬂict knowledge base: - Mutual exclusive is
+kind of relation (see section 5.4) which gives knowledge
+about whether two capabilities can exist together. This relation is used to detect false correlation. As these relations require information from security personnel about the values
+of different attribute (service/action) which cannot coexist.
+
+7 Conclusion and Future Work
+In this work, we have described the ACML along with its
+syntax and informal semantics. Language has three speciﬁcation parts and each one has been explained with suitable examples. Attribute speciﬁcation part of the language
+
+153
+
+is used to capture the user deﬁned taxonomy and its semantics so that security personnel can design the whole system
+according to their network architecture and their security
+interests. H-alert Speciﬁcation part is used to model the
+raw alert in the form of capability. Attack scenario speciﬁcation part gives facility to write the stateful description
+of attack scenarios in capability terms. The experimental
+results against the standard benchmarks display the effectiveness of these speciﬁcations. ACMF which provides the
+language suite has been systematically modularized. Modules are well deﬁned and have been made adaptive enough
+for further extension or customization.
+At this stage, the language supports NIDS alerts (in IDMEF format). Part of the future work will be to incorporate
+heterogeneous security monitoring tools like HIDS, Application logs etc.. Our future work will target the development of a fully ﬂedged framework along with a GUI. We
+are also planning to use ACML for other datasets. Other
+possible extensions include the development of a debugger
+for the language. Optimization of modules of the framework and modeling the defence capability can also be considered.
+
+[9] U. Lindqvist and P. Porras. Detecting computer and network
+misuse through the production-based expert system toolset
+(p-best). Security and Privacy, 1999. Proceedings of the
+1999 IEEE Symposium on, pages 146–161, 1999.
+[10] C. Michel and L. Mé. Adele: an attack description language
+for knowledge-based intrustion detection. In Sec ’01: Proceedings of the 16th international conference on Information security: Trusted information, pages 353–368, 2001.
+[11] B. Morin, L. Mé, H. Debar, and M. Ducassé. M2d2: A formal data model for ids alert correlation. In RAID’02: Proc.
+of the 5th Int. Symp. on Recent Advances in Intrusion Detection, pages 115–137. Springer Berlin / Heidelberg, Oct
+2002.
+[12] A. Mounji. Languages and tools for rule-based distributed
+intrusion detection, phd thesis, universite de namur, September 1997.
+[13] P. Ning, Y. Cui, D. S. Reeves, and D. Xu. Techniques and
+tools for analyzing intrusion alerts. ACM Trans. Inf. Syst.
+Secur., 7(2):274–318, 2004.
+[14] N. K. Pandey, S. K. Gupta, and S. Leekha. Algebra for capability based attack correlation. In Information Security Theory and Practices. Smart Devices, Convergence and Next
+Generation Networks, pages 117–135, London, UK, 2008.
+Springer LNCS IFIP series.
+[15] T. H. Ptacek and T. N. Newsham. Insertion, evasion, and denial of service: Eluding network intrusion detection. Technical report, Secure Networks, Inc., Suite 330, 1201 5th Street
+S.W, Calgary, Alberta, Canada, T2R-0Y6, 1998.
+[16] C. L. S. McCanne and V. Jacobson. Tcpdump 3.4 documentation, 1998.
+[17] S. J. Templeton and K. Levitt. A requires/provides model for
+computer attacks. In NSPW ’00: Proceedings of the 2000
+workshop on New security paradigms, pages 31–38, New
+York, NY, USA, 2000. ACM.
+[18] B. Tung. The common intrusion speciﬁcation language: a
+retrospective. DARPA Information Survivability Conference
+and Exposition, 2000. DISCEX ’00. Proceedings, 2:36–45
+vol.2, 2000.
+[19] F. Valeur, G. Vigna, C. Kruegel, and R. Kemmerer. Comprehensive approach to intrusion detection alert correlation.
+Dependable and Secure Computing, IEEE Transactions on,
+1(3):146–169, July-Sept. 2004.
+[20] D. Xu and P. Ning. Alert correlation through triggering
+events and common resources. In ACSAC ’04: Proceedings
+of the 20th Annual Computer Security Applications Conference (ACSAC’04), pages 360–369, Washington, DC, USA,
+2004. IEEE Computer Society.
+[21] J. Zhou, M. Heckman, B. Reynolds, A. Carlson, and
+M. Bishop. Modeling network intrusion detection alerts for
+correlation. ACM Trans. Inf. System Secur., 10(1):4, 2007.
+
+Acknowledgements
+The work was supported by AISSL project, IIT Delhi.
+The authors want to thank all the members of this project.
+
+References
+[1] Darpa 2000 intrusion detection evaluation data set,
+url-http://www.ll.mit.edu/mission/communications
+/ist/corpora/ideval/data/2000data.html.
+[2] Custom attack simulation language (casl),
+urlhttp://www.virtualblueness.net/nasl.html, secure networks,
+January 1998.
+[3] F. Cuppens, F. Autrel, A. Miège, and S. Benferhat. Correlation in an intrusion detection process. In SECI’02: S Ecurit
+e des Communications sur Internet, 2002.
+[4] F. Cuppens and A. Miège. Alert correlation in a cooperative
+intrusion detection framework. In SP ’02: Proceedings of
+the 2002 IEEE Symposium on Security and Privacy, page
+202, Washington, DC, USA, 2002. IEEE Computer Society.
+[5] F. Cuppens and R. Ortalo. Lambda: A language to model a
+database for detection of attacks. In RAID ’00: Proceedings
+of the Third International Workshop on Recent Advances
+in Intrusion Detection, pages 197–216, London, UK, 2000.
+Springer-Verlag.
+[6] H. Debar, D. Curry, and B. Feinstein. The intrusion detection message exchange format (idmef), publisher-network
+working group, rfc:4765, Mar 2007.
+[7] R. Deraison. The nessus attack scripting language reference
+guide, September 1999.
+[8] S. T. Eckmann, G. Vigna, and R. A. Kemmerer. Statl: an attack language for state-based intrusion detection. J. Comput.
+Secur., 10(1-2):71–103, 2002.
+
+154
+
+

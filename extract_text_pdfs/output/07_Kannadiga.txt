@@ -1,0 +1,876 @@
+E-NIPS: An Event-Based Network Intrusion Prediction
+System
+Pradeep Kannadiga1, Mohammad Zulkernine1, and Anwar Haque2
+1
+School of Computing
+Queen’s University, Kingston
+Ontario, Canada K7L 3N6
+{pradeep,mzulker}@cs.queensu.ca
+2
+Network Planning
+Bell Canada, Hamilton
+Ontario, Canada L8P 4S6
+anwar.haque@bell.ca
+
+Abstract. Intrusion detection systems (IDSs) can detect and respond to various
+attacks. However, they cannot detect all attacks, and they are not capable of
+predicting future attacks. In this research, we propose an automatic intrusion
+prediction system (IPS) called E-NIPS (Event-based Network Intrusion
+Prediction System) that can not only detect attacks but also predict future
+probable attacks. We have utilized network penetration scenarios partitioned
+into multiple phases depending on the sequences they follow during network
+penetrations. Each of these phases consists of attack classes that are precursors
+to attack classes of the next phase. An attack class is a set of attacks that have
+same the objectives, categorized to generalize network penetration scenarios
+and to reduce the burden on the prediction engine during intrusion alerts
+correlation and prediction tasks. Future attacks are predicted based on the attack
+classes detected in an earlier phase of a penetration scenario. Automatic
+intrusion prediction provides little but very crucial time required for fortifying
+networks against attacks, warns network administrators about possible attacks,
+and reduces the damage caused due to attacks. In this paper, we describe the
+architecture, operation, and implementation of E-NIPS. The prototype
+implementation is evaluated based on some of the most commonly occurring
+network penetration scenarios. The experimental results show that the prototype
+automatically provides useful information about the occurrence of future attack
+events.
+Keywords: Intrusion detection and prediction, attack classes, network security.
+
+1 Introduction
+Attacks on computer systems have continued unabated with more sophistication and
+variants. Some of the attacks are very stealth and harder to detect, and sometimes
+even when an attack is detected, there is very little time to respond and defend the
+target system. IDSs are systems that can detect attacks on computer systems and
+respond to such attacks [1]. However, IDSs cannot sense and respond to the attacks
+J. Garay et al. (Eds.): ISC 2007, LNCS 4779, pp. 37–52, 2007.
+© Springer-Verlag Berlin Heidelberg 2007
+
+38
+
+P. Kannadiga, M. Zulkernine, and A. Haque
+
+that might probably occur in future. A system that can not only detect attacks but also
+sense and predict future attacks is called an intrusion prediction system (IPS). IPSs
+can be more beneficial than IDSs in taking effective measures to secure computer
+systems by warning security administrators about future attacks. IPSs can be
+classified into time and event-based intrusion prediction systems [10]. Time-based
+IPSs predict the seasonality, trends, and cyclic patterns of attacks from historical audit
+data. Event-based IPSs make prediction based on the event sequences found in multistep attacks or observed during network penetrations. In this paper, we present an
+Event-based Network Intrusion Prediction System (E-NIPS) which utilizes the attack
+sequences occurring in network penetrations to predict future attacks.
+Network penetration refers to all the activities that an attacker performs from
+outside the network to attack a target inside the network [11]. These activities are a
+set of attacks carried out in a sequence until the objective of the attacker is met.
+Network penetration scenarios are partitioned into multiple phases depending on the
+sequence they occur during a network penetration. Each phase is made up of a set of
+attack classes that could occur in that phase. An attack class is a set of attacks that are
+variants of the same attack, having a common objective and a set of attributes called
+attribute vector associated with it for monitoring the likelihood of the occurrence of
+that attack class in future. For example, an FTP overflow attack class consists of all
+varieties of FTP overflow exploit attacks that an attack event detection component of
+the IPS can detect. The attribute vector that can be associated with this attack class
+consists of the following information: number of connection to the FTP server,
+version number, number of login failures, anonymous connections, etc. The
+generalization of a group of attack alerts into an attack class for correlation reduces
+the computational burden on the prediction engine during the construction of network
+penetration scenarios. Intrusion prediction is made based on all the precursors to the
+future attack classes observed in the network penetration scenarios after the attack
+class correlation.
+The proposed E-NIPS architecture contains the databases that store current and
+past attack events, software and hardware configuration information, and the new
+attacks reported external to the network. The intrusion prediction engine of the
+proposed IPS uses the information stored in these databases to perform intrusion
+prediction. The prediction engine groups and maps attack events to attack classes,
+generates network penetration scenarios from the correlation of attack classes,
+calculates the probability of occurrence of future attack classes belonging to the next
+phase of a network penetration, and also estimates the extent of penetration. The
+prediction engine is built on the predefined rules that contain the information about
+the sets of attack classes along with the probability with which they can follow a
+particular attack class. After future attack classes are predicted, the elements of
+attribute vectors associated with them are monitored to detect the most likely attacks
+to follow.
+IPSs foresee future attacks and hence provide the crucial time required for
+fortifying the network against any attack. In this paper, we present the concepts
+behind intrusion prediction, the architecture of the IPS, and the implementation details
+of the prototype IPS. The prototype is evaluated using the most commonly occurring
+network penetration scenarios. Experimental results show that the prototype
+automatically provides useful information about the occurrence of future attacks.
+
+E-NIPS: An Event-Based Network Intrusion Prediction System
+
+39
+
+Paper Organization. Some of the related works are discussed in Section 2. Section 3
+elaborates the phases of a network penetration and discusses the heuristics used in this
+work. Section 4 presents the architecture of E-NIPS by describing its components.
+Section 5 describes the implementation details of the prediction engine component of
+E-NIPS. Section 6 provides the experimental evaluation results of the prototype IPS.
+Section 7 summarizes the current work and its limitations and outlines the future
+work.
+
+2 Related Work
+Mathematical forecasting techniques are used for various applications like weather
+and business forecasting. In [2], various forecasting techniques that can be applied for
+business applications such as profit/loss prediction is discussed. In [9], fuzzy logic is
+applied for weather forecasting. In [3, 4, 5, 6, 7, 8], various forecasting techniques
+such as decision tree, Hotelling’s T2 test, chi-square multivariate test, markov chain,
+exponentially weighted moving average, neural networks, software agents, and local
+linear models have been used for intrusion detection. These techniques predict next
+user/system behavior based on the available information learnt by the forecasting
+algorithms during training phase. Any deviation from the behavior predicted by the
+forecasting algorithms is considered as abnormal, and an alert is generated to inform
+about the attack. However, the prediction of future intrusive events has not been dealt
+so far in the works mentioned above.
+In [12], the predictive patterns that are rules generated inductively from the event
+sequences present in audit data are used for intrusion detection. Suppose P1 and P2
+are events that have already occurred, F1 and F2 are events that might occur with
+some probability x and y, then the rule {P1-P2 (F1=x%, F2=y%)} is used. The
+rules represent normal user behavior and any deviation from the normal user behavior
+is detected by the rules as an attack. Therefore, it is basically an anomaly-based
+intrusion detection system [1]. The rules used in our work contain information of
+attack event sequences observed in network penetration scenarios instead of patterns
+seen in audit data. Furthermore, the rules in our work are used for the correlation of
+detected attack classes to construct ongoing network penetration scenarios, and the
+scenarios are also utilized for future attack events prediction instead of the mere task
+of detection [12].
+In [13,14,15,16,17], a graph-based approach is used to relate various attack events
+or alerts from an IDS with vulnerability and network topology information to
+construct a multi-stage attack scenario for recognizing attacker intensions. The nature
+of work presented in [15, 16, 17] are more closely related to our work, and hence,
+they are discussed in the following paragraphs.
+In [15], a work on alert correlation and multi-stage attack scenario construction is
+proposed. The cluster of alerts that correspond to the same occurrence of an attack are
+merged into one alert to reduce the number of alerts that are sent to a security
+administrator and for the ease of alert correlation. During correlation, attack alerts that
+are related to a multi-stage attack scenario are correlated using rules to generate a
+complete attack scenario. In our work, we have classified the alerts that are variants of
+the same attack as an attack class and the classification is also based on the unique
+
+40
+
+P. Kannadiga, M. Zulkernine, and A. Haque
+
+attributes associated with the alerts. This classification of attacks simplifies the
+domain knowledge about the relationship/dependency between different attacks. The
+classification process involves merging alerts as discussed in [14] with an additional
+step of mapping to an attack class. However, attribute vectors and some heuristics
+used in our work help in making finer-grained prediction of attacks from the predicted
+attack classes. The use of network penetration scenarios in our work makes it more
+useful tool for penetration testing and risk assessment.
+In [16], a technique for alert correlation and future alert prediction is proposed.
+Alerts from individual attack steps are correlated to detect multi-step attacks. For the
+purpose of alert correlation and prediction, attack graphs are built based on
+interdependencies between attack exploits and security conditions that are required
+for the corresponding exploit to be executed. Prediction is made based on the new
+security conditions that would be satisfied from any newly generated alerts. In our
+work, we have considered network penetration scenario graphs that show all the
+possible attack classes that follow its precursors. The number of attack classes used in
+our work during attack class correlation is considerably lower than the number of
+alerts used in [16] during alert correlation. As a result, attack class correlation is
+easier to perform. The simplicity of a network penetration scenario graph resulting
+from attack classes permits the usage of simple predefined rules for network
+penetration scenario construction and prediction. In our work, by utilizing penetration
+scenarios partitioned into phases, we can also determine the extent of a network
+penetration.
+In [17], an automatic attack graph construction mechanism and an alert correlation
+technique using multi-layer perceptron (MLP) and support vector machines (SVM)
+are presented. The alerts having similar features such as same source and destination
+addresses are used to compute the correlation probability between alerts. The
+correlated alerts are then represented as a hyper-alert graph to detect a multi-stage
+attack. The generated graph combined with vulnerability and topology information is
+used for target recognition and risk assessment. In our work, attack classes instead of
+each of the alerts belonging to the different phases of a network penetration are
+correlated based on predefined rules, and the conditional probabilities of future
+attacks are predicted. A set of attribute vectors indicates the security conditions
+related to the predicted attack classes that have to be monitored.
+
+3 Network Penetration
+In this section, we describe the network penetration phases using an example
+penetration scenario and discuss some of the heuristics used for prediction.
+3.1 Network Penetration Phases
+In this research, we have considered network penetration scenarios [11] that constitute
+the attacks that an attacker employs to find the way from outside to the target host
+present inside the network. Some of the important phases of a network penetration
+and the attacks possible in those phases are discussed below.
+
+E-NIPS: An Event-Based Network Intrusion Prediction System
+
+41
+
+Reconnaissance (recon). This is the first phase in a network penetration where an
+attacker tries to gather information such as network topology, open ports, shared
+folders, user accounts, and software/hardware configuration information. DNS zone
+transfer, NSLookup, port/network scanning, operating system and web fingerprinting,
+and vulnerability scan are some the attacks used by an attacker in this phase.
+Exploitation. This phase consists of attacks against the target that exploit the
+information already gathered in the reconnaissance phase to perform attacks such as
+buffer overflow, unauthorized access, file manipulation, etc.
+Denial of Service (DoS). DoS attacks are the class of attacks that follow after a recon
+or an exploitation phase. DoS attacks cause disruptions in the services available to
+users, and hence, these attacks have to be detected as early as possible.
+t0
+
+t1
+
+t2
+
+t3
+
+t4
+
+DNS
+
+zone transfer
+
+Portscan
+
+DoS
+FTP
+
+overflow
+NSLookup
+
+Trojan
+
+Server
+crash
+
+Vulnerability
+scan
+HTTP
+
+overflow
+
+Data theft
+
+Fig. 1. An example network penetration scenario
+
+Malicious Code. In this phase, attacks such as uploading of distributed DoS agents,
+Trojan, rootkits, backdoors, virus, or worms could take place.
+For intrusion prediction, we identify attack classes within each phases discussed
+above based on the common objective that attack events are trying to attain. For
+example [18], all FTP overflow exploits like FTP CMD overflow attempt, FTP PASS
+overflow attempt, FTP USER overflow attempt, etc. are considered as one class
+named FTP overflow, and this attack class falls under the exploitation phase of a
+network penetration. Section 5.1 contains detailed information on attack
+classification.
+An example network penetration scenario is shown in Fig. 1. In this figure, we can
+see recon attack classes (DNS zone transfer and NSLookup) at time t0 and (Portscan
+and Vulnerability scan) at time t1, denial of service (DoS) and exploitation attack
+classes (FTP overflow and HTTP overflow) at time t2, malicious code attack class
+(Trojan) at time t3, and the final objective of the attacker (Server crash and Data theft)
+at time t4. The arrows in Fig. 1 indicate the causal relationships between attacks.
+Based on the attacks that have occurred at time t0 and t1, we can predict attacks
+possibly occurring at time t2. Similarly, based on the attacks detected at time t0, t1,
+and t2, we can predict attacks that might occur at time t3 and t4.
+
+42
+
+P. Kannadiga, M. Zulkernine, and A. Haque
+
+3.2 Heuristics for Intrusion Prediction
+Several heuristics are used in deciding about the attack class which has the higher
+probability of occurring in near future [11, 13]. Some of the heuristics used in this
+work are mentioned below:
+1) Port scanning is considered precursor to DoS and exploitation attacks.
+2) Vulnerability scanning is considered precursor to attacks on vulnerable software
+and hardware.
+3) Vulnerable software/hardware versions are more prone to attacks. For example,
+exploits on some of the versions of wu-ftp server/ISS web server already exist
+and can be easily used against these servers.
+4) If any software is recently reported to be vulnerable, then the chances of attacks
+on this software are higher.
+5) Recon activities against specific servers lead to attacks specific to that server. For
+example, FTP server related recon activities lead to FTP server related attacks like
+FTP overflow exploits. Similarly, recon activities on a particular system/operating
+system lead to attacks on that particular system/operating system.
+6) A newly reported worm/virus that has infected an external network has higher
+probability of attacking the network.
+Along with the general heuristics listed above other attack specific precursors are
+used to decide about the probability of a particular attack class occurring in future. For
+example, suspicious logins or login failures can lead to user account compromise and
+act as a precursor to attacks such as uploading of rootkits and system file corruption.
+
+4 E-NIPS Architecture
+Fig. 2 shows the architecture of E-NIPS. The main components are Host Activity
+Collector and Reporter (HACR), Network Activity Collector and Reporter (NACR),
+Internal Activity Database (IAD), Vulnerability Profile Database (VPD), External
+Activity Database (EAD), and Intrusion Prediction Engine (IPE). Software/hardware
+configuration and web postings/mailing lists components shown in dotted boxes indicate
+the information stored in the VPD and the EAD respectively. The HACR and NACR are
+attack events monitoring components and the IAD, the VPD, and the EAD are the storage
+components that store attack events, software/hardware configuration, and web postings/
+mailing lists respectively. The IPE is the principal intrusion prediction component.
+Host Activity Collector and Reporter (HACR). It is a probe placed on every host (1
+to n) within the network. It is used for monitoring the host for attack events such as
+system files corruption, presence of sniffers and vulnerable applications, and
+installation of rootkits/backdoors on the host. The HACRs send any detected attack
+event to the IAD component for storage.
+Network Activity Collector and Reporter (NACR). It is also a probe that can
+monitor network traffic for malicious attack events such as port/network scanning,
+DoS attacks, virus or any overflow exploit content in network traffic, communication
+between Trojan client and server, and suspicious logins. The NACR monitors traffic
+
+E-NIPS: An Event-Based Network Intrusion Prediction System
+
+43
+
+to servers such as ftp, http, rpc, snmp, smtp, and pop. It also sends any detected attack
+event to the IAD component for storage. The attack events detected in the network by
+the NACR and the attack events detected by the HACRs on every host within the
+network result in multipoint detection and provide more comprehensive attack
+detection capability to the IPS. Snort is a widely used open source network intrusion
+detection tool [18] that has been used as the suspicious network activity detector by
+the NACR of E-NIPS. Snort is a rule-based intrusion detection system that contains
+more than 1,500 attack signatures for matching against sniffed network traffic to
+detect any malicious content in the traffic. Snort generates an alert on the detection of
+any attack traffic in the network.
+HACR-2
+
+HACR-1
+
+. . .
+
+IAD
+
+Software/hardware
+configuration
+
+VPD
+
+HACR-n
+
+NACR
+
+Web postings/
+mailing lists
+
+Intrusion Prediction
+Engine (IPE)
+
+EAD
+
+Fig. 2. E-NIPS architecture
+
+Internal Activity Database (IAD). This database stores all the attack events detected
+in the hosts and the network by the HACRs and the NACR monitoring components.
+This database contains attack events that have occurred in the past to be used by the
+IPE to construct network penetration scenarios and predict future attacks.
+Vulnerability Profile Database (VPD). This database stores hardware and software
+configuration information of the internal network environment. The VPD is necessary
+to apply the heuristics discussed in Section 3.2 and is populated with data from
+vulnerability scanner tools. The VPD also stores the information of open ports,
+available services, and operating systems of every monitored host.
+External Activity Database (EAD). This database stores the data related to the
+newly reported attacks collected from external sources like web posting and mailing
+lists. The EAD data is utilized to defend against those attacks.
+Intrusion Prediction Engine (IPE). The IPE is the main prediction component of
+E-NIPS, and it is discussed elaborately in the next section.
+
+44
+
+P. Kannadiga, M. Zulkernine, and A. Haque
+
+5 Intrusion Prediction Engine
+The IPE predicts intrusions based on the events stored in the IAD and the data stored
+in the VPD and the EAD. The IPE consists of a classifier and a predictor module. The
+classifier maps detected attack event alerts to attack classes and sends the mapped list
+of attack classes to the IPE. The predictor module generates network penetration
+scenarios by correlating attack classes received by the classifier and determines the
+probability of occurrence of attack classes of future penetration phases. It also
+estimates the extent of a penetration. The two most important functional modules of
+the IPE are discussed in the following subsections.
+5.1 Classifier
+The function of the classifier module is to take the set of attack events from the IAD
+and determine the attack classes of those events. The successive occurrences of attack
+events belonging to the same attack class is considered as single occurrence to reduce
+the number of attack classes sent to the predictor module. The output from the
+classifier is a set of attack classes that are arranged according to the sequence they
+have occurred and found in the IAD.
+The number of attack events detected by the NACR and the HACRs and the
+number of potential penetration scenarios considering all the attack events present in
+the IAD are very high. As a result, it is difficult to manually generate the rules for
+prediction in the IPE. Therefore, we have grouped a set of attack events into attack
+classes based on the attack objective and commonality between those attack events. In
+Fig. 3, we can see different attack classes used by E-NIPS and the sequence they
+could occur during a network penetration. Fig. 3 shows four separate columns with
+each column representing different phases of a network penetration with possible
+attacks in the corresponding phase. For example, all the FTP server related attack
+events are grouped into four attack classes: FTP overflow attempts, specific version,
+suspicious login, and DoS attempts as shown in the second column under FTP attacks.
+All different kinds of FTP overflow exploit attack events detected by the HACRs and
+the NACR are classified as “FTP overflow” attack class. The attacks against only
+specific versions of FTP servers (wu-ftp, serv-u) are grouped under a separate attack
+class, and similarly, all kinds of suspicious login attempts (brute force login attempts,
+anonymous/guest user login) are grouped as a separate attack class.
+The first column of Fig. 3 shows attack classes belonging to initial recon phase of a
+network penetration. Port scanning, network topology detection, and specific server
+recon activities occur in this phase. The recon phase is followed by attacks against
+specific servers such as DNS, FTP, RPC, and HTTP. The attack classes belonging to
+different servers are shown in the second column. In the third column, different attack
+classes (Backdoors/DDoS, DoS, and Web application attacks) that could follow attack
+classes of the second column are shown. The final column of Fig. 3 shows the attack
+classes that could be considered as final attack objective of the attacker. Data theft or
+alteration, system malfunctions, denial of service, web pages alteration, configuration
+change, and account compromise are some of the attack classes that are possible in
+the final phase of a network penetration.
+
+E-NIPS: An Event-Based Network Intrusion Prediction System
+
+DNS
+
+recon
+Topology
+detection +
+Scanning
+
+(Backdoor/DDoS)
+
+Data theft
+
+Backdoor activity
+
+Data alteration
+
+FTP overflow
+
+Virus
+
+Malfunction
+
+Specific version
+
+Install DDoS agents
+
+(FTP attacks)
+
+Suspicious login
+FTP recon
+
+(Attack objective-1)
+
+(DNS attacks)
+DNS exploits
+
+DoS attempts
+
+45
+
+(DoS)
+
+(Attack objective-2)
+DoS
+
+FTP DoS
+
+(RPC attacks)
+RPC overflow
+RPC recon
+
+RPC AMD events
+RPC sadmin events
+RPC NFS decode
+RPC query decode
+(HTTP attacks)
+
+HTTP
+
+recon
+
+HTTP overflow
+DoS attempts
+
+(Web-application attack)
+ISS attacks
+File transfer
+File compilation
+File modification
+Directory listing
+
+(Attack objective-3)
+Webpage
+alteration
+Configuration
+change
+User account
+compromise
+
+File access .conf,
+.exe, .cgi, .asp, etc
+(DoS)
+HTTP DoS
+
+Fig. 3. Attack classes and their sequences during a network penetration as used by the IPE
+
+5.2 Predictor
+The predictor correlates the set of attack classes received from the classifier module to
+construct network penetration scenarios for the purpose of prediction. The predictor
+module consists of predefined rules to predict future attacks based on the attack
+classes received from the classifier. Each rule stores information about the set of
+attack classes and the conditional probability with which they can follow a particular
+attack class. The rules also identify the attack with the highest probability of
+occurrence using some of the heuristics discussed in Section 3.2. After a set of attack
+classes are predicted by the rules, the attribute vectors associated with the predicted
+attack classes are monitored to identify the most likely attack to follow. For example,
+after occurrence of attack class A1, in Fig. 4, the elements of the attribute vectors of
+B1, B2, B3, B4, and B5 are monitored by the HACR and the NACR. If an activity is
+detected in the elements associated with attribute vector of attack class B1, then the
+probability of B1 occurring increases. Finally, the predictor also determines the extent
+of a network penetration to indicate the attack initiation, attack progress, or attack
+objective stage of a penetration. The attack classes detected in the recon phase
+
+46
+
+P. Kannadiga, M. Zulkernine, and A. Haque
+
+indicate attack initiation stage and the attack classes that lead to system compromises
+like those shown in the second and the third column of Fig. 3 indicate attack progress
+stage. The attack classes that indicate attack objectives as shown in the fourth column
+fall into the attack objective stage of a network penetration.
+
+FTP recon (A1)
+
+FTP overflow (B1)
+Specific version (B2)
+Protocol verification (B3)
+Suspicious logins (B4)
+DoS attempts (B5)
+Backdoor activity (C1)
+Virus (C2)
+
+FTP DoS (D1)
+
+DDoS agents (C3)
+Fig. 4. A penetration scenario used by the IPE
+
+Fig. 4 shows one of the penetration scenarios taken from Fig. 3 that can be
+visualized as a graph with each attack class as a separate node and the arrows
+indicating the causal relationships between attack classes. In Fig. 4, we can see a FTP
+recon activity (A1) is a precursor to FTP server related attack classes (B1, B2, B3, B4,
+B5) which in turn leads to backdoor /virus/DDoS (C1, C2, C3) and FTP DoS (D1)
+attack classes. In this scenario, we consider B1, B2, B3, B4, and B5 are mutually
+exclusive and they follow attack class A1 with equal probability. Therefore, the
+probability of B1 occurring after A1 denoted as P(B1) is equal to 1/5, and similarly,
+P(B2), P(B3), P(B4), and P(B5) are all equal to 1/5. C1, C2, and C3 can follow
+events B1, B2, B3, and B4 with equal probability. Therefore, the conditional
+probabilities of attack class C1 following B1, B2, B3, and B4 are shown by Equation 1.
+P(C1/B1) =P(C1/B2) =P(C1/B3) =P(C1/B4) =1/3
+
+(1)
+
+The conditional probabilities such as P(C2/B1) and P(C3/B1) can also be
+calculated similarly. D1 alone follows B5 and hence P(D1/B5) equals 1. Equation 2 is
+used to calculate the probability of occurrence of attack class C1 starting from A1.
+Similarly, probabilities P(C2) and P(C3) are also calculated.
+P(C1) =P(C1/B1)P(B1)+P(C1/B2)P(B2)+ P(C1/B3)P(B3) + P(C1/B4)P(B4)
+
+(2)
+
+In many cases, subjective probabilities could be used based on the data from the
+VPD, the EPD, and the heuristics discussed in Section 3.2. The set of future attack
+
+E-NIPS: An Event-Based Network Intrusion Prediction System
+
+47
+
+classes that follow an attack class from an earlier phase along with their probabilities
+are programmed into the IPE using a set of rules of the form shown in Fig. 5. These
+rules are derived from the scenario shown in Fig. 4.
+Rule 1: A1 B1, B2, B3, B4, B5 (x1)
+Rule 2: B1|B2|B3|B4 C1, C2, C3 (x2)
+Rule 3: B5 D1 (x3)
+Fig. 5. Sample rules used in the IPE
+
+Rule 1 of Fig. 5 shows that if attack class A1 has occurred then B1, B2, B3, B4 or
+B5 could occur with probability x1. The value of x1 programmed in Rule 1 is 1/5 if
+B1, B2, B3, B4 and B5 are considered to occur with equal probability or a value based
+on subjective probability could be assigned to x1. Rule 2 shows that if B1, B2, B3, or
+B4 occur then C1, C2, or C3 could follow with probability x2. The value of x2
+programmed in Rule 2 is 1/3 if C1, C2, and C3 are considered to occur with equal
+probability or a value based on subjective probability could be assigned to x2.
+Similarly, Rule 3 of Fig. 5 shows that when B5 occurs then D1 is the most likely
+event to occur, and hence, x3 is 1 or based on subjective probability.
+Applying the types of rules shown in Fig. 5, the probability calculator generates
+penetration scenarios from the attack class list received from the classifier module.
+Suppose (A1, B1) is the attack class list received from the classifier module. Using Rule
+1 and Rule 2 of Fig. 5 the penetration scenario Scenario-A of Fig. 6 is generated. The
+probability value x4 in Scenario-A of Fig. 6 is calculated using Equation 2 considering
+the occurrence of both A1 and B1. If there exists an additional rule such as Rule 4: C1
+D1, D2, D3(x5) and (A1, B1, C1) class list is received from the classifier module then
+using Rule 1, Rule 2, and Rule 4 Scenario-B of Fig. 6 would be generated. The
+probability of occurrence of A1, B1, and C1 is considered in calculating x6 of Scenario-B.
+Scenario-A: A1 B1 C1, C2, C3 (x4)
+Scenario-B: A1 B1 C1 D1, D2, D3 (x6)
+Fig. 6. Example scenarios generated by the IPE
+
+The scenarios shown in Fig. 6 are generated from the rules (see Fig. 5) programmed
+into the IPE. However, scenarios can also be generated using similar features such as
+attack origin address, target address, and port numbers found in the attack events. These
+kinds of scenarios show the attacks originating from one source to a single or multiple
+destinations.
+
+6 Experimental Evaluation
+The prototype E-NIPS is evaluated using various commonly occurring network
+penetration scenarios. However, we explain the evaluation process in detail using only
+two penetration scenarios (see Appendix A). Scenario-I is a penetration scenario
+
+48
+
+P. Kannadiga, M. Zulkernine, and A. Haque
+
+consisting of three phases simulated using attack tools [11, 20]. These attack tools
+generate attack events belonging to different phases of the penetration scenario. The
+experimental setup for this scenario consists of a network of hosts providing different
+services and the configuration information of the network is stored in the VPD.
+Scenario-II is a penetration scenario consisting of five penetration phases based on a
+scenario observed in 1999 MIT intrusion detection evaluation project [19]. We are
+aware of the limitations of this data source [21]. However, we just have chosen the
+most commonly occurring scenario and the general limitations of this dataset do not
+affect our evaluation objective. The alerts generated by the HACR and the NACR of
+E-NIPS during simulation of these penetration scenarios are stored in the IAD and
+used for the purpose of intrusion prediction. We have observed successful
+performances of E-NIPS in both the scenarios.
+From the experimental evaluation, we have observed that the implemented IPS
+provides ample information about attack classes that could occur in future. Moreover,
+in some cases, with the help of the data from the VPD, the EPD, and the heuristics
+discussed in Section 3.2, it can also predict highly probable attack events within the
+attack class. The creation of attack classes from attack alerts have made the
+correlation and prediction tasks simpler. In the experiments, the ongoing penetration
+phase was detected and prediction was made almost instantaneously. This shows that
+the IPE provides a time window of atleast few minutes for an administrator to defend
+the network. However, in real-world scenarios, the time gap between the time at
+which E-NIPS makes prediction about a future attack event and the time when that
+future attack event is actually detected can vary from few seconds to many hours or
+days. An attacker can launch the next set of attack events according to his/her own
+convenience, and hence, predicting the time of forthcoming attack events is difficult.
+However, based on the timings observed in the attack events from the earlier phases
+of a network penetration, the time of future attacks events may be predicted using
+various forecasting algorithms [2].
+
+7 Conclusions and Future Work
+This paper presents the concepts, method, and architecture of an intrusion prediction
+system along with the implementation and evaluation of a prototype IPS based on
+various simulated network penetration scenarios. The attack events having a common
+objective are grouped into one attack class, and instead of every attack event, we have
+considered attack classes during intrusion prediction. The sequence in which the
+attack classes occur during a network penetration and the conditional probability with
+which they occur is programmed into the prediction engine of the IPS as a set of
+predefined rules. Intrusion prediction is made considering various parameters related
+to the precursors to future attacks, vulnerability profile, reports of external worm/virus
+activities, and a set of heuristics. The IPS consists of host and network monitors that
+provide multi-point detection of attack events.
+The evaluation results show that this IPS can predict future attack events with
+reasonable accuracy and also estimate the extent of a penetration. Attack classes are
+used to reduce the number of penetration scenarios that have to be programmed into the
+prediction engine of the IPS. Attack class correlation and intrusion prediction provides
+
+E-NIPS: An Event-Based Network Intrusion Prediction System
+
+49
+
+information of a network penetration and helps to defend the network. This tool can
+help in testing network penetrations and addressing the security risks of a network.
+E-NIPS can construct and predict only the network penetration scenarios
+programmed as predefined rules in the IPE. Without sufficient knowledge of existing
+network penetrations, it is difficult to program these rules. The proposed IPS would not
+be very useful if there is not enough time gap between network penetration phases like
+in zero day attack scenarios. In future, we intend to investigate the advantages of using
+various prediction models such as neural networks, decision tress, and markov chains in
+the prediction engine. We will also develop time-based prediction engine for forecasting
+seasonality, trends, and cycles in intrusion data. Predicting the time of occurrence of
+future attack events will also be considered in the time-based prediction engine.
+
+Acknowledgments
+The authors would like to thank Dr. Lingui Wang of Concordia University, Canada
+for his comments on an initial version of this work. This research work is partially
+funded by Bell Canada through Bell University Laboratories (BUL) and the Natural
+Sciences and Engineering Research Council (NSERC) of Canada.
+
+References
+1. Mukherjee, B., Heberlein, L.T., Levitt, K.N.: Network intrusion detection. IEEE
+Network 8, 26–41 (1994)
+2. Arsham, H.: Time-critical decision making for business administration. University of
+Baltimore, Maryland, USA (Accessed January 2006), http://home.ubalt.edu/ntsbarsh/
+Business-stat/stat-data/Forecast.htm
+3. Ye, N., Li, X., Chen, Q., Emran, S.M., Xu, M.: Probabilistic techniques for intrusion
+detection based on computer audit data. IEEE Transactions on Systems, Man, and
+Cybernetics-Part A: Systems and Humans 31(4) (2001)
+4. Ye, N., Chen, Q., Borror, C.M.: EWMA forecast of normal system activity computer
+intrusion detection. IEEE Transaction on Reliability 53(4) (December 2004)
+5. Ramasubramanian, P., Kannan, A.: Quickprop neural network ensemble forecasting
+framework for a database intrusion prediction system. Neural Information Processing Letters and Reviews 5(1) (2004)
+6. Pikoulas, J., Buchanan, W.J., Mannion, M., Triantafyllopoulos, K.: An agent-based
+bayesian forecasting model for enhanced network security. In: Proc. of the Eighth Annual
+IEEE International Conference and Workshop on the Engineering of Computer-Based
+Systems-ECBS, pp. 247–254. Los Alamitos, CA, USA (April 2001)
+7. Govindu, S.K.: An intelligent mobile agent-based intrusion forecasting system. March
+2005 (Accessed January 2006), http://www.securitydocs.com/library/3110
+8. Hu, P., Heywood, M.I.: Predicting intrusions with local linear models. In: Proc. of the
+IEEE International Joint Conference on Neural Networks, vol. 3, pp. 1780–1785 (2003)
+9. Maner, W., Joyce, S.: WXSYS Weather Lore + Fuzzy Logic = Weather Forecasts.
+Presented at the 1997 CLIPS Virtual Conference, 1997 (Accessed January 2006),
+http://web.cs.bgsu.edu/maner/wxsys/wxsys.htm
+10. Zulkernine, M., Haque, A., Desroches, M.: Will I be attacked - forecasting network
+intrusions. In: The 16th IEEE International Symposium on Software Reliability
+Engineering (ISSRE), Chicago, Illinois, USA, vol. 4, pp. 9–10 (November 2005)
+
+50
+
+P. Kannadiga, M. Zulkernine, and A. Haque
+
+11. McClure, S., Scambray, J., Kurtz, G.: Hacking Exposed, 5th edn. Mc-Graw Hill, U.S.A
+(2005)
+12. Teng, H.S., Chen, K., Lu, S.C.: Security audit trail analysis using inductively generated
+predictive rules. In: Proc. of the Sixth Conference on Artificial Intelligence Applications,
+New Jersey, pp. 24–29 ( March 1990)
+13. Phillips, C., Swiler, L.P.: A graph-based system for network-vulnerability analysis. In:
+Proc. of the 1998 Workshop on New Security Paradigms, pp. 71–79. Virginia, U.S.A
+(1998)
+14. Levitt, K., Templeton, S.J.: A requires/provides model for computer attacks. In: Proc. of
+the 2000 Workshop on New Security Paradigms, Cork, Ireland (February 2001)
+15. Cuppens, F., Miege, A.: Alert correlation in a cooperative intrusion detection framework.
+In: Proc. of 2002 IEEE Symposium on Security and Privacy, pp. 202–215. Oakland,
+California, USA (2002)
+16. Wang, L., Liu, A., Jajodia, S.: Using attack graphs for correlating, hypothesizing, and
+predicting network intrusion alerts. Computer Communications 29(15), 2917–2933 (2006)
+17. Zhu, B., Ghorbani, A.: Alert correlation for extracting attack strategies. International
+Journal of Network Security 3(3), 244–258 (2006)
+18. Roesch, M.: Snort – lightweight intrusion detection for networks. In: Proc. of USENIX
+LISA 99, Seattle, Washington, USA (1999)
+19. Lincoln, M.I.T.: Laboratory, 2000 DARPA intrusion detection scenario specific datasets
+(Accessed January 2006), http://www.ll.mit.edu/IST/ideval/data/2000/2000_data_index.html
+20. Security Forest :ToolTree (Accessed August 2006), http://www.securityforest.com/
+wiki/index.php/Category
+21. McHugh, J.: Intrusion Detection Systems: A Critique of the 1998 and 1999 DARPA Offline Intrusion Detection System Evaluation as Performed by Lincoln Laboratory. ACM
+Transactions on Information and System Security 3(4), 262–294 (2000)
+
+Appendix: A
+A.1 Scenario-1
+The output generated by the predictor module of the IPE after each phase of ScenarioI is shown in Fig. 7. The time t1, t2, and t3 represented in HH:MM:SS format in
+Fig. 7 indicate the start of each penetration phase. The generated alerts are mapped
+into four attack classes A0, E7, G4, and G5 by the classifier module.
+In Phase-1, the attacker performs network scanning and determines the presence of
+web server indicated by open port 80. RPC attacks, FTP attacks, and HTTP attacks
+are predicted by the IPE to occur in the next phase since the VPD is programmed for
+this experiment to indicate only these services running on the network. In Phase-2,
+indicated by WEB file access (E7) attack class, a potential vulnerable application file
+is accessed by the attacker during a buffer-overflow exploit attack on web server. The
+attack classes following E7 and related to web server attacks are predicted. In
+Phase-3, indicated by ATK-RSP directory listing attempt (G4) attack class, directory
+listing attempt is detected in the response traffic indicating the compromise of the web
+server from the attack from Phase-2. Among the attack classes predicted after
+Phase-3, ATK-RSP command-execution attempt (G5) is found to be executed by the
+attacker.
+
+E-NIPS: An Event-Based Network Intrusion Prediction System
+Phase-1
+
+A0
+
+Phase-2
+
+Phase-3
+
+*FTP
+
+E8
+
+*HTTP
+(E7)
+
+E9
+
+*RPC
+
+E10
+
+t1:12:53:02 t2:13:20:19
+
+51
+
+G4
+t3:13:47:15
+
+G5
+M1
+
+A0 - Scanning, *FTP – all FTP attacks, *HTTP – all HTTP attacks, *RPC – all RPC attacks, E7 WEB file access, E8 - WEB remote-connect attempt, E9 - WEB dos attempt, E10 - cross-scripting,
+G4 - ATK-RSP directory listing attempt, G5 - ATK-RSP command-execution attempt, M1 - DoS
+attempt.
+
+Fig. 7. Output from the IPE for Scenario-I after each phase of penetration
+
+A.2 Scenario-II
+The output generated by the predictor module of the IPE after each phase of ScenarioII is shown in Fig. 8. Here, Phase-1 and Phase-2 fall in the attack initiation stage,
+Phase-3 and Phase-4 are called attack progress stage, and Phase-5 is considered attack
+objective stage of a network penetration. The alerts were mapped into five attack
+classes A0, C6, C2, J1, and D0 by the classifier module of the IPE.
+In Phase-1, the attacker performs network scanning using ICMP echo-requests and
+from the received ICMP echo-replies determines the hosts and services that are
+
+Phase-1
+
+Phase-2
+
+Phase-3
+
+F1
+
+*FTP
+A0
+
+Phase-4
+
+*HTTP
+
+C2
+
+F2
+
+D0
+
+*RPC
+
+C11
+
+J1
+
+O1
+
+(C6)
+t1:14:51:36 t2:15:08:07
+
+t3:15:33:10
+
+J3
+t4:15:50:01
+
+A0 - Scanning, *FTP – all FTP attacks, *HTTP – all HTTP attacks, *RPC – all RPC attacks,
+C6 - RPC sadmin query decode, C2 - RPC sadmin overflow, C11 - RPC exploits, F1 Backdoor activity, F2 - Virus, J1 - RSH exploit, J3 - REXEC overflow, D0 - DoS attempt, O1
+- Data theft.
+
+Fig. 8. Output from the IPE for Scenario-II after each phase of penetration
+
+52
+
+P. Kannadiga, M. Zulkernine, and A. Haque
+
+running within the network. RPC attacks, FTP attacks, and HTTP attacks are
+predicted by the IPE since the VPD is programmed for this experiment to indicate
+only these services running on the network. In Phase-2, indicated by RPC sadmin
+query decode (C6) attack class, the hosts discovered in Phase-1 are probed to detect if
+those hosts are running “sadmin” administration tool. The intention of the attacker
+being to use sadmin exploits against those hosts, and hence, RPC sadmin overflow
+(C3) and other RPC exploits (C11) attack classes are predicted.
+In Phase-3, indicated by RPC sadmin overflow (C2), the attacker attempts sadmin
+remote buffer overflow exploit on those hosts with sadmin tool and creates new root
+user accounts on the hosts on which the exploits are successful. The system is
+compromised at this stage, and therefore, Backdoor activity (F1) and Virus (F2)
+attack classes, remote connection attack classes RSH exploit (J1) and REXEC
+overflow (J3), and DoS attempt (D0) attack classes are predicted to follow. In
+Phase-4, indicated by RSH exploit (J1), the attacker telnets to the compromised hosts
+and uploads DDoS agent on the systems that are compromised in the previous phase.
+DoS attempt (D0) and Data theft (O1) attack classes are predicted to follow this
+phase. In Phase-5, indicated by DoS attempt (D0), the attacker launches DDoS attacks
+on victim host using DDoS agents installed in the previous phase.
+
+

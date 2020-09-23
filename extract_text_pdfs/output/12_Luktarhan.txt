@@ -1,0 +1,163 @@
+Multi-stage Attack Detection Algorithm Based on Hidden Markov Model
+Nurbol Luktarhan1, Xue Jia1, Liang Hu2, and Nannan Xie2,
+1
+*
+
+Information Science and Engineering College, Xinjiang University, Urumqi, China 2 Computer Science and Technology College, Jilin University, Changchun, China jienn10@jlu.edu.cn Abstract. With the growing amount and kinds of network intrusion, multi-stage attack is becoming the one of the main methos of the network security threaten. The hidden Markov model is a kind of probabilistic model, which is widely used in speech recognition, text and image processing. In this paper, a Multistage Attack Detection Algorithm Based on Hidden Markov Model is proposed.And inorder to improve the performance of this algorithm,aother algorithm aims at false positive filter is also put forward. Experiments show that the algorithm has good perfomance in multi-stage attack detection. Keywords: Hidden Markov Model, Multi-stage attack, False positive Filter.
+
+1
+
+Introduction
+
+Nowadays, with more and more network intrusion events, the importance of network security is getting more and more attention. Symantic's reports in July 2010[1] and April 2011[2] show that the type of network intrusion has transformed from the original "pure" Trojan horses and viruses into complex attacks of the combination of the "Internet", "Teamwork" and "Commercial Interests", especially the multi-stage attacks, to achieve a network intrusion, which not only threats networks but also difficult to predict. It is such a huge challenge to the existing equipments of security detection. In this case, the detection of multi-stage attack has become a hot research topic in network security field. Commonly the process of multi-stage attack is composed of a number of interrelated attack steps, the previous one being the occurring condition of the latter one which made it more difficult to detect. To solve the problem that it is difficult to detect multi-stage attack, researchers put forward intrusion alert correlation and attack scenario recognition [3], which is aimed to the effective identification of multi-stage attack scenario. There are some representative research of attack intention recognition technology, such as the event correlation method based on attack premise and result[4], Hidden Colored Petri-Net model[5] and similarity analysis. These methods have generally achieved better research results, but the costs of establishment of the prior knowledge base and the selection of large training samples are large[6]. Hidden Markov models(HMM) is one of the methods which achieve a better effect in the field of speech recognition, and HMM can modeling the complex attacks and
+*
+
+Corresponding author.
+
+F.L. Wang et al. (Eds.): WISM 2012, LNCS 7529, pp. 275­282, 2012. Š Springer-Verlag Berlin Heidelberg 2012
+
+276
+
+N. Luktarhan et al.
+
+has a better classification ability of attack sequence[7]. In this paper, the application of HMM in the multi-stage attack detection is analysed, and an multi-step attack detection algorithm based on HMM is proposed. Experiments show that this method can effectively recognize the multi-stage attack.
+
+2
+2.1
+
+Related Works
+Typical Methods of Multi-stage Attack Detection
+
+A number of relational analysis methods have been put forward in the research of security event correlation analysis, but there are few typical and influential methods. Wang Li introduces several typical methods of security event correlation [3]: A Correlation polymerization method based probability similarity It is a quantitative method, which makes correlation aggregation on security events, can be used for the analysis of real-time security event aggregation correlation. The method was proposed by Valdes etc. in U.S. scientific research EMERALD[8]. Since it uses quantitative calculation, the main advantage of this method is avoiding the complexity of define formulation correlation, and it performs well in aggregating some alarms with high similarity. B Cross-correlation method based on machine learning Researchers from IBM believe that in large number of false positives, the majorities are resulted from quite a few causes. Classify the alarms resulted from the same cause and then find the cause, large quantities of false positives can be removed, and the number of alarms can be reduced. Based on this, Pietraszek etc. proposed a IDS false alarms removal method based on machine learning[9] . This method has good practical applicability, has been applied to actual products and can precisely analyses false alarms while it needs a lot of manual intervention and demands professional quality of the security analysts. C Attack scenario construction method based on causes and effects This method was first proposed in 2010 by Templeton et al.[10]. The basic idea is to associate two security incidents by comparing two incidents, the consequence of one incident that happened earlier, and the prerequisite of the incident that happened later. The advantage of this method is that new attacks formed by the combination of different attacks can be identified without knowing the whole attack. The deficiency is that those attacks cannot be handled without knowing the causes and effects of the attack, in addition, the consumption of computing resources is larger. 2.2 HMM
+
+HMM is a statistical model which is widely used in the fields of text, image, voice processing and so on. It is developed from the Markov chain[11]. HMM is a double random process, which contains a Markov chain with a hidden state transition Q= { q1, q2, ... , qt, ... ,qT} (qt is the state of system at time t), and a random observation sequence O= { O1 , O2, ... , Ot, ... ,OT}(Ot is the observed values of the system at time t) . The state transition process of Q can only be inferred through the observation sequence O.
+
+Multi-stage Attack Detection Algorithm Based on Hidden Markov Model
+
+277
+
+The complete HMM consists of five features[6]:N, number of state, Corresponds to a finite state set S = { S1, S2, ... , SN};M, total number of observations, corresponds to finite set of observations O={V1, V2, ..., VM};, the initial state distribution;A, State transition probability;B, the probability of the observed values generate. This Markov model consists of two stochastic processes: One is the Markov process, also known as the basic random process, describing the transitions between the states. The other random process describe the statistical relationship between the state and the observed values. Complex network attacks always can be divided into several stages, each stage depends on the results of the previous stage, the conversion of the attack stages meet the characteristics of Markov. Each stage of the attack can achieve its goal through a variety kinds of ways, which lead to the multiple alarm events, and some alarm events may appear in more than one attack step. There is no mapping relationship between attack steps and alarming time. In a certain moment, which kind of attack, which step of a attack event can not be know exactly, it needs to be inferred from more than one alarm time. There is good correspondence between attack steps, alarm time and the HMM state.
+
+3
+3.1
+
+Multi-stage Attack Detection Algorithm Based on HMM
+The Basic Definition
+
+Definition 1: A hidden Markov model is a triplet , A, B .  = (i ) Initialized B = (bij ) probability vector A = (aij ) State transition matrix Pr( xi | xj )
+
+  P ( y | x ) Confusion matrix 
+r i j
+
+
+
+
+
+
+
+i
+
+i - 1
+
+ 
+
+
+
+Every probability in the state transition matrix and confusion matrix are independent of time, that is, when the system evolution, the matrix does not change with time and this is the model that used in proposed model in the next part.
+
+
+
+Definition 2: Attack scenario model set
+
+The model expresses the probability of an observed sequence Definition 3: appear in the system. 3.2 The Algorithm Description
+
+
+
+
+
+Input Alarm sequence Output Probability of occurrence of intrusion scenarios P Parameter
+
+ 
+
+Hidden Markov model
+calculate
+
+Step1. Training a hidden Markov model for each attack scenario Step2. Get a collection of an attack scenario model Step3. Let i = 1,if i<n
+
+278
+
+N. Luktarhan et al.
+
+Step4. Find the largest corresponding to the attack scene , that is the scene of the attack happened currently. Step5. End. Training Hidden Markov Models for each attack, we need to collect attack scene data, which can be used to train two attack scenarios. In the determination of hidden Markov model parameters, since each step based on the previous step attack, according to the means of attackers and the familiarity of the target network, some attack steps can be omitted. The initial probability is set as a descending sequence accord to the attack steps, so the initial probability of a previous attack step is large than the follow one. , make the alarm sequence as the observation After define the parameters sequence, use the above algorithm, can calculate the probability that an alarm sequence appearing in this model, as the probability of occurrence of this intrusion. 3.3 Performance Optimizing with False Positive
+
+Intrusion detection technology has some limitations, this is an important reason to cause false positives.The reason for the high rate of intrusion detection system false positive can be summarized as follows:caused by the specific topology of the network itself,caused by the specific application protocol,caused by the special equipment,caused by network intrusion detection system's vulnerability.The introduction of intrusion detection system false alarm filter is the method to improve the effection of multi-step attack to identify. Definition 4: By listing all possible hidden state sequences and calculating corresponding probabilities of each combination to find the most possible hidden state sequence. The most likely hidden state sequence is a combination which makes the below probability biggest : Pr (observed sequence | hidden state combination). For example, the alarm sequence O = {"alert category ID1","alert category ID2 "," alert category ID3 "} shows the observed sequence, The most likely hidden state sequence is the one corresponds to the maximum probability of the following probabilities,which expressed as: Pr (alert category ID1 "," alert category ID2 "," alert category ID3 "| false alarm, false, alarm, false alarm), Pr (alarm category ID1", "alert category ID2","alert category ID3 "| false, alarm, false, alarm, attack), ..., Pr ("alert category ID1","alert categoryID2", "alert category ID3" |attack, attack, attack). The Algorithm Description: Inpute: alert file that caused by intrusion detection system. Outpute: Alarm sequence Q Q1 Q2 ......Qn ,the alert category that output by intrusion detection system. Parameter: Hidden Markov model HMM{M N A B pi}.The total time value T; alarm feature observation sequence O (O1, O2,, ...... On), the name of the initial alert ID value."
+
+  
+
+   
+
+Multi-stage Attack Detection Algorithm Based on Hidden Markov Model
+
+279
+
+Step1. Declares a local probability delta, so that for each i (1iN) make the delta [1] [i] = pi[i]*B[i][O[1]], through the product of the initial probability of hidden state and the corresponding observation probability, computing the local probability when t = 1. Step2.t increase 1,make j=1,make j cycles N times, in every cycle, make i=1 cycles N Times, computing delta[t-1][i]*(phmm->A[i][j]),and reached the maximum value Qt = MAXtj; Step3. If t is less than or equal to T, Goto Step2: Step4. According to the most likely state path backtracking in the entire grid. when backtracking finishied, will generate the observed sequence that most likely alert to hidden state sequence Q. Step5. In the algorithm,step2 determine the most likely path to reach the next state, And make the record about how to reach the next state. Specifically, First, by examining the produnct of all of the transition probability and the maximum partial probability obtained in the prebious step, And then record the biggest one. Also includes trigger this probability state in the previous step. Step 3 Make sure the t=T the most likely hidden state when the system complete.
+
+4
+
+Experiments and Evaluation
+
+Experiments were conducted using the LLDOS1.0 and LLDOS2.0 datasets in order to check the performance of the proposed approach for Multi-stage attack detection. The LLDOS1.0 and LLDOS2.0 dataset are extension of the DARPA2000 dataset, which is prepared and managed by MIT Lincoln Labs. The evaluation criteria Correct Rate is defined as "the number of correlation alerts detected/ the total number of correlation alerts". 4.1 Experiment Result
+
+(1) Attack detection test It can be seen from the figure 1 that the probability of multi-step attack scenario for LLDOS1.0 are increasing,and the probability of occur LLDOS2.0.1 multi-step attack scenario is maintained at the above of a steady data. (2) The algorithm performance with and without false positive filter In order to explore the effection of the false alarm to the result of the test,based on the preliminary work, in the following experiment,false positive filter module to join or remove from the algorithm ,under the two cases,compare the effection of multi-step attack scenario recognition algorithm. Using the Intrusion scenario analysis module to analyze Snort alerts.we use the data to training and testing that the data used in the simulates attack scenarios in the previous section.These attack scenarios are belong to the same type,so it should be regarded as the training in an attack scene.The results predicted value of intrusion scene recognition using the testing data are close to an upward trend.the scene recognition results without using the false alarm filter module shown in Figure 2. Because there are a large number of false positive information, so we could not analyze the occurrence was what kind of attack scenarios.
+
+280
+
+N. Luktarhan et al.
+
+(a)
+
+(b)
+
+Fig. 1. Result of multi-stage attack detection(b is Bezier Curve)
+
+(a)
+
+(b)
+
+Fig. 2. Result of multi-stage attack detection without false positive filter(b is Bezier Curve)
+
+(a)
+
+(b)
+
+Fig. 3. Result of multi-stage attack detection with false positive filter(b is Bezier Curve)
+
+Multi-stage Attack Detection Algorithm Based on Hidden Markov Model
+
+281
+
+Figure 3 is the scene recognition results using the false alarm filter module and the corresponding Bezier curves.From these two graphs can be seen,In-depth with the attack in the process of Scene Recognition with the false alarm filter module,The calculated probability value of corresponding attack scenario is also increasing.When the entire attack scene is completed, the corresponding probability of occurrence of the attack scene is close to 1. The tests of mark the correct rate of attack steps also using the cross-comparison approach, Table 1 is ten times the cross on the results .It can be seen that,in most,the false alarm filter module to improve the correct rate of attack steps marked intrusion scenario analysis.
+Table 1. Comparison of correct rate No. 1 2 3 4 5 6 7 8 9 10 Correct rate without false positive filter 86.08% 88.89% 92.29% 96.27% 98.39% 92.73% 94.63% 95.67% 91.10% 93.05% Correct rate positive filter 99.98% 99.96% 95.00% 99.76% 96.81% 95.00% 94.96% 94.49% 99.70% 95.06% with false
+
+4.2
+
+The Basic Definition Result Analyse
+
+From the above experiments, we come to the conclusions: (1)The multi-stage attack detection algorithm based on HMM has been proposed in this paper can effectively identify the multi-step attack scenarios. (2)Comparing the algorithm with adding the false positive filter function, we can see that the detection rate is different.
+
+5
+
+Conclusion
+
+In this paper, we use Hidden Markov Model to network intrusion, and propose an algorithm to achieve multi-stage attack detection. The method can detect the defined multi-step attack. It reduce the computing amout relatively and get high accuracy. Because we consider the entire attack sequence other than single step attack, the algorithm we proposed have good validity in multi-stage attack detection. In future work, we will try this method in the online intrusion detection systems which developed by our team, and evaluate its performance in a real network environment, and given the demo of the practical application of this approach, and provide the online experimental data of the intrusion alert correlation.
+
+282
+
+N. Luktarhan et al.
+
+Acknowledgment. This work is supported by the National Grand Fundamental Research 973 Program of China under Grant No. 2009CB320706, the National High Technology Research and Development Program(863) of China under Grant No. 2011AA010101, the National Natural Science Foundation of China under Grant No. 61073009 and 61163052, Program of XinJiang University Doctorial Start Foundation No BS110126.
+
+References
+1. Symantec Global Internet Security Threat Report trends, http://eval.symantec.com/mktginfo/enterprise/white_papers/ bwhitepaper_internet_security_threat_report_xiv_ 04-2009.en-us.pdf 2. Symantec Internet Security Threat Reaport, http://www.symantec.com/zh/cn/theme.jsp?themeid=istr 3. Li, W.: Study on Method of network Multi-stage Attack Plan Recognition, Wu Han (2007) 4. Lindqvist, U., Porras, P.A.: Detecting computer and network misuse throughproductionbased exstemsy system toolset (P-BEST). In: Proceedings of the IEEE Comuter Society Symposium on Research in Security and Privacy, pp. 146­161. IEEE Press, Washington, D.C. (1999) 5. Liang, Y., Zhou, J., Yan, P.: Network Intrusion Detection System Based on CPN and Mobile Agent. J. Computer Engineering 16, 106­108 (2003) 6. Sun, Y., Zhong, Q., Su, J.: Research on Intention Recognition Based on HMM. J. Computer Engineering & Science 29(8), 19­22 (2007) 7. Balthrop, J., Esponda, F., Forrest, S., et al.: Coverage and Generalization in an Artificial Immune System. In: Proceedings of the Genetic and Evolutionary Computation Conference, pp. 3­10. Morgan Kaufmann, New York (2002) 8. Valdes, A., Skinner, K.: Adaptive, Model-Based Monitoring for Cyber Attack Detection. In: Debar, H., Mé, L., Wu, S.F. (eds.) RAID 2000. LNCS, vol. 1907, pp. 80­92. Springer, Heidelberg (2000) 9. Pietraszek, T., Tanner, A.: Data mining and machine learning-Towards reducing false positives in intrusion detection. Information Security Technical Report 10, 169­183 (2005) 10. Templeton, S.J., Levitt, K.: A requires/provides model for computer attacks. In: Proceedings of the New Security Paradigms Workshop 2000, Cork Ireland, pp. 31­38 (2000) 11. Zhong, A.M., Jia, C.F.: Study on the application of hidden Markov models to computer intrusion detection. In: Proceedings of the 5th World Congress on Intelligent Control and Automation, pp. 4352­4357 (2004) 12. Chen, X., Wen, Z.: The Research on Network Intrusion Detection Method Based on RBFHMM. J. Network Security 1, 9­11 (2011)
+
+

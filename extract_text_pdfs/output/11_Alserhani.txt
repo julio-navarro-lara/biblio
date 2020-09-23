@@ -1,0 +1,973 @@
+2011 International Conference on Advanced Information Networking and Applications
+
+Event-based alert correlation system to detect SQLI activities
+1
+
+Faeiz Alserhani
+
+2
+
+Monis Akhlaq
+
+3
+
+Irfan U Awan
+
+4
+
+Andrea J Cullen
+
+Informatics Research Institute
+University of Bradford
+BD7 1DP, United Kingdom
+{ f.m.f.alserhani 1, m.akhlaq22, i.u.awan3, a.j.cullen4}@bradford.ac.uk
+identified that most of attacker activities consists of multiple
+steps (attack scenario) and occur in a certain time (attack
+window). Identification of such strategy can lead to the
+recognition of attack intensions and also prediction of
+unknown attacks. Some simple analysis tools have been
+developed to generalize these alerts based on attack classes
+[3].
+
+Abstract— Alerts correlation techniques have been widely used
+to provide intelligent and stateful detection methodologies. This
+is to understand attack steps and predict the expected sequence
+of events. However, most of the proposed systems are based on
+rule –based mechanisms which are tedious and error prone.
+Other methods are based on statistical modeling; these are
+unable to identify causal relationships between the events.
+In this paper, we have identified the limitations of the
+current techniques and propose a model for alert correlation
+that
+overcomes
+the
+shortcomings.
+An
+improved
+“require/provide” model is presented which established a
+cooperation between statistical and knowledge-based model, to
+achieve higher detection rate with the minimal false positives. A
+knowledge-based model with vulnerability and extensional
+conditions provide manageable and meaningful attack graphs.
+The proposed model has been implemented in real-time and has
+successfully generated security events on establishing a
+correlation between attack signatures. The system has been
+evaluated to detect one of the most serious multi-stage attacks
+in cyber crime – SQLIA (SQL Injection Attack). Typical
+SQLIA steps are analyzed within the realm of simulated
+malicious activities normally used by cyber criminals. The
+system has efficiently established a correlation in attack
+behaviors and has generated an attack map. The map can be
+used to discretely analyze the correlated attack activities which
+in other case may go undetected thus facilitating the multistage attack recognition process.
+Keywords-Network intrusion detection systems;
+correlation; multi-stage attac; SQL Injection
+
+I.
+
+Over recent years, one of the most common and risky
+threats is SQLIA [14], which cause access to databases and
+sensitive information. Vulnerable web applications are
+exploited to execute arbitrary transactions on database
+server bypassing authentications. SQLIA occurs when a
+vulnerable Web application passes data supplied by end
+users without validation. The utilized backend database
+trusts the information sent by the application and an attacker
+can craft a string which is syntactically correct in a query
+statement. However, the statement semantics is totally
+compromised resulting in a very different query from the
+intended by the developer.
+IDS can be used to mitigate the risk of SQLIA and to
+protect against data loss either using signature-based or
+anomaly-based systems. Application firewalls, also has been
+used to block suspicious crafted HTTP requests. It has been
+argued that such systems are not reliable to protect against
+such attacks for two reasons: the first is the existence of
+evasion techniques that are employed to trick signaturebased system. These techniques provide endless variations
+of the same attack and allow hackers to bypass all IDS
+systems. The second reason is that zero-day attacks are not
+detected by such systems, simply because they have no
+available signature. Anomaly-based systems can detect 0day attacks however, they produce high rate of false
+positives and cannot be a practical solution for prevention
+systems. Evasion techniques can be avoided using a wellcoded signatures and regular expressions such as Perl
+regular expressions supported by Snort. Even though,
+unseen attacks are not detected, there are still new variations
+of existent known attack. Hence, any attack consists of
+several stages can be used with confidence as an indication
+of intrusion.
+
+Alerts
+
+INTRODUCTION
+
+The effectiveness of any NIDS depends on its ability to
+recognize different variations of cyber attacks. The current
+implementation of intrusion detection systems (commercial
+and open-source) is employing signature-based detection
+mechanisms. In addition to these, few statistical techniques
+are also used for detection process. The main task of
+signature-based systems is to inspect the network traffic and
+perform pattern matching to detect attacks and generate
+alerts. The systems generates large number of alerts
+everyday and make the job of administrator difficult as the
+person has to sift the entire alert log to find out actual
+attacks. Quality of these alerts is also debatable particularly
+if the majority is false positives. For this reason, high-level
+and real-time analysis techniques are needed. Potentially a
+more suitable way of analysis is discovering logical
+connections between isolated alerts. It has been practically
+1550-445X/11 $26.00 © 2011 IEEE
+DOI 10.1109/AINA.2011.102
+
+It has been observed that SQL attack is performed in
+organized stages, follows a predefined sequence, and occurs
+in temporal order. Some of involving actions will be missed
+due to using obfuscation techniques or missing the
+175
+
+appropriate signatures. Moreover, large number of false
+alarms that are generated possibly by intension to cover the
+real scenario, they may flood the IDS. In this work, we
+employ MARS correlation model[5] to provide a global
+view of intruder behavior by aggregating and correlating
+only relevant alerts. Even supposing that some alerts are
+missed by security systems, it will not affect drawing the
+whole attack map.
+
+technique is used to generate correlation rules based on
+temporal and content constraints. The [12] adopted a
+classical sequential mining method GSP [17] to find the
+maximal alerts sequence and then to discover the attack
+strategy. The limitation of their work is the use of only
+attack class and temporal as features.
+On the other hand, scenario-based modeling is based on
+manual knowledge acquisition that specifies intrusion steps
+by experts. Scenario libraries are used to build the model
+and to discover the logical connections between alerts.
+LAMBDA [7] is an intrusion specification language to
+describe the conditions and effects of an intrusion in
+connection to the variable state of the victim system.
+Similarly, in STATL [18] language, sequence of events
+conducted by the attacker can described to express multistage attack. However, these approaches need a manual
+description of possible attacker’s behavior and if a single
+step is missed the whole behavior go undetected.
+
+The rest of this paper is organized as follows: section 2
+presents the related work and section 3 provides a
+background of provides/requires model. Section 4 gives an
+overview of MARS model [5] and in Section 5 we analyze
+SQLIA. In section 6 we present the experimental results, and
+then we conclude in section 7.
+II.
+
+RELATED WORK
+
+Alerts clustering and correlation techniques have been
+employed to provide a global view of attacker’s behavior by
+analyzing low-level alerts produced by the IDS sensors. The
+main objective of alerts correlation is to build an abstract
+modeling of alerts by generalizing the detected events
+instead of the current specific modeling. The constructed
+inference will progress even in case of unforeseen attacks.
+Different approaches have been utilized to build the
+correlation models[4], and can be categorized into three
+main disciplines: probabilistic approaches, scenario-based
+approaches and pre/post conditions approaches. The
+probabilistic approaches are inspired from anomaly-based
+intrusion detection systems where prior knowledge is not
+required. In this category, relations between incurred events
+are computed statistically providing automatic knowledge
+acquisition. Data mining, clustering, association rules
+techniques are examples of these approaches. The work in
+[2] presented a probabilistic approach to provide unified
+mathematical framework that perform a partial matching of
+features. Features are extracted and minimum similarities are
+computed and weighted. K Julisch in [10] proposed alarm
+clustering to discover the root causes of different alarms.
+The aim was to reduce the volume of alarms to manageable
+size. Even though, these methods are useful for alert fusion
+and statistical purposes but they fail to discover the causal
+connection between alerts.
+
+The third category is the pre/post conditions techniques
+which are based on the notion that the older alerts prepare
+for the later ones. These approaches require specifying the
+criterion used to discover the relations between alerts and
+the weights of such relations. Early, [19] proposed a
+“require/ provide” capabilities model using attack
+specification language “JIGSAW”. However, the exact
+matching between “require” and “provide” conditions is
+employed causing different variation of the same behavior is
+not detected. [6] proposed MIRADOR correlation approach
+for alert clustering, merging and then correlation. Explicit
+correlation of events based on security experts is used to
+express the logical or topologic links between events. Attack
+is specified using five fields and based on the language of
+LAMBDA [7]. Partial matching techniques are adopted to
+build the model. In addition to explicit correlation, implicit
+correlation is used to overcome possibly missing events.
+Authors in [15] and [16] proposed alert correlation
+model based on prerequisites and consequences of
+individual detected alerts. A knowledge database “Hyperalert Type Dictionary” contains rules that describe the
+conditions where prior behaviors prepare for later ones.
+Attack strategy is represented as a Directed Attack Graph
+(DAG) with constraints on the attack attributes considering
+the temporal order of the occurring alerts. The nodes of the
+DAG represent attacks and the edges represent causal and
+temporal relations. Similarities between these strategies are
+measured to reduce the redundancy. A technique of
+hypothesizing and reasoning about missing attacks by IDS is
+presented to predict attribute values of such attacks. The
+significance of their work is the reduction of the huge
+number of security incidents and to report a high-level view
+for the administrator. However, the proposed system is
+useful as a forensic tool where it perform offline analysis. In
+addition, building the knowledge database containing rules
+
+Recently the efforts in [1], [9] and [24] employed
+different data mining algorithms for real-time correlation to
+discover multi-stage attacks. Off-line attack graph is
+constructed using manual or automatic knowledge
+acquisition and then attack scenarios are recognized by
+correlating the collected alerts in real-time. The incoming
+step of an attack can be predicted after detection of few
+steps of attack in progress. In [24] association rule mining
+algorithm is used to generate the attack graph from different
+attack classes based on historical data. “candidate attack
+sequences” are determined using a sliding window. In [12]
+AprioriAll algorithm which is a sequential pattern matching
+
+176
+
+of the applied conditions is a burdensome. However, authors
+have not provided a mechanism to build the Hyper Alert
+dictionary. Also, the generated graph is huge even with
+medium size datasets.
+
+techniques [15], [16], [7], [8], [9] and [22]. We have
+selected this approach for several reasons. First, instead of
+specification of the whole steps of the attack scenario, only
+the specification of “requires” and “provides” conditions of
+an event is required. This provides a flexible approach
+particularly if a partial satisfaction of correlation is
+employed. Second, even if the attacker starts the attack
+from advanced steps, the behavior is still detected.
+Similarly, if an alert is missed and the scenario is divided
+into different graphs, these sub-scenarios can be correlated.
+Third, the model is expandable to incorporate other
+mechanisms such as probabilistic approaches.
+
+In other respect [22] and [23] proposes a combination of
+statistical and knowledge-based correlation techniques.
+Three algorithms are integrated based on assumption that
+some attack stages have statistical and temporal relations
+even though direct reasoning link is not existent. Bayesianbased correlation engine is used to identify the direct
+relations among alerts based on prior knowledge. In contrast
+to previous approaches, knowledge of attack steps
+incorporates as a constraint to probabilistic inference to
+avoid the exact matching of pre and post conditions. Causal
+Discovery Theory-based engine is developed to discover the
+statistical of one-way dependence among alerts. In addition,
+Granger-Causality-based algorithm is used by applying
+statistical and temporal correlation, to identify mutual
+dependency. However, the problem of selection time
+window for temporal correlation is still an open problem.
+Attackers can exploit the slow-and-low attack to avoid
+detection. Attack prediction also relies on prior knowledge
+where zero-day attack is not detected.
+
+MARS [5] has initially proposed to combine two
+engines: online and offline, and two mechanisms: high
+quality knowledge-based and statistical-based correlation. In
+addition, the proposed model employs various tools that
+help the administrator to recognize multi-stage attacks and
+attackers behaviors. An overview of the system will be
+presented in section 4.
+III.
+
+REQUIRES/PROVIDES MODEL
+
+It has been proposed by [19] in inspiration from network
+management systems to deal with network faults. Cyber
+attack is described in two components: capabilities and
+concepts. The idea behind this model is that multi-stage
+intrusion consisting of a sequence of steps performed by an
+attacker; the later steps are prepared by the early ones.
+Target system information collected from scanning or port
+mapping, are advantages acquired to choose which exploit
+can be used. Capabilities are defined as general description
+of the conditions required or provided by each stage of
+intrusion. In other words, the system state that must be
+satisfied in order to launch an attack. For instance, a
+successful Trojan injection requires some particular services
+running in the target systems and an existence of
+vulnerabilities
+
+Although the past techniques dealt with reducing the
+massive number of collected data by NIDS, however there
+are many limitations. First, the analysis of attack strategy
+recognition is too complex especially if the task broadens to
+predict the unknown steps. Knowledge-based approaches
+are more accurate due to rules matching mechanism which
+are built based on experts’ knowledge, but it needs more
+efforts to provide precise rules. Statistical and temporal
+analysis techniques are unable to detect causal relations
+among events, but they don’t require prior defined rules.
+Adoption of such systems in real-time is still an open
+question, where most proposed systems have been tested in
+offline fashion or in a low volume traffic environment. The
+huge number of detected events leads to graph explosion as
+in [15][16]. Moreover, missing attacks by the IDS can result
+in separate scenarios related to the same attack. Attackers
+also exploit the attack sliding window used in most
+approaches by performing slow-and-low attack.
+
+Formally, capabilities are a higher level of intrusion
+abstraction that specifies the system state after each attack
+attempt. Concepts are abstracts of system states that
+involved in multi-stage attack scenarios. Attacker uses the
+capabilities gained by some of his early actions to generate
+some new capabilities. System state incorporates in attack
+scenarios if instances of concepts have “required” and
+“provided” conditions matched.
+
+Alerts correlation modeling has to provide a type of
+intelligence for attack strategy recognition. A framework
+consists of several components is needed to enjoy
+capabilities of different approaches. A combination of
+knowledge-based, statistical and temporal based, data
+mining and machine learning can incorporate to provide
+more intelligent system. In this paper we propose a novel
+approach to overcome the limitations of the past techniques.
+Attack strategy recognition cannot be implemented in a
+single stage or using a single component.
+
+The capability model proposed by [21] is also based on
+“requires/provides” model for logical alert correlation. The
+authors used different properties of capabilities. An attack
+model is presented to build blocks of capabilities in a
+multilayer fashion with more expressive definition. [6], [7]
+and [8] have used “requires/provides” model using the
+concept of predicates which are similar to capabilities.
+
+In this paper, our work aims to build an improved
+correlation model based on “requires/provides” conditions
+
+Our model is a variation of the “requires/provides”
+model but it is different in the following aspects:
+
+177
+
+ Different definitions for capabilities and concept are
+employed to overcome the limitations expressed in other
+approaches; these will be discussed in section 4. The work
+in [19] used very detailed specifications language called
+JIGSAW to describe attack scenarios. A complete
+satisfaction of “required” and “provided” conditions is
+necessary to correlate two alerts and that will fail in case of
+broken scenarios. However; [15] and [16] have adopted a
+partial satisfaction technique which is also implemented in
+our model. The main concern with their approach is the high
+rate of false positives and possibly a huge graph will be
+created. We have managed to overcome this limitation by
+using three techniques: well-defined capabilities,
+accumulated aggregation and alert maintenance.
+ Real-time processing approach for correlation,
+aggregation and event generation. The security officer can
+monitor the attack progress which is displayed as an
+intrusion graph. An event is triggered once at minimum two
+alerts are correlated and any additional related alert based on
+its attributes will join the same event.
+ Some parameters are not considered in other approaches
+are proposed such as vulnerability abstraction, attack
+direction, and administrator experience.
+ Online and offline graph reduction algorithms after
+correlation and aggregation to provide a manageable graph.
+IV.
+
+Arguments [r1 ,r2 ,…ri ]→r : are a set of associated
+attributes such as source and destination IP addresses.
+Required Conditions R : are a set of pre-conditions
+specified in a form of capabilities with variable of
+Arguments.
+Provided Conditions P : is a set of post-conditions
+specified in the form of capabilities with variable of
+Arguments.
+Extensional Provided Conditions EP: are a set extended
+Provided Conditions as a result of implicit relations between
+capabilities in a form of capabilities with variable of
+Arguments.
+Vulnerability V: is a description of state of the target
+host or network with variable of Arguments.
+Intrusion Direction D: is a description of attack direction
+(0: source address, 1: destination address, 2: bidirectional)
+
+Experience EX: is description of the security officer’s
+feedbacks in different situations.
+The provided P conditions are extended to involve
+possible extensional provided conditions EP to broaden the
+correlation mechanism. This is the result of possible implicit
+correlation between alerts based on interdependencies
+between capabilities. This mechanism will be useful in two
+cases, the first: suppose the attacker ignore some steps
+because he has already obtained some knowledge about the
+target system. Then, there is no need for creating
+unnecessary noise that may lead him to be noticed. The
+result will be a broken scenario and most of proposed
+correlation system fails to correlate this sort of sequences.
+The second case: it has been identified that NIDS systems
+miss some attacks because of absence of its signatures or if
+the system experience high speed traffic that the NIDS is
+unable to process all packets.
+
+MARS MODEL REVIEW
+
+This section presents briefly the knowledge base of
+MARS model that generates rules to correlate high-level
+alerts called Meta-Alerts. As stated earlier, our model is
+derived from “provides/requires” model using different
+definitions of the model components. The proposed model
+for the knowledge base consists of three sets:
+ Capability C: This specifies a higher level of abstraction
+of intrusion model. Intrusion attempts are expressed in
+terms of a set of “required”, “provided”, and extensional
+“provided” conditions of a given alert.
+
+The information provided by elementary alerts does not
+reflect the actual state of the target system. For this reason,
+we proposed additional information about the vulnerability
+parameters and the state of the victim to produce more
+realistic correlation. The vulnerability knowledge, which can
+be acquired using tools such as Nessus[13], will ignore
+insignificant alerts from correlation process to reduce the
+complexity of the resulting graph. A produced huge graph
+with false positive correlation in [15][16] is avoided. In
+addition, attack direction and administrator experience are
+adopted to raise the accuracy and hence, to lower the false
+alarms.
+
+ Meta Alert (M-Alert) concept MC: This specifies the
+related capabilities of a given Meta-Alert. “Required”
+and “provided” conditions for each M-Alert are coded in
+language of capabilities.
+ Meta-Alert M: a higher level of abstraction of an alert.
+This can be generated from various IDS sensors. In our
+case, we use Snort[20] as the main IDS, so Meta-Alert
+will be elementary alert received from Snort . However,
+different M-Alerts will be aggregated in different
+occasions during the correlation process.
+
+Definition. 2 An M-Alert instance m is defined as a set of
+instances of M-Alert concept MC by substituting the
+associated values in Arguments tuple considering the time
+constraints (start-time and end-time).
+
+Definition1. A M-Alert concept MC is an abstraction of
+
+elementary alerts generated by IDS defined by a set of
+(Arguments, Required Conditions, Provided Conditions,
+Extensional Provided Conditions, Vulnerability,
+Intrusion direction, and Experience) where:
+
+Definition. 3 Given a M-Alert concept MC and an M-Alert
+
+178
+
+instance m, the R(MC), P(MC), EP(MC), V(MC), and
+EX(mc) sets are the sets of all Capabilities C. Given an MAlert instance m, the R(m), P(m), EP(m), V(m), and
+EX(m) sets are the capabilities by mapping the values to the
+corresponding Arguments in MC considering the time
+constraints.
+
+Algorithm: Alert Correlation
+Input: elementary alerts generated by the IDS
+Output: Correlated Attack Graph CAG(N,G)
+Methods:
+
+1-
+
+Definition 4. Given a pair of M-Alert instances m : m1, m2
+ordered temporally in the following time slots respectively:
+
+4-
+
+m1 : ts1 and te1
+
+For k=1 to i
+If a. at least one R(m i+1)  P(m i)
+ R (m i+1)  EP (m i)
+
+m2 : ts2 and te2
+
+b. V(m i+1), V(m), EX(m), and D(m) are
+satisfied.
+
+where ts is the start time, and te is the end time.
+
+c. P(mi).End_time >= R (m i+1).Start_time
+ EP(mi).End_time >= R (m i+1).Start_time
+
+m1 is correlated with for m2 if:
+
+1- There exists at least one common Capability C in
+
+Then
+Add CAG (nm , nm )
+5- Return CAG(N,G)
+
+R(m2), P (m1) and EP (m1).
+
+2- Satisfaction
+constraints.
+
+Let CAG(N,G) = null
+
+2- Map elementary alerts to M-Alerts instances
+(m0,m1,……, m i)
+3- Let m 0 an instance of isolated M
+
+i
+
+of V(m2), EX(m2), and D(m2)
+
+3- P(m1).te1 >= R(m2).ts2 AND
+
+i+1
+
+Figure 1. Correlation algorithm
+
+V. CASE STUDY: SQLIA
+SQLIA is a multi-stage and coordinated process; and to
+detect such activities we need to obtain the whole picture of
+the attacker behavior. IDS systems, network-based and hostbased are able to detect some attacks based on their
+signatures or protocol analysis. However, detected events
+are treated as isolated activities and uncountable variations
+of SQLIA activities evolve every day. Attackers tend to
+change their fingerprints to avoid detection by IDS rules
+despite the general behaviors are similar. Even though, the
+IDS system misses some attack involved in SQLIA activity,
+network administrator is still aware of the global view of a
+suspected attacker’s intension.
+The typical scenario of SQLIA is summarized as follow:
+
+EP (m1).te1 >= R(m2).ts2
+
+The partial matching mechanism has been used to avoid
+the hard-coded correlation as in scenario-based methods and
+the
+explicit
+relationship
+employed
+in
+other
+“requires/provides” approaches.
+Definition 5. Correlated Attack Graph CAG(N,E) is defined
+as a Directed Acyclic Graph (DAG) consisting of a set of
+nodes N connected by edges G. Nodes n1,n2,n3, ….,ni N
+represents the M-Alert set and edges g1,g2,g3,….gj represent
+the provide relationship.
+Formally, Let M alerts represent some exploits E
+discovered in a system, and C to be set of capabilities
+represents the relevant security conditions. To express the
+relationship between system conditions and possible exploit
+there are two relations:
+
+1. Application Fingerprinting via Input validation [14] : in
+this stage the attacker tries to discover any vulnerable entry
+to the web application using some basic techniques. This
+involves testing web form fields, query strings in URL
+REQUEST and POST, or crafted values in cookies. A
+combination of strings such as ′ , ″ , ), #, --, etc, can be sued
+to generate possible application errors. The attacker has to
+perform this stage to finger print the application and the
+
+R C X E
+P  E X C , EP  E X C
+
+And the correlated attack graph is
+CAG(MC, R P EP)
+
+Hence, we can say that the relationship between system
+conditions, exploits, and alert instances is a logic correlation
+expressed in AND and OR. OR logic is used between the
+conditions required and provided and AND is used to satisfy
+particular instances of the target system.
+MARS tools have been designed and implemented using
+C++ language and MSSQL database System details are not
+described here due to space constraints. We have evaluated
+MARS using DARPA2000 in [5] and it has achieved
+improved results. The alert correlation algorithm is shown in
+Figure 1.
+
+179
+
+database, otherwise, it will not be clear which SQLI
+technique is used. This stage can be combined with scanning
+and port mapping activities using some available fuzzing
+tools.
+2. Database Fingerprinting: to gather information about the
+application and the database incorporated with the previous
+stage. Analysis of different responses through error
+messages to choose the appropriate method of injection and
+that based on the type of the target database. Then database
+columns number is discovered and which ones are
+vulnerable. In this respect different databases use different
+syntax.
+3. Attack stage: by exploiting the detected vulnerable
+columns to obtain extra information such as, database
+version, server name, user table name..etc. A typical
+injection technique is to use SELECT UNION to craft query
+statements in URL requests.
+4. Information disclosure: and that includes extracting data
+in user and password tables. And it is based on the available
+privilege levels gained by the attacker. Data modifications
+can be performed such as adding new user account, deletion,
+and update.
+5. Advanced attack: to interact with the operating system in
+order to achieve a full control over the target system.
+Therefore, this is the most dangerous action can be exploited
+by such attack. This stage involves uploading files such as
+shared objects for Linux and Dynamic Link Library for
+windows. User defined functions supported by SQL
+databases can be used for more interaction with the
+operating system through direct command execution.
+Furthermore, the attacker can add some user accounts and
+local groups to the operating system.
+
+have also, modified some fields of the injected noise traffic
+to be synchronized. The attack steps are as follow:
+(1) The attacker starts to perform scanning and port mapping
+looking for running services; Snort has triggered two
+signatures related to scanning.
+sid: 2000537 BLEEDING-EDGE SCAN NMAP -sS
+sid:2000545 BLEEDING-EDGE SCAN NMAP -f -sS
+
+(2) Discovery of vulnerabilities (basic SQL injection
+techniques)
+The attacker will initially use the basic techniques such as
+the symbols: ' , * , and " to determine if the target web site is
+vulnerable to SQL Injection. Also some other strings such as
+1 = 1 , '1' = '1'))/*, or 1=1--, or "a"="a", can be injected.
+And if an error is displayed on the target web site, it means
+that the site is vulnerable such as:
+Warning: mysql_result(): supplied argument is not a valid MySQL result resource
+Snort generates some alerts related to this stage:
+sid:1000303 WebAttack PHPInjection test \' detected
+sid:1000304 WebAttack PHPInjection test 1=1 or 1=2
+Figure 2 shows the evolving attack event generated by
+MARS system based on Snort alerts.
+BLEEDING-EDGE SCAN
+NMAP -sS
+
+WebAttack PHPInjection test \''
+detected
+
+BLEEDING-EDGE SCAN
+NMAP -f -sS
+
+WebAttack PHPInjection test 1=
+1 or 1=2
+
+Figure 2. The first triggering event
+
+(3)Discovery of the number of columns in the target database
+The attacker uses ORDER BY to determine the total number
+of columns in the database. For instance, the statement
+includes ORDER By 1 , to request the page to display the
+first column and if no error displayed. This number is
+increased and decreased until the exact number of columns
+is identified.
+
+We consider SQLIA as a multi-stage attack conducted by
+an attacker to compromise a target system. PHP web
+application vulnerabilities are exploited to gain access to
+MySql database and to obtain table names, column names,
+and stored data. Consequently, the attacker acquires
+administrator privileges to upload malicious files to control
+the web server hosting the target application. We have
+followed the typical scenario in real life simulating the
+traffic communications between the attacker and the victim
+machine. The simulated network is monitored by Snort and
+MARS engine. Snort is configured with all rules enabled
+including: VRT, bleeding-Edge, Community, and Emerging
+Threat rules (ET).
+
+(4)Discovery of the vulnerable columns out of the identified
+ones in step2. UNION SELECT statement is used to identify
+which column is vulnerable and can be exploited to get
+access to the database as follows:
+UNION SELECT 1,2,3,4,5,6,7,8
+And then all vulnerable columns will be displayed, in this
+experiment, 4,6 and 7 are vulnerable. Three types of
+signatures are generated by Snort in this stage.
+sid:2010963 ET WEB_SERVER SELECT USER SQL Injection Attempt in URI
+sid:1000302 WebAttack PHPInjection -1=select detected
+sid: 1000305 WebAttack PHPInjection -union allselect
+(5)Exploitation of the vulnerable columns to disclose the
+database information. In this step, the attacker will discover
+the database name, version and username by substitution of
+
+VI. EXPERIMENT AND RESULTS
+In this paper, simulating SQLIA has been used to test the
+detection accuracy of the proposed model. We have pursued
+SQLIA scenario as occurs in real network as described later
+in this section. Network traffic has been recorded in a pcap
+file for further analysis. Then we have injected the produced
+pcap file with 200MB of other traffic consisting of: normal
+traffic, background traffic, and some malicious traffic. We
+
+180
+
+these variables in the vulnerable columns fields of the
+UNION SELECT statement as follow:
+UNION SELECT 1,2,3,4,5,concat(database(),version(),user()) ,7,8
+
+UNION SELECT 1,2,3,4,5,load_file(‘/etc/password’),7,8 INTO OUTFILE
+‘/home/www.site.com/images/passFile.txt’/*
+UNION SELECT 1,2,3,4,5,’<?system($_get[“c”])?;>’,7,8 INTO OUTFILE
+‘/home/www.site.com/images/c.php’/*
+
+And this statement will display the requested information on
+column 6 position of the site page. This step is important
+because different versions of databases, MySql in our case,
+have different syntaxes. Snort responses with some alarms.
+
+And below some related Snort alerts.
+sid:2010037 ET WEB_SERVER Possible SQL Injection INTO OUTFILE Arbitrary File Write
+Attempt
+sid:1020053 WebAttack PHPInjection load_file
+Figure 3 shows the extracted attack graph for the detected attack
+steps.
+
+sid:2011042 ET WEB_SERVER MYSQL SELECT CONCAT SQL Injection Attempt
+sid:2011073 ET WEB_SERVER Possible Attempt to Get SQL Server Version in
+URI using SELECT VERSION
+sid:1000302 WebAttack PHPInjection -1=select detected
+sid:1000305 WebAttack PHPInjection -union allselect
+
+(8) Advanced attack. The attacker can list, modify, insert,
+and delete some or all information in the target database.
+In addition, files containing scripts or libraries can be
+uploaded to configure the server and to provide more
+interaction with the operating system. Snort reacts to some
+activities while others are not detected. However, the
+correlation system can support to discover the whole
+behavior.
+sid:1100061 WebAttack SQLInjection QueryData Domain
+sid:2006443 ET WEB Possible SQL Injection Attempt -- DELETE FROM
+sid:2006444 ET WEB Possible SQL Injection Attempt -- INSERT INTO
+sid:2006447 ET WEB Possible SQL Injection Attempt -- UPDATE SET
+Figure 4 shows the whole extracted attack graph.
+
+WebAttack PHPInjection -1=
+select detected
+
+ET WEB_SERVER SELECT
+USER SQL Injection Attempt in
+URI
+
+ET WEB_SERVER Possible
+Attempt to Get SQL Server
+Version in URI using SELECT
+VERSION
+
+ET WEB_SERVER Possible SQL
+Injection INTO OUTFILE
+Arbitrary File Write Attempt
+
+ET WEB_SERVER MYSQL
+SELECT CONCAT SQL
+Injection Attempt
+
+VII. CONCLUSION
+We have presented our proposed correlation model to
+achieve high quality recognition of multistage attack in real
+time. The proposed approach is mainly based on improved
+version of “requires/provides” model which is basically used
+in plan recognition models. Novel methods have been
+presented to overcome the limitation of current systems:
+vulnerability, extensional conditions, attack direction, and
+administrator experience. It has been demonstrated that this
+mechanism can applied to detect complex multi-stage attack.
+We have analyzed SQLIA traffic as a case study to measure
+accuracy and performance of MARS tool which has been
+developed based on the proposed model. We have
+confidence that our system has achieved an improvement in
+relation to identification of attack plans and reduction in
+graph complexity. False positives have been reduced
+comparing with other approaches using vulnerability
+knowledge.
+
+WebAttack PHPInjection
+load_file
+
+WebAttack PHPInjection -union
+allselect
+
+Figure 3.
+
+The second and third event
+
+(6)Disclosure of table names, usernames and passwords. The
+attacker will use the same statement in step 5 to identify the
+names of the database tables, and to obtain the login names
+and passwords from the user table. An example of this
+statement is shown below:
+UNION SELECT 1,2,3,4,5,concat(table_name,column_name,table_schema),7,8
+FROM information_schema_tables WHERE column_name LIKE %pass%
+Snort triggers similar alarms to the previous step.
+(7)File Privilege Server path discovery. Knowing of File
+privileges level is very important in order to read, write, and
+upload files. An example of statement used in this respect is:
+
+Future work will be focusing on involvement of other
+NIDS and antivirus systems to broaden the volume of the
+supplied information. We are not concerned of a huge data
+as only related activities are detected ignoring false
+positives. In addition, implementation of statistical engine
+will gives more accurate results to provide some other inputs
+different from the signature-based systems.
+
+UNION SELECT 1,2,3,4,5,load_file(‘/’),7,8 FROM information_schema.user_privilages
+
+In order to upload files to the target server, it is required to
+determine the server paths and there are different and easy
+techniques to find them, for example:
+UNION SELECT 1,2,3,4,5,@@datadir,7,8
+
+And the next action is to check the directories with write
+permission. Temporary directories are the best choice in this
+respect such as: /temporary/ , /temp/, /images/,/cache/, …etc.
+
+181
+
+ET WEB_SERVER SELECT
+USER SQL Injection Attempt in
+URI
+
+WebAttack SQLInjection
+QueryData Domain
+
+WebAttack PHPInjection -1=
+select detected
+
+WebAttack PHPInjection test \''
+detected
+
+WebAttack PHPInjection -union
+allselect
+
+ET WEB_SERVER Possible
+SQL Injection INTO OUTFILE
+Arbitrary File Write Attempt
+ET WEB Possible SQL Injection
+Attempt -- DELETE FROM
+
+BLEEDING-EDGE SCAN
+NMAP -sS
+
+WebAttack PHPInjection test 1=
+1 or 1=2
+
+ET WEB_SERVER MYSQL
+SELECT CONCAT SQL
+Injection Attempt
+
+WebAttack PHPInjection
+load_file
+
+BLEEDING-EDGE SCAN
+NMAP -f -sS
+
+ET WEB Possible SQL Injection
+Attempt -- INSERT INTO
+ET WEB_SERVER Possible
+Attempt to Get SQL Server
+Version in URI using SELECT
+VERSION
+
+ET WEB Possible SQL Injection
+Attempt -- UPDATE SET
+
+Figure 4.
+
+Extracted SQLIA scenario graph
+[13]. Nessus: Security Scanner; http://www.nessus.org
+[14]. Open Web Application Security Project: OWASP Top Ten Injection Flaws. http://www.owasp.org/index.php/Top_10_2007njection_Flaws, Aug 2010
+[15]. Peng Ning, Yun Cui, Douglas Reeves, and Dingbang Xu, Tools
+and Techniques for Analyzing Intrusion Alerts, in ACM Transactions
+on Information and System Security, 7, 2, 273--318, May 2004.
+[16]. Peng Ning, Yun Cui, Douglas S. Reeves, Constructing Attack
+Scenarios through Correlation of Intrusion Alerts, in Proceedings of
+the 9th ACM Conference on Computer & Communications Security,
+245--254, Washington D.C., November 2002.
+[17]. R. Agrawal and R. Srikant: Mining sequential patterns. In:
+Research Report RJ 9910, IBM Almaden Research Center, San Jose,
+California, October 1994.
+[18]. S. Eckmann, G. Vigna, and R. Kemmerer. Statl: An attack
+language for state-based intrusion detection, Journal of Computer
+Security , 10, 1-2, 71-104 ,2002.
+[19]. S. J. Templeton and K. Levitt. A requires/provides model for
+computer attacks. In NSPW '00: Proceedings of the 2000 workshop
+on New security paradigms, 31-38, New York, NY, USA, 2000.
+ACM Press.
+[20]. Snort: A free lightweight network intrusion detection system for
+UNIX and Windows; http://www.snort.org/
+[21]. Wang, L., A. Liu, et al. (2005). An efficient and unified approach
+to correlating, hypothesizing, and predicting intrusion alerts.
+Computer Security–ESORICS 2005, 3679, 247-266
+[22]. X. Qin. A Probabilistic-Based Framework for INFOSEC Alert
+Correlation. PhD thesis, Georgia Institute of Technology, 2005.
+[23]. X. Qin and W. Lee. Attack plan recognition and prediction using
+causal networks. In ACSAC '04: Proceedings of the 20th Annual
+Computer Security Applications Conference (ACSAC'04), 370-379,
+Washington, DC, USA, 2004. IEEE Computer Society.
+[24]. Zhi-tang Li, Jie Lei, Li Wang, Dong Li, A Data Mining Approach
+to Generating Network Attack Graph for Intrusion Prediction, fskd, 4,
+307-311, Fourth International Conference on Fuzzy Systems and
+Knowledge Discovery (FSKD 2007), 2007
+
+REFRENCES
+[1]. Ai-fang Zhang, Zhi-tang Li, Dong Li, Li Wang, Discovering Novel
+Multistage Attack Patterns in Alert Streams, Networking,
+Architecture, and Storage, In International Conference on
+Networking, Architecture, and Storage (NAS 2007), 2007.
+[2]. A. Valdes and K. Skinner. Probabilistic alert correlation. Lecture
+Notes in Computer Science, 2212, 54-68, 2001
+[3]. Basic Analysis and Security Engine; http://base.secureideas.net/
+[4]. B. Zhu and A. A. Ghorbani. Alert correlation for extracting attack
+strategies. International Journal of Network Security, 3,2, 244-258,
+2006.
+[5]. F. Alserhani, M. Akhlaq, I. Awan, A. Cullen, and P. Mirchandani,
+“MARS: Multi Stage Attack Recognition System, In Proc. of the
+International Conf. on Advanced Information Networking and
+Applications (AINA), Perth, Australia, 2010 , 753-759
+[6]. F. Cuppens. Managing alerts in a multi-intrusion detection
+environment. In 17th Annual Computer Security Applications
+Conference, New-Orleans, USA, Dec 2001.
+[7]. F. Cuppens and R. Ortalo. Lambda: A language to model a database
+for detection of attacks. In RAID '00: Proceedings of the Third
+International Workshop on Recent Advances in Intrusion Detection,
+197-216, London, UK, 2000. Springer-Verlag.
+[8]. F. Cuppens and A. Miege. Alert correlation in a cooperative intrusion
+detection framework. In SP '02: Proceedings of the 2002 IEEE
+Symposium on Security and Privacy, page 202, Washington, DC,
+USA, 2002. IEEE Computer Society.
+[9]. Jie Ma, Zhi-tang Li, Wei-ming Li, Real-Time Alert Stream Clustering
+and Correlation for Discovering Attack Strategies, fskd, vol. 4, 379384, 2008 Fifth International Conference on Fuzzy Systems and
+Knowledge Discovery, 2008
+[10]. K. Julisch. Clustering intrusion detection alarms to support root
+cause analysis. ACM Trans. Inf. Syst.Secur., 6, 4, 443-471, 2003.
+[11]. Lincoln
+Labs
+Information
+Systems
+Technology,
+http://www.ll.mit.edu/mission/communications/ist/corpora/ideval/dat
+a/index.html
+[12]. Li, Z., A. Zhang, et al. Real-Time Correlation of Network Security
+Alerts. Proceedings of the IEEE International Conference on eBusiness Engineering, IEEE Computer Society, 2007
+
+182
+
+

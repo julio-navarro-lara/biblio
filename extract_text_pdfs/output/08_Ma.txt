@@ -1,0 +1,598 @@
+Fifth International Conference on Fuzzy Systems and Knowledge Discovery
+
+Real-Time Alert Stream Clustering and Correlation
+for Discovering Attack Strategies
+Jie Ma, Zhi-tang Li, Wei-ming Li
+Computer Science Department
+Huazhong University of Science and Technology, Hubei Wuhan 430074, China
+majie_hust@163.com
+launches appropriate response to stop attacks and
+prevent them form escalating.
+In the past few years, a number of alert clustering
+and correlation techniques have been proposed.
+However, most of these approaches only focus on
+clustering inter-connected alerts into different groups
+without further analyzing the strategies of the
+attackers. One of the common weaknesses of these
+approaches is that they cannot fully discover the causal
+relationships between related alerts [1]. Some
+techniques for extracting attack strategies have been
+proposed in recent years [2][3][4], but they normally
+require defining a larger number rules. Ning et al.
+[5][6], Cuppens [7][8] build alert correlation systems
+based on matching the pre-/postconditions of
+individual alerts. The idea of this approach is that prior
+attack steps prepare for later ones. One major
+limitation to these approaches is that a new attack
+cannot be paired with any other attacks because its
+prerequisites and consequences are not defined.
+Because alert stream is dynamic, huge, infinite and
+fast changing, traditional alert correlation methods are
+limited on accuracy to discover intrusions by offline
+analyzing, and more, these methods are not real time.
+We think it is more significant to detect an on-going
+attack behavior than afterwards analysis. The main
+contribution of the paper is the design of an integrated
+correlation system to detect an ongoing attack and
+predict the upcoming next step of a multistage attack in
+real time. And, our approach can discovery various
+attack sequential patterns over different kinds of time
+horizons or user-defined time periods.
+The remainder of this paper is organized as follows.
+Section 2 introduces the framework of the system. The
+details of online alert stream clustering algorithm are
+discussed in Section 3. Section 4 presents our alert
+correlation method. Section 5 reports our experiments.
+Section 6 concludes the paper and outlines future
+work.
+
+Abstract
+Signature based network intrusion detection
+systems (NIDSs) often report a massive number of
+elementary alerts of low-level security-related events
+which are logically involved in a single multi-stage
+attack. Since be overwhelmed by these alerts, security
+administrators almost unable to discover complicated
+multistage attack in time. It is necessary to develop a
+real-time system to extracting useful attack strategies
+from the alert stream, which enables network
+administrators to launches appropriate response to
+stop attacks and prevent them form escalating. This
+paper focuses on developing a new alert clustering and
+correlation technique to automatically discover attack
+strategies from the evolving alert stream, without
+specific prior knowledge. The proposed algorithms can
+discovery various attack sequential patterns in
+different kinds of time horizons or user-defined time
+periods. Experiments show our approach can
+effectively construct attack scenarios and accordingly
+predict next most possible attack behavior.
+
+1. Introduction
+In order to counter security threats to computer
+systems and networks, many technologies have been
+developed and applied in security operations. Signature
+based network intrusion detection system (NIDS),
+which play an important role in security
+countermeasures, have been unable to provide proper
+analysis or an effective defense mechanism. They often
+report a massive number of elementary alerts of lowlevel security-related events which are logically
+involved in a single multistage attack. Since be
+overwhelmed by these alerts, security administrators
+almost unable to discover complicated multistage
+attack in time. It is necessary to develop a real-time
+system to extracting useful attack strategies form the
+alert stream, which enable network administrators to
+
+978-0-7695-3305-6/08 $25.00 © 2008 IEEE
+DOI 10.1109/FSKD.2008.522
+
+379
+
+As a result, the underlying clusters namely hyper-alerts
+may also change considerably with time. The crucial
+characteristic of steam algorithm is that it must keep up
+with the continuously coming alert stream. In addition,
+the correlation approach proposed by section 4 must
+face the challenge of extracting useful information
+from the alert stream over various levels of time
+window, which indicates that the alert stream
+clustering algorithm must provide the flexibility to
+create hyper-alerts over different kinds of time
+horizons or user-defined time periods in online time.
+The CluStream method proposed by [9] provides an
+effective and efficient framework for clustering large
+evolving data streams. We borrow the idea from their
+work and design the framework of our own system
+which is also composed by online and offline modules.
+But there is something different from their design that
+the offline component is substituted by our alert
+correlation module. The status of micro-cluster in [9]
+corresponds to the hyper-alert of our framework, while
+some cluster features are extended and new ones are
+added to satisfy with the needs of the system for
+security events analysis and statistics. To maintain
+statistics at a sufficiently high level temporal and
+spatial granularity, a pyramidal time frame technique
+described by [9] is adopted by our system, which
+assures that essential statistics of the evolving alert
+stream can be captured effectively. The snapshots of
+hyper-alerts at differing levels of granularity are stored
+in the data warehouse from where hyper-alerts created
+in different time periods or intervals can be retrieved
+by correlation engine for reconstructing attack
+scenarios.
+Alert correlation module: The module uses prespecified attack scenario time window (see section 4)
+to mine attack sequence patterns that may occur within
+this window. Different values about the time window
+denote different time horizons, and then attack
+sequence patterns happen in different time spans can
+be found. The final results are stored into database
+warehouse and can be used as rules to recognize the
+attack plans of the attacker or even predict the next
+step the attacker will take.
+
+2. Framework of proposed system
+In this section, we present an overview of our alert
+stream clustering and correlation system. Here, the
+sequence of alerts produced by IDS sensors can be
+referred to alert stream. After preprocessing, every
+alert in the stream comply with the standardized
+format, which is a 5 tuple: A (AID, SrcIP, DstIP,
+SigID, AT). AID is a unique id-number of the security
+event; SrcIP and DstIP are the source and target IP
+addresses of the security event; SigID is the signature
+of security event triggered by sensors; AT indicates the
+time when the security event occurs. The security event
+in context refers to one attack or one step of a multistage attack.
+The sketch of our framework is presented in figure
+1. Functions and operations of core modules in the
+framework are described as follows:
+
+Figure 1. Framework of alert stream clustering and
+correlation process
+Alert collection module: The module receives all
+standardized alerts reported by sensors, and a unique
+ID number is assigned to each alert as soon as it
+arrives. Then, the alerts with different IDs will be put
+into alert stream queue where they can be obtained by
+online alert clustering module. The alert stream is
+defined as bellow:
+Definition 1. Given an elementary alert with
+standardized format denoted by type A (AID, SrcIP,
+DstIP, SigID, AT), an alert stream consists of a set of
+5-demensional records A1 , A2 , ... Ak , ... arriving at
+time stamps T1 , T2 , ... Tk , ... . Each Ai is an instance of
+A, here Ai.AT equals to Ti without considering the time
+delay for transmitting the alerts from sensors to our
+platform, since the delay is small enough to be
+ignored.
+Online alert clustering module: To ensure the
+performance of the real-time system, large volume of
+elementary alerts come form the stream are clustered to
+create higher-level alert messages, then the number of
+alerts for subsequent processing is dramatically
+reduced and burden of the platform is alleviated.
+Where, the higher-level alert message is denoted as
+hyper-alert.
+The alert stream is an infinite process consisting of
+elementary alert which continuously evolves with time.
+
+3. Online alert stream clustering
+The goal of the alert stream clustering is to handle
+the elementary alerts produced by multiple NIDS due
+to a certain attack, fusing them to create hyper-alerts
+which summarizes the characteristics of the detected
+attack Furthermore, the nature of evolving alert stream
+makes it essential that our alert clustering and
+correlation system should have a process which can
+continuously determine dominant hyper-alerts within a
+
+380
+
+the notion of Type see definition 3 shown later; the N
+denotes the number of lower-level alert objects
+maintained by the hyper-alert; Ts is the timestamp for
+its first creating and Tn for its latest updating.
+As discussed before we note the basic policy of the
+clustering approach is determined by comparing the
+three features, then the result that is a new created
+hyper-alert can be labeled with the Type feature by
+using the following definition:
+Definition 3. A hyper-alert for a set of lower-level
+alert objects {A*1, A*2, ... A*n } is identified by one of
+the three types defined as follows:
+
+specified time interval without being dominant by the
+previous history of the alert stream. Now, we will give
+more details.
+
+3.1. Problem statement
+The alert stream clustering module maintains a
+queue in an available memory space; hyper-alerts
+maintained in the queue represent the current snapshot.
+And the clustering approach is an online process
+consists of some actions such as updating, merging and
+deleting, which can be taken between alerts, hyperalerts or each other. For example, a newly arrived alert
+from the stream may be absorbed by an existed hyperalert in memory and the hyper-alert should be updated
+consequently, or the alert becomes a new hyper-alert of
+its own; different hyper-alerts may also be merged into
+a new hyper-alert. However, the issue on when and
+how these actions are taken is raised.
+The decision to merge two alerts (hyper-alerts)
+based on the temporal difference between them and the
+information that they contain. If two alerts seem to
+occur simultaneously within a certain short time span
+and have some common on their information, then they
+can be merged together, otherwise they are unrelated
+and can not be merged. This policy to merging alerts is
+based on our long time of investigation into network
+security events and their corresponding alerts trigged
+by signature-based NIDS. Some relations owned by
+these alerts are obviously found: some alerts occur to
+have same information on source IP, target IP
+addresses and signature; while some occur to have only
+two same features. For example, probing attacks (such
+as port-scan) involve many connections from one host
+to many others, alerts trigged by these attacks always
+have same source IP addresses but different target IP
+addresses. On base of these relations, lower-level alerts
+can be merged into higher-level alerts (hyper-alerts) by
+simply comparing their source IP addresses, target IP
+addresses and signature IDs if not considering
+temporal differences between themselves. We firstly
+give the formal definition of hyper-alert as follows:
+Definition 2. A hyper-alert HA is generated by
+clustering (merging) a set of lower-level alert objects
+{A*1, A*2, ... A*n }; here each lower-level alert object A*i
+represents either new elementary alert come from the
+stream or old hyper-alert already exists in memory
+queue as the result of former clustering. HA is a 8
+tuple (HID, HSrcIP, HDstIP, HSigID, Type, N, Ts , Tn)
+where HID is assigned a unique number whenever the
+hyper-alert is fist created. If some existed hyper-alerts
+are merged, the HID of the new created hyper-alert is
+generated by a list of ids each of which corresponds to
+the constituent hyper-alert; the HSrcIP, HDstIP and
+HSigID are inherited from the lower-level alert objects;
+
+TYPE − I : ∀ i, j (i ≠ j,0 <i, j < n) st. Ai* • SrcIP = A*j • SrcIP &&
+Ai* • DstIP = A*j • DstIP && Ai* • SigID = A*j • SigID
+TYPE − II : ∀ i, j (i ≠ j,0 <i, j < n) st. Ai* • SrcIP = A*j • SrcIP &&
+Ai* • DstIP ≠ A*j • DstIP && Ai* • SigID = A*j • SigID
+TYPE − III : ∀ i, j (i ≠ j,0 <i, j < n) st. Ai* • SrcIP ≠ A*j • SrcIP &&
+Ai* • DstIP = A*j • DstIP && Ai* • SigID = A*j • SigID
+
+In addition, we observe that if we trace the ongoing
+alerts in the stream, then quite a lot of alerts are
+expected to occur repeatedly in a relatively short time
+interval with the same features of SrcIP, DstIP and
+SigID, and these alerts can be consequently merged to
+form a hyper-alert of Type-I. While in a relatively long
+time span these Type-I hyper-alerts resulted from
+former merging appear that they can be further merged
+to form Type-II or Type-III hyper-alerts. We illustrate
+the case with an example: let four elementary alerts A1,
+A2, B1, and B2 occur simultaneity within a certain time
+window, where A1 and A2 occur relatively closer to
+each other and have common values on the
+overlapping features that A1.SrcIP =A2.SrcIP, A1.DstIP
+=A2. DstIP, A1.SigID =A2.SigID, then a hyper-alert A*
+is generated by merging A1 and A2. The same is true of
+B1 and B2, and another hyper-alert B* is generated in
+the same way. Both A* and B* are identified by the
+same type label Type-I. While, if A* and B* satisfy with
+the conditions that A*.SrcIP= B*.SrcIP and A*.SigID=
+B*.SigID, they can be merged to generate a Type-II
+hyper-alert even though they have distinct DstIP. The
+case is the same with creating Type-III hyper-alerts.
+We can also accounts for these properties by taking
+into account the characteristic of attack behaviors. It is
+very common that attackers make persistent attack
+behaviors with the same intent, which results in
+repeatedly reporting alerts on the same attack behavior,
+and at the same time these attack behaviors may
+involves a large number of distinct target IP addresses
+such as port-scan attack, or distinct source IP addresses
+such as DDOS attack. This motivates us to cluster the
+alerts with common attack intent to reduce the number
+of alerts for improving the efficiency of processing.
+
+381
+
+HAq .Tn = Tc .
+
+Thus it can be seen that the proposed alert stream
+clustering algorithm is a hierarchical process which
+holds differing levels of clustering granularity over
+different time widows. In our case, there two levels of
+clustering granularity in our algorithm, one is for
+creating Type-I hyper-alert, the other is for creating
+Type-II or Type-III hyper-alert. More details on the
+algorithm will be discussed by following part.
+
+else
+Delete HAq from Q and generate a new
+hyper-alert HAk corresponding to Ak .
+Initialize all features of HAk in the same
+way as step2, and insert it into Q.
+It means that if the temporal difference is below the
+user-defined threshold τ Ak is absorbed by HAq,
+otherwise a new hyper-alert is created. These
+operations can be viewed as the first-level clustering.
+Meanwhile, a copy of each newly generated hyperalert will be sent to the next online module, namely
+attack plan recognition module, for predicting the next
+step of the attack.
+· Step 4: In case there is no available memory space
+for storing the newly generated hyper-alert, namely
+that all positions in Q are occupied by current hyperalerts, one hyper-alert in Q must be deleted to create
+memory space. Given HAd is just the hyper-alert to be
+deleted, there must be:
+
+3.2. Overall online clustering algorithm
+As discussed above we note that the Type-I hyperalert must be made up of elementary alerts, the Type-II
+and Type-III hyper-alert must be originated from TypeI hyper-alerts. And the two levels of clustering
+granularity are determined by two different time
+window τ and δ , where τ represents a relatively small
+time span, δ represents a relatively long time span and
+τ < δ . Meanwhile δ is chosen as the particular instant
+of time to store 0-th order snapshots (defined in [9]) of
+hyper-alerts, which means that δ is the smallest level
+of granularity for storing snapshots. Here, the levels of
+granularity for storing snapshots have inconsistent
+meanings with the levels of clustering granularity, they
+are two different concepts. Algorithm 1 describes the
+online process of clustering the alert stream.
+Algorithm 1.Clustering the alert stream
+
+Tc − HAd • Tn = max { Tc − Qi • Tn }
+Qi ∈ Q
+
+where Qi represents any hyper-alert in Q (Qi , HAd ∈Q).
+This means that our algorithm approximately deletes
+the least recently used hyper-alert which can be
+considered less active in the recent stream activity.
+· Step 5: Whenever each time period δ arrives, it
+should perform the second-level clustering that some
+certain Type-I hyper-alerts in Q can be merged to form
+Type-II or Type-II hyper-alerts. This can be done as
+follows: select the first Type-I hyper-alert from Q as a
+reference point denoted by HAr , then scan other Type-I
+alerts in Q to find the ones that have the same values of
+DstIP and SigID as HAr, and put them together to form
+a set QII. Concurrently, another set QIII can also be
+formed, where each member in it has the same values
+of DstIP and SigID as HAr. Intuitively, different SigIDs
+represent different attack behaviors, and Type-I hyperalerts concerning a certain SigID tend to form either
+Type-II or Type-III hyper-alert if they can be merged
+within some time span. We compare the numbers
+contained in the two set. If there are more members in
+QII than in QIII, then HAr and all members of QII are
+merged together to generate a new Type-II hyper-alert,
+which means these alerts are inclined to group
+themselves to form a Type-II hyper-alert instead of
+Type-III hyper-alert. We call this clustering trend, and
+the same applies to generating Type-III hyper-alerts. In
+case that QII(QIII) is verified to have the clustering
+trend, QIII(QII) will be discarded, then each members
+of QII(QIII) and HAr are merged to generate a new
+hyper-alert HAn and some positions in Q are free for
+
+· Step 1: We fist allocate some memory space to
+initialize a queue (denoted by Q) to maintain the
+current snapshot of hyper-alerts which change over the
+course of the stream as new alerts arrive. At the very
+beginning of the alert stream the queue is empty.
+The τ and δ are inputted as parameters with prespecified values.
+·Step 2: Whenever a new elementary alert Ak arrives,
+compare it with each Type-I hyper-alert in the Q to find
+one Type-I hyper-alert that have the same values of
+SrcIP, DstIP and SigID as Ak, If Q is empty or such
+kind of hyper-alert is not exists, then Ak is put in a
+newly generated hyper-alert of its own, the new hyperalert denoted by HAk is assigned with a new HID
+number and inserted into Q with initialized features:
+HAk .SrcIP = Ak .SrcIP, HAk .DstIP = Ak .DstIP,
+HAk .SigID = Ak .SigID, HAk .Type = Type-I,
+HAk .N = 1, HAk .Ts = HAk .Tn = Tc .
+The Tc represents the current time of the system in the
+context of the paper.
+· Step 3: If the hyper-alert is found by step 2, let it be
+HAq, compare the temporal difference between HAq
+and Ak:
+if Ak .AT － HAq .Ts <= τ then Update HAq:
+HAq .N = HAq .N + 1.
+
+382
+
+newly generated hyper-alerts. HAn is initialized as
+follows:
+HAn .Type = Type-II (III), HAn .SrcIP = HAr .SrcIP (0),
+HAn .DstIP =0 (HAr .SrcIP), HAn .SigID = HAr .SigID,
+HAn .N = 1 + numbers contained in QII(QIII),
+HAn .Ts = min {HAr .Ts , Qi.Ts },
+HAn .Tn = max {HAr .Tn , Qi.Tn }.
+
+created between Ti－WT and Ti can be obtained from
+the database, where Ti represents any time point. This
+means that the candidate hyper-alert sequences
+concerning WT can be generated. For the clarity, we use
+Table 1 to illustrate the final form of multiple
+subsequences concerning WT, which is similar to the
+customer’s transactions.
+The advantage owned by the feature SigID is the
+fact that it offers enough information to illustrate the
+attack behavior or one step of multi-stage attack. So
+our correlation approach only focuses on the SigID
+feature of the hyper-alerts. As seen from the table, we
+use integer numbers instead of hyper-alerts to represent
+the candidate attack sequences, where each number is
+related to a certain SigID.
+Table 1 Candidate attack sequence
+
+Where Qi∈QII(QIII), NULL represents nonsense, and
+the HID of HAn becomes an id-list which is a union of
+the HIDs in the individual members. We then select the
+second Type-I hyper-alert form Q as the reference
+point and repeat above operations until the last
+reference point.
+· Step 6: In case that current time Tc is divisible by
+δ i for any integer i (i>0) which indicates the i-th order,
+we then store the current snapshot of hyper-alerts in the
+data warehouse on corresponding orders.
+
+4. Discovering attack strategies
+After online alert clustering process, the number of
+alerts reduced largely and the quality of alerts
+improved highly compared with raw elementary alerts.
+The main task of discovering attack strategies is to
+mining attack sequential patterns by analyzing history
+hyper-alerts in the data warehouse. Once such patterns
+are known, the rules can be produced for describing or
+predicting the behavior of the sequence of network
+attack. We observe that different multi-stage attack
+strategies taken by the attacker usually have their own
+attack behavior sequence patterns and happen in a
+certain time span which is defined as attack scenario
+time window WT. Therefore, the problem of mining
+attack sequential patterns becomes to find out the
+frequent hyper-alert subsequences among the global
+history hyper-alerts sequence that are not less than the
+user-specified minimum frequency and complete in
+user-specified WT.
+A classical sequential mining method GSP proposed
+by [10] is initially used for mining frequent sequential
+patterns in transaction database to discovery the
+customer purchase patterns. All the transactions of a
+customer that are sorted in time order is a customer
+sequence. The problem of mining sequential patterns is
+to find the maximal sequences among all customer
+sequences that have a certain user-specified minimum
+support. Each such maximal sequence represents a
+sequential pattern. Therefore we can use its sequential
+mining idea to find attack sequential patterns from the
+snapshots of hyper-alert stored in the database. Since
+the pyramidal time frame proposed by [9] is adopted
+by our clustering algorithm, which the hyper-alerts
+
+Consequently, GSP can execute in the same way as
+it does on the transaction database. In addition, our
+approach ensures the scalability for various values of
+WT, which can mine different attack patterns may
+happen in different attack scenario time window.
+
+5. Experiment
+To evaluate the effectiveness and validity of our
+method, we performed a series of experiments using
+DARPA 2000 benchmark repository, scenario-specific
+datasets [11]. Snort V2.4.5 was choose as NIDS
+sensors. We use playback technique to replay each of
+the LLDOS 1.0 and LLDOS 2.0.2 datasets for ten
+times separately, and each time we replayed one day’s
+attack traffic of DARPA 1999 dataset simultaneously
+as the background attacks traffics. And the functions of
+replaying were fastened and each time the procedure
+lasted for 12 minutes. We run the online alert stream
+clustering algorithm with τ setting to 40ms and δ
+setting to 120s, the number of the raw alerts is reduced
+by almost 90%. Then we run the correlation algorithm
+with attack scenario time window setting to 12 minutes
+and support value setting to 5 percent. Figure 2 shows
+an example of multi-stage attack scenario we have
+recognized. We can see this is a DDoS attack in
+DARPA 2000 datasets. Attack types, associated with
+signature IDs generated by snort, in black circles in the
+figure construct the attack sequential pattern. One
+attack step usually arouses more than one alert with
+different attack types, that is the reason why the
+
+383
+
+number of nodes in attack sequential patterns are more
+than the number of the attack steps in a multi-stage
+attack.
+
+Research and Development Program of China (863
+Program) under Grant No. 2007AA01Z420.
+
+8. References
+[1] P. Ning, Y. Cui, D. S. Reeves, and D. Xu: Techniques
+and tools for analyzing intrusion alerts. In: ACM
+Transactions on Information and System Security, vol. 7, pp.
+274, 2004.
+[2] Cuppens, F., Ortalo, R. LAMBDA: A language to model
+a database for detection of attacks. In: Proc. of Recent
+Advances in Intrusion Detection, 2000: 197 -216
+[3] J. L.Hellerstein, S. Ma, and C. -S. Perng. Discovering
+actionable patterns in event data. IBM Systems Journal,
+2002, 41: 475
+[4] C. Araujo, A. Biazetti, A. Bussani, J. Dinger, M. Feridun,
+and A. Tanner. Simplifying correlation rule creation for
+effective systems monitoring. In: 15th IFIP/IEEE
+International Workshop on Distributed Systems: Operations
+and Management, DSOM 2004 Proceedings. Davis, CA,
+USA., 15-17 Nov. 2004: 266-268
+[5] P. Ning, Y. Cui, and D. S. Reeves: Constructing attack
+scenarios through correlation of intrusion alerts. In
+Proceedings of the 9th ACM Conference on Computer and
+Communications Security, Nov 18-22 2002, Washington,
+DC, United States, 2002.
+[6] P. Ning, Y. Cui, D. S. Reeves, and D. Xu: Techniques
+and tools for analyzing intrusion alerts. In: ACM
+Transactions on Information and System Security, vol. 7,
+pp.274, 2004.
+[7] F. Cuppens.: Managing alerts in multi-intrusion detection
+environment. In: Proceedings 17th annual computer security
+applications conference. New Orleans; 2001.
+[8] F. Cuppens, A. Miege: Alert correlation in a cooperative
+intrusion detection framework. In: Proceedings of the 2002
+IEEE symposium on security and privacy; 2002.
+[9] C. C. Aggarwal, J. Han, J. Wang, P. Yu. A Framework
+for Clustering Evolving Data Streams. VLDB Conference,
+2003.
+[10] Srikant R, Agrawal R. Mining sequential patterns:
+Generalizations and performance improvements. In: Proc.
+International
+Conference
+on
+Extending
+Database
+Technology, EDBT’96, Avignon, France, 1996: 3-17
+[11] MIT Lincoln Lab. 2000 DARPA Intrusion Detection
+ScenarioSpecificDataSets.http://www.ll.mit.edu/IST/ideval/d
+ata/2000/2000_data_index.htm
+
+Figure 2. Example of attack behavior sequential
+pattern and attack scenario
+
+6. Conclusion and future work
+In this paper, we proposed a novel approach to
+discover the complicated multistage attack behavior
+patterns. It adopts the sequential pattern mining
+algorithm GSP to find out the frequency and sequence
+features in attack behaviors. The result of GSP is attack
+sequential pattern which are stored as rules for
+recognizing the attack plans of the attackers. In order
+to detect attack as soon as possible, the real-time alert
+stream clustering algorithm is presented. This is a
+hierarchical clustering process over different time
+intervals, and higher level alerts existed in different
+time horizons provide the scalability to mining with
+different attack scenario time window. The experiment
+result shows the validity of our system in discovery and
+predication of attacks.
+
+We will continue to study alert correlation, with
+focusing on complementary approaches that can be
+integrated into our system to improve the detection
+capability. We can also make progress to improve the
+system in some other aspects such as alert reduction,
+alert verification and so on.
+
+7. Acknowledgments
+This work was supported by the National Natural
+Science Foundation of China under Grant No.
+60573120, and by the National High Technology
+
+384
+
+

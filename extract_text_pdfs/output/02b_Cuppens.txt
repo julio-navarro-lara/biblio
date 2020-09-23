@@ -1,0 +1,546 @@
+septembre
+
+2002
+
+н
+
+┤ SEcurit┤ e
+
+des
+
+Communications
+
+sur
+
+Internetн
+
+SECI02
+
+Correlation in an intrusion detection process
+Fr┤ ed┤ eric Cuppens , Fabien Autrel , Alexandre Mi` ege & Salem Benferhat
+1: ONERA-CERT, 2 Av. E. Belin, 31055 Toulouse Cedex, France, 2: ENST Paris, 46 rue Barrault, 75014 Paris CEDEX, France, 3: IRIT, 118 route г de Narbonne, 31062 Toulouse CEDEX, France email: cuppens,autrel,miege д @cert.fr, benferhat@irit.fr
+
+ 
+
+ 
+
+б
+
+в
+
+Abstract Generally, the intruder must perform several actions, organized in an intrusion scenario, to achieve his or her malicious objective. We argue that intrusion scenarios can be modelled as a planning process and we suggest modelling a malicious objective as an attempt to violate a given security requirement. Our proposal is then to extend the definition of attack correlation presented in [2] to correlate attacks with intrusion objectives and to introduce the notion of anti correlation. These notions are useful to decide if a sequence of correlated actions can lead to an intrusion objective. This approach provides the security administrator with a global view of what happens in the system. In particular, it controls unobserved actions through hypothesis generation, clusters repeated actions in a single scenario, recognizes intruders that are changing their intrusion objectives and is efficient to detect variations of an intrusion scenario. This approach can also be used to eliminate a category of false positives that correspond to false attacks, that is actions that are not further correlated to an intrusion objective.
+
+1. Introduction
+The main objective of computer security is to design and develop computer systems that conform to the specification of a security policy. A security policy is a set of rules that specify the authorizations, prohibitions and obligations of agents (including both users and applications) that can access to the computer system. An intruder (also called hacker or cracker) might be viewed as a malicious agent that tries to violate the security policy. Thus, an intrusion is informally defined as a deliberate attempt to violate the security policy. This intrusion can be an attempt:
+
+е
+
+To have an illegal access to some piece of information. In this case, the intrusion violates a confidentiality constraint expressed in the security policy. For instance, sniffing or cracking a password violates a confidentiality constraint saying that the owner of a password must be the only user that knows this password.
+
+е
+
+To perform some illegal creation, modification or deletion of some piece of information. In this case, the intrusion violates an integrity constraint expressed in the security policy. For instance, an IP spoofing consists in forging IP packets with illegal address. This is an intrusion that violates an integrity constraint saying that the address of an IP packet must represent the sender of this packet.
+
+е
+
+To prevent other users to have legal access to some services or resources. In this case, the intrusion violates an availability constraint expressed in the security policy. For instance, flooding a system with messages so that other users can no longer have an access to this system provides an example of an intrusion against availability. 153
+
+Fr┤ ed┤ eric Cuppens, Fabien Autrel, Alexandre Mi` ege & Salem Benferhat Notice that sometimes the intruder might perform his intrusion by using a single action. For instance, performing a deny of service using the ping of death attack simply requires sending a too long IP packet. However, more complex intrusions generally require several steps to be performed. For instance, let us consider the Mitnick attack. There are two steps in this attack. In the first step, the intruder floods a given host ж . Then the intruder sends spoofed SYN messages corresponding to ж address to establish a TCP connection with a given server з . When з sends a SYN-ACK message, ж would normally send a RESET message to close the connection. But this is not possible since ж is flooded. This enables the intruder to send an ACK message to illegally open a connection with з . Notice also that opening a TCP connection with з is probably not the intruder's final objective. It is likely that the intruder will then attempt to get an access on з for instance by performing a rlogin. This means that the Mitnick attack will actually represent preliminary steps of a more global intrusion. In the following, we shall call intrusion scenario the complete sequence of actions that enables the intruder to achieve his intrusion objective. Another important point to be mentioned is that the intruder will generally first need to gain knowledge about the target system to be attacked. For instance, let us consider an intruder whose objective is to perform a deny of service (DOS) over the Domain Name Server (DNS) of a given network. In this case, a "brute force" intrusion would be to launch a Winnuke attack over all the machines of this network, expecting that the DNS server will be denied at the same time as other machines. However, this is not a very efficient nor clever way to proceed. It is more likely that a careful intruder will first use the nslookup command to locate the DNS server and then send a ping to check whether this server is active. And if the intruder chooses Winnuke to perform the DOS attack, since Winnuke only succeeds on Windows machines, this careful intruder will probably check if the DNS server actually supports Windows. For this purpose, the intruder may scan port 139 (NetBios) because NetBios provides good evidence that Windows is active. We shall call knowledge gathering steps the set of commands that enables the intruder to gain knowledge about the target system. In our previous example, the knowledge gathering steps correspond to nslookup, ping and scan of port 139. In the following, we shall consider that the knowledge gathering steps are part of the intrusion scenario. In this context, current intrusion detection technology only detects elementary attacks that correspond to the steps of a given intrusion scenario. They neither provide a global view of the intrusion scenarios in progress nor of the intrusion objectives the intruders attempt to achieve. Therefore, our goal in this paper is twofold. First, we suggest an approach to recognize various steps of an intrusion scenario. We shall call attack correlation this first functionality. It is actually an extension of the approach suggested in [2]. Second, when the attack correlation function succeeds in correlating several actions, we want to decide whether the current observations actually correspond to malicious activities or not. We call malicious intention recognition this second functionality. Combining these two functionalities would enable the security administrator to have a global understanding of what happens in the system in order to prepare an adequate reaction. Notice also that sometimes, this reaction might be launched before the intrusion scenario is completed, that is before the intrusion objective is actually achieved. The remainder of this paper is organized as follow. Section 2 introduces preliminary definitions to fix the vocabulary. Section 3 presents our approach to modelling the intrusion process. This model includes a representation of both attacks and intrusion objectives. Our approach is actually derived from planning process models in Artificial Intelligence. These models are used to represent the activity of an agent that attempts to find a sequence of actions that achieve a given objective. We argue that the activity of an intruder who is performing an intrusion scenario is quite similar to a planning process. Section 4 then presents our approach for modelling the intrusion detection process. From a formal point of view, this approach uses the same materials as the ones presented in section 3, namely attack and intrusion objective modelling. Based on these materials and following [2], we define the notion of attack and alert correlation and also correlation between an attack and an intrusion objective. We then introduce the notion of anti correlation that is useful to detect that an action disables a given intrusion scenario in progress. Section 5 further refines our approach by introducing abduction in the correlation process. Abduction is used to generate hypotheses. This is useful in two different situations: 1. Abduction of unobserved attacks. This is used to complete detection of an intrusion scenario when some steps in this scenario are not detected (false negatives). 154
+
+Recognizing malicious intention in an intrusion detection process 2. Abduction of intrusion objectives. This is useful to anticipate over the intruder intentions when several actions that match an intrusion scenario have been correlated. Section 6 presents an experimentation of our approach on several examples of intrusion scenarios. Section 7 is a discussion of our approach, compared to other approaches suggested in the literature, in particular approaches based on expert system [7], explicit plan recognition (see for instance [6]) and chronicle recognition [9]. Finally section 9 concludes the paper.
+
+2. Preliminary definitions
+In order to avoid any confusion or misunderstanding, and because the intrusion detection vocabulary is not clearly established, we give in this section a brief overview of the terms we shall use in this paper. Intrusion objective (intrusion detection point of view) An intrusion objective is the final purpose of an intruder, which justifies all its actions. So, from its point of view, the intrusion objective is obvious. By contrast, from the intrusion detection point of view, it is more difficult to determine the possible intrusion objectives and to differentiate them from non malicious activities. As an intruder aims at committing a forbidden action, we suggest deriving the possible intrusion objectives from the security policy: any security policy violation is a potential intrusion objective. We give three examples corresponding to integrity, confidentiality, and availability violation:
+
+е е е
+
+Objective 1: gaining a non authorized root access right Objective 2: having a non authorised read access to a sensitive file Objective 3: performing a denial of service attack on the DNS
+
+Malicious action A malicious action enables the intruder to directly achieve an intrusion objective. For instance, thanks to the Winnuke attack, an intruder can do a denial of service on a Windows server. Intrusion scenario As an intrusion objective will often needs several actions to be reached, the intruder needs to draw up an intrusion scenario. It is an organised set of actions, which have to be executed following a certain order. Let us present three intrusion scenarios corresponding to the intrusion objectives described just before. 1. Illegal NFS mount: the intruder, say badguy, wants to obtain a root access on a target. badguy can perform the following actions:1
+
+е е е е е
+
+rpcinfo to know if portmapper is running on the target. With the showmount command, badguy sees the target exportable partitions. mount enables badguy to mount one of this partition, say the root partition. By modifying the .rhost file of this partition, badguy gets a root access on the target system. rlogin is the final step to access the target system with root privileges.
+
+2. Illegal file access: we shall consider the following intrusion scenario example where an unauthorised user bad guy tries to read secret-file:2
+scenario actually exploits a wrongly configured security policy: the intruder should not be able to mount the root partition. scenario that does no longer work on current UNIX versions but it provides a good example to illustrate various concepts of our approach.
+2 This is an old intrusion 1 This
+
+155
+
+Fr┤ ed┤ eric Cuppens, Fabien Autrel, Alexandre Mi` ege & Salem Benferhat
+
+е е е е е е
+
+bad guy creates a file (touch file), bad guy blocks the printer, by opening the paper trays. lpr -s enables bad guy to print file. With "s" option, the file is not spooled, only its path is saved. bad guy deletes file bad guy creates a symbolic link from file to secret-file: ln -s file secret-file. bad guy unblocks the printer and secret-file will be printed.
+
+3. DoS on the DNS: this intrusion scenario leads to a DoS attack on the DNS server. A possible scenario suggested in the introduction is: nslookup, ping, scan port 139 and winnuke. Action correlation (informal definition) intruder to then perform ий"! .
+
+ий
+
+is correlated with
+
+ий!
+
+if
+
+ий"#
+
+may enable the
+
+Suspicious action A suspicious action is defined as an action that can be correlated to a malicious action. According to this definition, a suspicious action may be an inoffensive action, or may also be a way to execute a malicious action on a following step. For example, scanning port 139 (NetBios) is not a dangerous action. But, if port 139 is open, the intruder knows that Windows is running and can perform the Winnuke attack. Attack An attack is a malicious action or a suspicious action. This is quite a weak definition of "attack" since it also includes suspicious actions. However, we guess it is close to the intrusion detection terminology since many alerts actually correspond to only suspicious actions. This leads to the following definition of alerts: Simple alert A simple alert is a message sent by an IDS. It results from the detection of a suspicious or a malicious action. Fusion process and fusion alert The simple alerts generated by different IDS detecting the same attack are merged into a single cluster. This is called fusion process. It determines first which are the merging criteria for each type of attack, and then, during the intrusion detection process, uses those criteria to constitute clusters. At last, it generates a fusion alert to inform all the security devices of the creation and the content of a new cluster. It is not the purpose of this paper to further present the fusion process but see [1, 10] for different proposals for this process. Correlation process and scenario alert The correlation process receives the fusion alerts and tries to correlate them one by one using correlation rules. When a complete or a partial intrusion scenario is detected, a scenario alert is generated. [2] suggests an approach for the correlation process and correlation rules definition. The purpose of this paper is to extend this correlation process. False positive False positive and false negative are well documented notions in intrusion detection literature. However, regarding false positive we guess it is necessary to distinguish between false detection and false attack. 1. False detection corresponds to the occurrence of an alert whereas the corresponding attack did not occur. For instance, this can be due to an IDS weak signature. 156
+
+Recognizing malicious intention in an intrusion detection process 2. False attack results from detecting a suspicious action that is not further correlated with a malicious action. We argue that the fusion process is useful to recognize false detection (see [1]). However, it is not sufficient to detect false attacks. For this purpose, the correlation process presented in this paper will be useful.
+
+3. Modelling the intrusion process
+The objective of this paper is to detect intrusion scenario and recognize malicious intention. For this purpose, it is first useful to analyse and model how intruders proceed to perform their intrusions. In our approach the intrusion process is modelled as a planning activity. We assume that the intruder wants to achieve intrusion objectives and, for this purpose, the intruder can use a set of attacks (remember that attacks include both suspicious or malicious actions). In this context, the intruder's problem is to find a sequence of attacks that transform a given initial state into a final state. The initial state corresponds to the system state when the intruder starts his intrusion. And the final state has the property that the intrusion objective is achieved in this state. We check this approach on several intrusion scenarios, including the three scenarios presented in section 2 but also other scenarios such as the Mitnick attack. For every analysed scenario, it was possible to interpret it as a planning process. Due to space limitation, we shall only illustrate this claim on scenario 3 "illegal file access". But before, we need to present our approach to model attacks and intrusion objectives.
+
+3.1. Attack modelling
+In the planning context, actions are generally represented by their pre and post conditions. Pre conditions of an action correspond to conditions the system's state must satisfy to perform the action. Post conditions correspond to effects of executing the action on the system's state. In our model, an attack is similarly represented using three fields: its name, pre condition and post condition. Attack name is a functional expression that represents the name of the attack and its different parameters. Attack pre-condition specifies the logical conditions to be satisfied for the attack to succeed and attack post-condition is a logical condition that specifies the effect of the attack when this attack succeeds. The pre-condition and post-condition of an attack correspond to conditions over the system's state. For this purpose, we use a language, denoted $% , which is based on the logic of predicates. Predicates are used to describe properties of the system state relevant to the description of an attack. In this language, we assume that terms starting by an upper case letter correspond to variables and other terms are constants. The predicates are combined using the logical connectives "," (conjunction denoted by a comma) and "not" (negation). Currently, we do not allow using disjunction in the pre and post conditions of an attack. Another restriction is that negation only applies to predicates, not to conjunctive expressions. The reason of these restrictions will be explained in section 4. In order to model knowledge gathering actions, we extend language $& so that it also includes a metapredicate (actually a logical modality) knows. If и is an agent and ' is a formula of $& , then ()0132546и879'A@ means that и knows that ' is true. We assume that modality ()012 satisfies the following axiom for each agent и and formula ' : (50132546и879'B@DCE' , that is if и knows that ' then ' is true. Figure 1 shows how various steps of scenario illegal file access are represented in this model. In this example, we use the following predicates: FGIHQP)46R3H9PS@ (R3IHQP is a file), 1&0PUTV46и%WXPUB"7YR3IHQPS@ (и%WXP`B is the owner of R3H9P ), 'GTabBcPUTV4edTaeBcPUT5@ ( dTaeBcPUT is a printer), fgH9aйU(hPip4edTaeBcP`T5@ ( dTabBcPUT is blocked), q)r YspTatuPip46и%WXPUB"7wvx6WVsV"7YR3H9PS@ (и%WXPUB has v6WVsX access on R3H9P ), Hye!(XP`i4e$#b!(p7wR3H9PS@ (there is a logical link from $De!( to R3H9P ),  r P r P`i46R3H9Pu7dTaeBcPUT5@ ( R3H9P is queued in dTaeBcPUT ), TuP q i q йgйgPa22546и%WXPUB"7wR3H9PS@ 157
+
+Fr┤ ed┤ eric Cuppens, Fabien Autrel, Alexandre Mi` ege & Salem Benferhat Action c r й`s46и%WXPUB"7wR3H9PS@ Pre: T r P Post: FpH9P546R3H9PS@"71%0P`TV46и%WXPUB"7YR3H9PS@ Action H'pT - 2u46и%WXP`B"7wdTaeBcPUTa7wR3H9PS@ Pre: 'pTaeBcPUTV4edTaeBcP`T5@"7FGIHQP)46R3H9PS@"7 Action fgHQaй`(46и%WXPUB"7dTaeBcPUT5@ Pre: 'GTaeBcPUTV4edTabBcPUT5@"7
+
+q)r Y  sGTat5P`i46и%WXPUB"7cTuP q ip7YR3H9PS@ Post:  r P r P`ip46R3IHQP57wdTaeBcPUT5@ Action Hy - 2546и%WXPUB"7$#b!(p7wR3H9PS@ Pre: not 4bFpH9P54e$De!(X@Y@ Post: Hye!(XP`i4e$De!(p7wR3H9PS@
+Action Pre: 
+
+'AsVV2Uй q H q йgйUPS2S2u46и%WXP`B"7wdTaeBcPUT5@ Post: fgHQaй`(hP`i4edTaeBcPUT5@ Action TuPUhP)46и%WXPUB"7YR3H9PS@ Pre: 1%0P`TV46и%WXPUB"7YR3H9PS@ Post: not 4bFpH9P546R3H9PS@Y@
+Action r 0fgHQaй`(46и%WXPUB"7dTaeBcPUT5@ Pre: 'GTaeBcPUTV4edTabBcPUT5@"7wfgH9aйU(hPip4edTaeBcP`T5@"7
+
+ -'GTuaйUPS2S2u4edTabBcPUTa7w$De!(V@ r 'pPTar eB P`ip4e$De!(7wdTabBcPUT5@"7 Hye!(hPip4e$De!(7YR3H9PS@"7 not 4ef"H9aйU(XP`i4edTaeBcPUT5@Y@ Post: 'pTaeBcP`i4edTaeBcPUTa7wR3H9PS@"7 not 46 r P r P`i4e$#b!(p7dTaeBcPUT5@Y@
+
+'AsVV2Uй q H q g й йUPS2S2u46и%WXP`B"7wdTaeBcPUT5@ Post: not 4efgH9aйU(XP`ip4edTabBcPUT5@Y@ Action WXPU - FpH9P546и%WXPUB"7YR3IHQPa@ Pre: 'GTaeBcP`i4edTaeBcPUTa7wR3H9PS@"7 'AsVV2Uq й q qH q йgйUPS2S2u46и%WXP`B"7wdTaeBcPUT5@ Post: TuP i йUйgPS2S2546и%WXPUB"7YR3H9PS@
+
+Figure 1: Modelling the illegal file access scenario (и%WXP`B has a read access on R3H9P ) and 'BsXV2Uй q H q йUйgPS2S2546и%WXPUB"7wdTaeBcP`T5@ (и%WXPUB has a physical access to dTabBcPUT ). To model the illegal file access scenario, we actually specify 8 actions. The 6 first actions , H 'pT - 2546и%WXPUB"7wdTaeBcP`Ta7YR3H9PS@ , TuPUhP)46и%WXPUB"7YR3H9PS@ , Hy c r й`s46и%WXPUB"7wR3H9PS@ , f"H9aйU(A 6 4 % и X W U P B  "  w 7  d a T e  B  c  ` P 5 T @ 2546и%WXPUB"7$De!(p7wR3H9PS@ and r 0f"H9aйU(A46и%WXPUB"7wdTabBcPUT5@ correspond to the various actions performed by the intruder in the illegal file access scenario as presented in section 2. Our model includes two additional actions 'pTaeB -'GTuaйgPa2254edTaeBcP`Ta7w$De!(V@ and WXPU - FGIHQP)46и%WXPUB"7YR3H9PS@ . Action 'pTaeB -'GTuaйUPS2S2u4edTabBcPUTa7w$De!(V@ models what happens on dTaeBcPUT when $De!( is queued: a file is printed if dTaeBcPUT is not blocked. This printed file will be R3H9P if there is a logical link between $De!( and R3IHQP . Action WXP` - FGH9P546и%WXPUB"7wR3H9PS@ corresponds to the physical action performed by и%WXPUB to get R3H9P after it is printed. This last action actually enables и%WXPUB to obtain a read access to R3H9P . We argue that these two last actions are necessary to fully represent this scenario. In particular, the intruder has not achieved his intrusion till he has not executed the action WXPU FGIHQP . Notice also that the attack will not succeed if и%WXPUB has not a physical access to the printer on which the sensitive file is printed.
+
+3.2. Modelling intrusion objective
+In our approach intrusion objectives actually correspond to violation of a given security policy. For instance, the security policy may specify (1) that an agent should not gain a root access to a system whereas he is not authorized to do so, or (2) an agent should not obtain a read access to a file whereas he is not authorized to do so, or (3) a DNS system should remain available in any circumstance. Therefore, an intrusion objective is modelled by a system state condition that corresponds to a violation of the security policy. Figure 2 provides three examples of intrusion objectives that respectively correspond to violation of the three requirements specified in the previous security policy example. For instance, intrusion objective 2  з4eж2UY@ is achieved if ж2U is a DNS server and there is a DOS attack on this server. 158
+
+Intrusion Objective IHQH9PgW q H Tua q йgйgPS2S254eж2gY@ State Condition: Tua q йgйgPS2S2546и%WXPUB"7ж2UY@"7 not 4 q)r YsGTat5P`i46и%WXPUB"7cTua"7ж2UY@Y@
+
+Recognizing malicious intention in an intrusion detection process
+
+IHQH9PgW q H FGIHQP q йUйgPS2S2546R3H9PS@ qi qU й йgPS2S2546и%WXPUB"7YR3H9PS@"7 4 q)r YsGTat5P`i46и%WXPUB"7cTuP q ip7YR3H9PS@Y@ Intrusion Objective з  з4eж2UY@ State Condition: i5!2 2PUTaXPUTV4eж2UY@"7Yih2u4eж2UY@
+Intrusion Objective State Condition: TuP not Figure 2: Examples of intrusion objectives Domain rule 1&0PUT TaeWVsXg46R3H9PS@ Pre: 1%0P`TV46и%WXPUB"7YR3H9PS@ Post: q5r YspTat5P`ip46и%WXP`B"7cTuP q ip7YR3H9PS@"7
+
+Domain rule TuP`XP Ta6WVsXg46R3IHQPa@ Pre: not FGIHQP)46R3H9PS@ Post: not 4e1&0PUTV46и%WXP`B"7YR3H9PS@Y@"7 not 4 q5r YspTat5P`ip46и%WXP`B"7cTuP q ip7YR3H9PS@Y@"7 not 4 q5r YspTat5P`ip46и%WXP`B"7c1&TaecPu7wR3H9PS@Y@
+
+q5r YspTat5P`ip46и%WXP`B"7c1&TaecPu7wR3H9PS@
+
+Figure 3: Examples of domain rules
+
+3.3. Domain rules
+In our model, we also include the possibility to specify domain rules. Domain rules are used to represent general properties of system's state through possible relations between predicates. These domain rules are also represented using a pre and post condition but there is a major difference with the pre and post condition of actions. Indeed, an action corresponds to a transition from an initial state to a final state: the pre condition of an action is true in the initial state and the post condition is true in the final state. By contrast, the pre and post conditions of an domain rule are evaluated on the same system state: if the pre condition of an domain rule is true in a given state, then the post condition is also true in the same state. Figure 3 provides two examples of domain rule. Rule 1&0PUT Ta6WVsVg46R3H9PS@ says that the и%WXPUB owner of a given R3IHQP is automatically authorized to have read and write access to this file. Rule TuPUXP Ta6WVsVg46R3H9PS@ says that if R3H9P does no longer exist, then there is no longer an owner for this file and read and write access to R3IHQP are also removed to every и%WXPUB .
+
+3.4. Planning intrusion scenario
+Using the three previous sections, we can now show how the intrusion scenario illegal file access is modelled as a planning process. For this purpose, let us consider an intruder, say f q i W r  , and a file containing sensitive data, say 2PйTuP` FGIHQP . Let us assume that f q i W r  wants to achieve the intrusion objective IHQH9PgW q H FGIHQP q йUйgPS2S254b2`PSйTuPU FpH9PS@ . This means that f q i W r  wants to achieve a final system state such that the following condition is satisfied:
+
+е TuP q i q йgйgPS2S254ef q i W r A  72PйTuPU FpH9PS@"7 not 4 q)r YsGTat5P`i4ef q i W r 7YTuP q iG7"2PйTuPU FpH9PS@Y@ Let us also assume that f q i W r  starts in the following initial state:
+159
+
+Fr┤ ed┤ eric Cuppens, Fabien Autrel, Alexandre Mi` ege & Salem Benferhat Step Step Step Step Step Step Step Step 1: 2: 3: 4: 5: 6: 7: 8:
+
+c r й`s4ef q q i W r r 7cW r  FGIHQPa@ fgH9aйU(A4ef i W 76'u'pY@ H'pT - 2u4ef q i W r 76'u'p"7IW r  FGH9PS@ TuP`XqP54ef q i r W r  7cW r  FpH9PS@ r 254ef i W 7IW  FpH9Pu72PйTuP` FGH9PS@ rHy 0fgH9aйU(A4ef q i W r 79'5'GY@ 'pTaeB -'GTuaйUPS2S2u4'5'G"7cW r  FpH9PS@ WXP` - FGH9P54ef q i W r 7"2PйTuPU FpH9PS@
+
+Figure 4: Planning the illegal file access scenario
+
+е p F H9P54b2PйTuPU FpH9PS@"7 not 49TuP q i q йgйgPS2S254ef q i W r 72Pй"TuPU FGH9PS@Y@"7 'pTaeBcPUTV4'5'GY@"79'BsXG2gIй q H q йgйgPS2S254ef q i W r A79'u'pY@ That is, in the initial state, 2Pй"TuPU FGH9P exists but f q i W r  has not a read access to this file and there is a printer 'u'G and f q i W r  has a physical access to this printer.
+Now, the planning problem consists in finding a sequence of actions that transforms the initial state into the final state. Figure 4 presents a possible solution to this problem. It is easy to check that objective IHQH9PgW q H FGIHQP q йUйgPS2S254b2`PSйTuPU FpH9PS@ is achieved in the state resulting from these 8 steps. Notice that there is another solution that corresponds to starting by blocking the printer and then creating W r  FGIHQP using the c r й`s command, the other steps being identical to the other solution. According to our definitions presented in section 2, only WXPU - FpH9P54ef q i W r A72PйTuPU FpH9PS@ corresponding to step 8 is a malicious action since it enables the intruder to achieve the intrusion objective. Steps 1 to 7 are only suspicious actions in the sense that they enable the intruder to then perform step 8. This might seem surprising since steps 1 to 6 are generally presented as an attack scenario. However, notice that independently each of this step might well correspond to a non malicious action. It is really the combination of these 6 steps that enables the intruder to achieve his objective. However, after step 6, the intruder did not achieve his objective yet. This is why, according to our definition, steps 1 to 6 are only suspicious actions and step 8 is the malicious action. But, of course, if the 6 first steps are observed, we can conclude on the malicious intention of the intruder and it is relevant to react. Actually, it is especially time to react since the intruder perhaps did not get the paper on the printer yet whereas we are quite sure of his malicious intention.
+
+4. Attack and alert correlation
+Our approach for intrusion scenario detection uses the same materials as the ones introduced in section 3, namely attack specification through pre and post conditions, intrusion objective corresponding to security policy violation and domain rules. Based on these materials, we shall extend the definition of attack correlation suggested in [2] by defining the notions of objective correlation and anti attack and objective correlations.
+
+4.1. Correlation definitions
+Let 
+
+е d  ePUf5'GTSgh`7PUf5'GTSgAiS7`jkjljl7wPUf5'pTSgm е RnoPUf5'GTap h 7PUf5'GTap i 7Ujljljk7PUf5'GTapuq
+
+and R be two logical expressions having the following form:3
+
+3 Notice that we assume that these two expressions do not include disjunction. This is a restriction which is used to simplify definition of correlation below. Generalising correlation definitions to take into account disjunctions represents further work that remains to be done.
+
+160
+
+Recognizing malicious intention in an intrusion detection process where each PUf5'GTr must have one of the following forms:
+
+е P`f5'GT`rst'pTuP`i е P`f5'GT`rs
+not
+
+е P`f5'GT`rso()0132u4uv2PUTa79'pTuP`iX@
+where 'pTuP`i is a predicate.
+
+4'pTuP`ih@
+
+е P`f5'GT`rso()0132u4uv2PUTa7 not 4'pTuP`iX@Y@
+
+Definition 1: Headway correlation We say that logical expressions following condition is satisfied:
+
+
+
+and
+
+R
+
+are headway correlated if the
+
+е
+
+there exist  in wx7Yy and z in unifier (mgu) ~ .
+
+w{xu7cAy
+
+such that
+
+PUf5'pTag|
+
+and
+
+P`f5'GTapS}
+
+are unifiable through a most general
+
+For instance, the post condition of action c r йUs46и%WXP`B"7YR3H9PS@ is headway correlated with the pre condition of action TuPUhP546и%WXP`B"7YR3H9PS@ . This is because these two logical expressions have in common predicate 1&0PUTV46и%WXP`B"7YR3H9PS@ . After renaming the variables of 1&0PUTV46и%WXPUB"7wR3H9PS@ that respectively appear in the post condition of action c r йUs and the pre condition of action TuPUhP into 1&0PUTV46и%WXPUBU`7wR3H9Pg@ and 1&0PUTV46и%WXP`Bca7YR3IHQPS@ , we can conclude that these expressions are unifiable through mgu ~ such that и%WXP`Bи%WXPUBc and R3IHQPuR3IHQPS . Definition 2: Knowledge gathering correlation We say that logical expressions gathering correlated if the following condition is satisfied:
+
+
+
+and
+
+R
+
+are knowledge
+
+е
+
+there exist  in mgu ~ .
+
+w{xu7cy
+
+and z in
+
+w{xu7YAy
+
+such that PUf5'pTag| and
+
+()01254uv2PUTa7wPUf5'pTap}S@
+
+are unifiable through a
+
+For instance, in the illegal root access scenario, knowledge gathering correlation applies to correlate the post condition of action 2SsG1& r Bg46и%WXPUB"7c q TSWXPUY@ with the pre condition of action  rr Bg46и%WXPUq B"7Y q TSWXP`"q 7wd q Taeq !@ . Indeed, a possible post condition of action 2SsGr1& r B is ()012546и%WXPUB"7  BcP`i ' Tae49 TSWXPU"7wd TaeI!@Y@ , that is the и%WXP`B performing 2Ssp1% B knows what partitions are mounted on  q TSWXPU . On the other hand,  r BcP`i ' q Tae49 q TSWXPU"7d q TaeI!@ appears in the pre condition of action  r B and so definition 2 applies. Definition 3: Correlation We say that logical expressions correlated or knowledge gathering correlated.
+
+
+
+and
+
+R
+
+are correlated if
+
+
+
+and
+
+R
+
+are headway
+
+Definition 4: Direct attack correlation We say that attacks и and  are directly correlated if expressions dv2Ug46и3@ and dTuP54e@ are correlated. Intuitively, correlation between attacks и and  means that и enables the intruder to then perform attack  . Figure 5 shows attacks that are directly correlated in the illegal file access scenario. In this figure, all variables were renamed to obtain distinct variables in the pre and post conditions of correlated attacks. 161
+
+Fr┤ ed┤ eric Cuppens, Fabien Autrel, Alexandre Mi` ege & Salem Benferhat Attack и Attack  r c й`s46и%WXPUB`7wR3H9Pg@ TuPUXP546и%WXPUBc7wR3H9P`@ TuPUXP546и%WXPUB`7wR3H9Pg@ Hy - 2546и%WXPUBc7w$De!(5a7YR3IHQPS@ r 0fgH9aйU(46и%WXP`Bc7wdTaeBcPUTS@ f"H9aйU(A46и%WXPUB`7dTaeBcPUTug@ H'GT - 2546и%WXPUB`7dTaeBcPUTu`7wR3H9P"@ p ' TaeB -'GTuaйgPa2254edTaeBcP`TSS7w$De!(5@ Hy - 2546и%WXPUB`7w$De!(X7YR3H9Pg@ ' TaeB -'GTuaйgPa2254edTaeBcP`TSS7w$De!(5@ p r 0f"H9aйU(A46и%WXPUB7dTaeBcPUTu"@ ' TaeB -'GTuaйgPa2254edTaeBcP`TSS7w$De!(5@ p 'GTaeB -'pTuaйgPS2S254edTaeBcPUTuU7$De!(hg@ WXPU - FpH9P546и%WXPUBc7wR3H9P@
+
+и%WXPUBи%WXPUBc7YR3H9PR3H9P R3H9Pe$De!(5 и%WXPUBи%WXP`Bca7wdTabBcPUTuedTaeBcPUTS R3H9Po$De!(5a7wdTabBcPUTuedTaeBcPUTS $De!(Xe$De!(57wdTabBcPUTuedTaeBcPUTS dTaeBcPUTuedTabBcPUTS R3H9PR3IHQPS7wdTaeBcPUTuedTabBcPUTS
+
+Unifier
+
+Figure 5: Direct attack correlation in the illegal file access scenario
+
+Definition 5: Indirect attack correlation We say that attacks domain rules v87`jkjljl7Yvx if the following conditions are satisfied:
+
+и
+
+and
+
+
+
+are indirectly correlated through
+
+е dv2Ug46и3@ е е dv2Ug46vxp@
+
+is correlated with dTuP)46v8"@ through a mgu
+
+~ , ~% , H'pT ~
+.
+
+For each z in
+
+w{xu7cx"y , dv2gg46v&S@
+
+is correlated with dTuP546v%"s"@ through a mgu
+
+is correlated with attack dTuP54e@ through a mgu
+
+For instance, it is easy to verify that attack c r йUs046и%WXPUB"7wR3H9PS@ is indirectly correlated with attack 2546и%WXPUB"7dTaeBcPUTa7wR3H9PS@ through the domain rule 1&0PUT Ta6WVsVg46R3H9PS@ .
+
+Definition 6: Direct objective correlation We say that attack и is directly correlated to intrusion objective  if expressions dv2Ug46и3@ and з# q cP йUiueI4e8@ are correlated. Definition 7: Indirect objective correlation Same definition as definition 5 by replacing з# q cP йgi5e4e@ for dTuP54e@ . Intuitively, correlation between attack и and intrusion objective  means that attack и enables the intruder to achieve objective  . For instance, attack WXPU - FpH9P546и%WXPUB"7YR3IHQPa@ is directly correlated with intrusion objective IHQH9PgW q H FpH9P q йUйgPS2S2546R3H9PS@ .
+
+4.2. Anti correlation
+In this section, we use the same notation as in section 4.1 and define anti correlation as follows: Definition 8: Anti correlation We say that logical expressions following conditions is satisfied:
+
+
+
+and
+
+R
+
+are anti correlated if one of the are unifiable through a mgu ~ .
+
+е е
+
+there exists  in there exists  in
+
+wx7Yy wx7Yy
+
+and z in and z in
+
+wx7YAy wx7YAy
+
+such that PUf5'GTg
+
+|
+
+and not
+
+4ePUf5'pTap } @
+
+such that not
+
+4ePUf5'pTag|I@
+
+and PUf5'GTp} are unifiable through a mgu ~ .
+
+For instance, the post condition of c r йUs46и%WXP`B"7YR3H9Pg@ is anti correlated with the pre condition of 2546и%WXPUBc7w$De!(5a7wR3H9P@ through the unifier R3H9Pue$De!(5 . 162
+
+H
+
+-
+
+Recognizing malicious intention in an intrusion detection process Definition 9: Direct anti attack correlation We say that attacks и and  are directly anti correlated if expressions dv2Ug46и3@ and dTuP)4e@ are anti correlated. In the illegal access file scenario, we have the following direct anti attack correlations:
+
+е c r й`s46и%WXPUB7YR3H9Pg@ and Hy - 2546и%WXPUBca7$#b!(u7wR3H9P`@ through the unifier R3H9Pue$De!(5 е fgH9aйU(A46и%WXPUB7wdTaeBcP`Tu"@ and 'pTaeB 'GTuaйgPS2S254edTaeBcPUTaS7$De!(u@ through the unifier dTaeBcP`Tu dTabBcPUTS
+Definition 10: Indirect anti attack correlation We say that attacks и and through domain rules v7`jkjljk7wv& if the following conditions are satisfied:
+
+
+
+are indirectly anti correlated
+
+е dv2Ug46и3@
+
+~ , е For each z in w{xu7cx"y , dv2gg46v&S@ is correlated with dTuP546v%"s"@ through a mgu ~% , е dv2Ug46vxp@ is anti correlated with attack dTuP54e@ through a mgu ~ .
+For instance, attacks TuPUhP)46и%WXPUB"7YR3H9PS@ and H'GT - 2546и%WXPUB"7wdTabBcPUTa7YR3H9PS@ are indirectly anti correlated through domain rule TuPUXP Ta6WVsVg46R3H9PS@ . The notion of anti attack correlation is very useful. It enables the correlation process to conclude that some sequences of actions will not succeed and do not correspond to intrusion scenarios. For instance, the sequence:
+
+is correlated with dTuP)46v8"@ through a mgu
+
+е c r й`s4ef q i W r   7cW r  FGH9PS@"7YTuPUXP54ef q i W r   7cW r  FGH9PS@"7H 'pT - 5 2 4ef q i W r   76'u'G"7cW r  FpH9PS@
+can be discarded because of the anti correlation between TuP`XP and H'pT - 2 . One can also conclude that illegal access file scenario will not succeed until the printer is blocked because of the anti correlation between f"H9aйU( and 'GTaeB -'pTuaйgPS2S2 . Similarly, one can define the notions of direct and indirect anti objective correlation of an attack и with an intrusion objective  by simply replacing з# q cP йgi5e4e@ for dTuP)4e@ in definition 9 and 10. This is useful to analyse actions that would prevent the intruder to achieve a given intrusion objective. We plan to use this approach to combine the reaction process with the intrusion detection process in order to take into account the effect of reaction on the intrusion.
+
+4.3. Generating correlation rules
+In [2], we show how to automatically generate correlation rules. 4 Due to space limitation, we shall simply give the intuition here. An attack correlation rule enables the correlation process to correlate two alerts corresponding to correlated attacks. For instance, attack TuP`XP546и%WXPUBg7YR3H9Pg@ is correlated to attack Hy - 2546и%WXPUBYa7w$De!(57YR3H9P@ when R3IHQPu$De!(5 . In this case, the associated correlation rule will say that an alert иH9PUTaU corresponding to detection of attack TuPUhP can be correlated with an alert иH9PUTaw corresponding to detection of attack Hy - 2 if the target file associated with иH9PUTa" is equal to the target link associated with иH9PUTaw . Of course, an implicit condition to correlate иH9PUTa" with иH9PUTac is that the attack associated with иH9PUTag occurred before the attack associated with иH9PUTaY . We similarly generate objective correlation rules to correlate an alert with an intrusion objective. When the correlation process receives an alert and there is a correlation rule that applies to correlate this alert to an
+4 These correlation rules may be also specified manually but we argue in [2] that it would be quite tedious for an expert to define accurate correlation rules. Actually, we guess it is one of the main advantages of our approach to automatically derive correlation rules from the specification of elementary attacks.
+
+163
+
+Fr┤ ed┤ eric Cuppens, Fabien Autrel, Alexandre Mi` ege & Salem Benferhat intrusion objective, the correlation process will check if this objective is achieved or not. For instance, attack 1&eB r (XP is correlated with objective з  з . If an alert corresponding to attack 1&eB r (XP on a given ж2U is received, then the correlation process will check if ж2U corresponds to a DNS server. Notice that this data is generally not provided in the alert. Therefore, we need to combine "classical" IDS with other tools that collect additional information about the monitored system such as its topology and configuration. This problem is outside the scope of this paper but is further discussed in the conclusion.
+
+5. Abduction in the correlation process
+Abductive reasoning consists in inferring plausible explanations from a set of observable facts. It can also be presented as the generation of hypotheses that are missing in a deductive process. In the correlation process, abduction is used in two different situations: 1. When all the steps of a given intrusion scenario are detected, the correlation process will succeed in tracking the intruder by reconstituting his intrusion scenario. However, it may happen that some steps in an intrusion scenario are not detected by any of the IDS. In this case, abduction will try to generate minimal hypotheses corresponding to undetected attacks in order to complete the intrusion scenario detection. In [2], we suggest raising a virtual alert for each hypothesis successfully generated. 2. When the correlation process succeeds in correlating several attacks but no intrusion objective is achieved yet, abduction is used to generate an intrusion objective consistent with these attacks. This is used by the correlation process to anticipate over the intruder's intention in order to prepare the most adequate reaction.
+
+5.1. Virtual alerts
+The correlation process will attempt to create virtual alerts when it is plausible that some attacks are not detected. That is, when two alerts cannot be correlated, we try to insert one or several virtual alerts between them. Let us describe the two main steps of the virtual alert creation function. Let us assume that иH9PUTa` and иH9PUTac are not correlated.
+
+е
+
+Let и& q йU(X and и& q йU(5 be the attacks respectively associated with иHQP`Tag and иHQP`Tac . The correlation process will then attempt to find a path of attacks to connect и& q йU(G with и& q й`(u . Currently, the maximal acceptable length of this path is set as a parameter by the security administrator. Of course and this is very important to notice, this path must be formed by attacks that might be not detected by any IDS that provides alerts to the correlation process.
+
+For example, let us assume that, in the illegal root access scenario (see figure 6), the modification of the .rhost file is not detected. In this case, the correlation process receive the rlogin alert without being able to correlate it with the mount alert. However, the correlation process knows that attack mount can be correlated with attack rlogin through attack .rhost.
+
+е
+
+The second step of the function replaces the path of attacks by a path of virtual alerts by instantiating each attack. From the first attack we create a first virtual alert. This virtual alert is correlated with иH9PUTa` . We do the same for the next attacks of the path until иH9PUTaw is achieved. At this point, the correlation process verifies whether it is possible to correlate the last virtual alert with иH9PUTa .
+
+In the last example, we had a single attack in our path corresponding to the j T5sG2U modification. We create a virtual alert associated with this attack. According to the correlation rules between mount alert and .rhost 164
+
+Recognizing malicious intention in an intrusion detection process
+.rhost modification illegal rlogin root access
+
+rpcinfo
+
+showmount
+
+mount
+
+Figure 6: Illegal root access scenario
+
+modification alert, the target IP addresses must be the same. Consequently, the virtual alert is initialised with the target IP address of the mount alert. We then check correlation between the virtual alert .rhost and the rlogin alert. This test could fail if the target IP addresses of these two alerts are not equal.
+
+5.2. Abduction of intrusion objective
+When the correlation process has detected the beginning of a scenario, it tries to find out what will be the next steps that might enable the intruder to achieve an intrusion objective. For this purpose, the correlation process applies an approach similar to the first step used to raise virtual alerts. It analyses the possible correlations between attacks and between an attack and an intrusion objective to find a path of attacks between the last detected alert of the scenario and an intrusion objective. Of course, it sometimes happens that this alert can be connected to different intrusion objectives through different paths. In this case, our strategy is simply to select an intrusion objective that corresponds to the shortest path. Of course, it would be possible to significantly enhance this simple strategy. This point is further discussed in the conclusion.
+
+6. Examples of scenario detection
+In the intrusion detection context, the intruder whose plans are being inferred is not cooperative and observations are gleaned through IDS alerts. This point and the computer security context bring to light several issues to take in consideration. The objective of this section is to show, through the three intrusion scenarios introduced in section 2, how our approach addresses these issues:
+
+е
+
+Unobserved actions: There are multiple reasons that can make an attack unobservable. Signature based IDS are not able to recognize unknown exploits and even variations of known exploits can make them undetectable. Furthermore there can be holes in the IDS network coverage that make impossible detection of some malicious attacks. Our approach to solve the problem that some steps in an intrusion scenario are not detected is based on abductive reasoning as we show in section 5.
+
+е
+
+е
+
+Repeated observations: it may happen that the intruder will repeat several times the same action, because this is necessary to perform the intrusion scenario or simply because this might be a technique to disrupt the intrusion detection process. In any case, our approach will generate a single alert corresponding to the detection of a single intrusion scenario. For instance, figure 7 shows what will happen if the intruder performs two T"'Aйe!F and then two 2SsG1& r B commands in the illegal root access scenario. We see that the result we obtain is more complex than figure 6 but it still corresponds to a single scenario. Optional actions: figure 8 shows detection of intrusion scenario з  з when the intruder performs the sequence !2H9a( r '!79'peAW72й q D7c1&eB r (XP . Actually, actions 'GeAW and 2й q  are optional since the intruder may directly attempt the 1&eB r (hP attack without checking that the server is active (with the 'peAW command) and Windows is installed (with a 2й q  of port 139). 165
+
+Fr┤ ed┤ eric Cuppens, Fabien Autrel, Alexandre Mi` ege & Salem Benferhat
+
+rpcinfo
+
+showmount illegal rlogin root access
+
+mount
+
+.rhost modification
+
+rpcinfo
+
+showmount
+
+Figure 7: Illegal root access scenario with repeated T"'йe!FA and
+
+2SsG1& r B
+
+commands
+
+Representing intrusion scenario that includes optional actions is immediate in our approach. We have actually nothing to do. If the intruder does not execute 'peAW or 2й q  , we shall simply detect a simpler scenario that does not include these actions.
+
+е
+
+Representation of intrusion scenario variations: As an intruder executes his plan, his actions may lead him to draw some conclusions i.e. gain some knowledge about the network or some host for example. This may lead in small variations in the execution of the intruder's plan. We have to be able to represent these variations to take them in consideration. For instance, in the 8з  з scenario, the intruder may prefer using T q йgP`Tu r cP instead of a 'GbAW to know which machines are active in the network he wants to attack. Representing intrusion scenario variations is straightforward in our approach. We have simply to specify the pre and post conditions of attack T q йgPUTu r cP and the correlation process will automatically derive that replacing T q йgPUTu r cP by 'peAW also enables the intruder to achieve the з  з objective.
+
+е
+
+Partially ordered plans: By partially plans we point out plans in which the ordering constraint in the actions creates a partial order over the actions. For example in the problem of system scanning, an intruder can collect a large amount of IP addresses and then port sweep each of them or can port sweep each IP as he finds them. This kind of flexible plans is easily detectable in our approach.
+
+е
+
+Deactivation actions: there are actions that will disable the possibility to achieve the intrusion objective. In our model, these deactivation actions are detected using anti correlation. For instance, figure 9 shows the result we obtain in the case of illegal access file scenario. In this figure, dash lines represent anti correlation. As mentioned before, using anti correlation, we can for instance conclude that the sequence c r й`sB7YTuPUXPu7H 'pT - 2 does not match an intrusion scenario.
+
+е
+
+Inferring unobserved actions from state changes: As noticed in [5], the way IDSs work to detect malicious actions conditions the way these actions are reported. Let us take the example of a service running on a computer. A host based IDS may report that the service has been started but a network based IDS may report only the effects of starting this service. In the first case we observe the action and in the second the state change caused by the action. From the state change we should be able to infer that the service has been started and consider it in our plan recognition task. We did not include this point in our approach, but since each attack specification includes a description of its effects (through its post condition), it will be quite straightforward to derive that an action was executed from the observation of a state change. This point is further discussed in the conclusion.
+
+166
+
+Recognizing malicious intention in an intrusion detection process
+
+nslookup
+
+DOS on DNS ping winnuke
+
+scan port 139
+
+Figure 8: DOS on DNS scenario
+
+touch
+
+lpr -s
+
+Illegal remove ln -s print-process get-file file access
+
+block
+
+unblock
+
+Figure 9: Illegal file access scenario
+
+167
+
+Fr┤ ed┤ eric Cuppens, Fabien Autrel, Alexandre Mi` ege & Salem Benferhat
+
+7. Related works
+Several approaches exist in the literature in order to capture an agent's plan, in particular:
+
+е е е
+
+Explicit Plan recognition [5, 6] Chronicle recognition [9] Expert system approach [8, 7]
+
+7.1. Explicit plan recognition
+In the approach suggested by Geib and Goldman in [5], the intrusion scenario detection system must be provided with a plan library based on the set of actions the intruder may execute in order to build intrusion scenarios. This represents the major difference with our approach: in our approach, it is neither necessary to explicitly specify such a plan library. These plans are represented through task decomposition (hierarchical plans). A plan is a graph with goal or top level action as root node and leaves are actions implying this goal. In this approach we can see the problem of plan recognition as finding a minimal set of goals explaining the observed actions. This formalism works as follow: at the beginning the intruder has a set of goals and chooses plans he will execute in order to reach those goals. This set of chosen plans determines all the primitive actions the intruder can execute. The set of pending actions, i.e. the set of actions that can be executed according to the plan hierarchy, is generated as the intruder executes his chosen plans. The pending actions are enabled by the previous actions, more precisely executed actions are removed from the pending set and newly enabled actions are added. This approach has some advantages:
+
+е
+
+Management of unobserved actions: to handle the fact that the attacker's actions are not always detectable, Geib and Goldman construct a set of possible execution traces. This set is built from the execution trace represented by all the observed intruder's actions. After finding all the plans that partially match the observations, the set of possible execution traces is created by adding hypothesized unobserved actions to the execution trace in order to complete it according to the selected plans.
+
+е
+
+Abductive reasoning: Geib and Goldman have addressed two problems: inferring unobserved action from observed actions and inferring unobserved actions from state change.
+
+However it has also several drawbacks:
+
+е е е
+
+Exhaustivity of the plan library: since this expert knowledge must be provided by some specialist, it is difficult to assume that the plan library covers all the possible scenarios. Risk of explosion of the search space: The fact that hypothesized unobserved actions are inserted in the set of possible execution traces in order to match plans can lead to an explosion of the search space, especially in the case of multiple concurrent intrusion objectives. Management of repeated observations: an intruder that will repeat several times the steps of an intrusion scenario will potentially activate the plan recognition several times. This may lead to an explosion of the number of alerts. For instance, if one specifies an intrusion scenario oeB r (XP и& q йU( by the sequence 'peAW , 2й q  port 139, 1&eB r (XP and if the intruder executes 100 'GeAWV2 and 100 2й q !2 and then 1 1&eB r (XP , this may lead to x`ux`8nx`uu detections of the oeB r (hP q  q йU( . 168
+
+Recognizing malicious intention in an intrusion detection process
+
+7.2. Chronicle recognition
+The system of chronicle recognition aims at giving an interpretation of the world's evolution giving dated events. It takes in entry a stream of dated events and recognises instances of chronicles as they are developing. It is mainly a temporal reasoning system. It is predictive in the sense that it predicts forthcoming events relevant to its task, it focuses its attention on them and it maintains their temporal windows of relevance. Its main function is to efficiently recognise complex temporal patterns on the fly, as they occur. Each chronicle can be viewed as a set of events pattern and a set of temporal and contextual constraint over them. If the observed events match the chronicle's patterns and if they occur as the contextual and temporal constraints allow them to, then an instance of the modelled chronicle is recognised. Some hypotheses are done on the events. First, all events specified in a chronicle must be observable, i.e. unobservable activities are not included in the chronicle expression. It is also assumed that the events are reported to the system as they occur and they must be collected in the same order as they occur (synchronization hypothesis). This approach has several advantages:
+
+е е е е е
+
+Chronicle based system gives an efficient recognition process. The hypothesis stating that all the actions are observable makes unnecessary the abduction of unobserved events. The system maintains the set of possible occurring chronicles as the new observations are sequentially collected and treated. It is possible to define deactivation events that invalidates a partially recognised chronicle. The explosion of the search space is more limited than in the plan recognition approach.
+
+The chronicle main advantages are the consequences of the strong hypotheses made. But the synchronisation hypothesis and the hypothesis made that all the intruder's actions specified in a chronicle can be detected are very hard to fulfil in computer security domain. These hypotheses and the fact that this system is based on a chronicle library point out some drawbacks:
+
+е е е е
+
+As for plan recognition systems, the exhaustivity of the plan library is a main concern. In computer security domain it is difficult to predict which events will be observable or not. Since chronicle recognition assumes that all actions are observable, not including an event because it is sometimes not detected may lead to false positives. Including an unobservable event in a chronicle may lead to false negatives.
+
+Actually, we argue that a chronicle system is especially efficient to recognize stereotyped attack scenarios, such as the ones launched by automatic intrusion tools. In this case, it is quite straightforward to represent each attack scenario by a chronicle. We are currently investigating this approach and it will be presented in a forthcoming paper.
+
+7.3. Expert system approach
+[7] suggests representing an intrusion scenario as a set of production rules. These rules are fired as the intrusion progresses. This approach is based on the P-Best expert system. Notice that there is generally not a one to one correspondence between the production rules and various intrusion steps performed by the intruder. Additional production rules are necessary to "control" the intrusion 169
+
+Fr┤ ed┤ eric Cuppens, Fabien Autrel, Alexandre Mi` ege & Salem Benferhat detection process. Actually, starting from the exploit description of an intrusion, the approach requires some adaptations to specify how to detect this intrusion scenario. This approach has some advantages. In particular, Lindquist and Porras claim that their approach is quite efficient from a performance point of view. The drawbacks of this approach are quite similar to chronicle recognition. The exhaustivity of the production rules is not an easy to solve problem. It also seems that specifying an intrusion scenario must take into account which steps are detected. There is no easy way to abduce unobservable events. Finally, repeated observations will potentially activate detection of the intrusion scenario several times (as in plan or chronicle recognition).
+
+8. Conclusion
+Based on the observation that an intrusion scenario might be represented as a planning activity, we suggest a model to recognize intrusion scenarios and malicious intentions. This model does not follow previous proposals that require to explicitly specify a library of intrusion scenarios. Instead, our approach is based on specification of elementary attacks and intrusion objectives. We then show how to derive correlation relations between two attacks or between an attack and an intrusion objective. Detection of complex intrusion scenario is obtained by combining these binary correlation relations. Our approach is efficient to cluster repeated actions in a single scenario. We also suggest using abduction to recognize intrusion scenarios when some steps in these scenarios are not detected. We then define the notion of anti correlation that is useful to recognize a sequence of correlated attacks that does no longer enable the intruder to achieve an intrusion objective. This may be used to eliminate a category of false positives that correspond to false attacks, that is actions that are not further correlated to an intrusion objective. We have implemented in Prolog the functions that perform attack and objective correlations in the CRIM prototype [1, 2]. Attacks are actually specified in Lambda [3], which is fully compatible with the attack model suggested in this paper and alerts are represented in the IDMEF format [4]. We are currently extending this implementation to include the anti correlation functionality. There are several issues to this work. When the intruder did not achieved his intrusion objective yet but there are several possible intrusion objectives consistent with a given sequence of correlated attacks, our current strategy is simply to select the objective that requires the shortest path of attacks to be achieved. Our course, it would be useful to significantly enhance this strategy. We are currently studying approaches based on Bayesian Network to decide what are the best intrusion objectives that explain all the observations. As suggested in [6], our solution should also able to consider situations where the intruder has multiple goals. Another point is that to decide if a given intrusion scenario is achieved or not, it is often necessary to combine information provided by "classical" IDS with other information about the system monitored by the IDS: its topology, configuration and other data about the type and version of the operating systems and applications installed in this system. For instance, to decide if the objective з  з is achieved it is necessary to know on which system is installed the DNS server. This kind of data is not provided by classical IDS but other tools exist that may be used to collect it. Since current IDS also provide alerts that do not allow us to distinguish between successful or failing attacks, these additional data would be also useful for that purpose. This problem is currently investigated in the ongoing project DICO.
+
+9. Acknowledgements
+This work was partially funded by the DGA/CELAR/CASSI as a part of the Mirador project and then by the French Ministry of Research as part of the DICO project. The authors would like to thank all the members of these projects, especially the members of the sub-project "Correlation": Herv┤ e Debar, Ludovic M┤ e and Benjamin Morin. 170
+
+Recognizing malicious intention in an intrusion detection process
+
+References
+[1] F. Cuppens. Managing Alerts in a Multi-Intrusion Detection Environment. In 17th Annual Computer Security Applications Conference New-Orleans, New-Orleans, USA, December 2001. [2] F. Cuppens and A. Mi` ege. Alert Correlation in a Cooperative Intrusion Detection Framework. In IEEE Symposium on Security and Privacy, Oakland, USA, 2002. [3] F. Cuppens and R. Ortalo. Lambda: A language to model a database for detection of attacks. In Third International Workshop on the Recent Advances in Intrusion Detection (RAID'2000), Toulouse, France, October 2000. [4] D. Curry and H. Debar. Intrusion detection message exchange format data model and extensible markup language (xml) document type definition. draft-itetf-idwg-idmef-xml-06.txt, December 2001. [5] C. Geib and R. Goldman. Plan Recognition in Intrusion Detection Systems. In DARPA Information Survivability Conference and Exposition (DISCEX), June 2001. [6] C. Geib and R. Goldman. Probabilistic Plan Recognition for Hostile Agents. In Florida AI Research Symposium (FLAIR), Key-West, USA, 2001. [7] Ulf Lindquist and Philip Porras. Detecting Computer and Network Misuse Through the Production-Based Expert System Toolset (P-Best). In IEEE Symposium on Security and Privacy, Oakland, USA, 1999. [8] A. Mounji and B. Le Charlier. Continuous Assessment of a Unix Configuration: Integrating Intrusion Detection and Configuration Analysis. In ISOC'97 Symposium on Network and Distributed System Security, San Diego, USA, February 1997. [9] M. Ornato and P. Carle. Reconnaissance d'intention sans reconnaissance de plan. Francophones d'Intelligence Artificielle Distribu┤ ee et Syst` emes Multi-Agents, 1994. In Journ e ┤ es
+
+[10] A. Valdes and K. Skinner. Probabilistic Alert Correlation. In Fourth International Workshop on the Recent Advances in Intrusion Detection (RAID'2001), Davis, USA, October 2001.
+
+171
+
+septembre
+
+2002
+
+н
+
+┤ SEcurit┤ e
+
+des
+
+Communications
+
+sur
+
+Internetн
+
+SECI02
+
+172
+
+

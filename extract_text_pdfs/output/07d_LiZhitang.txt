@@ -1,0 +1,267 @@
+Assessing Attack Threat by the Probability of Following Attacks
+Zhi-tang Li, Jie Lei, Li Wang, Dong Li Computer Science Department Huazhong University of Science and Technology 430074 Wuhan - Hubei - China {leeying, leijie, wtwl, lidong}@hust.edu.cn Abstract
+In this paper a novel approach to assessing the threat of network intrusions is proposed. Unlike the present approaches which assess the attack threat either from a backward perspective (how probable a security state can be reached) or from the perspective of the attacks themselves (how much an attack would cause damage to the network), this approach assesses the attack threat from a forwarding perspective (how probable it would be the precursor of future attacks). First, to every attack type and some attack scenarios, their Probabilities of having Following Attacks(PFAs) are calculated by a data mining algorithm. Then the threats of real time intrusions are assessed by these probabilities. The result of the threat assessment can help identify the intrusion alerts which would be the best evidence for the coming attacks from tremendous amount of intrusion alerts, thus this approach can be used for intrusion prediction. The approach is validated by DARPA 2000 and DARPA 1999 intrusion detection evaluation datasets.
+
+1
+
+Introduction
+
+Network attacks have dramatically increased in both frequency and severity during these years [22]. New vulnerabilities keep coming forth and the attack skills are getting more and more sophisticated, while less expertise is required to execute the attacks. In order to reduce the damage caused by network attacks to the lowest level, network intrusion detection has become an indispensable part of most of the organizations' security mechanisms. IDS(intrusion detection system) which audits the network flowing data and system calls to detect malicious behaviors against the monitored systems is the main tool which assists security analysts with the work of intrusion awareness and intrusion response. Monitoring the IDS alerts, finding out the most 1
+International Conference on Networking, Architecture, and Storage (NAS 2007) 0-7695-2927-5/07 $25.00 Š 2007
+
+critical events and taking appropriate responses is the major part of a security analyst's daily work [13]. There are two significant problems which baffle the security analysts with their work of ID(Intrusion Detection): false positives and alert flooding [14]. It has been revealed that currently IDS can trigger thousands of alarms per day, up to 99% of which are false positives [14]. This brings great difficulties in distinguishing the critical attacks among the enormous amount of raw alerts. In practice, usually the intrusion analysts have to choose some "interesting" alerts to investigate according to their knowledge of the networks and experience (sometimes even randomly), leaving a lot of alerts unresearched [13]. As to solve these problems, during these years many approaches and tools are proposed to help managing the IDS alerts. Some tools intend to reduce the amount of alerts by alert aggregation [4, 8], while some others try to extract attack scenarios by alert correlation [5, 10, 16], and also some approaches are proposed to assess the threat of network intrusions [3, 9, 11, 12, 15, 18, 24, 26] so as to identify the true threats and eliminate false positives . This paper falls in the third kind of work­the approach to assessing the attack threat. The present approaches to assessing the attack threat are generally based on the factors of two aspects: the natural factors [7, 6] and the context factors [18, 9]. The natural factors are the criticality and urgency of the exploited vulnerabilities, and the context factors are the host information, vulnerability information of the targeted hosts, network topology and the security policies of the protected network. A combination of these factors can well reflect the threat of an attack. However, there is one fact that is not considered by any of the previous approaches. While some exploits pose little threat to the network when assessed separately, once they occur simultaneously or in certain sequence, they would be very probable to be the evidence
+
+of following attacks and thus worth mention. A good example is that "while post scans should not be considered as precursors to an attack, the post scans combined with vulnerability scans might be a relevant indicator of a coming attack" [21]. To these attacks which could be the indication of future attacks, we should pay high attention and make more in-depth investigation. It would make the work of intrusion detection more valuable if we could find out the future attack plans from the IDS alerts and take some preventing actions in advance, than only to detect the past attacks and take responses. Therefore, when performing risk assessment this kind of alerts should be assigned higher priority. Based on this idea, in this paper we proposed a novel approach to assessing the attack threat by the Probability of Following Attacks(PFAs). Figure 1 gives an overview of our approach. The PFAs of the attack scenarios and known attack types are estimated beforehand by a data mining algorithm. The attack scenarios and their PFAs are stored in a network attack graph, which is a state transition diagram showing all possible attack sequences that can be used by an attacker to penetrate the system. Then in the real-time intrusion detection environment the reported intrusion alerts and attack scenarios are ranked by their PFAs. According to the ranking list the attack scenarios which are most probable to be the evidence of future attacks can be distinguished. We evaluated the approach by DARPA 2000 and DARPA 1999 intrusion detection evaluation datasets.
+IDS IDS
+
+2
+
+Related Work
+
+Alert Correlation
+
+Threat Assessment
+
+1 2 3 
+
+IDS
+
+Attack Scenarios
+Data Mining Algorithm PFA Calculation Attack Graph
+
+Alert Database
+
+Ranked Attack Scenarios
+
+PFA: Probability of having Following Attacks
+
+Figure 1. An Overview of the Approach The remainder of this paper is organized as follows. Section 2 introduces the related work. Section 3 presents the data mining approach to calculating the PFAs. Section 4 describes the experiments performed with DARPA datasets and explains the process of assessing the attack threat by PFAs in detail. Section 5 concludes the paper. 2
+International Conference on Networking, Architecture, and Storage (NAS 2007) 0-7695-2927-5/07 $25.00 Š 2007
+
+Assessing the threat of network attacks is an essential step of security analysis. It lets the security analysts know how much an attack poses threat to the protected host and network system in order to select the appropriate security events to launch responses, and helps to evaluate the risk of a network. Some vulnerability exposure mechanisms (such as CVE[6] and Bugtraq[1]) and IDSes (such as Snort[19]) measure the risk level of an attack (vulnerability) by three-level standard: high, medium and low. These security metrics can be calculated from the standard Common Vulnerability Scoring System [7]. These security metrics focus on the criticality of the vulnerabilities, and is a static method to attack threat assessment. Considering the same attacks may pose different threat in different environments, a lot of approaches which use the context information to assess the attack threat are proposed. Porras, Fong, and Valdes [18] proposed a mission-impact approach to perform intrusion alert prioritization by the vulnerability information and mission information (such as security policies). Kruegel and Robertson [15] have developed a plug-in to Snort to perform alert verification with Nessus vulnerability scanner. Meanwhile, the approach of correlating vulnerability information with alert information is used by various IDS manufacturers to eliminate false positives [9, 11]. Stephen Boyer etc. [20] proposed SADL: Security Assessment Declarative Language for assessing the priority of attack scenarios. In their approach, the security risk is determined by a set of rules written by SADL. Recently some approaches using formal analysis techniques to perform attack threat assessment are proposed. In [24], Vaibhav etc. proposed two algorithms to rank the attack scenarios by the probability of an attacker to reach the corresponding security states. The basis of the algorithms is a pre-constructed probabilistic attack graph in which the probabilities of every transition are given. Andre Arnes etc.[3] used HiddenMarkov Models to evaluate the risk of intrusions. In their approach the security state of each host is modeled into four states: Good, Probed, Attacked and Compromised. The Markov Model is used to model the transitions between those states, and the probabilities of each transition as well as the probabilities of the observation of each state are given. Then the risk of the host at certain time and the risk of an intrusion alert can be calculated based on those probabilities. These two approaches generally suffer from the problem of defining a large number of probabilities, which makes the approaches not practical when dealing with large
+
+networks. Jared Holsopplea etc. [12] proposed a algorithm named TANDI: Threat Assessment to Network Data and Information. They model the attack behaviors by three separate models: the attack sequence, the logical topology and the information graph. The threat score of each entity is calculated from the logical relationships between the entities in three models. Although this approach successfully evade from the problem of defining the probability set, it needs to model the attack behaviors by an attack model which is different from the conventional attack models, while generating the proposed attack models would be a difficult job. Our approach to assessing the attack threat is based on a new factor that has not been considered by any of the contribution before. We rank the intrusions by their "PFAs: Probabilities of having Following Attacks". Unlike the previous approaches which assess the attack threat either from the perspective of the attack themselves [24, 3, 12] (how much it would cause damage to the network) or from a backward perspective [6, 7, 1] (how probable the security state can be reached), our approach assesses the attack threat from a forwarding perspective (how probable it would be a precursor of future attacks), thus it is more suitable for intrusion prediction. In addition, only one probability (the PFA) to each state needs to be maintained in our approach.
+
+s  S, state.
+
+s S
+
+ (s, s ) = 1, and s0  S is an initial
+
+Our approach generates the network attack graph and calculates the PFAs by a data mining algorithm. The concept of using data mining in intrusion detection is proposed by [25]. Their work focused on mining the causal relationships existing between a user and the entries that are logged in the audit data and raw network traffic, in order to automatically generate attack signatures or to build more accurate IDS model. A recent work by Thurimella et al. [23] has shown that the causal relationships between the attackers and the combination of alarms which are generated in intrusion detection logs as a result of their attack behaviors can also be mined through data mining approach. Therefore, it is possible to mine association rules from intrusion alerts and use these rules(frequent attack sequences) to construct attack graphs, which is the purpose of the work of [14, 23]. Here we use association rule mining to generate the attack graph and through the course of data mining, the PFAs of every security state can be estimated.
+
+3.1
+
+Data Mining Terminology
+
+3
+
+The Data Mining Approach to Calculating PFAs
+
+The attack scenarios and the PFAs are stored and represented by a probabilistic network attack graph. A network attack graph is a tool used for security vulnerability analysis, intrusion detection and network forensic analysis. It provides a global view of the security vulnerabilities in a system and all possible sequences of exploits which an intruder may use to penetrate the system. Formally, as Sheyner et al. introduced in [17], a network attack graph is a state transition diagram in which each state denotes a state of the attacker, the defender and the system, and the transitions correspond to actions taken by an attacker which lead to a change in the overall state of the system. The following is the formal definition of probabilistic attack model in which the probabilities of all the transitions between every state are given. The PFA of a security state can be represented by the probability of the transition from the state back the security state. Definition 1 A Probabilistic Attack Model is a 3-tuple M = (S, , s0 ), where S is a set of states,   S × S - [0, 1] is a transition relation such that 3
+International Conference on Networking, Architecture, and Storage (NAS 2007) 0-7695-2927-5/07 $25.00 Š 2007
+
+The main goal of association rule mining is to locate non-obvious interrelationships between members of a large data set. The goal of our work is to find associations between the various attack classes from historical IDS alerts generated by real attacks in the network, and use them to constitute an attack graph. Since the IDS alerts follow the time series, we use sequential association rule mining algorithm. An example sequential association rule is in the following form, with two statistics which describe their strength and quality: [x  y ]  z Support=50, Confidence=80 This rule states that whenever x  y were present in a given sequence, then z was present as well. The Support value states that this specific sequence of three items represents 50 percent of the transactions which were examined. The Confidence value states that 80 percent of the time that the sequence x  y were found, the item z was also found. Formally, let I = {i1 , i2 , ..., in } be a set of items. Given a set of transactions D, where each transaction is defined as a sequence of items T  I, a transaction T contains X if X  T . An association rule is an implication X  Y , where X  I, Y  I, and X Y = . The association rule X  Y holds in the transaction
+
+Start time 06-03-02-10:55:12 06-03-02-10:56:03 06-03-02-11:12:29 06-03-02-11:25:43 06-03-02-11:29:51 06-03-02-11:45:08 06-03-02-11:49:08 06-03-02-12:11:07 06-03-02-12:20:12 06-03-02-12:26:31 06-03-02-12:39:17 06-03-02-12:40:03 06-03-02-13:10:17
+
+Signature ID 2 3 9 8 17 14 3 2 9 8 14 5 2
+
+Other attributes ... ... ... ... ... ... ... ... ... ... ... ... ...
+
+Table 1. Sample Alert Database Sequence ID 1 2 3 4 5 6 7 8 Candidate attack sequence 2,3,9,8,17,14,3 3,9,8,17,14,3 9,8,17,14,3,2 8,17,14,3,2,9 17,14,3,2,9,8 14,3,2,9,8,14,5 3,2,9,8,14,5 2,9,8,14,5,2
+
+which reduce the amount of raw alerts and eliminate some false positives. Then the attributes of alerts are mapped to the format which is more convenient for computation. And last we cut the global sequences into separate candidate attack sequences by the sliding Attack Sequence Time Windows. Suppose the multistep attacks often happen in a certain range of time interval, the Attack Sequence Time Window is used to define this time interval by which the attack sequences are divided into separate attack sequences(the candidate sequences used for association rule mining). Here we give an example of how the candidate attack sequences are generated. Table 1 gives a sample sequence of attack signatures in which the signatures have been mapped into integers. Then we divide it into separate attack sequences by Time Window Wt , as shown in Figure 2. When the Wt is set to be 1 hour, we can get the candidate attack sequences as Table 2.
+
+3.3
+
+The Algorithm
+
+Table 2. Candidate Attack Sequences set D with a Confidence c if c percent of transactions in D which contain X also contain Y. The association rule X  Y has a Support value s in the transaction set D if s percent of the transactions in D contain X Y [2].
+t
+
+
+t t
+
+
+
+Figure 4 shows the pseudocode of the algorithm to generating attack graph and calculating PFAs. This algorithm is based on the classic association rule mining algorithm [2]. Different to the classic rule mining algorithm, in our algorithm when counting the support of one subsequence, only the situation that the subsequence appears at the beginning of a candidate sequence counts. The input of the algorithm is a set of candidate attack sequences and the min support value. And the output of the algorithm is the Maximal Attack Sequences k Lk and the probabilities of having following attacks of each maximal attack sequences ( k Lk ). For example, when taking the candidate attack sequences in Table 2 as the input and set the min support to be 15 (percent), the result of the algorithm is as Figure 3, which consists of a set of attack sequences and theirs PFAs.
+
+Earliest
+
+latest
+
+Figure 2. Generating Candidate Attack Sequences with Wt
+
+1-sequence PFA <2> <3> <9> <8> <14> 1 1 1 1 1
+
+2-sequence PFA <2,9> <2,8> <3,9> <3,8> 1 0 1 0 3-sequence PFA <2,9,8> <3,9,8> 0 0
+
+3.2
+
+Data Preparation
+
+The algorithm deals with a large set of IDS alerts. Some preprocessing functions need to be performed before the algorithm runs. First we improve the quality of the data set by alert aggregation and alert verification 4
+International Conference on Networking, Architecture, and Storage (NAS 2007) 0-7695-2927-5/07 $25.00 Š 2007
+
+Figure 3. The Example Result of the Algorithm
+
+4
+
+Attack Threat Assessment using PFAs--Experiment with DARPA Dataset
+
+ˇ Phase 3: The attacker attempts the sadmind Remote-to-Root exploit several times. ˇ Phase 4: The attacker uses telnet and rpc to install a DDoS program on the compromised machines. ˇ Phase 5: The attacker telnets to the DDoS master machine and launches the mstream DDOS against the final victim of the attack. And the LLDOS 2.0.2 scenario consists of the following fives phases: ˇ Phase 1: The attacker probes a machine in the network. ˇ Phase 2: The attacker breaks in this machine via exploiting the Sadmind vulnerability. ˇ Phase 3: The attacker uses FTP to upload mstream DDoS software and attack script to the compromised machine. ˇ Phase 4: The attacker tries to break in two more machines, but only one attempt is successful. ˇ Phase 5: The attacker telnets to the DDoS master machine (the first compromised machine) and launches the mstream DDOS against the final victim of the DDoS attack.
+
+Since the approach of mining attack graphs from real network intrusion alerts in large intrusion detection infrastructure has been validated by [23], in the experiment we chose the datasets which were more appropriate to our mining algorithm so as to show the results more clearly. We tested the algorithm using the DARPA 2000 intrusion detection scenario specific dataset and the DARPA 1999 intrusion detection evaluation dataset. The DARPA 2000 dataset has two multi-stage attack scenarios namely LLDOS 1.0 and LLDOS 2.0.2. The DARPA 1999 dataset contains 20 days(workdays of 4 weeks) of different attack traffics. And these two datasets share the same network topology. The LLDOS 1.0 scenario can be divided into five phases as follows. ˇ Phase 1: The attacker scans the network to determine which hosts are "up". ˇ Phase 2: The attacker then uses the ping option of the sadmind exploit program to determine which hosts selected in Phase 1 are running the Sadmind service.
+
+Input: A set of candidate attack sequences {s1,s2,, sn} and min_support Output: The Maximal Sequence  kLk, and  (  kLk) Algorithm: 1: find all the large 1-sequences: L1={large 1-sequences}; 2: once getting the large (k-1)-sequences Lk-1, get the large k-sequences Lk; 3: given li  Lk-1, find the Pk={p1,p2,...,pm}  Lk, where p j  Pk , li is the beginning subsequence of pj ; 4: find subsequence set S ' , where { s ' S ' , p  P, p is the subsequence of s ' } and { si ' , s j ' S ' , si ' is not the subsequence of s j ' }; 5: S (li ) count ( S ' ) / count (li ) ; 6: ( Lk 1 ) {S (li ), ) li  Lk 1} ; 7: repeat 2,3,4,5,6 until the longest Maximal Sequence is found out; 8: for each Lk, delete the redundant subsequences of Lk from L1,L2,...,Lk-1; 9: finally, output the Maximal Sequence  kLk, and  (  kLk).
+Figure 4. The Algorithm to Calculating the PFAs 5
+International Conference on Networking, Architecture, and Storage (NAS 2007) 0-7695-2927-5/07 $25.00 Š 2007
+
+ID 1 2 3 4 5 6 7 8 9
+
+10 11 12 13 14 15 16 17
+
+Snort Signature ICMP PING INFO TELNET access INFO web bug 0x0 gif attempt ATTACK-RESPONSES directory listing (portscan) UDP Portsweep (portscan) TCP Portscan RPC portmap sadmind request UDP RPC sadmind query with root credentials attempt UDP RPC sadmind UDP NETMGT PROC SERVICE CLIENT DOMAIN overflow attempt WEB-CGI finger access BAD-TRAFFIC loopback traffic WEB-MISC /doc/ access POLICY FTP anonymous login attempt ICMP Echo Reply INFO TELNET Bad Login INFO TELNET login incorrect INFO TELNET login failed
+
+PFA 0.048 0.016 0.002 0.768 0.001 0.001 0.161 0.267 0.266
+
+0.001 0.001 0.001 0.538 0.003 0.002 0.002 0.002
+
+ture. Figure 5(b) is the attack graph in which each node denotes a security state and each transition is an exploit which lead the security state from one change to another. The PFAs of every security state were given. Also the PFAs of the single exploits are calculated and given in Table 3. The attack graph contains the attack scenarios of both LLDOS 1.0 and LLDOS 2.0.2 and some other attacks. The LLDOS 1.0 attack scenario can be represented by the attack sequence "e1  e2  e7  e8  e9  e2  e11 ", and the LLDOS 2.0.2 attack scenario is as follows: "e1  e2  e7  e8  e9  e13  e2  e11 ". Actually in this alert database the exploit e11 (BAD-TRAFFIC loopback traffic) is the indicator of MStream DOS attack, because in the Snort ruleset v2.4.5 there is no rule specified to detect MStream DOS attack, while whenever it was executed the attacker used fake IP addresses which would trigger the Snort alerts with the signature of "BAD-TRAFFIC loopback traffic".
+
+4.2
+
+Ranking the Attack Scenarios by the PFAs
+
+Table 3. Types of Alerts Reported by Snort We replayed each of the LLDDOS 1.0 and LLDOS 2.0.2 datasets for ten times separately, and each time we replayed one day's attack traffic of DARPA 1999 dataset simultaneously. The network was monitored by Snort v2.4.5 with the rule set v2.4. And the functions of replaying were fastened and each time the procedure lasted for 4 minutes by average. Then the Snort alerts of twenty times were merged into one alert dataset. Thus, the generated alert dataset contains 10 times of LLDOS 1.0 attack scenarios and 10 times of LLDOS 2.0.2 attack scenarios along with various attacks of the DARPA 1999 dataset. The goal of our algorithm is to generate attack graph from this alert dataset and calculate the PFAs of the attacks and attack scenarios in the attack graph.
+
+After the attack graph was generated and the PFAs were calculated, we replayed the LLDDOS 1.0 and LLDOS 2.0.2 attack traffic simultaneously and used Snort
+
+ICMP PING
+
+1
+S0
+INFO TELNET access
+
+0.048
+
+2
+S1
+
+0.052
+
+RPC portmap sadmind request UDP
+
+7 0.162
+S2
+
+RPC sadmind query with root credentials attempt UDP
+
+8
+S3 0.266
+
+RPC sadmind UDP NETMGT_PROC_SERVICE CLIENT_DOMAIN overflow attempt
+
+9
+S4
+
+0.264
+
+INFO TELNET access
+
+POLICY FTP anonymous login attempt
+
+ATTACKRESPONSES directory listing
+
+2 13
+0.577 S5 S6 0.538
+
+4
+S7 0.798
+S10
+
+4.1
+
+The Generated Attack Graph
+
+BAD-TRAFFIC loopback traffic
+
+INFO TELNET access
+
+11
+(portscan) UDP Portsweep
+
+2
+S9 0.933
+
+5
+
+0.002 S8
+
+We ran the algorithm with the Attack Sequence Time Window set to 4 minutes. And when the Support value was set to 5 (percent), the algorithm generated attack graph as Figure 5. The attack graph contains 17 types of Snort alerts, as shown in Table 3. Figure 5(a) is the exploit-oriented attack graph in which each node represents an exploit named by the Snort signa6
+International Conference on Networking, Architecture, and Storage (NAS 2007) 0-7695-2927-5/07 $25.00 Š 2007
+
+0.011
+
+12
+WEB-MISC / doc/ access BADTRAFFIC loopback traffic WEB-CGI finger access
+
+11
+S12 0.001
+
+10
+S13 0.001
+
+S11 0.002
+
+(a) Exploit-oriented Attack Graph
+
+(b) Attack Graph with PFAs
+
+Figure 5. The Generated Attack Graph
+
+Rank 1 2 3 4 5
+
+Attack Scenario e13  e2 e2  e4 e4 e2  e7  e8  e9 e2
+
+Time Range 10:53:35-10:59:26 10:59:27 12:14:58 11:04:28-11:32:38 10:50:08-11:06:29
+
+Source Target 197.192.91.223172.16.112.100 172.16.113.168197.182.91.233 172.16.112.100196.37.75.158 195.73.151.50172.16.112.100 202.77.162.213172.16.115.20 172.16.112.194194.7.248.153
+
+PFA 0.933 0.798 0.768 0.264 0.016
+
+Table 4. The Ranked Attack Scenarios to detect the attacks. The snort alerts were real-time collected and correlated into attack scenarios. The PFAs of each detected attack scenario and single alert are assigned according to the attack graph. Then the alerts combined with the meta-alerts (attack scenarios) are ranked by their PFAs every five minutes. The time range of the experiment lasted for nearly 4 hours from 10:44:53 to 14:38:56, and 1573 alerts are received. Table 4 shows the ranking result at 12:20:00 before the DoS attack against 131.84.1.31 was launched. At this time 293 alerts are received. 1. Entry1: This attack scenario represents the exploit of using Ftp to upload mstream DOS software to 172.16.112.100 which is the third step of LLDOS 2.0.2 attack. The predictability of this scenarios is 0.933 which means it is very possible that further attacks related to this scenario would take place. This is the evidence of the coming Mstream DoS attack of LLDOS 2.0.2 attack scenario. 2. Entry2: This represents that 172.16.112.100 is probable to be compromising to 196.37.75.158. 3. Entry3: This represents that 195.73.151.50 is probable to be compromising to 172.16.112.100. 4. Entry4: This represents the fouth step of LLDOS 1.0 has been reached, and the attacker has gained the administrator's privilege of 172.16.115.20 and is ready to launch Mstream DoS attack. 5. Entry5: This represents that 172.16.112.194 is trying to telnet to 194.7.248.153. We can see from the ranking result that the attack scenarios ranked to be the top five attacks are very probable to be the precursors of future attacks and worth of attention. This shows that our approach can find out the attack scenarios which are most possible to be the indication of following attacks, thus predicate the attack threat beforehand. 7
+International Conference on Networking, Architecture, and Storage (NAS 2007) 0-7695-2927-5/07 $25.00 Š 2007
+
+5
+
+Conclusion
+
+In this paper we proposed a novel approach to assessing the attack threat by the Probability of having Following Attacks(PFA). We proposed a data mining algorithm to generating network attack graph and calculating the PFAs of every security state in the attack graph. After that, the real-time detected IDS alerts are correlated into attack scenarios(hyper alerts) and each attack scenario is assigned with its PFA according to the preconstructed attack graph. Then the alerts can be ranked by their PFAs, let the alerts which are most probable to be the indicators of following attacks(with high PFA) ranked at the top of the list. Our approach is unique from other approaches in that it assesses the attack threat from a forwarding perspective which considers the probabilities of the attack to be the precursor of future attacks, while the present approaches assess the attack threat either by how much an attack would cause damage to the network or from a backward perspective which considers how probable a security state can be reached. Since the approach can identify the intrusion alerts which are most probable to have following attacks, it can help with intrusion prediction in finding the best evidence for future attacks. The limitation of our approach lies two ways. First, the approach can not perform threat assessment to all of the attacks because the PFAs of some attacks can not be estimated, thus when performing intrusion alert prioritization it would be better to combine our approach with the previous approaches which concern about the context information and the criticality of the vulnerabilities. But compared to other approaches of attack threat assessment, this approach brings better capability in identifying the future threats. Second, although the data mining algorithm can find new attack scenarios, the attack graphs generated by the data mining approach are usually partial and it depends on the completeness of data source to generate the complete attack graph of the network system. More complete and accurate approach to generating attack graphs should be involved in the future work.
+
+References
+[1] Bugtraq, http://www.securityfocus.com/archive/1. [2] S. A. Agrawal R., Imielinski T. Mining association rules between sets of items in large databases. In Proceedings of the ACM SIGMOD Conference on Management of Data, pages 207­216, 1993. [3] G. V. Andre Arnes, Fredrik Valeur and R. A. Kemmerer. Using hidden markov models to evaluate the risk of intrusions. In Proceedings of the International Symposium on the Recent Advances in Intrusion Detection(RAID 2006), pages 145­164. Springer-Verlag, 2006. [4] F. Cuppens. Managing alerts in a multi-intrusion detection environment. In Proceedings of the 17th Annual Computer Security Applications Conference (ACSAC 2001), New Orleans, Louisiana, 2001. [5] F. Cuppens and A. Miege. Alert correlation in a cooperative intrusion detection framework. Proceedings 2002 IEEE Symposium on Security and Privacy (SP 2002), page 202, Berkeley, CA, USA, 2002. IEEE Comput. Soc. [6] CVE. Common vulnerabilities and exposures, http://www.cve.mitre.org/. [7] CVSS. Common vulnerability scoring system, http://nvd.nist.gov/cvss.cfm. [8] O. Dain and R. Cunningham. Fusing a heterogeneous alert stream into scenarios. In Proceedings of the 2001 ACM Workshop on Data Mining for Security Applications, 2001. [9] G. Eschelbeck and M. Krieger. Eliminating noise from intrusion detection systems. Information Security Technical Report, 8(4):26, 2003. [10] B. Z. Ghorbani and A. A. Alert correlation for extracting attack strategies. International Journal of Network Security, 3(3):244­258, 2006. [11] R. Gula. Correlating ids alerts with vulnerability information. technical report, Tenable Network Security, Dec. 2002. [12] S. J. Y. Jared Holsopplea and M. Suditb. Tandi: Threat assessment of network data and information. In Multisensor, Multisource Information Fusion: Architectures, Algorithms, and Applications 2006. Proc. of SPIE Vol. 6242, 2006. [13] A. K. John R. Goodall, Wayne G. Lutters. The work of intrusion detection:rethinking the role of security analyst. In Proceedings of the Tenth Americas Conference on Information Systems, New York, 2004. [14] K. Julisch and M. Dacier. Mining intrusion detection alarms for actionable knowledge. In ACM Conference on Knowledge Discovery and Data Mining, pages 366­ 375, 2002. [15] C. Kruegel and W. Robertson. Alert verification: Determining the success of intrusion attempts. In Workshop of the Detection of Intrusions and Malware and Vulnerability Assessment (DIMVA 2004), 2004. [16] W. Lee and X. Qin. Statistical causality analysis of infosec alert data. In Proceedings of the International Symposium on the Recent Advances in Intrusion [17]
+
+[18]
+
+[19]
+
+[20]
+
+[21]
+
+[22] [23]
+
+[24]
+
+[25]
+
+[26]
+
+Detection(RAID 2003), pages 73­94. Springer-Verlag, 2003. S. J. R. L. Oleg Sheyner, Joshua Haines and J. M. Wing. Automated generation and analysis of attack graphs. In Proceedings of the 2002 IEEE Symposium on Security and Privacy (SP 2002), pages 273­284, 2002. P. A. Porras, M. W. Fong, and A. Valdes. A missionimpact-based approach to infosec alarm correlation. In Proceedings of the International Symposium on the Recent Advances in Intrusion Detection(RAID 2002), page 95. Springer-Verlag, 2002. M. Roesch. Snort - lightweight intrusion detection for networks. In Proceedings of the USENIX LISA 1999 Conference, 1999. O. D. Stephen Boyer and R. Cunningham. Stellar: A fusion system for scenario construction and security risk assessment. In Proceedings of the Third IEEE International Workshop on Information Assurance (IWIA05). IEEE, 2005. K. M. J. Susmit Panjwani, Stephanie Tan and M. Cukier. An experimental evaluation to determine if port scans are precursors to an attack. In Proceedings of the 2005 International Conference on Dependable Systems and Networks (DSN 2005), pages 602­611, 2005. Symantec. Internet security threat report: Volume x: September 2006. Technical report, January,2007. J. J. T. Thurimella and Ramakrishna. A framework for the application of association rule mining in large intrusion detection infrastructure. In Proceedings of the International Symposium on the Recent Advances in Intrusion Detection(RAID 2006), pages 1­18. Springer-Verlag, 2006. H. Z. E. C. Vaibhav Mehta, Constantinos Bartzis and J. Wing. Ranking attack graphs. In Proceedings of the International Symposium on the Recent Advances in Intrusion Detection(RAID 2006), pages 127­144. Springer-Verlag, 2006. S. S. Wenke Lee. Data mining approaches for intrusion detection. In Proceedings of the 7th USENIX Security Symposium, pages 79­94, 1998. L. W. D. L. Zhi-tang Li, Jie Lei and Y. ming Ma. Towards identifying true threat from network security data. In Pacific-Asia Workshop on Intelligence and Security Informatics (PAISI 2007), pages 160­ 171. Springer-Verlag, 2007.
+
+8
+International Conference on Networking, Architecture, and Storage (NAS 2007) 0-7695-2927-5/07 $25.00 Š 2007
+
+

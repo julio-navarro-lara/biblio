@@ -1,0 +1,68 @@
+OK 02_Eckmann	38	1.7%
+OK 01a_Dain	18	0.8%
+17 NO 13_Shin	28	1.3%
+OK 07_Yu	42	1.9%
+OK 04c_Ning	27	1.2%
+11 NO 08_Ma	17	0.8%
+OK 06b_LiWang	5	0.2%
+40 NO 04a_Ning	71	3.2%
+OK 06_Xu_Thesis	117	5.3%
+OK 11_Farhadi	33	1.5%
+18 NO 06c_LiWang	27	1.2%
+OK 08_Holsopple	13	0.6%
+OK 07_Qin	30	1.4%
+28 NO 11_Cipriano	31	1.4%
+OK 07c_LiZhitang	13	0.6%
+OK 03_Cheung	28	1.3%
+35 NO 07_Zhou	61	2.8%
+OK 11_Manganiello	15	0.7%
+OK 12_Qiao	17	0.8%
+OK 01b_Dain	10	0.5%
+OK 10_Ren	26	1.2%
+OK 01_Julisch	33	1.5%
+OK 07_Stotz	8	0.4%
+OK 07d_LiZhitang	26	1.2%
+OK 01_Geib	20	0.9%
+OK 04_Xu	24	1.1%
+OK 12_Saad	13	0.6%
+OK 06_Holsopple	19	0.9%
+OK 05_Wang	41	1.9%
+OK 06_Wang	46	2.1%
+OK 04_Noel	15	0.7%
+OK 08_Fava	40	1.8%
+OK 05_Sudit	21	1.0%
+70 NO 03_Julisch	113	5.1%
+24 NO 11_Alserhani	33	1.5%
+OK 07_Camtepe	30	1.4%
+OK 09_Du	20	0.9%
+22 NO 09_Sadoddin	117	5.3%
+OK 03_Benferhat	9	0.4%
+OK 06_Zhu	16	0.7%
+OK 03b_Julisch_Thesis	206	9.3%
+OK 03_Qin	27	1.2%
+(14 really) 17 NO 08_Zhang	34	1.5%
+OK 02b_Cuppens	10	0.5%
+13 NO 07_LiWang	22	1.0%
+OK 11_Roschke	25	1.1%
+OK 03_Morin	24	1.1%
+41 NO 04b_Ning	75	3.4%
+84 NO 05_Qin_Thesis	87	3.9%
+OK 02a_Ning	14	0.6%
+20 NO 07a_LiZhitang	29	1.3%
+OK 02_Julisch	42	1.9%
+OK 08_Pandey	21	1.0%
+OK 01_Cuppens	22	1.0%
+OK 10_Ning	39	1.8%
+OK 04_Valeur	52	2.4%
+OK 04_Yu	35	1.6%
+OK 02b_Ning	18	0.8%
+OK 05_King	16	0.7%
+16 NO 02_Krugel	1	0.0%
+14 NO 04_Anming	3	0.1%
+OK 02_Cuppens	15	0.7%
+OK 06_Zhai	17	0.8%
+OK 03b_Ning	38	1.7%
+OK 02c_Ning	24	1.1%
+
+NOTAS SOBRE LA HERRAMIENTA de extracción de referencias
+- Duplica aquellas referencias que tienen acentos

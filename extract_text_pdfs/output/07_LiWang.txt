@@ -1,0 +1,177 @@
+Eighth ACIS International Conference on Software Engineering, Artificial Intelligence, Networking, and Parallel/Distributed Computing
+
+Attack scenario construction with a new sequential mining technique
+Wang Li Li Zhi-tang Li Dong Lei Jie Computer Science Department Huazhong University of Science and Technology, Hubei Wuhan 430074, China {wtwl, leeying, lidong, leijie}@hust.edu.cn
+initiating timely response. Therefore, it is important to develop an advanced alert correlation system that can reduce alert redundancy, intelligently correlate security alerts and detect attack strategies. Correlating security alerts and discovering attack strategies are important components of such systems. Up to now, there have been several proposed techniques to analyze attack scenarios from security alerts. However, most of these approaches depend on complex correlation rule definition and hard-coded domain knowledge that lead to their difficult implementation and limited capabilities of detecting new attack strategies. Related work In [1, 2, 3], Cuppens et al. correlates alerts if the prerequisites of some later alerts are satisfied by the consequences of some earlier alerts in MIRADOR correlation method. Ning et al. [4, 5, 6] use similar method. They construct attack scenarios through alert correlation, using prerequisites and consequences of attacks in TIAA correlation method. Both approaches are based on the observation that in a series of attacks, the attacks were usually not isolated, but related as different stages, with the earlier stages preparing for the later ones. Such methods can potentially uncover the causal relationship between alerts, but they need to define the specification of attacks and the results rely on the precision of correlation rules. Such limitations make the methods difficult to implement. Sheyner and J. W. Wing et al. [7] propose a model checking based technique to automatically construct attack graphs. Although it helps facilitate the task of defining attack graphs, it has the limitation of scalability especially for larger network and systems. Wenke lee and Xinzhou Qin [8,9] propose a GCTbased and Bayesian-based correlation approach to identify new alert relationship without depending on prior knowledge of attack transition patterns. But their method depends on alert pair correlation which makes it difficult to construct complete attack scenario model.
+
+Abstract
+Continuously increasing volume of security data makes it important to develop an advanced alert correlation system that can reduce alert redundancy, intelligently correlate security alerts and detect attack strategies. In this paper, we propose a new method of constructing attack scenarios in order to recognize attacker's high-level strategies and predict upcoming attack intentions. We mine frequent attack sequence patterns from history high level alert database. We then construct attack scenario models with the operation of online attack behavior pattern matching and correlativity calculation. Our technique overcomes the drawback of manual association rule specification used in other relevant systems. It is easy to implement and it can be used to detect novel multistage attack strategies compared with other existing techniques. Experiments show our approach can effectively construct attack scenarios and accordingly predict next most possible attack behavior.
+
+Keyword: attack scenario construction, sequential mining, correlativity 1. Introduction
+The information security industry has been very active in recent years. In order to counter security threats to computer systems and networks, many technologies have been developed and applied in security operations such as IDS, firewalls, routers. All those security application devices, whether aimed at prevention or detection of attacks, usually generate huge volumes of security audit data. Deploying information security systems can provide in-depth protection for networks. However, large volume of security data which is the output of different security sensors can overwhelm security managers and keep them from performing effective analysis and
+
+0-7695-2909-7/07 $25.00 Š 2007 IEEE DOI 10.1109/SNPD.2007.395
+
+872
+
+In addition, the accuracy of the method relies on the integrity of history data. This paper focuses on constructing attack scenarios via sequence mining and correlation method. We apply an attack sequential analysis technique to mine attack behavior patterns from history alert database. We evaluate new alerts to see if they match any of the patterns and meet a correlatively threshold. If the alert meets the two criteria it is added to an attack scenario.
+
+2. Alert preprocessing
+
+Figure 1. Framework of online alert correlation process Figure 1 shows the graphical representation of the framework of our alert correlation process. The core of the correlation process consists of several components including alert normalization, alert ranking, alert aggregation, alert verification, attack plan recognition and alert sequential pattern analysis. Data collection and alert normalization module can be functionally divided into two parts: the agent sub-module which is installed on the sensor-side reading and normalizing reports from log files continuously and sending them to the server, and the server sub-module which manages all the agents, receives the security data and stores them in alert database. Alert ranking function can then have an access to the database and prioritize the alerts according to the alert-rank algorithm. In alert-rank algorithm, we calculate the alert-weight of each alert, and then use the values to rank the alerts. The alert-weight represents the final assessment of each alert with respect to three factors: reliability, asset and priority. Reliability is real-time calculated by correlating alert information with the vulnerability and topology information provided by network tools such as Ntop and Nessus. Asset and priority are inputted by system administrator. Alert aggregation module further analyzes the ranked alerts to remove repetitious and redundant alerts in order to provide more synthetic information to security manager and to the following modules. After this phase the amount of alerts reduced largely. Alert verification verifies each alert based on its success and relevance to the mission goals as well as
+
+the result of alert ranking processing. The verification component filters out false positive alert cross checked by multiple security sensors. After this phase the quantity of alerts reduced largely. Alert correlation module has two functions. The alert sequential pattern analysis function is used to mine attack activity patterns from history hi-alerts which are the result of alert aggregation and verification procedures. Alert plan recognition module then match the real-time hi-alerts to the patterns mined and accordingly correlate those alerts matching any of the attack activity patterns to recognize the attack plans of the attackers or even predict the next step the attacker will take. After alert ranking and alert aggregation phases, the number of alerts reduced largely and the quality of alerts improved highly compared with raw alerts. Our attack scenario construction technique is presented based on the hypothesis that the alerts being processed are such high level alerts in the rest of the paper we simply call them alerts. As mentioned in the introduction, we will concentrate on the function of attack scenario construction in this paper.
+
+3. Attack behavior pattern analysis
+The idea of mining attack sequential patterns comes out from the fact that different multi-stage attack strategies taken by the attacker usually have their own attack behavior sequence patterns. Series of attacker's behaviors launched with certain intent have time consecutive association and appear in ordered sequence. For example, in Distributed Denial of Service (DDOS) attacks, the attacker has to install the DDOS daemon programs in vulnerable hosts before he can instruct the daemons to launch the attack. In other words, an attacker has to reach a certain state before he can carry out next attack steps. The attack steps happen in certain order.
+
+3.1 Terminology
+At first, we are given a raw alert database Dr . After alert ranking and alert aggregation processes, the number of alerts reduced largely and the quality of alerts improved highly compared with raw alerts in Dr . We call the database of such high level alerts as hialert database D . The problem of mining attack behaviors pattern we discuss in this paper is based on database D . Each alert in D consists of the following fields: alert-id (id-number, sensor-id), signature-id (attack type), timestamp (start-time, end-time), source (source-IP, source-port), destination (destination-IP,
+
+873
+
+destination-port), risk (reliability, asset, and priority), and protocol. An attackset I is the set of all attack behavior types which refers to all kinds of attack behavior. Without loss of generality, we map the attackset to a set of contiguous integers which are attack signature identifiers corresponding to different attack behavior types in signature database. Therefore, we denote the attackset I by (i1 , i2 ,......il ) in which i j (1 d j d l )
+means attack signature-id. An attack sequence is an ordered list of attack behaviors which are the elements of attackset. We denote an attack sequence as by  a1 , a2 ,......an ! , where ai (1 d i d n)  I . Definition 1. An attack sequence  a1 , a 2 ,......a n !
+is contained in another sequence  b1 , b2 ,......bm ! ,
+(m t n) if there exist integers a1 b1 , a 2 bi ,......, a n bi .
+2 n
+
+lattackset is the set of frequent attack behaviors in global attack sequence. We call an attack sequence satisfying the minimum support constraint a large attack sequence.
+
+3.2 Attack behavior sequential mining
+The alert database is sorted with alert-id as the major key. We first convert the original alert database into a global attack sequence. We use start-time attribute of the alert to sort the alerts in order to form the long global attack sequence. We map all the alerts to their signature-id attributes to get global attack sequence. Therefore, the mapping result of sorted alert sequence is the global attack sequence acquired. The reason why we map the alerts to contiguous integers is that in the following transformation and sequence mining phases we only concentrate on the attack behavior type attribute of the alerts and it can save the time of string matching to improve the efficiency of the mining algorithm. Then we transform the global attack sequence into a database of candidate attack sequences. We use a slip attack scenario time window to divide the global attack sequence into a candidate attack sequence set. The time window starts from the earliest happen attack behavior and slides to the next one orderly. The attack steps which fall into the same attack scenario time window form a candidate attack sequence set.
+
+i2  ......in such that
+
+For example, the sequence  5, 12, 8 ! is contained in  5, 14, 12, 17, 8, 2 ! , since it satisfies the first element of former sequence equals the first element of the latter one and a 2 bi ,......, a n bi . Notice here we don't
+2 n
+
+define the condition like a1 but a1
+
+b1 , a 2
+
+bi2 ,......, a n
+
+bi1 , a 2 bi2 ,......, a n bin bi which means the first
+n
+
+elements of the two sequences must be equal. Because you will see that the candidate attack sequences acquired in section 3.2 have overlap parts in neighbor sequences for the particularity of the problem. To avoid repeated computing especially when we count support of an attack sequence, we define sequence containing in this way. Definition 2. If as is contained in a candidate attack sequence c , we describe c supports as . The support for an attack sequence is defined as the fraction of total candidate attack sequences who support this attack sequence. In a set of attack sequences, an attack sequence as is maximal if as is not contained in any other sequence. All the sorted alerts in alert database D can be viewed together as a global attack sequence. We use attack scenario time window to divide the long global attack sequence into candidate attack sequences. Given a database of alerts D , the problem of mining attack activity patterns is to find the maximal attack sequences among all candidate attack sequences that have a certain user-specified minimum support. Each of these maximal attack sequences represents an attack sequential pattern. The length of an attack sequence is the number of elements in the sequence. An attack sequence of length k is called a k -sequence. The
+
+Algorithm for mining attack sequential patterns (MASP)
+input L1 = {large 1-sequence}; begin for (k=2; Lk 1 z  ; k ++) do begin insert into Ck select p.lattackset1, p.lattackset2, ..., p.lattacksetkk-1, q.lattacksetk-1 from Lk-1 p, Lk-1 q where p.litemset1 = q.litemset1, p.litemset2 = q.litemset2,..., p.litemsetk-2 = q.litemsetk-2 for all sequences c Ck do for all (k-1)-subsequences s of c do if (s  Lk-1) then delete c from Ck; end foreach c in candidate attack sequence DB do Increment the count of all sequences in Ck that are contained in c . Lk = large attack sequences in Ck with minimum support; end //end for end Output = Maximal sequences in  Lk . k
+
+874
+
+Figure 2. MASP (Mining Attack Sequential Pattern) algorithm With candidate attack sequence set, we now find the set of all Lattacksets L . We are also simultaneously finding the set of all large 1-sequences, since this set is just { l !| l  L} . The support for an attack behavior a is defined as the fraction of a in global attack sequence. Thus the attack a and 1sequence  a ! have same support. An attack behavior with minimum support is called a large attack behavior. All the large attack behaviors form lattackset. Hence, any large attack sequence can be deduced from lattackset. If the first element of a candidate attack sequence doesn't contain any attack behavior belonging to lattackset, the sequence will not be retained in the remaining candidate attack sequence set during the process of the following phase. However, such candidate sequences will still contribute to the count of total number of candidate sequences. The purpose of doing this is to filter out uninterested sequences so that the mining algorithm will not pass over all the sequences in candidate attack sequence database in order to improve the performance of the algorithm. We use algorithm MASP (Mining Attack Sequential Pattern) given in figure 2 to mine frequent attack sequential patterns from candidate attack sequences. It is a reformative Apriori-all algorithm proposed by R. Agrawal and R. Srikant [10]. However, since the processing objects and the targets of the two problems are completely different, we propose MASP algorithm based on the idea of Apriori-all but quite different from it.
+
+during the pass over the candidate attack sequence database. At the end of the pass, we determine which of the candidate large sequences will become the seed for the next pass. In the first pass, all 1-sequences with minimum support, obtained in the lattackset phase, form the seed set. Lk denotes the set of all large ksequences, and C k denotes the set of candidate large k-sequences. Consider the example shown in figure 3. The minimum support has been specified to be 15%. The first pass over the database is made to find lattackset L . Thus we determine large 1-sequences shown in figure 4(a). The large sequences together with their support at the end of the second and third passes are also shown in figure 4 (b) and (c). No candidate is generated for the fourth pass. Sequences like  3, 9 ! ,  3, 8 ! ,
+ 2, 9 ! and  2, 8 ! are the subsequences of other large
+
+sequences, so they are pruned from the maximal attack sequence set. The maximal large attack sequences would be the two attack sequences  3, 9, 8 ! and
+ 2, 9, 8 ! .
+
+Figure 4. Large attack sequences
+
+4. Attack scenario construction
+Figure 3. Candidate attack sequence set example The general structure of the algorithm is that we make multiple passes over the candidate attack sequence database. In each pass, we start with a seed set of large attack sequences. We use the seed set for generating new potentially large attack sequences, called candidate large attack sequences. We find the support for these candidate large attack sequences We mine frequent attack activity patterns from history data. We combine those sequence patterns with same subsequence from their first nodes into an APT (Attack Pattern Tree) so that we can save the time of matching in the algorithm for real-time attack strategies recognition. These attack activity patterns reflect attack behavior occurrence patterns, but they don't involve
+
+875
+
+the correlation-ship between contextual attack behaviors in attack scenarios. Therefore, in our system, when we process the alerts on-line, we also calculate the correlativity between contextual attack behaviors if they match any of the attack activity patterns. Figure 5 shows the flowchart of online alert matching processing for attack plan recognition.
+Wait No Is alert received ? Yes Is alert.signature-id = current_node.child_node in each math_log ? Is Cor(alert, curent_node) > G ? Yes Append the alert to current_node; current_node= current_node.child_node
+
+practice. Table 1 gives the alert attribute weight matrix we used in our method.
+
+5. Experiment
+Table 1. Alert attribute weight matrix
+hi\hj SIP DIP SPort DPort Time AType Priori SIP 0.1 0.1 0 0 0 0 0 DIP 0 0.2 0 0 0 0 0 SPort 0 0 0.08 0 0 0 0 DPort 0 0.1 0 0.15 0 0 0 Time 0 0 0 0 0.02 0 0 AType 0 0 0 0 0 0.2 0 Priori 0 0 0 0 0 0 0.05
+
+Yes
+
+Is alert.signature-id = current_node.root_node in each APT ?
+
+Yes
+
+Create a match-log object with the tree, Current_node=root_node; Append G the alert to current_node;
+
+We applied our method to DARPA 2000 benchmark repository, scenario-specific datasets [11] and live data collected from our network center. We use playback technique (Open source tool Tcpreplay32 [12]) to induct the workflow to the sensors integrated in our system. We first performed the experiment that persisted for 4 weeks to collect history data for MASP algorithm. Then we continue our experiment for 2 weeks to evaluate our method of online attack scenario construction.
+
+5.1 Performance evaluation of MASP
+During four weeks test, our system received large quantity of alerts. The number reduced from more than 796,300 to 5932 after the processing of aggregation and verification phases, reduced 99.2% totally.
+250
+
+Output all the match_logs in graphical form
+
+Execution time (sec)
+
+Figure 5. Flowchart of online alert matching for attack scenario construction The alert correlativity describes the correlation-ship of the alert pair. The larger the correlativity of two alerts is, with more possibility they belong to the same scenario. Correlativity between alert hi , h j is defined as Cor (hi , h j ) . Alerts hi , h j are described by p attributes x1 , x 2 ,......x p , y1 , y 2 ,...... y p respectively. The correlativity between hi , h j is described as the weighted sum
+p i, j 1
+
+200
+
+0.01 0.02 0.03
+
+150
+
+100
+
+50
+
+0 2 4 6 8 10 12
+
+Attack scenario time window (hour)
+
+of
+
+their
+p i, j 1
+
+attributes:
+
+Cor (hi , h j )
+values of
+
+Ś wij Cor ( xi , y j ) / Ś wij . The weight
+
+Figure 6. Execution times of MASP Figure 6 shows the relative execution times of MASP for different setting of minimum support as attack scenario time window varies from 2 hours to 10
+
+wij are set empirically and can be tuned in
+
+876
+
+hours. As expected, the execution times increases as the minimum support decreases from 0.03 to 0.01 and as the time windows expands. The reason is that smaller minimum support means larger number of large attack sequences, and long time windows means long candidate attack sequences to be processed. We mined 17 attack activity patterns from 5932 alerts with the setting of minimum support 0.02 and attack sequence time window size 4 hours. We set the attack scenario time windows as half work day time and we found that almost all the multi-stage attacks can be implemented in this time interval.
+
+Acknowledgement
+I would like to thank the anonymous reviewers for their valuable comments. I would also like to thank the graduate students in our lab for their kind help to collect various attack instances for our experiments, and my colleagues for their constructive advice to my work.
+
+References
+[1] Fre´de´ric Cuppens. Managing alerts in multi-intrusion detection environment. In: Proceedings 17th annual computer security applications conference. New Orleans; 2001. p. 22e31. Fre´de´ric Cuppens, Alexandre Mie`ge. Alert correlation in a cooperative intrusion detection framework. In: Proceedings of the 2002 IEEE symposium on security and privacy; 2002. p. 202e15. Fre´de´ric Cuppens, Fabien Autrel, Alexandre Mie`ge, Salem Benferhat. Correlation in an intrusion detection process. In: Proceedings SE´curite´ des communications sur internet (SECI02); 2002. p. 153e71. P. Ning, Y. Cui, and D. S. Reeves, "Constructing attack scenarios through correlation of intrusion alerts," presented at Proceedings of the 9th ACM Conference on Computer and Communications Security, Nov 1822 2002, Washington, DC, United States, 2002. P. Ning, Y. Cui, D. S. Reeves, and D. Xu, "Techniques and tools for analyzing intrusion alerts," ACM Transactions on Information and System Security, vol. 7, pp. 274, 2004. P. Ning and D. Xu, "Alert correlation through triggering events and common resources," Tucson, AZ, USA, 2004 Sheyner, O., Haines, J., Jha, S., Lippmann, R., and Wing, J. M., "Automated generation and analysis of attack graphs" in Proceedings of the 2002 IEEE Symposium on Security and Privacy, (Oakland, CA), May 2002. W. Lee and X. Qin, "Statistical Causality Analysis of INFOSEC Alert Data," presented at RAID2003. Q. Xinzhou and L. Wenke, "Discovering novel attack strategies from INFOSEC alerts," Sophia Antipolis, France, 2004. R. Agrawal and R. Srikant, "Mining sequential patterns," Research Report RJ 9910, IBM Almaden Research Center, San Jose, California, October 1994. MIT Lincoln Lab. 2000 DARPA Intrusion Detection Scenario Specific Data Sets. http://www.ll.mit.edu/IST/ideval/data/2000/2000_data_ index.html Aaron Turner, TCPreplay32 tools. http://tcpreplay.synfin.net/trac/ Xinzhou Qin, "A Probabilistic-Based Framework for INFOSEC Alert Correlation", College of Computing Georgia Institute of Technology, Aug. 2005.
+
+5.2 Attack scenario construction
+Finally 47 attack scenarios were correctly reconstructed among 51 real carried out attacks. The detection rate is 92.2%. Further analysis reveals that the miss detection rate is caused mainly because we performed another two kinds of multi-stage attacks which are not appeared in the experiment of pattern mining. We can collect more complete history data to solve the problem, since the attack sequence patterns have simple forms and structures, security manager can also add new type of attack patterns manually to renew the attack sequence pattern database. Therefore the result of the judgment is proved to be correct by the real attack behavior we carried out. The method is shown to be effective with the result of the experiment.
+[2]
+
+[3]
+
+[4]
+
+[5]
+
+6. Conclusion and future work
+Security audit data increased so dramatically, management and analysis of these security data become a critical and challenge issue. In our centralized network security event management and analysis system we formalize the audit data, rank and aggregate the alerts, detect novel attack strategies, recognize attack plans and predict forthcoming attacks. We address the challenges of recognizing attacker's high-level strategies and predicting upcoming attack intentions. In this paper we introduced a new attack scenario construction method. We use attack sequential mining algorithm to find out attack activity patterns which are related to attack strategies deployed by the attacker, we also consider the logical correlation-ship in constructing the attack scenario model. Our technique solved the problem of complex correlation rules defining and the unknown attack scenario recognition. Experiments show that our approach can effectively discover attack scenarios in reality and identify attack plans.
+
+[6]
+
+[7]
+
+[8] [9]
+
+[10]
+
+[11]
+
+[12] [13]
+
+877
+
+

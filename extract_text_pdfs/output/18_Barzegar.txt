@@ -1,0 +1,1961 @@
+Accepted Manuscript
+
+Attack Scenario Reconstruction Using Intrusion Semantics
+Mahdiyeh Barzegar, Mehdi Shajari
+PII:
+DOI:
+Reference:
+
+S0957-4174(18)30268-9
+10.1016/j.eswa.2018.04.030
+ESWA 11944
+
+To appear in:
+
+Expert Systems With Applications
+
+Received date:
+Revised date:
+Accepted date:
+
+23 August 2017
+14 April 2018
+24 April 2018
+
+Please cite this article as: Mahdiyeh Barzegar, Mehdi Shajari, Attack Scenario Reconstruction Using
+Intrusion Semantics, Expert Systems With Applications (2018), doi: 10.1016/j.eswa.2018.04.030
+
+This is a PDF file of an unedited manuscript that has been accepted for publication. As a service
+to our customers we are providing this early version of the manuscript. The manuscript will undergo
+copyediting, typesetting, and review of the resulting proof before it is published in its final form. Please
+note that during the production process errors may be discovered which could affect the content, and
+all legal disclaimers that apply to the journal pertain.
+
+ACCEPTED MANUSCRIPT
+
+Highlights
+• A two-step semantic attack scenario reconstruction technique is proposed.
+• The technique is fast and incremental without the need for human intervention.
+• The technique calculates the similarity between alerts using a proposed metric.
+
+CR
+IP
+T
+
+• Semantic similarity is used in inferring the causal relation between alerts.
+
+AC
+
+CE
+
+PT
+
+ED
+
+M
+
+AN
+US
+
+• The evaluation results prove the advantages of the proposed approach.
+
+1
+
+ACCEPTED MANUSCRIPT
+
+Attack Scenario Reconstruction Using Intrusion Semantics
+Mahdiyeh Barzegara , Mehdi Shajaria,∗
+Department of Computer Engineering and Information Technology, Amirkabir University of Technology,
+Tehran, Iran
+
+CR
+IP
+T
+
+a
+
+Abstract
+
+PT
+
+ED
+
+M
+
+AN
+US
+
+Security information and event management (SIEM) systems receive a large number of alerts
+from different intrusion detection systems. They are expected, from these alerts, to make
+reliable and timely decisions regarding the types of ongoing attack scenarios and their priorities. However, the lack of an agreed-upon vocabulary for the representation of the domain
+knowledge makes it difficult for state-of-the-art SIEM systems to effectively manage these
+complex decisions. To overcome this problem, an ontology-based expert system approach
+can provide domain knowledge modeling as a foundation for disambiguation of meaning
+and automatic reasoning regarding ongoing attack scenarios. The proposed approach reconstructs attack scenarios by reasoning based on the evidences in the alert stream. The
+main idea of the proposed approach is to identify the causal relation between alerts using
+their similarity. This approach assumes that the similarity between two successive steps in
+an attack scenario is greater than that of two non-successive steps. Moreover, the similarity
+between the steps of the same attack scenario is greater than that between the steps of
+two different attack scenarios. The benefit of the proposed approach includes the fast and
+incremental reconstruction of known and unknown attack scenarios without expert intervention, which is an enormous step forward in developing expert and intelligent systems
+for cyber security. We evaluated the proposed technique by performing experiments on two
+known datasets: DARPA 2000 and MACCDC 2012. The results prove the advantages of
+the proposed approach with regard to completeness and soundness criteria.
+
+CE
+
+Keywords: alert correlation, attack scenario, ontology, similarity, semantic
+
+AC
+
+1. Introduction
+
+One important aspect of network security is the proactive and continuous identification
+of possible attacks on computer networks. This task is complicated owing to the complexity
+and size of the networks and the fact that network attacks are typically performed in several
+steps. Many technologies have been developed and applied in security operations such as
+∗
+
+Corresponding author
+Email addresses: mhd.barzegar@aut.ac.ir (Mahdiyeh Barzegar ), mshajari@aut.ac.ir (Mehdi
+Shajari )
+Preprint submitted to Expert Systems with Applications
+
+May 1, 2018
+
+ACCEPTED MANUSCRIPT
+
+AC
+
+CE
+
+PT
+
+ED
+
+M
+
+AN
+US
+
+CR
+IP
+T
+
+intrusion detection systems (IDSs) and firewalls to counterwork security threats to computer
+systems and networks. The previous research works in the intrusion detection field remain
+considerably less than perfect and include numerous weaknesses. One of the main weaknesses
+of an IDS is that it can detect only simple attacks that occur in a single step of any major
+attack, whereas actual attacks that are more sophisticated go undetected. In multi-step
+attacks, an attacker uses different steps to prepare for the final step and achieve his/her
+main goal. An action performed by an attacker to attain his/her goal is called an attack
+step. A sequence of attack steps forms an attack scenario, and the process of identifying the
+attacker steps is called attack scenario reconstruction.
+Attack scenario reconstruction is used for both intrusion response and forensic investigation. In intrusion response, the attack scenario reconstruction assists forecasting the next
+move of the attacker, allowing an intrusion response system (IRS) to react before any serious
+damage is realized. In a forensic investigation, the attack scenario reconstruction facilitates
+identifying the attacker steps and their relations for further analysis. The three important
+parameters in an attack scenario reconstruction are expert knowledge independence, average
+reconstruction time, and incremental reconstruction. The independence from expert knowledge allows the technique to be more flexible in reconstructing unknown attack scenarios
+and is important for both intrusion response and forensics. Moreover, because the attack
+scenario should be reconstructed before an attacker attains his or her ultimate goal, average
+reconstruction time and incremental reconstruction are two important characteristics of the
+intrusion response; these have less importance in the forensic investigation.
+Two main approaches have been introduced in the literature for attack scenario reconstruction: approaches based upon expert knowledge (Totel et al., 2004) (Ning et al., 2002)
+(Cuppens and Miege, 2002) and approaches that infer causal relations using data-mining
+and machine-learning techniques (Qin and Lee, 2004) (Zhu and Ghorbani, 2005) (Sadoddin
+and Ghorbani, 2009). In the first group, although attack scenarios can be reconstructed with
+fewer false positives, attack scenario reconstruction is limited to known scenarios; unknown
+scenarios cannot be reconstructed. In the second group of approaches, statistical analysis is
+used to discover the relationships between attack steps. These approaches are independent
+of expert knowledge; however, they are performed on static databases.
+In this paper, we introduce an ontology-based semantic attack scenario reconstruction
+technique using the proposed semantic similarity metric. The main idea of the proposed
+technique is to identify the causal relation between alerts using their similarity. Because each
+step of the attacker provides prerequisites for the next step, there is a causal relationship
+between the different steps of an attack. These causal relations in multi-step attacks are the
+reason for the similarity between the related alerts. The similarity between two successive
+steps in an attack scenario is greater than that between two non-successive steps. Moreover,
+the similarity between the steps of the same attack scenario is greater than that between the
+steps of two different attack scenarios. The accurate estimation of the similarity allows an
+expert knowledge-independent technique (other than the knowledge encoded in the ontology)
+to reconstruct an attack scenario incrementally in less time.
+We can summarize the contributions of this paper as follows:
+3
+
+ACCEPTED MANUSCRIPT
+
+• A new similarity metric based on the SimRank method (Jeh and Widom, 2002) to
+calculate the similarity between two ontology instances. The proposed metric can also
+be used for different ontologies in different fields.
+• An ontology-based inference engine that identifies the causal relation between attacks.
+
+CR
+IP
+T
+
+• An attack scenario reconstruction technique that uses the defined similarity metric for
+the fast and incremental reconstruction of attack scenarios without human intervention.
+
+AN
+US
+
+We used two datasets, DARPA 2000 and MACCDC 2012, to evaluate the proposed
+technique. In the literature, the completeness and soundness of the alert correlation are the
+most adopted metrics for evaluating attack scenario reconstructions; hence, we used these
+metrics in our evaluation. Moreover, we investigated the average time for an attack scenario
+reconstruction.
+2. Related Works
+
+CE
+
+PT
+
+ED
+
+M
+
+A variety of alert correlation techniques for reconstructing attack scenarios have been
+proposed in recent years. The aim of alert correlation includes alert aggregation, alert prioritization, and alert causality analysis. Alert aggregation groups alerts into different clusters
+on the basis of their similarity and then merges them in a particular manner (Mathew et al.,
+2005). Alert prioritization prioritizes alerts on the basis of their importance (Morin et al.,
+2002) (Morin et al., 2009). Alert causality analysis identifies the causal relations between
+alerts (Cuppens and Miege, 2002). Because the topic of this paper is alert causality analysis,
+we only review those related approaches. In the following subsections, we categorize all major related works based on the proposed analysis method of each approach. Note that the
+most important criteria for evaluating alert correlation methods are expert knowledge independence, ability to reconstruct both known and unknown scenarios, incremental scenario
+reconstruction, online alert correlation capability, and semantic analysis of the attack. In
+Table 1, we compare the related works on the basis of the mentioned criteria. In Section 4,
+we provide a detailed discussion of the advantages and limitations of the proposed approach
+compared to the other related approaches.
+
+AC
+
+2.1. Scenario-Based Correlation
+Scenario-based correlation techniques determine the causal relations between alerts using known attack scenarios to identify the sequences of alerts that match the predefined
+scenarios. The attack scenario can be specified using an attack language, such as LAMDBA
+(Cuppens and Ortalo, 2000), which is based on logic and uses a declarative approach. In this
+language, the conditions and effects of an attack related to the state of the target computer
+system are described with logical formulas. ADeLe (Goldberg, 2009) is another language
+that provides a means to define the correlation properties. One of the major problems with
+these techniques is their dependence on known scenarios, which means that they cannot
+correlate unknown scenarios.
+4
+
+ACCEPTED MANUSCRIPT
+
+Known scenario
+
+Unknown scenario
+
+Incremental reconstruction
+
+Online correlation
+
+X
+X
+X
+X
+X
+X
+P
+X
+X
+X
+
+X
+X
+X
+X
+X
+X
+X
+X
+X
+X
+X
+P
+X
+X
+X
+
+D
+D
+D
+X
+X
+X
+X
+X
+X
+P
+P
+X
+
+X
+X
+X
+X
+X
+X
+X
+
+X X X X X - P
+- X
+- X
+X X
+
+AC
+
+CE
+
+PT
+
+AN
+US
+
+M
+
+ED
+
+Criteria
+Techniques
+(Cuppens and Ortalo, 2000)
+(Goldberg, 2009)
+(Ning et al., 2002)
+(Templeton and Levitt., 2001)
+(Cheung et al., 2003)
+(Qin and Lee, 2004)
+(Sadoddin and Ghorbani, 2009)
+(Zhu and Ghorbani, 2005)
+(Ren et al., 2010)
+(Shittu et al., 2015)
+(Li and Tian, 2011)
+(Saad and Traore, 2013)
+(Sadighian et al., 2014)
+(Tayeb and Aiash, 2016)
+Proposed technique
+
+Semantic consideration
+
+Expert knowledge independence
+
+scenario-based
+scenario-based
+rule-based
+rule-based
+rule-based
+statistical analysis-based
+statistical analysis-based
+statistical analysis-based
+statistical analysis-based
+statistical analysis-based
+ontology-based
+ontology-based
+ontology-based
+ontology-based
+ontology-based
+
+CR
+IP
+T
+Category
+
+Table 1: Previous research on attack scenario reconstruction
+
+X: Technique satisfies the criteria. -: Technique does not satisfy the criteria. D: Capabilities depend on the
+defined rules. P: Technique partially satisfies the criteria.
+
+5
+
+ACCEPTED MANUSCRIPT
+
+AN
+US
+
+CR
+IP
+T
+
+2.2. Rule-Based Correlation
+Rule-based correlation approaches correlate alerts based on predefined rules. The defined
+rules have two parts: prerequisite and consequence. These rules identify the prerequisites
+and consequences of the attacks and correlate the corresponding alerts by matching the consequence of some previous alerts and the prerequisite of some later alerts (Ning et al., 2002).
+The cyber security community has proposed different techniques based on this approach.
+JIGSAW (Templeton and Levitt., 2001) introduced a language to describe attacks in terms
+of their prerequisites and consequences. It stores these in a database to detect complicated
+multi-step attack scenarios. The Correlated Attack Modeling Language (CAML) (Cheung
+et al., 2003) uses a modular approach, where a module represents an inference step. These
+modules can be linked together to detect multi-step scenarios. CAML is accompanied by
+a library of predicates, which functions as a vocabulary to describe the properties of the
+system states and events. These techniques are more flexible than the first category in
+identifying related alerts. However, they are similar to the first category in that they are
+dependent upon expert knowledge.
+
+AC
+
+CE
+
+PT
+
+ED
+
+M
+
+2.3. Statistical Analysis-Based Correlation
+Statistical analysis-based correlation approaches analyze alerts statistically and identify
+the relations between them using time and other related evidence. Qin and Lee (2004) used a
+Bayesian network in their correlation engine to discover the dependency between alerts. They
+developed two correlation engines to discover attack transition patterns based on statistical
+analysis and temporal pattern analysis. Zhu and Ghorbani (2005) utilized neural networks
+for extracting attack scenarios without using prior knowledge. Their proposed approach
+is based on two different neural network methods. The probabilistic output of these two
+methods is used to determine which of the previous alerts can be correlated with the current
+alert. Sadoddin and Ghorbani (2009) proposed a framework for real-time alert correlation
+that incorporates techniques for aggregating alerts into structured patterns and incremental
+mining of frequently structured patterns. Shittu et al . (2015) presented a framework to
+prioritize alerts and detect attack patterns using a post-correlation method. They propose
+creating meta-alerts from low IDS alerts and clustering them using the DBSCAN algorithm
+(Ester et al., 1996). For the next step, they apply a GSPAN algorithm (Yan and Han, 2002)
+to extract frequent pattern mining to extract the patterns. However, these techniques are
+independent of prior knowledge, making them infeasible in an online setting because alert
+analysis is time consuming.
+2.4. Ontology-based Correlation
+Ontology-based correlation approaches correlate alerts using the inference capability of
+the ontology. Li and Tian (2011) extended the inference language on ontology named
+XSWRL and developed a framework for using an ontology to correlate alerts. Saad and
+Traore (2013) proposed a new hybrid approach using semantic analysis and intrusion ontology (Saad and Traore, 2013). Although their approach has novelty, it is necessary that
+the attack scenario be completed before it can correlate the received alerts. Therefore, their
+work suffers from major limitations in online correlation. Sadighian et al. (2014) presented
+6
+
+ACCEPTED MANUSCRIPT
+
+CR
+IP
+T
+
+an ontology-based alert correlation framework that uses ontologies to represent and store the
+alert information, attack scenarios, and other information. Their framework uses the Semantic Query-Enhanced Web Rule Language to reduce nonrelevant alerts and correlate alerts.
+Tayeb and Aiash (2016) presented an ontology-based event correlation technique for SIEM
+systems. They define an ontology using different sources of knowledge to share vocabularies
+in the intrusion domain and a prototype to use their defined ontology for alert correlation.
+This, however, suffers from major limitations such as an inability to make decisions when
+specific information is missing.
+3. Proposed Technique
+
+ED
+
+M
+
+AN
+US
+
+The aim of this research is to propose a technique that can perform a timely incremental
+reconstruction of attack scenarios without the requirement for previous knowledge of these
+scenarios. In the proposed technique, an ontology is used to model the concepts of the
+computer and network intrusion field. In addition to the modeling of domain knowledge,
+the ontology also provides possibilities to obtain new knowledge. Previous researchers have
+proposed ontologies for the domain of intrusion detection (Gonzalez Granadillo et al., 2012).
+Because none of these ontologies is sufficiently mature to satisfy the proposed technique’s
+requirements, we define our own version of intrusion ontology.
+After receiving alerts from different intrusion detection sensors and converting these
+into intrusion ontology instances, the proposed technique sends them to the attack scenario
+reconstruction component. As there is a causal relation between two successive steps in an
+attack scenario, these steps have a degree of similarity. A correct estimation of the similarity
+between alerts can facilitate determining related alerts without any previous knowledge.
+The attack scenario reconstruction component uses the intrusion ontology to calculate the
+similarity between alerts. The received alert is correlated to the most similar alert if its total
+degree of similarity is greater than a threshold.
+
+CE
+
+PT
+
+3.1. Intrusion Ontology
+Several definitions of ontology have been proposed. The most cited definition is that of
+Gruber in 1993, who updated his definition in 2009 (Gruber, 2009); this reads as follows:
+
+AC
+
+“Ontology defines a set of representational primitives with which to model a
+domain of knowledge or discourse. The representational primitives are typically
+classes (or concepts), attributes (or properties), and relationships (or relations
+between class members).”
+
+We present an ontology more formally as O = (C, P, R, D), where C is the set of concepts,
+P is the set of properties, R is the set of relations, and D is the domain of the ontology (i.e.,
+intrusion detection in this paper). The properties of a concept ci are represented by p(ci ),
+and the domain and range of the relation ri are represented by domain(ri ) and range(ri ),
+respectively. Each concept can have instances that are indicated with I and instances of
+concept ci with I(ci ). A subset of related concept instances is defined as an ontology instance
+and is indicated with o.
+7
+
+ACCEPTED MANUSCRIPT
+
+Table 2: Rules for extraction of T-box elements from XML schema
+
+AN
+US
+
+CR
+IP
+T
+
+Rule Number Description
+Rule 1
+Each xs:element that contains an xs:complexType is mapped to a concept
+in the ontology.
+Rule 2
+There is a relation between each xs:element and its sub-elements except
+when a sub-element has no xs:complexType. The domain of the extracted
+ontology relation is the xs:element and the range of the relation is composed of the internal sub-elements of the xs:element.
+Rule 3
+Each xs:attribute is mapped to a property for the included xs:element.
+Rule 4
+Each xs:simpleType is mapped to the restriction of the xs:attribute.
+Rule 5
+xs:minOccurs and xs:maxOccurs are mapped to the minimum and maximum cardinality, respectively.
+Rule 6
+Each xs:element that does not have sub-elements or attributes is mapped
+to the property of the concept extracted by Rule 1.
+
+PT
+
+ED
+
+M
+
+An ontology typically consists of two types of information items: T-box and A-box. The
+T-box consists of the terminology component with the definition of the concepts, properties,
+and concept relationships. The A-box consists of assertions that comprise the facts stated by
+the ontological instances. That is, it consists of triplets that provide information regarding
+the relationships between ontology instances.
+We defined our own version of ontology, which is called intrusion ontology, using the
+Intrusion Detection Message Exchange Format (IDMEF). IDMEF is a data model for representing information exported by IDSs (Debar et al., 2007). Because the implementation
+of this data model in the Extensible Markup Language (XML) was presented previously in
+(Debar et al., 2007), we defined a set of rules for extracting T-box elements from the IDMEF XML implementation, and then refined the ontology using expert knowledge. Table 2
+displays the set of rules for extracting T-box elements from an XML schema.
+
+CE
+
+Example 1. In this example, we illustrate the extraction of T-box elements using the defined
+rules. Consider the following part of an XML file.
+
+AC
+
+<!-- User -->
+<xs:element name=‘‘User’’>
+<xs:complexType>
+<xs:sequence>
+<xs:element maxOccurs=‘‘unbounded’’ ref=‘‘idmef:UserId’’/>
+</xs:sequence>
+...
+<xs:attribute name=‘‘category’’ default=‘‘unknown’’>
+<xs:simpleType>
+<xs:restriction base=‘‘xs:string’’>
+<xs:enumeration value=‘‘unknown’’/>
+8
+
+ACCEPTED MANUSCRIPT
+
+AN
+US
+
+CR
+IP
+T
+
+<xs:enumeration value=‘‘application’’/>
+<xs:enumeration value=‘‘os-device’’/>
+</xs:restriction>
+</xs:simpleType>
+</xs:attribute>
+...
+</xs:complexType>
+</xs:element>
+<!-- UserId -->
+<xs:element name=‘‘UserId’’>
+<xs:complexType>
+...
+<xs:sequence>
+<xs:element ref=‘‘idmef:name’’/>
+<xs:element minOccurs=‘‘0’’ ref=‘‘idmef:number’’/>
+</xs:sequence>
+...
+</xs:complexType>
+</xs:element>
+
+CE
+
+PT
+
+ED
+
+M
+
+Rule 1: The element “User” will map to the “User” concept in the ontology.
+Rule 2: There is a relation between the two concepts “User” and “UserId.” The domain
+of the relation is “User,” and its range is “UserId.”
+Rule 3: The attributes named “ident” and “category” are properties of the concept
+“User.”
+Rule 4: The attribute named “category” is restricted to values of “unknown,” “application,” and “os-device.”
+Rule 5: The number of relations between the concepts “User” and “UserId”, which is
+referenced as “idmef:UserId” in line 4, has no limitation on its maximum number. Moreover,
+“UserId” cannot have any because minOccurs is zero.
+Rule 6: The element named “number” is a property of “UserId”
+
+AC
+
+It is necessary to build a glossary of concepts with their synonyms and acronyms to be
+included in the ontology. Enforcing the defined rules in Table 1 on the IDMEF schema
+leads to 31 concepts. Each class in the IDMEF schema has a set of attributes that describe
+its properties. These attributes are mapped to data type properties in the corresponding
+ontology concept. The relations between concepts are illustrated in Figure 1. This ontology
+is a high-level view of the intrusion ontology.
+3.2. Ontology Instance Similarity
+In recent years, a variety of ontology-based similarity techniques have been proposed
+aiming to calculate the similarity between ontology instances (Sánchez et al., 2011) (Maedche and Staab, 2002). In this section, first, we introduce the proposed similarity calculation
+9
+
+AN
+US
+
+CR
+IP
+T
+
+ACCEPTED MANUSCRIPT
+
+Figure 1: Intrusion ontology
+
+AC
+
+CE
+
+PT
+
+ED
+
+M
+
+technique, which can be used for any ontology. Then, we explain the proposed attack scenario reconstruction technique.
+Each alert is an instance of the intrusion ontology, and therefore, we must calculate the
+similarity between two ontology instances. An ontology instance can be considered a labeled
+directed graph where the nodes are the concepts and the directed edges are the relations.
+By considering the ontology as a graph, we can introduce a technique based on the SimRank
+method (Jeh and Widom, 2002) to calculate the similarity between two ontology instances.
+The SimRank method is a measure of structural context similarity. It represents a set of
+related objects as a directed graph G = (V, E) in which V and E indicate a set of vertices
+and directed edges, respectively. It defines a recursive model which computes a similarity,
+Sim(a, b), for each pair of vertices a, b ∈ V based on the concept of structural-context
+similarity. In this method, two objects are similar if they are referenced by the similar
+objects in the graph. In a formal manner, a and b are similar (a ∼ b) if a referenced by c
+(c → a), b referenced by d (d → b), and c and d are similar (c ∼ d).
+Because we have two ontology instances, we must calculate the similarity between two
+independent graphs. We use the SimRank method to calculate the similarity of two graphs
+by defining a mapping function. This function maps a concept instance of the first graph to
+that of the second graph if they are instances of the same concept. The SimRank method
+considers these two concept instances as nodes of the same graph to allow it to calculate the
+similarity.
+Formally, when we consider each concept instance as a node in a graph, we have a graph
+Gi with node setNi = {ni 1, ni 2, ..., ni m}. To calculate the similarity between graph Gi and
+graph Gj , we must first map together the node sets Ni and Nj . The mapping function M
+10
+
+CR
+IP
+T
+
+ACCEPTED MANUSCRIPT
+
+Figure 2: Ontology of Example 2 with its instances
+
+AN
+US
+
+maps the node ni k to node nj l if and only if ni k and nj l are the instances of the same concept
+in the ontology O, (ni k, nj l ∈ I(c)). That is, the mapping function maps the instances of
+the same concept to each other. If an instance of the same concept does not exist in Gj , the
+node in Gi maps to ∅ and vice versa. The mapped nodes are stored in a set named Sm and
+each pair is displayed as σ and σ ∈ Sm .
+
+ED
+
+M
+
+Example 2. If we have the ontology O with the concept set C = {c1 , c2 , c3 } and two ontology
+instances OI1 = {a1 , a2 , a3 } and OI2 = {b1 , b2 }, where a1 , b1 ∈ I(c1 ) , a2 , b2 ∈ I(c2 ), and
+a3 ∈ I(c3 ), then if the function M is applied, Sm would be {(a1 , b1 ), (a2 , b2 ), (a3 , ∅)}. The
+ontology O is illustrated in Figure 2.
+
+PT
+
+After the two ontology instances are mapped, the similarity must be calculated between
+each pair of σ ∈ Sm . By considering two concept instances a and b, we can use two sets of
+parameters that have an impact on concept instance similarity:
+
+CE
+
+a. Properties: The properties of each concept instance: P (a) and P (b).
+b. Related instances: Related instances to each concept instance: R(a) and R(b).
+
+AC
+
+Therefore, to calculate the similarity between two concept instances, we calculate the
+similarities between their properties and between the related instances to each concept instance.
+Let us denote the similarity between a and b by Sim(a, b) ∈ [0, 1]. We write a recursive
+equation for Sim(a, b), which is presented in Equation 1. In this equation, the similarity
+between properties and relations is indicated as SimP (a, b) ∈ [0, 1] and SimR(a, b) ∈ [0, 1],
+respectively. Two parameters, α and β, are defined as follows to normalize the impact of
+the properties and relations on the similarity, and α + β = 1:
+
+11
+
+ACCEPTED MANUSCRIPT
+
+(1)
+
+CR
+IP
+T
+
+Sim(a, b) = αSimP (a, b) + βSimR(a, b)
+(|P (a) ∪ P (b)|)
+α=
+(|P (a) ∪ P (b)| + |R(a) ∪ R(b)|)
+(|R(a) ∪ R(b)|)
+β=
+(|P (a) ∪ P (b)| + |R(a) ∪ R(b)|)
+
+M
+
+AN
+US
+
+The sum of SimP (a, b) and SimR(a, b) is in the range of [0, 2]. When the parameters α
+and β are multiplied with the sum, the range is [0, α] for SimP (a, b) and [0, β] for SimR(a, b).
+By assigning α + β = 1, we obtain a value from Sim(a, b) that is in the range of [0, α + β],
+which means Sim(a, b) ∈ [0, 1].
+We consider an instance as a bipartite graph. A bipartite graph, also called a bigraph,
+is a set of graph nodes that are decomposed into two disjoint sets such that no two graph
+nodes are adjacent within the same set (West et al., 2001). An instance has a name that
+introduces the instance and a set of properties; the name is connected to each property.
+Therefore, the name and properties are two disjoint sets. We use the SimRank method to
+calculate the similarity in a bipartite graph. The following equation illustrates the mutually
+recursive equations that formalize the similarity in a bipartite graph. SimP (a, b) indicates
+the similarity between the instances a and b. Moreover, SimP (Pi (a), Pj (b)) indicates the
+similarity between the properties of a and b. If a = b, the similarity is “1”; otherwise, it is
+calculated using Equation 2.
+
+ED
+
+|P (a)| |P (b)
+X X
+γ
+SimP (Pi (a), Pj (b))
+SimP (a, b) =
+|P (a)||P (b)| i=1 j=1
+
+(2)
+
+If Pi (a) = Pj (b), the similarity is equal to “1”; otherwise, it is calculated using Equation 3.
+
+PT
+
+γ
+SimP (a, b) =
+|I(Pi (a))||I(Pj (b))|
+
+|I(Pi (a))| |I(Pi (b))|
+
+X
+i=1
+
+X
+
+SimP (I(Pi (a)), I(Pi (b)))
+
+(3)
+
+j=1
+
+AC
+
+CE
+
+The similarity of the related instances SimR(a, b) is calculated using Equation 4. In this
+equation, if either a or b has no related instances, then SimR(a, b) = 0. In this case, there
+is no method to infer the relation similarity between them.
+(
+1
+a=b
+P|R(a)| P|R(b)
+(4)
+SimR(a, b) =
+γ
+i=1
+j=1 SimR(Ri (a), Rj (b)) a 6= b
+|R(a)||R(b)|
+
+After the similarity between pairs of mapped instances is calculated, the total similarity
+is calculated. The most pervasive method to identify the similarity between two sets is
+to compare the common members to the total members of the two sets. In the field of
+psychology, Tverskye has demonstrated the cognitive plausibility of this intuition, giving
+the mathematical model of a similarity measure between the two objects A and B given in
+Equation 5 (Tversky, 1977).
+12
+
+ACCEPTED MANUSCRIPT
+
+SimilarityT verskye (A, B) =
+
+f (A ∩ B)
+f (A ∪ B) + δf (A − B) + λf (B − A)
+
+δ, λ ≥ 0
+
+(6)
+
+CR
+IP
+T
+
+Inspired by the Tverskye equation, we define the total similarity as Equation 6.
+PSm
+Sim(σi ∈ Sm )
+Sim(A, B) = i=0
+|Sm |
+
+(5)
+
+Example 3. Consider the ontology given in Example 2. In the following, we calculate the
+similarity between two ontology instances OI1 and OI2 . Consider the following properties
+for each instance: a1 = {w, x, y}, a2 = {m, p}, a3 = {i, j}, b1 = {w, x, z}, and b2 =
+{m, o, q}. According to the mentioned properties, using λ = 0.9, we obtain the similarities
+between mapped instances as Sim(a1 , b1 ) = 0.699, Sim(a2 , b2 ) = 0.674, and Sim(a3 , ∅) = 0.
+Therefore, the total similarity between OI1 and OI2 is 0.458.
+
+PT
+
+ED
+
+M
+
+AN
+US
+
+3.3. Attack Causality Analysis
+The proposed ontology instance similarity technique only identifies the related alerts;
+however, we must determine the sequence of attacks launched by the attacker. That is, the
+attack causality of the related alerts must be analyzed to correlate them in a meaningful
+manner. We define a concept named “Attack” in the intrusion ontology with two properties,
+namely, type and impact, p(Attack) = {type, impact}, which are used to analyze the attack
+causality. The type property indicates the category of the attack and the impact indicates
+the attacker’s gains if the attack succeeds. Each attack alerted by an IDS signature is stored
+as an instance of the Attack concept.
+A semantic reasoning engine is used to analyze the attack causality between a pair
+of similar alerts. This engine can infer logical sequences from a set of asserted facts and
+axioms. We use a rule-based inference variation of reasoning, which requires a set of defined
+rules in addition to an inference engine to generate knowledge by making inferences. It uses
+first-order prediction logic to perform reasoning by forward chaining and backward chaining.
+To describe the semantic reasoning engine, we introduce the following three definitions:
+
+CE
+
+Definition 1. Midway Attack (MA) Each intermediate attack step between two related
+attacks is called a midway attack step.
+
+AC
+
+Definition 2. Attack Distance(AD) The distance between two related attacks is the count
+of MAs between the first attack and the second.
+Definition 3. Minimum Attack Distance (minAD) When there is more than one path
+connecting two attacks, the path with the shortest AD between the first attack and the second
+indicates the minAD.
+
+To analyze the attack causality of alerts, we define two semantic rules described in the
+Semantic Web Rule Language (SWRL): Rule 1 and Rule 2. Rule 1 indicates that, when
+we have two attacks named x and y where the impact of x is the same as the type of y,
+13
+
+ACCEPTED MANUSCRIPT
+
+the attack sequence is x − y instead of y − x. Note that the first rule in the inference
+engine considers the midway attacks when determining the attack sequence between a pair
+of attacks. For example, if we have a pair of attacks named x and z, and x caused another
+attack named y, which in turn caused z, the sequence of attacks between x and z is x − z
+with a distance of one. Rule 2 states that when two attacks have the same type and impact,
+then they are same.
+
+CR
+IP
+T
+
+Rule 1. Attack(?x) ∧ Attack(?y) ∧ Impact(?t) ∧ hasImpact(?x, ?t) ∧ hasT ype(?y, ?t) →
+hasCaused(?x, ?y)
+Rule 2. Attack(?x)∧Attack(?y)∧T ype(?t)∧hasT ype(?x, ?t)∧hasT ype(?y, ?t)∧Impact(?i)∧
+hasImpact(?x, ?t) ∧ hasImpact(?y, ?t) → IsA(?x, ?y)
+
+AN
+US
+
+We assume that if the minAD between a pair of attacks is greater than zero, then there
+were MAs that the IDS has failed to detect; the proposed inference engine, however, can
+identify these undetected MAs.
+
+M
+
+3.4. Attack Causality Analysis
+The received alerts are passed to the attack scenario reconstruction component after
+being converted into intrusion ontology instances. In a formal definition, an alert stream is
+a set of alerts received sequentially A = {a1 , a2 , , ak , } in a manner that ai is the ith alert
+in the sequence. This stream must be analyzed to correlate the related alerts. Because a
+newly received alert must be compared with the previous alerts stored in the knowledge base
+denoted as KB, the reconstruction time increases by the size of KB. Therefore, we must
+project the KB in a meaningful manner using Definition 5.
+
+ED
+
+Definition 4. Projected Knowledge Base Given a knowledge base KB and a semantic rule
+p, a projected knowledge base denoted as KB|p is constructed from KB by removing the
+instances that do not support p.
+
+CE
+
+PT
+
+We define a semantic filter f using two semantic rules (Rule 3 and Rule 4) to project the
+KB. Rule 3 identifies a set of alerts that have the same source as the received alert included
+in the knowledge base as KB|Rule 3. Rule 4 identifies a set of alerts with the same target
+denoted by KB|Rule 4.
+
+AC
+
+Rule 3. Alert(?x) ∧ Alert(?y) ∧ SourceIP (?s) ∧ hasSource(?x, ?s) ∧ hasSource(?y, ?s) →
+hasSameSource(?x, ?y)
+Rule 4. Alert(?x) ∧ Alert(?y) ∧ T argetIP (?t) ∧ hasT arget(?x, ?t) ∧ hasT arget(?y, ?t) →
+hasSameT arget(?x, ?y)
+The semantic filter f uses these two projected knowledge bases to create a candidate list
+using Equation 7:
+(
+(KB|Rule 3) ∪ (KB|Rule 4) ∆ = ∅
+KB|f =
+(7)
+(KB|Rule 3) ∩ (KB|Rule 4) ∆ 6= ∅
+where ∆ = (KB|Rule 3) ∩ (KB|Rule 4).
+
+14
+
+ACCEPTED MANUSCRIPT
+
+Table 3: Sample received alerts
+
+Alert
+
+Source IP
+
+Target IP
+
+Target Attack
+Port
+
+alert1
+alert2
+alert3
+alert4
+alert5
+alert6
+
+5.188.4.43
+5.188.4.43
+5.188.4.43
+46.92.12.100
+5.188.4.43
+46.92.12.100
+
+11.100.24.7
+11.100.24.8
+11.100.24.7
+11.100.24.7
+11.100.24.7
+11.100.24.7
+
+443
+443
+443
+53
+514
+53
+
+CR
+IP
+T
+
+Scan
+Scan
+Mod SSL buffer overflow
+Scan
+RSH
+Off by one buffer overflow
+
+Detection
+Time
+(AM)
+10:43
+10:47
+10:57
+11:08
+11:14
+11:17
+
+AN
+US
+
+Example 4. The received alert stream is illustrated in Table 3. At time t=11:14 AM, alert5
+is received. The alert is converted into an intrusion ontology instance. By enforcing the semantic rules of filter f , we obtain the projected knowledge base as {alert1 , alert2 , alert3 } and
+{alert1 , alert3 , alert4 }. The intersection of these two sets results in KB|f = {alert1 , alert3 }
+as a candidate list.
+
+PT
+
+ED
+
+M
+
+As the candidate list is prepared, the newly received alert must be compared to each
+alert belonging to the candidate list using the defined metrics. The most similar alert that
+exceeds the minimum predefined threshold is correlated to the received alert. Formally,
+consider that, at time t1 , the knowledge base is KB = {a1 , a2 , ..., ai , ai+1 , , an } and an alert
+ax is received. By applying the defined filter, we can extract the alerts a2 , ai , and ai+1
+as a candidate list from the knowledge base (KB|f = {a2 , ai , ai+1 }). The similarity of the
+received alert (ax ) to each alert in the candidate list is calculated, Sim(x, aj ); aj ∈ KB|f .
+Note that if we have more than one alert with the same level of similarity, the received alert
+is correlated to each of them until the new evidence contained in future alerts indicates the
+proper alert.
+
+CE
+
+Example 5. Using γ = 0.9, we obtain the total similarity between alert5 and each alert of
+the candidate list as Sim(alert1 , alert5 ) = 0.612 and Sim(alert3 , alert5 ) = 0.714. Alert5 is
+correlated with alert3 because alert3 is the most similar alert to alert5 .
+
+AC
+
+The pair of similar alerts indicates that they are related to each other; however, we must
+identify the causality relation between them to reconstruct the attack scenario. Therefore,
+to identify their causality, we must pass them to the attack causality component described
+in Section 4.3. Each alert has a classification that identifies the corresponding attack on the
+basis of the defined intrusion ontology in Section 4.1. The attack causality component uses
+this classification to identify what attack was executed first. Further, the minimum attack
+distance between the pair of attacks is returned. Using these parameters, we can determine
+that two alerts are related to each other by a directed correlation link from the prerequisite
+attack to the consequent attack. Formally, suppose that the alert ai is the most similar
+alert to the received alert ax . The causal relation between alerts, denoted as Causal(ax , ai ),
+15
+
+CR
+IP
+T
+
+ACCEPTED MANUSCRIPT
+
+Figure 3: Portion of attack knowledge base
+
+returns two parameters ai as a prerequisite attack with a minimum attack distance equal to
+zero.
+
+AN
+US
+
+Example 6. Alert3 and alert5 indicate the Mod SSL buffer overflow and Remote Shell
+(RSH) attacks, respectively. Figure 3 illustrates part of the attack knowledge base. As
+indicated in the figure, the Mod SSL buffer overflow attack has an impact on run program,
+which is the RSH’s type. Therefore, alert3 is caused by alert5 directly. Because there is
+no transition attack between these two attacks, the attack distance between them is equal to
+zero.
+
+AC
+
+CE
+
+PT
+
+ED
+
+M
+
+The output of the attack causality indicates the direction of the correlated alerts. However, there remains another parameter that impacts the alert correlation and reconstruction
+of the attack scenario. Because there could be other simultaneous attack scenarios, and also
+because each scenario is constructed incrementally, it is possible that the newly received
+alert changes the previously reconstructed attack scenarios. To address this issue, we define
+weak and strong types of correlation links. The weak correlation link is between two alerts
+correlated with a different source or target IP address, whereas the strong correlation link is
+between two alerts with the same source and same target IP address. Figure 4a illustrates
+the definitions. The weak correlation link occurs in two situations. In the first situation, the
+attacker launches different attack scenarios towards different targets, e.g., when the attacker
+scans all the IP addresses of a subnet. In the second situation, different attacks have the
+same target address, e.g., in the case of a distributed denial-of-service (DDoS) attack.
+Each of the two successive correlation links in the reconstructed attack scenario has four
+states denoted as (Strong,Strong), (Weak,Strong), (Strong,Weak), and (Weak,Weak). These
+four states are illustrated in Figure 4b and are described as follows:
+• (Strong,Strong): The alerts belong to the same attack scenario.
+• (Strong,Weak): The attack scenario reconstruction component must wait for further
+evidence from the alert stream.
+• (Weak,Strong): The last two alerts have greater similarity compared to the previous
+two alerts. Therefore, the link of the previously correlated alerts must be removed
+16
+
+CR
+IP
+T
+
+ACCEPTED MANUSCRIPT
+
+(a) Types of correlation links
+between two alerts
+
+(b) State of two successive correlation links
+
+AN
+US
+
+Figure 4: Different types and states of correlation links. Here, S and T denote source and target, respectively.
+
+because the new evidence indicates that two independent attack scenarios are occurring
+concurrently.
+• (Weak,Weak): The attack scenario reconstruction component must wait for further
+evidence from the alert stream.
+
+ED
+
+M
+
+Definition 5. Evidence vector An evidence vector is a data structure for storing the affected
+parameters on the alert correlation between pairs of alerts. It consists of three elements:
+similarity, minimum attack distance, and correlation link type, which are formally indicated
+as follows:
+ev =< sim(A, B), minAD(A, B), CorrelationLinkT ype >
+
+CE
+
+PT
+
+Example 7. Following the previous example, we select alert3 and alert5 for correlation.
+Because they have the same source and target, the link type between them is a strong type.
+Therefore, the evidence vector for correlating these two alerts is < 0.714, 0, Strong >. Figure
+5 displays the steps in the attack scenario reconstruction for the specified Example 3.
+
+AC
+
+4. Implementation and Evaluation
+In this section, we report the experiment results of the evaluation of the proposed
+technique. The proposed technique was implemented using Java’s OWL API version 2.0
+(Horridge and Bechhofer, 2009). We evaluated the proposed technique using two datasets:
+DARPA 2000 dataset (Lippmann et al., 2000), which was generated by the MIT Lincoln
+Laboratory, and MACCDC 2012 dataset (MACCDC, 2012), which was generated by the
+U.S. National Cyber Watch Mid-Atlantic Collegiate Cyber Defense Competition. The experiments were executed on a computer with a 2.4 GHz Intel Core i5 CPU.
+17
+
+AN
+US
+
+CR
+IP
+T
+
+ACCEPTED MANUSCRIPT
+
+Figure 5: Reconstructed attack scenarios from sample alerts
+
+AC
+
+CE
+
+PT
+
+ED
+
+M
+
+4.1. DARPA 2000
+The DARPA 2000 dataset has two similar attack scenarios, with the aim of launching a
+DDoS attack. The first attack scenario, which we used in our evaluation, is performed over
+multiple networks and audit sessions. The goal of the adversary is to install components
+for a DDoS attack and to perform a DDoS attack as described by the MIT Lincoln Lab.
+The scenario has five attack steps: the attacker sweeps target IP addresses, probes the
+network, breaks into a host by exploiting the Solaris sadmind vulnerability , installs Trojan
+mstream DDoS software, and, finally, launches a DDoS attack on an off-site server from the
+compromised host (Lippmann et al., 2000). The dataset contains a variety of attacks in each
+step, which are used by the attacker to achieve his/her goal.
+We used the alert log file generated by RealSecure IDS, which included 922 alerts for the
+traffic corresponding to an inside segment of the DARPA simulation network. This dataset
+includes redundant traffic, which is independent of the main attack scenario. There are
+four extracted attack scenarios from the dataset, as displayed in Figure 6 and described as
+follows:
+(a) The main attack scenario is in the dataset that is launched by the attacker to perform
+a DDoS attack. The attacker pings multiple machines in the target network to detect
+whether the host is running sadmind . An exploit is launched to obtain access and to
+transfer the mstream zombie program to the targeted hosts. The single-alert stream
+DoS displays a spoofed IP address related to the first scenario in the DARPA 2000
+dataset that launched the final DDoS attack.
+18
+
+AN
+US
+
+CR
+IP
+T
+
+ACCEPTED MANUSCRIPT
+
+M
+
+Figure 6: Reconstructed attack scenarios from DARPA 2000 dataset
+
+ED
+
+(b) There are related attacks generated by the IDS that indicate the attacker using other
+steps to exploit vulnerabilities such as the email almail overflow and telnet terminal
+to access shells to launch his/her attack.
+
+PT
+
+(c) It seems that the attacker has attempted to use FTP to transfer his/her desired program to the targeted hosts.
+
+CE
+
+(d) There are alerts generated by RealSecure IDS that were not related to the attack
+scenario.
+
+AC
+
+The comparison of the reconstructed attack scenarios with the dataset’s description
+demonstrate that the first three reconstructed attack scenarios (a, b, c) complied with the
+real attack scenarios in the dataset. The last reconstructed attack scenario (d), as mentioned
+previously, was not related to the main attack scenario and was generated by the attacks
+contained in the background traffic of the dataset.
+4.2. MACCDC 2012
+MACCDC is a unique experience for college and university students to test their cyber
+security knowledge and skills in a competitive environment. The released dataset of the
+competition addresses numerous attacks from scanning/reconnaissance to exploitation. It
+has 22,694,356 connections labeled by the snort IDS, although it does not specify the attack scenarios. The dataset is released in 17 parts. Because the dataset has a considerably
+19
+
+ACCEPTED MANUSCRIPT
+
+Table 4: Sample alerts stream from MACCDC 2012
+
+alert1
+alert2
+alert3
+
+Source IP
+
+Target IP
+
+Target
+Port
+192.168.202.83 192.168.206.44 1433
+192.168.202.110 192.168.206.44 1433
+192.168.202.83 192.168.206.44 1433
+
+alert4 192.168.202.110 192.168.206.44 1433
+alert5 192.168.202.83 192.168.206.44 1433
+
+Detection
+Time (AM)
+10:43
+10:44
+10:45
+
+Port 1433 scan
+Port 1433 scan
+MS-SQL brute force
+attempt
+MS-SQL brute force 10:46
+attempt
+MS-SQL xp-cmdshell 10:47
+program execution
+MS-SQL xp-cmdshell 10:48
+program execution
+
+AN
+US
+
+alert6 192.168.202.110 192.168.206.44 1433
+
+Attack
+
+CR
+IP
+T
+
+Alert
+
+M
+
+large number of alerts, and the majority of the generated alerts in the first five parts of
+the dataset contain information gathering and reconnaissance steps regarding the targets,
+we selected only the maccdc2012-00006.pcap portion of the dataset, which contains 82,597
+records. To demonstrate the significance of our approach, we first present the attack scenario reconstruction of concurrent multi-step attacks with necessary details using a sample
+alerts stream from the MACCDC 2012 dataset. Then, we discuss various attack scenarios
+reconstructed from the MACCDC 2012 dataset by the proposed technique.
+
+ED
+
+• Attack scenario reconstruction of concurrent multi-step attacks
+
+AC
+
+CE
+
+PT
+
+We added an example scenario from MACCDC 2012 to the paper to discuss how the proposed technique can correlate alerts if multiple attack scenarios are launched at the same
+time using similar steps. In this example, there are three attack steps: searching and locating MSSQL installations inside the network, brute-forcing and successfully guessing the
+password, executing a xp-cmdshell to run commands with the MSSQL privilege. Each step
+in this attack scenario prepares the attacker for the next step which makes it multi-step
+attack scenario. The received alert stream in the MACCDC dataset is illustrated in Table 4.
+The attack times are changed to make these two attack scenarios concurrent. Figure 7
+illustrates part of the attack knowledge base.
+Table 5 shows the steps of the attack scenario reconstruction using the proposed technique. At each step, the candidate list is obtained by enforcing the semantic rules of filter f
+as KB|f . Then, the total similarity is calculated between the received alert and each member of the candidate list. Consequently, the minAD is inferred, and therefore, the evidence
+vector is obtained. Figure 8 shows the reconstructed attack scenarios from the alerts stream
+in Table 4.
+• Extracted attack scenarios
+20
+
+AN
+US
+
+CR
+IP
+T
+
+ACCEPTED MANUSCRIPT
+
+Figure 7: Part of the attack knowledge base
+
+Table 5: Attack scenario reconstruction from the sample alerts stream in Table 4
+
+Candidate
+list
+alert1
+
+alert3
+
+{alert1 ,
+alert2 }
+
+alert4
+
+{alert1 ,
+alert2 ,
+alert3 }
+
+Sim(alert4 , alert1 ) = 0.538 alert2
+Sim(alert4 , alert2 ) = 0.671
+Sim(alert4 , alert3 ) = 0.624
+
+< 0.671, 0, s >
+
+{alert1 ,
+alert2 ,
+alert3 ,
+alert4 }
+
+Sim(alert5 , alert1 ) = 0.670 alert3
+Sim(alert5 , alert2 ) = 0.538
+Sim(alert5 , alert3 ) = 0.703
+Sim(alert5 , alert4 ) = 0.621
+
+< 0.703, 0, s >
+
+{alert1 ,
+alert2 ,
+alert3 ,
+alert4 ,
+alert5 }
+
+Sim(alert6 , alert1 ) = 0.583 alert4
+Sim(alert6 , alert2 ) = 0.603
+Sim(alert6 , alert3 ) = 0.538
+Sim(alert6 , alert4 ) = 0.703
+Sim(alert6 , alert5 ) = 0.660
+
+< 0.703, 0, s >
+
+alert6
+
+ED
+
+Sim(alert2 , alert1 ) = 0.821
+
+Selected
+alert
+alert1
+
+Sim(alert3 , alert1 ) = 0.671 alert1
+Sim(alert3 , alert2 ) = 0.538
+
+PT
+
+CE
+
+AC
+
+alert5
+
+Similarity
+
+M
+
+Received
+alert
+alert2
+
+21
+
+Evidence Vector
+< 0.821, 0, w >
+< 0.671, 0, s >
+
+AN
+US
+
+CR
+IP
+T
+
+ACCEPTED MANUSCRIPT
+
+Figure 8: Reconstructed attack scenarios from the alerts stream in Table 4
+
+ED
+
+M
+
+By applying the proposed approach to the selected portion of the MACCDC dataset, we
+could detect 22 attack scenarios. The goals of the attack scenarios detected by the proposed
+technique were as follows: reconnaissance, privilege escalation, unauthorized information
+gain; and exploitation of the web server, PostgreSQL database, a web application (PHP),
+and the FTP server. Figure 9 displays part of the reconstructed attack scenarios, which are
+described as follows:
+
+PT
+
+(a) File disruption scenario - This scenario indicates that the attacker attempted to execute
+the netcat command and to remove files on the targeted host.
+
+AC
+
+CE
+
+(b) Unauthorized information gain scenario - The constructed attack scenario displays the
+related alerts to an unencrypted password transferred on the network. The password
+was encoded in Base64, which means that it was not human readable yet was unencrypted. Note that if the attacker sniffed the network packets and captured them,
+then he/she had obtained transmitted passwords on the network.
+(c) SQL Injection scenario - The scenario indicates the attacker’s multiple efforts to launch
+a Select SQL injection attack on the web server. The attacker used the Select version
+command to determine the database version, which must have indicated the version
+of the MYSQL server because the attacker’s next steps revealed that he/she injected
+select queries against the MYSQL server. It would appear that he/she wanted to dump
+the users on the server.
+
+(d) Exploitation of the web server using SQL injection and XSS scenario - The scenario
+22
+
+AN
+US
+
+CR
+IP
+T
+
+ACCEPTED MANUSCRIPT
+
+M
+
+Figure 9: Part of reconstructed attack scenarios from maccdc2012-00006.pcap
+
+indicates that the attacker attempted two different attacks against the web server,
+cross-site scripting (XSS) and SQL injection in URI .
+
+CE
+
+PT
+
+ED
+
+(e) Directory traversal attack - In this scenario, it is most likely that the attacker accessed
+the file robots.txt to determine what part of the website was ignored by search engines,
+thus giving him/her information regarding the secure parts of the website. Using the
+archived information, the attacker launched two attacks on the web server. He/she
+attempted an HTTP directory traverse on the server to gain file access and then
+attempted to delete a file on the server.
+
+AC
+
+Because the MACCDC’s providers did not identify the attack scenarios, we verified the
+reconstructed attack scenarios using expert knowledge.
+4.3. Attack Scenario Reconstruction Time
+The time complexity of the attack scenario reconstruction versus the number of alerts is
+one of the most important parameters in evaluating the proposed technique. The scenario
+reconstruction time is the average time from the time an alert is generated to the time
+this newly generated alert is correlated to one of the attack scenarios. Figure 10 depicts
+the impact of the number of ontology instances on the average reconstruction time, which
+smoothly increases as the number of instances increases.
+
+23
+
+AN
+US
+
+CR
+IP
+T
+
+ACCEPTED MANUSCRIPT
+
+Figure 10: Attack scenario reconstruction time
+
+M
+
+4.4. Comparison with Previous Research Works
+In the following subsections, we compare the proposed technique with other approaches.
+We include the advantages of the proposed technique, completeness, and soundness. At the
+end, we discuss the challenges of the proposed technique.
+
+PT
+
+ED
+
+4.4.1. Advantages of the Proposed Technique
+In the following, we elaborate on the advantages of the proposed technique compared to
+other research works on the basis of the criteria mentioned in Section 2, which specifies the
+important aspects of alert correlation.
+• Expert knowledge independence
+
+CE
+
+Expert knowledge dependency decreases the flexibility of an attack scenario reconstruction technique. In the proposed technique, attack scenarios are reconstructed
+based on alert similarity without expert intervention, which makes it more flexible to
+correlate known and unknown attack scenarios.
+
+AC
+
+Scenario-based approaches such as (Cuppens and Ortalo, 2000) and (Goldberg, 2009)
+are limited to known attack scenarios because of their dependency upon expert knowledge. If the expert system missed a scenario, these techniques cannot correlate the
+attack scenario. Further, because these techniques depend on every step of the predefined attack scenario, any change in the order of the attack steps leads to failure of
+the reconstruction technique.
+Rule-based attack scenario reconstruction techniques such as (Ning et al., 2002) and
+(Templeton and Levitt., 2001) are more flexible than scenario-based approaches, yet
+they continue to rely upon expert knowledge to define the correlation rules as described
+24
+
+ACCEPTED MANUSCRIPT
+
+by Ning et al. in (Ning et al., 2002). In their techniques, the prerequisites and
+consequences of each attack are described as if-then rules. The completeness and
+soundness of the set of defined rules has a critical impact on the attack scenario
+reconstruction, which makes it difficult to implement.
+
+CR
+IP
+T
+
+Statistical analysis-based approaches such as (Zhu and Ghorbani, 2005) and (Ren
+et al., 2010) are expert knowledge independent. Ontology-based approaches such as
+(Saad and Traore, 2013) are expert knowledge independent in their first phase, where
+the related alerts are identified; however, when correlating alerts and reconstructing
+the attack scenario, they are expert knowledge dependent.
+• Known and unknown attack scenarios
+
+• Incremental scenario reconstruction
+
+AN
+US
+
+Because the proposed technique is expert knowledge independent, it can reconstruct
+known and unknown attack scenarios using reasoning based on the evidences in the
+alert stream. Unlike scenario-based and rule-based techniques, statistical analysisbased approaches such as (Sadoddin and Ghorbani, 2009) and (Qin and Lee, 2004)
+are capable of reconstructing unknown attack scenarios. Previous ontology-based approaches such as (Saad and Traore, 2013) can identify the related alerts of an unknown
+attack scenario; however, they cannot identify the causal relation between them.
+
+ED
+
+M
+
+The timely reconstruction of an attack scenario is essential for an effective response.
+The attack scenario must be reconstructed step-by-step while the attacker is attempting to attain his/her goal. The proposed technique reconstructs the attack scenario
+incrementally as it occurs.
+
+PT
+
+Scenario-based and rule-based approaches can reconstruct the attack scenario incrementally, whereas the other approaches such as (Ren et al., 2010) and (Qin and Lee,
+2004) in the statistical analysis category require that the attack scenario be completed
+before they can reconstruct it, i.e., they are not incremental.
+
+AC
+
+CE
+
+Ren et al. suggested a technique for reconstructing attack scenarios in an offline
+setting where there is no time limitation. The results of their offline analysis were
+then converted into rules to correlate attack scenarios in the online phase (Ren et al.,
+2010). The proposed technique decreases the processing time in the online phase;
+however, because it depends on the training phase, it cannot correlate unknown attack
+scenarios incrementally. The authors in (Sadoddin and Ghorbani, 2009) presented
+an incremental frequent structure mining framework for statistical alert correlation
+that aggregates alerts into a structured pattern and then mines the structured pattern
+incrementally to identify frequent patterns. Although it has an acceptable aggregation
+ratio and correlates alerts in real time, the reported attack patterns do not indicate
+the attack scenario and only includes the related alerts. It requires expert knowledge
+to interpret the alerts and to identify the attacker steps.
+Ontology-based approaches such as (Saad and Traore, 2013), (Sadighian et al., 2014),
+and (Tayeb and Aiash, 2016) use the defined semantic rules on the completed attack
+25
+
+ACCEPTED MANUSCRIPT
+
+scenarios, which clearly makes them unsuitable for incremental attack scenario reconstruction and online correlation.
+• Online alert correlation capabilities
+
+AN
+US
+
+CR
+IP
+T
+
+Security information event management (SIEM) systems require online alert correlation techniques to monitor the events in the covered zone. Approaches that can perform incremental attack scenario reconstruction are capable of performing online alert
+correlation. The proposed approach and scenario-based and rule-based approaches are
+capable of performing online alert correlation because they correlate alerts incrementally. Because statistical analysis-based approaches are not incremental, they suggest
+an offline training phase to analyze the attack scenarios. Then, the results of their
+training phase are used in the online phase in a correct manner to reconstruct the
+attack scenarios. Although this makes them capable of online correlation, their ability
+to reconstruct different known and unknown attack scenarios is limited to the attacks
+included in the training phase data.
+
+• Semantic analysis of the attack
+
+PT
+
+ED
+
+M
+
+Today, attacks are becoming more complicated, making their management more challenging. By considering the semantics of an attack instead of its name, the correlation
+technique can reconstruct complicated attack scenarios. The proposed technique considers the attack semantics and intrusion concepts in attack scenario reconstruction. It
+enables the proposed technique to identify complicated attack scenarios, as indicated
+in Subsections 4.1 and 4.2. Previous works such as (Saad and Traore, 2013) used
+an ontology as part of their approach. They used semantic rules that relate alerts using their textual similarity and then analyzed the causal relations between the alerts
+using the previous nonsemantic approaches such as prerequisites/consequences, which
+require expert knowledge. In other approaches such as (Sadighian et al., 2014) and
+(Tayeb and Aiash, 2016), semantic rules were defined to relate alerts using their common textual similarity and to correlate alerts if the attack scenario was completed.
+
+AC
+
+CE
+
+4.4.2. Completeness and Soundness
+We also evaluated the accuracy of the proposed attack scenario reconstruction based
+on two metrics: completeness and soundness. The completeness of an alert correlation
+technique (Equation 8) assesses how well it can correlate all related alerts together; soundness
+(Equation 9) evaluates how correctly the correlated alerts have been chosen.
+Completeness =
+Soundness =
+
+#correctly correlated alerts
+#related alerts
+
+#correctly correlated alerts
+#correlated alerts
+
+(8)
+(9)
+
+Because the majority of the previous techniques were evaluated based on the DARPA
+2000 (LLS-DDoS 1) dataset, we used the results obtained from this dataset to compare our
+26
+
+ACCEPTED MANUSCRIPT
+
+Table 6: Comparison of accuracy between proposed technique and previous research works
+
+Related works
+(Ning et al., 2002)
+(Al-Mamory and Zhang, 2009)
+(Li and Tian, 2010)
+(Saad and Traore, 2013)
+Proposed technique
+
+Completeness
+Soundness
+93.96%
+93.96%
+86.5%
+100%
+92.2%
+Not reported
+100%
+99.7%
+100%
+97.22%
+
+CR
+IP
+T
+
+Technique
+Rule-based correlation
+Statistical correlation
+Ontology-based
+Ontology-based
+Ontology-based
+
+M
+
+AN
+US
+
+accuracy with that of other techniques. Table 6 demonstrates that the proposed method
+has an acceptable accuracy result. The completeness and soundness of Ning et al. (2002)
+depends on the completeness and soundness of the defined rules. Therefore, failure to define
+effective rules can influence the reported results. In the reported result of the technique of
+Al-Mamory and Zang (2009), although its soundness was high, it missed a large number of
+attack scenarios. Li and Tian (2010) did not report the soundness of their ontology-based
+framework. The proposed technique of Saad and Traore (2013) depends on other existing
+techniques. Therefore, the completeness and soundness of their technique depends on the
+selected attack scenario reconstruction technique. It appears that they reported their first
+step results, which identified related alerts instead of attack scenarios.
+It should be noted that if our results are similar to those of other research works in
+Table 4, it means that the proposed technique received a batch of alerts at a time and, thus,
+its soundness would have increased to 99.3%.
+
+AC
+
+CE
+
+PT
+
+ED
+
+4.4.3. Challenges with the Proposed Technique
+Using an ontology in expert systems, especially in the proposed technique, has challenges
+including the complexity of the defined ontology and the logical rules defined in the inference
+engine. In the ontology definition, the accuracy of the defined concepts, properties, and
+relations is of particular importance because it models the scope of the domain for the
+expert system. The size and complexity of the ontology must be controlled to ensure that
+the ontology is usable. However, the ontology definition is a continuous process that requires
+feedback from other experts in the field of cyber security to become a mature ontology.
+Therefore, the ontology proposed in this paper must be refined in future works to satisfy the
+requirements of the cyber security community. Further, explicit representation of knowledge,
+the ability to reason regarding the knowledge, and to infer and assert new knowledge require
+comprehensive logical rules that are consistent and that can address the proposed special
+situations, which is attack scenario reconstruction in this paper.
+5. Conclusion
+A new technique for attack scenario reconstruction using attack semantics was proposed
+in this paper. The proposed technique correlates alerts in three main steps. In the first
+step, the received IDS alerts are stored as instances of the defined ontology (called intrusion
+ontology). In the second step, the semantic similarities between alerts are calculated using
+27
+
+ACCEPTED MANUSCRIPT
+
+CE
+
+References
+
+PT
+
+ED
+
+M
+
+AN
+US
+
+CR
+IP
+T
+
+the proposed metric. This metric is applicable not only to the proposed ontology but can
+also be used for calculating the semantic similarities for other ontologies. The most similar
+alerts are passed to the third step, which correlates alerts by inferring the causal relations
+using the ontology-based inference engine.
+Our approach assumes that there are similarities between the steps of an attack scenario.
+We assumed that two successive steps in an attack scenario are more similar compared to
+two non-successive steps and that the similarity between the steps of the same attack scenario is greater than the steps between two different attack scenarios. One implication of
+the successful results of our experiments is that the above-mentioned assumption is correct, and, therefore, improving the proposed approach can potentially solve the problem of
+reconstructing attack scenarios, especially unknown attacks, the main challenge of SIEM
+applications. Moreover, considering the timely and incremental reconstruction of scenarios,
+the second implication is the suitability of the approach for building early-warning security
+systems with the capability to monitor a network, and respond to and stop an ongoing
+attack before it can cause serious damage.
+Our future research has two different dimensions. The first dimension is the improvement
+in the base functionality of the ontology and the logic in the domain of intrusion detection.
+The second dimension is proving the applicability of the approach in combating more sophisticated real-world attacks. One of the major prerequisites of the proposed approach is a
+mature ontology for the domain of intrusion detection. Ontology maturity requires contributions from all members of the cyber security community to upgrade the current status of
+the ontology to a mature and complete ontology that can be used in real-world applications
+such as SIEM applications. In the same dimension, continuing the enhancement of logical
+rules with the aim of inferring more sophisticated attack scenarios is another future research.
+In the second dimension, our aim is to provide a sophisticated testbed and dataset for better
+evaluation of alert correlation approaches. The test environment must provide alerts from
+different security systems (e.g., firewall, anti-viruses) in addition to IDS alerts. The ultimate
+goal of the research is to deploy the proposed technique in real-world environments with the
+aim of understanding the limitations of the approach.
+
+AC
+
+Al-Mamory, S.O., Zhang, H., 2009. Ids alerts correlation using grammar-based approach. Journal in
+computer virology 5, 271–282.
+Cheung, S., Lindqvist, U., Fong, M.W., 2003. Modeling multistep cyber attacks for scenario recognition, in:
+DARPA information survivability conference and exposition, 2003. Proceedings, IEEE. pp. 284–292.
+Cuppens, F., Miege, A., 2002. Alert correlation in a cooperative intrusion detection framework, in: Security
+and privacy, 2002. proceedings. 2002 ieee symposium on, IEEE. pp. 202–215.
+Cuppens, F., Ortalo, R., 2000. Lambda: A language to model a database for detection of attacks, in: Recent
+advances in intrusion detection, Springer. pp. 197–216.
+Debar, H., Curry, D.A., Feinstein, B.S., 2007. The intrusion detection message exchange format (idmef) .
+Ester, M., Kriegel, H.P., Sander, J., Xu, X., et al., 1996. A density-based algorithm for discovering clusters
+in large spatial databases with noise., in: Kdd, pp. 226–231.
+Goldberg, A.E., 2009. The nature of generalization in language. Cognitive Linguistics 20, 93–127.
+
+28
+
+ACCEPTED MANUSCRIPT
+
+AC
+
+CE
+
+PT
+
+ED
+
+M
+
+AN
+US
+
+CR
+IP
+T
+
+Gonzalez Granadillo, G., Ben Mustapha, Y., Hachem, N., Debar, H., 2012. An ontology-driven approach
+to model siem information and operations using the swrl formalism. International Journal of Electronic
+Security and Digital Forensics 7 4, 104–123.
+Gruber, 2009. Ontology. encyclopedia of database systems. Springer-Verlag .
+Horridge, M., Bechhofer, S., 2009. The owl api: a java api for working with owl 2 ontologies, in: Proceedings
+of the 6th International Conference on OWL: Experiences and Directions-Volume 529, CEUR-WS. org.
+pp. 49–58.
+Jeh, G., Widom, J., 2002. Simrank: a measure of structural-context similarity, in: Proceedings of the eighth
+ACM SIGKDD international conference on Knowledge discovery and data mining, ACM. pp. 538–543.
+Li, W., Tian, S., 2010. An ontology-based intrusion alerts correlation system. Expert Systems with Applications 37, 7138–7146.
+Li, W., Tian, S., 2011. Xswrl, an extended semantic web rule language and prototype implementation.
+Expert Systems with Applications 38, 2040–2045.
+Lippmann, R., Haines, J.W., Fried, D.J., Korba, J., Das, K., 2000. The 2000 darpa off-line intrusion
+detection evaluation. Computer networks 34, 579–595.
+MACCDC, 2012. U.s. national cyberwatch mid-atlantic collegiate cyber defense competition (maccdc).
+Maedche, A., Staab, S., 2002. Measuring similarity between ontologies, in: International Conference on
+Knowledge Engineering and Knowledge Management, Springer. pp. 251–263.
+Mathew, S., Shah, C., Upadhyaya, S., 2005. An alert fusion framework for situation awareness of coordinated
+multistage attacks, in: Information Assurance, 2005. Proceedings. Third IEEE International Workshop
+on, IEEE. pp. 95–104.
+Morin, B., Mé, L., Debar, H., Ducassé, M., 2002. M2d2: A formal data model for ids alert correlation, in:
+International Workshop on Recent Advances in Intrusion Detection, Springer. pp. 115–137.
+Morin, B., Mé, L., Debar, H., Ducassé, M., 2009. A logic-based model to support alert correlation in
+intrusion detection. Information Fusion 10, 285–299.
+Ning, P., Cui, Y., Reeves, D.S., 2002. Constructing attack scenarios through correlation of intrusion alerts,
+in: Proceedings of the 9th ACM Conference on Computer and Communications Security, ACM. pp.
+245–254.
+Qin, X., Lee, W., 2004. Attack plan recognition and prediction using causal networks, in: Computer Security
+Applications Conference, 2004. 20th Annual, IEEE. pp. 370–379.
+Ren, H., Stakhanova, N., Ghorbani, A.A., 2010. An online adaptive approach to alert correlation., in:
+DIMVA, Springer. pp. 153–172.
+Saad, S., Traore, I., 2013. Semantic aware attack scenarios reconstruction. Journal of Information Security
+and Applications 18, 53–67.
+Sadighian, A., Fernandez, J.M., Lemay, A., Zargar, S.T., 2014. Ontids: A highly flexible context-aware and
+ontology-based alert correlation framework. Foundations and Practice of Security , 161–177.
+Sadoddin, R., Ghorbani, A.A., 2009. An incremental frequent structure mining framework for real-time
+alert correlation. computers & security 28, 153–173.
+Sánchez, D., Batet, M., Isern, D., 2011. Ontology-based information content computation. Knowledge-Based
+Systems 24, 297–303.
+Shittu, R., Healing, A., Ghanea-Hercock, R., Bloomfield, R., Rajarajan, M., 2015. Intrusion alert prioritisation and attack detection using post-correlation analysis. Computers and Security 50, 1–15.
+Tayeb, K., Aiash, M., 2016. Toward an efficient ontology-based event correlation in siem. Procedia Computer
+Science 83, 139–146.
+Templeton, S.J., Levitt., K., 2001. A requires/provides model for computer attacks, in: workshop on New
+security paradigms, ACM. pp. 31–38.
+Totel, E., Vivinis, B., Mé, L., 2004. A language driven intrusion detection system for event and alert
+correlation. Security and Protection in Information Processing Systems , 208–224.
+Tversky, A., 1977. Features of similarity. Psychological review 84, 327.
+West, D.B., et al., 2001. Introduction to graph theory. volume 2. Prentice hall Upper Saddle River.
+Yan, X., Han, J., 2002. gspan: Graph-based substructure pattern mining, in: Data Mining, 2002. ICDM
+
+29
+
+ACCEPTED MANUSCRIPT
+
+AC
+
+CE
+
+PT
+
+ED
+
+M
+
+AN
+US
+
+CR
+IP
+T
+
+2003. Proceedings. 2002 IEEE International Conference on, IEEE. pp. 721–724.
+Zhu, B., Ghorbani, A.A., 2005. Alert correlation for extracting attack strategies. University of New
+Brunswick (Canada).
+
+30
+
+CR
+IP
+T
+
+ACCEPTED MANUSCRIPT
+
+AN
+US
+
+(a) First Author - Mahdiyeh (b) Corresponding Author Barzegar
+Mehdi Shajari
+
+AC
+
+CE
+
+PT
+
+ED
+
+M
+
+Mahdiyeh Barzegar received her M.Sc. in Information Security from Amirkabir University of Technology, Tehran, Iran, in 2013. Her research interests revolve around intrusion
+detection and vulnerability assessment. She has been a member of Information Security
+and E-Commerce Laboratory (ISEC Lab.) at Amirkabir University of Technology since
+December 2011.
+Mehdi Shajari is an Assistant Professor in the Department of Computer Engineering
+and Information Technology at the Amirkabir University of Technology, Tehran, Iran. He
+obtained his M.S. with honors from the Amirkabir University of Technology in 1993 and
+received his Ph.D. degree in Computer Science from Univesity of New Brunswick in 2005. He
+worked with the National Research Council of Canada as a Research Officer and with Trent
+University as an Assistant Professor during 2001 2006. Dr. Shajari has extensive experience
+in IT industry and has successfully implemented many large scale projects. His research
+interests include information security, information retrieval, and electronic commerce.
+
+31
+
+

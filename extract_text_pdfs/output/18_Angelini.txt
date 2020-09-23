@@ -1,0 +1,1037 @@
+An Attack Graph-based On-line Multi-step Attack
+Detector
+Marco Angelini
+
+Silvia Bonomi
+
+Emanuele Borzi
+
+University of Rome “La Sapienza”
+Rome, Italy
+angelini@dis.uniroma1.it
+
+University of Rome “La Sapienza”
+Rome, Italy
+bonomi@dis.uniroma1.it
+
+University of Rome “La Sapienza”
+Rome, Italy
+borzi@dis.uniroma1.it
+
+Antonella Del Pozzo
+
+Simone Lenti
+
+Giuseppe Santucci
+
+University of Rome “La Sapienza”
+Rome, Italy
+delpozzo@dis.uniroma1.it
+
+University of Rome “La Sapienza”
+Rome, Italy
+lenti@dis.uniroma1.it
+
+University of Rome “La Sapienza”
+Rome, Italy
+santucci@dis.uniroma1.it
+
+ABSTRACT
+Modern distributed systems are characterized by complex deployment designed to ensure high availability through replication and diversity, to tolerate the presence of failures and
+to limit the possibility of successful compromising. However,
+software is not free from bugs that generate vulnerabilities that
+could be exploited by an attacker through multiple steps.
+This paper presents an attack-graph based multi-step attack
+detector aiming at detecting a possible on-going attack early
+enough to take proper countermeasures through; a Visualization interfaced with the described attack detector presents the
+security operator with the relevant pieces of information, allowing a better comprehension of the network status and providing
+assistance in managing attack situations (i.e., reactive analysis
+mode). We first propose an architecture and then we present
+the implementation of each building block. Finally, we provide
+an evaluation of the proposed approach aimed at highlighting
+the existing trade-off between accuracy of the detection and
+detection time.
+
+CCS CONCEPTS
+• Security and privacy → Intrusion detection systems; Network security;
+
+KEYWORDS
+Attack Detection, Multi-step Attacks, Alert correlation, Attack
+Visualization
+ACM Reference Format:
+Marco Angelini, Silvia Bonomi, Emanuele Borzi, Antonella Del Pozzo,
+Simone Lenti, and Giuseppe Santucci. 2018. An Attack Graph-based
+On-line Multi-step Attack Detector. In ICDCN ’18: 19th International
+Conference on Distributed Computing and Networking, January 4–7,
+Permission to make digital or hard copies of all or part of this work for personal
+or classroom use is granted without fee provided that copies are not made or
+distributed for profit or commercial advantage and that copies bear this notice
+and the full citation on the first page. Copyrights for components of this work
+owned by others than ACM must be honored. Abstracting with credit is permitted. To copy otherwise, or republish, to post on servers or to redistribute to
+lists, requires prior specific permission and/or a fee. Request permissions from
+permissions@acm.org.
+ICDCN ’18, January 4–7, 2018, Varanasi, India
+© 2018 Association for Computing Machinery.
+ACM ISBN 978-1-4503-6372-3/18/01. . . $15.00
+https://doi.org/10.1145/3154273.3154311
+
+2018, Varanasi, India. ACM, New York, NY, USA, 10 pages. https:
+//doi.org/10.1145/3154273.3154311
+
+1
+
+INTRODUCTION
+
+Modern distributed systems are characterized by complex deployment based on replication (used to tolerate the presence
+of failures) and software diversity (used to limit the possibility
+of successful compromising) with the final aim of maximizing
+the availability of the system. However, these key ingredients
+for availability represent serious threats for the security of the
+system as its security perimeter grows and protecting it become
+challenging. Attackers are in fact becoming smarter and powerful and modern attacks are getting more and more complex as
+they may affect large part of the network with very few consequences (sometimes also unnoticed) before reaching the real
+target. As a matter of fact, the past few years have witnessed an
+impressive growth in the number of incidents related to computer security that encompass widely heterogeneous variants
+ranging from data/identity theft, to espionage, from financial
+scams to cyberwarfare. At the same time, the complexity of
+cyberattacks increased as well. Well-known hacks that targeted
+giants like Target or Yahoo showed that cybercriminals are able
+to infiltrate complex organizations, take complete control of
+large scale systems and persist for years by hiding their presence. These kind of highly structured and complex attacks, that
+usually are referred to as Advanced Persistent Threats (APT),
+represent today a critical problem for large organizations. APT
+can be modeled as a multi-step attack i.e., a sequence of exploits that starts from compromising a single device, often far
+from the real target, and continue with the progressive compromising of other devices leading to reach the real attack target.
+Intrusion Detection Systems help in monitoring the system and
+detecting basic steps of the attacks but they are not able to
+correlate events happening at different nodes and to infer from
+them that something wrong is happening. Such kind of correlation is possible when an attack model is available and the
+most diffused is the attack graph model. Informally, an attack
+graph is a representation of possible attack scenarios and it is
+usually used off-line to identify sensible nodes that should be
+protected.
+In this paper, we combine these two main approaches in the
+design of a multi-step attack detector which is able to detect
+
+on-line on-going multi-step attacks. In addition, given the complexity of managing such kind of information, a visualization
+is also presented, with the final goal of increasing the user situational awareness and presenting visually the relevant pieces of
+information, speeding up the decision process.
+The contribution of the paper is twofold: (i) we present a
+multi-step attack detector aiming to detect a possible ongoing attack early enough to allow the security operator to take
+proper countermeasures (ii) we evaluate the effectiveness of
+the proposed technique in a real network and (iii) we present a
+visualization to make comprehensible the detection results for
+the security operator.
+The proposed solution can be placed on top of existing Intrusion Detection Systems (IDSs) to improve, trough alert correlation, their detection capabilities and enabling the detection
+of complex attacks involving multiple steps. In order to detect
+multi-step attacks, the engine needs to take as input an attack
+model (i.e., an attack graph) describing possible attack scenarios. Several Attack Graph models exist and we decided to use
+the one presented in [27] that represents an attack scenario as
+a sequence of vulnerabilities exploits. Given the attack graph
+and the stream of alerts generated by the IDS, our engine tries
+to match alerts over attack graph edges and estimates, through
+the usage of similarity metrics, if an on-going attack is in place
+over a certain path. When this happen, a meta-alert is generated
+and it is passed to the visualization for being analyzed by the
+security operator.
+
+2
+
+on exploit dependency. The attack graph is constructed
+and it is used as an attack model. An alert related to
+the possible presence of a multi-step on-going attack is
+raised at run-time when events are mapped to adjacent
+exploits in the attack graph. Events that are mapped to
+adjacent exploits in the attack graph are considered fully
+correlated while events mapped to non-adjacent exploits
+are considered partially correlated using a specific distance measure. A similar approach has been applied in
+[30] where a reasoning framework is created from the
+attack graph to infer roles of suspicious hosts from local
+observations, identifying groups of strongly correlated
+hosts and deriving hosts relationships. Mathew et al. [18]
+propose a mechanism to predict multistage goal-oriented
+attacks in real time using attack graphs. In this category,
+we can also place Finite Automata Based Pattern Matching Techniques for Network Intrusion Detection System. In [25], the authors present a comparative study of
+some Finite Automata (FA) based techniques for pattern
+matching in network intrusion detection system (NIDS).
+These techniques are based on the same concepts: attack
+signatures are represented by regular expressions that
+are then verified by using finite automata taking as input
+string the payload of packets.
+[13] presents ADEPT i.e., an automated response mechanism for an intrusion tolerant system. ADEPT models attack
+trough an I-Graph whose nodes represent intrusion goal and
+edges represent dependencies between intrusion goals (e.g.,
+causal dependencies). Each node of the graph has an associated
+Compromised Confidence Index (CCI) that is computed by
+analyzing incoming IDS alerts and then, based on such score,
+response actions are computed. While our work and ADEPT
+share the same philosophy (modeling multi-step attacks and
+analyze alert stream to perform a detection) they are focused on
+different attack graph models and thus they require a different
+alert correlation approach: ADEPT correlates alert to infer if an
+intrusion goal has been reached while our solution correlates
+alert to estimate the progression of an attack and to manage the
+trade-off between accuracy and timeliness of the detection.
+In [32], the authors propose a response and recovery engine
+(RRE) based on a game-theoretic response strategy against
+adversaries modeled as opponents in a two-player Stackelberg
+stochastic game. The underlying attack model is the attackresponse trees ART. ART are mandatory for the detection and
+response definition but, unfortunately, they are designed offline
+by experts for each computing asset i.e., the correlation process
+between exploits and attack progression is done by hand.
+[26] is the closest work. However, the attack estimation is
+performed by analyzing the attack tree topology and it is not
+clear if and how it can be extended to work on-line as our
+engine does. In addition, no visualization support is provided.
+[24] presents a framework including a correlation scheme
+based on a combination of statistical and stream mining techniques. The method works in real-time by extracting critical
+episodes from sequences of alerts, which could be part of multistep attack scenarios. A Causal Correlation Matrix (CCM) is
+
+RELATED WORK
+
+Dealing with cyber-attacks is far from being an easy task. One
+of the main limitations of existing techniques comes from the
+accuracy and the uncertainty of information gathered during
+the attack detection phase. This uncertainty is partly due to
+the lack of accurate attack prediction models using contextual
+information that can be employed in the detection process.
+In [4], the authors provide a comprehensive review of data
+analytics paradigms for intrusion detection along with an overview
+of techniques that apply contextual information to it.
+Concerning signature-based intrusion detection techniques
+(where the signature of the attack is a sequence of single-step
+attacks), the authors consider the following main categories:
+• Classification approaches. In this group, it is possible
+to find all the algorithms that analyze network connections to understand whether they are legal or not. The
+major categories of classification-based intrusion detection techniques are: rule-based classifiers (e.g., decision
+trees [12]), Bayesian classifiers (e.g., [16]), Support vector machines (SVM) (e.g., [10]), Neural networks (e.g.,
+[8]) and k-Nearest neighbors (e.g., [9])
+• Graph-based approaches. Several intrusion detection
+techniques utilize attack graphs to discover correlations
+or causal relationships between alerts, as the solution in
+this paper does.
+Approaches in this category create attack scenarios by including host vulnerabilities as background information.
+The majority of approaches in this category have been introduced in [20–22, 28] to represent attack graphs based
+2
+
+used for encoding correlation strength between the alert types
+in attack scenarios.
+[11] proposes a framework consisting of a filter and a decision tree to address large volumes of security alerts and to support the automated identification of the root causes of the alerts.
+The framework adopts both term weighting and conceptual
+clustering approaches to fill the gap between the unstructured
+textual alerts and the formalization of the decision tree.
+These approaches are complementary to our solution as they
+develop correlation algorithms aimed at building the attack
+graph.
+As systems become more complex, attack graphs are increasingly difficult to understand and therefore to take benefit
+from. Visualization has been proposed to improve how humans
+understand them. Some proposals addressed the representation
+of attack graphs; NetSPA [15] is a complete tool to build attack
+graphs. It comprises a graphing subsystem component based
+on graphviz [14] that generates a visual representation of the
+computed attack graph. GARNET [31] extends this work by
+proposing another graph subsystem based on treemaps that
+reflects physical or logical topology and allows reachability
+display and evaluation through interactions. Some other proposals addressed the visualization of on-going attacks. In [7]
+[5] [19] [6] are proposed solutions that help security operators
+to understand in real time the impact of security events and
+attacks on the enterprise mission. Mathew et al. [17] proposed
+a visualization tool that displays attack tracks based on security
+events detected by IDSes or collected in log files; Vandenberghe
+presented NTE (Network Traffic Exploration) in [29], a tool of
+which the objective is to allow users to explore network traffic
+to search for attacks.
+
+3
+
+172.21.100.130
+
+192.168.1.160
+
+CVE-2008-4250
+
+CVE-2009-2503
+
+192.168.1.1
+
+192.18.200.100
+
+CVE-2008-4250
+
+CVE-2008-5625
+
+192.18.200.210
+
+Figure 1: An example of Attack Path
+and vulid is a vulnerability present on vi }). We assume that
+the set Vul is known1 .
+When an attacker controls a node vi usually she checks the
+neighbors nodes of vi looking for vulnerabilities to exploit; if
+she finds a node v j , neighbor of vi , and succeeds in exploiting
+a vulnerability vul j present on v j , she may have access to
+v j , eventually compromising it; once v j is compromised, the
+attacker can look again for neighbors nodes of v j , find a node
+vk , exploit another vulnerability vulk to reach the node vk and
+so on until she reaches her final target node vt .
+This alternate sequence of nodes and vulnerabilities vi , vul j ,
+v j , vulk , vk , . . . , vult , vt constitutes a multi-step attack. A
+multi-step attack can be seen as a path over TG from an entry
+point node vi to a target node vt and is called Attack Path (AP).
+Definition 3.1. Let TG = (V , E) be the topology graph and
+let Vul be the set that collects all pairs < vi , vulid > of nodes
+and corresponding vulnerabilities. An Attack Path (AP) is a
+sequence of triples < vs , vulid , vd > such that:
+(1) for any two consecutive triples < vs , vulid , vd > and
+< vs ′ , vulid ′ , vd ′ > then vs ′ = vd ;
+(2) for any triple, < vs , vd >∈ E;
+(3) for any triple, any pair < vulid , vd >∈ Vul;
+(4) the sequence of edges < vs , vd > extracted from any
+triple is a path over TG.
+
+SYSTEM MODEL
+
+We consider a multi-hop network composed by a set of heterogeneous devices that can communicate through different
+channels (e.g., critical infrastructure networks, data center networks, enterprise ICT networks etc.). We abstract the multi-hop
+network from the specific application domain, modeling it as
+its Topology Graph TG = (V , E), where the set of nodes V is
+composed by the devices present in the network (e.g., servers,
+routers, switches, access points, thin clients, etc.) and the set
+of edges E represents the connections between such devices. In
+particular, for any pair of nodes vi , v j ∈ V there exists an edge
+ei, j =< vi , v j > if and only if vi and v j are connected through
+a communication medium and there is no routing rule denying
+the communication from vi to v j .
+Each node vi ∈ V may have one or more vulnerabilities
+(e.g., software bugs) that can be exploited by an attacker to
+gain access privileges and to compromise the node. For ease
+of presentation and without loss of generality, we assume that
+each vulnerability has a unique identifier vulid . Such identifier is chosen according to standard vulnerabilities classification resources like, for example, the Common Vulnerabilities
+and Exposures (CVE) dictionary [1]. Information about nodes
+vulnerabilities are stored in a set Vul that collects all pairs
+< vi , vulid > where vi ∈ V is a node and vulid is a vulnerability present on vi (i.e., Vul = {< vi , vulid > such that vi ∈ V
+
+We call each triple as edge of the AP.
+Figure 1 shows an example of AP where nodes are represented trough their IP addresses and vulnerabilities are identified by their CVE identifier. This AP is composed by four
+edges:
+AP = {< 172.21.100.130, CV E − 2008 − 4250, 192.168.1.1 >
+, < 192.168.1.1, CV E − 2009 − 2503, 192.168.1.160 >,
+< 192.168.1.160, CV E − 2008 − 4250, 192.18.200.210 >,
+< 192.18.200.210, CV E − 2008 − 5625, 192.18.200.100 >}.
+Given the topology graph TG and the set of vulnerabilities
+Vul of each node, it is possible to compute the Attack Graph
+(AG) as the union of all the possible APs among a given set of
+entry points and a given set of targets. We assume that the AG
+(expressed as a list of all the possible attack paths) is known.
+How AG is computed is out of scope of this paper, as several
+techniques and tools exist (e.g., [23]) that accurately compute
+AG.
+1 Let
+
+us note that such set can be easily obtained in practice by collecting the
+output of a network and vulnerability scanner like Nessus or openVAS.
+
+3
+
+Final part of the system model regards the actual monitoring
+of the network; the network is considered under continuous
+monitoring, where alerts are generated when suspicious activities on a specific node are detected. Without loss of generality,
+we model an alert as a triple ai =< vs , vulid , vt > where vs
+and vt are nodes and vulid is a vulnerability identifier and it
+means that the vulnerability vulid has been exploited on node
+vt starting from node vs .
+
+4
+
+Dynamic Queries
+Translator
+Dynamic Queries
+Installer
+New Graph
+Initializer
+
+Alerts
+
+ON-LINE MULTI-STEP ATTACK
+DETECTOR
+
+Dynamic Queries
+Management
+
+Attack Graph Matching
+
+Metric Estimation and IAP Generation
+
+In this section, we present an Attack Graph-based multi-step attack detector, whose aim is to estimate the presence of on-going
+multi-step attacks in the monitored network and to visualize in
+an effective way such information to a security operator that
+must take decision on how to stop or mitigate the attack. The
+detector is composed by two main components: (i) the On-line
+Correlation Engine (OCE) and (ii) the Visualization Engine
+(VE).
+
+IAP
+
+Visualization Engine
+
+Figure 2: Attack Graph-based multi-step attack detector
+vs , vulid , vt > extracted from an alert, we have an exact
+match if vi = vs , vul j = vulid and v j = vt .
+• Approximate match: given an edge of an AP characterized by the triple < vi , vul j , v j > and given the triple
+< vs , vulid , vt > extracted from an alert, we have an approximate match when two out of three equalities hold.
+Such type of match allows to take into account possible
+inaccurate or wrong information (e.g., a missing source
+identifier in the alert, a mismatch in the vulnerability
+identifier due to different classifications used by the underline IDS and the vulnerability scanner, etc.).
+
+The OCE takes the following inputs:
+(1) The current Attack Graph (listing APs each modeling a
+possible multi-step attack).
+(2) A stream of alerts, generated by monitors installed in
+the network (i.e., Intrusion Detection Systems, Intrusion Prevention Systems, sensors, probes etc.). Alerts
+coming from heterogeneous sources are translated into
+a common format before reaching our engine but the
+translation process is out of scope for our work.
+Taking such inputs, the engine evaluates how much the received stream of alerts matches one (or more) AP(s) and when
+it founds an AP with a similarity greater than a configuration
+threshold it generates a meta-alert called Instantiated Attack
+Path (IAP). Informally, an IAP is a subset of an AP that includes
+only nodes and their vulnerabilities that have been detected as
+exploited.
+In order to do that, the engine offers three main features:
+(i) matching alerts on known APs, (ii) generation of IAPs for
+all APs that, given the current set of matching alerts, are more
+probable to be followed by an attacker and (iii) the dynamic
+AG management.
+When IAPs are generated, they are sent to the VE that will
+take care of its effective visualization.
+Figure 2 shows the Attack Graph-based multi-step attack
+detector architecture. In the following, we will detail each functionality of the proposed detector.
+
+4.1
+
+On-Line Correlation Engine
+
+Attack
+Graph
+
+Approximate match and exact match associate a different
+weight to the match so that, during estimation of the attack
+progress, it is possible to consider differently the two cases.
+In our implementation, the matching is performed by employing a Complex Event Processing (CEP) engine called Esper [2].
+It is an open-source Java library capable of triggering custom
+actions when event conditions occur among event streams. In
+our case, the analyzed event stream is the alert stream.
+Esper allows the storage of queries computed over the stream of
+alert, and its continuous execution model supports the designed
+on-line detection solution. Esper offers an Event Processing
+Language (EPL) allowing expression of rich event conditions,
+correlation, and possibly spanning time windows. EPL allows
+to register queries in the engine. A listener will then be called
+by the engine when the EPL condition is matched as events
+flow in.
+In our implementation, a continuous query is defined for
+every edge of each AP and it is installed in the Esper Engine.
+The Dynamic Queries Translator sub-module is in charge of
+providing the translation from each AP representation into EPL
+queries as soon as a new AP is provided. The Dynamic Queries
+Management system will be deeply discussed later in Section
+4.3.
+
+Attack Graph Matching
+
+The first and fundamental feature of the On-Line Correlation
+Engine is the ability to understand if an alert matches with an
+edge of one or more APs in the attack graph. If this happens, the
+alert must be considered to estimate which is the more probable
+AP followed by the attacker among all those with a matching
+edge.
+OCE implements two different types of match:
+• Exact match: given an edge of an AP, characterized
+by the triple < vi , vul j , v j > and given the triple <
+
+4.2
+
+Metric Estimation and IAPs Generation
+
+Once matches between alerts and APs edges have been found,
+the engine needs to proceed with the detection. In order to do
+4
+
+• matchesi : is a binary array where the j − th entry stores
+value 1 if the j − th edge in AP has at least a corresponding matching alert, value 0 otherwise.
+• JSi and CSi : are real valued variables storing the current
+value of the similarity metrics.
+• Ti : is a configurable threshold for the generation of IAPs.
+
+that, it needs to estimate which is the AP that an attacker is
+more likely to follow and generate the corresponding IAP. To
+estimate the progress of an attack and raise IAPs, our engine
+uses several similarity metrics generally used in the domain of
+string recognition and text mining.
+The basic idea is to represent each AP as a reference string. As
+soon as alerts match over edges of a given attack path AP, a
+current path string is constructed based on the matches. The
+engine then evaluates the similarity between the two strings
+and assigns the corresponding similarity score to the AP.
+In order to provide a timely detection that prevents an attacker to reach her target, an IAP should be generated early
+enough to allow the execution of proper countermeasures. Therefore, an IAP must be generated before the engine observes all
+the exploits of a given AP. This is done by defining a threshold Ti for each AP. Let us note that the selection of a good
+threshold is mandatory to manage the trade-off between the
+timeliness of the detection and its accuracy in terms of numbers
+of false positive/false negative. This aspect is investigated in
+Section 5.1. When there exists an AP such that its similarity
+score is above the given threshold, then the corresponding IAP
+is generated.
+Regarding similarity, we consider the following metrics:
+• Jaccard Similarity: it is a statistic used for comparing
+the similarity and diversity of sample sets A and B. The
+Jaccard coefficient measures similarity between finite
+sample sets, and is defined as the size of the intersection
+divided by the size of the union of the sample sets:
+
+Init:
+(01) for each A P i ∈ A G do
+(02)
+path i ← A P i ;
+(03)
+exploit i ← ∅;
+(04)
+∀j ∈ path i : matches i [j] ← 0;
+(05)
+J S i ← 0;
+(06)
+CS i ← 0;
+(07) endFor.
+———————————————————————–
+upon event ALERT _ MATCH(a j , i) do;
+(08) if (a j < exploit i )
+(09)
+then matches i [j] ← 1;
+(10) end if
+(11) CS i ← compute_cosine_similarity(I dent ityi , matches i );
+(12) exploit i ← exploit i ∪ {a j };
+(13) J S i ← compute_Jaccard_similarity(path i , exploit i );
+(14) if (J S i ≥ Ti ∨ CS i ≥ Ti )
+(15)
+then trigger IAP(i, max(J S i , CS i ), exploit i );
+(16) end if.
+
+Figure 3: IAP generation algorithm.
+When the Attack Graph Matching module finds a matching
+alert for a given attack path APi , the corresponding data structures are updated and the current similarity values recomputed.
+In particular, the Jaccard similarity is computed between the set
+pathi (containing all the edges of APi ) and the set exploiti (containing all the matching alerts for APi ). Differently, the Cosine
+similarity is computed between the Identityi vector (containing 1 in each entry and representing a completely exploited
+path) and the matchesi vector.
+When one of the two similarity scores overcomes the threshold Ti set for the current AP then the corresponding IAP is
+generated.
+In order to evaluate the impact of considering alerts arrival
+time in the detection process, we also implemented the computation of a similarity score based on a metric that considers alert
+ordering. For any given APi , the following similarity scores
+will be computed in a window of size |APi | alerts:
+
+|A ∩ B|
+|A ∪ B|
+• Cosine Similarity and Cosine Distance: these metrics
+are often used in the context of information retrieval
+and text mining to measure the similarity among texts.
+Given two elements of which computing the similarity
+is the goal, they must first be represented as vectors in a
+geometric space. Then, the cosine similarity (distance)
+is the metric measuring the proximity (distance) of the
+two vectors in the space. Given two vectors A and B,
+their cosine similarity is computed as follow:
+J (A, B) =
+
+similarity = cos(θ ) =
+
+AB
+=
+||A|| ||B||
+
+Ín
+Ai × B i
+= qÍ i=1 qÍ
+n A ×
+n B
+i=1 i
+i=1 i
+
+• 1-Edit Distance: is a method to quantify how similar two
+strings A and B are by counting the minimum number
+of operations required to transform A in B. To compute
+such metric, the two strings A and B are constructed
+starting from the representation of the attack path and
+from the representation of the last received alerts. In
+particular, a unique mapping between each vulnerability
+and an alphabet is defined and then the two strings are
+constructed as follows:
+(1) for each vulnerability vul j contained in APi , the symbol corresponding to vul j in the alphabet will be concatenated to the result string
+(2) for each matching alert, the exploited vulnerability is
+extracted and its corresponding symbol in the alphabet
+is appended to the most recent |APi | − 1, defining a
+
+These metrics do not take alert arrival time into account,
+resulting tolerant to possible order inversion in the alert stream,
+due for example to the asynchronous nature of the implemented
+system or to the desynchronization of data sources.
+Figure 3 shows the algorithm executed to estimate the presence of an on-going attack and to generate IAPs. Given an
+attack graph AG, for each attack path APi in AG the following
+data structures are created:
+• pathi : is a list of triples < vi , vul j , v j > representing
+the attack path APi .
+• exploiti : is a set where are stored triples < vi , vul j , v j >
+corresponding to matching alerts.
+5
+
+sliding window on the filtered stream of matching
+alert.
+
+4.3
+
+Dynamic Queries Management
+
+The Dynamic Query Management module is in charge of managing the attack graph changes (e.g., due to new vulnerabilities
+that were previously unknown, network topology changes, applied patches etc.). Informally, this module is responsible to
+enable the automatic reconfiguration of the OCE, without stopping its execution and trying to reuse as much as possible
+recently collected matching alerts (alerts for which we have
+a match on one or more AP). When a new AG is ready to be
+processed, the OCE immediately pauses the management of
+the incoming alerts; this does not mean that the alerts incoming
+during this time are discarded, but they are queued and then
+processed as soon as the new AG has been computed and the
+OCE is ready to work with it.
+To this aim three components are employed: (i) the Dynamic
+query translator, (ii) the Dynamic query installer and (iii) the
+New graph initialiser. The Dynamic Query Management works
+as follows:
+The Dynamic query translator component translates each
+AP of the incoming AG into an Esper query. The Dynamic
+query translator can translate the edges included in an AP
+in different ways in order to support exact or approximate
+matches.
+After the translation process the Dynamic query installer
+component takes all the new queries and it installs them into
+the Esper Engine replacing the old ones.
+Finally, the New graph initialiser component instantiates the
+APs in the new AG. The instantiation is made by using the old
+alerts stored in the component for which there is a match on
+the old AG. This is a very important process, since it permits
+to not lose the important information collected during previous
+steps of attacks.
+At the end of the described process, the processing of the
+incoming alerts is restored, hence all the alerts queued during
+this time are processed on the new AG and the OCE starts to
+work again under its normal behavior.
+
+4.4
+
+Figure 4: In figure, an example of visualization of the OCE
+is shown. On the left attack progress is projected on the
+network topology, while on the right detailed information
+about IAPs is present.
+
+The VE distinguishes between exploited and non-exploited
+edges. The set of exploited edges, colored in red, represents
+the actual progression of an attack (i.e., the current state of
+the attack). The set of non-exploited edges, colored in orange,
+represents the possible evolution of the attack from the actual
+state (i.e. potentially future states of the attack), identified by the
+IAPs computed by the OCE. The more the orange is intense,
+the more APs pass through that edge. This encoding helps
+the security operator in identifying the portion of the network
+potentially interested by the attack in advance with respect to
+the actual state of the attack. When an IAP presents a new
+exploited node, it blinks in red to catch the attention of the
+operator.
+On the right detailed information about IAPs is present. IAPs
+are classified with respect to their last exploit in order to maintain the temporal evolution of an attack. Visual filters allow the
+security operator to visualize the whole set of received IAPs or
+a subset of them given a specific last exploit. Additionally, it is
+possible to retrieve information about the involved vulnerabilities by mouse-hovering on an edge. An example of the attack
+progression is visible in figure 5.
+
+5
+
+The Visualization Engine
+
+EVALUATION
+
+This section presents the evaluation of the OCE. The engine
+has been tested and evaluated in the disaster recovery site of
+ACEA, a big water and energy distribution company of Italy
+and the stakeholder of the PANOPTESEC project [3]. Such
+environment is a perfect replica of ACEA ICT and energy
+distribution network.
+In the following we discuss the setup of the threshold Ti and
+how it affects the trade-off between the detection time and false
+positive and false negative IAPs generation. In addition, we
+show how the current implementation scale with respect to the
+alert stream input rate.
+
+The main goals of the Visualization Engine (VE) are to provide
+to security operators a way to comprehend the detection of an
+attack, monitor its progression and anticipate its possible evolution, in accordance to the data provided by the OCE. To reach
+these goals, the layer 3 of the network topology is represented
+as a node-link graph TG = (V , E); the set of nodes V represents
+the devices, comprehensive of their network interfaces (IP addresses), while the set of edges E represents the connections
+between them according to routing rules. Based on this representation, all the other critical information are superimposed
+on it.
+Figure 4 shows an example of the VE. Given an IAP as
+input, VE shows the progress of an attack through animation
+starting from the entry point (green colored) and following
+the progression of the attack through correlation steps; blink
+animation is used if the attack effectively reaches a target node.
+
+5.1
+
+How to set up the threshold Ti ? A
+timeliness-accuracy trade off analysis
+
+As said before, the OCE needs to set up a threshold Ti for each
+AP in order to decide if an IAP should be generated or not.
+6
+
+Figure 5: Details of the VE: (i) exploitation of a node, (ii) visualization of the targets of an IAP, (iii) visualization of a bulk
+of IAPs, (iv) information related to exploitable vulnerabilities of a still non-exploited node.
+However, if the threshold is not set correctly will be generated
+of a lot of false positives/negatives; more in detail:
+• if the threshold Ti is too low, very few alerts on APi
+are necessary to generate an IAP (even with incorrect
+information). As a consequence, the OCE may generate
+a false positive.
+• if the threshold Ti is too high, we need almost all the
+alerts corresponding to APi in order to generate an IAP.
+However, due to possible incorrect fields in the alerts,
+it is possible to remain below Ti even if the attack succeeded; in this case the OCE may generate a false negative.
+For these reasons, the management of the threshold is a very
+sensitive problem and it needs to be carefully investigated.
+
+	  
+Figure 6: Comparison of False Positive IAP generation for
+different monitors.
+IAP on an AP of a given length |AP | and used such number
+to compute the probability that all the xmin alerts are false
+positive.
+Figure 6 shows the probability of generating the first IAP
+as a false positive for different values of the threshold T and
+different monitors with decreasing accuracy. This comparison is
+done by considering an AP of length 5 that is a realistic scenario
+with respect to what we observed in the disaster recovery site.
+Regarding false negatives, we first introduce the following
+definition:
+
+Definition 5.1. The OCE is generating a false positive when
+it generates an IAP for an APi and no attack is on-going over
+APi .
+If the monitors in the network are perfect (i.e., they do not
+notify any alert not related to a real on-going attack) then the
+OCE will not generate any false positive. In fact, independently
+from the selected threshold Ti , any IAP generated will correspond to an AP with an on-going attack. In this case, the only
+impact of the threshold Ti is on the time interval between the
+time of the on-going attack detection (i.e., the time at which
+the first IAP is generated) and the time of the completed attack.
+On the contrary, if monitors in the network are not perfect (e.g.,
+they could identify as an alert a suspicious activity generated
+by the system itself) then the OCE evaluates alerts that may be
+not relevant and, depending on the value of Ti , may induce the
+generation of a false positive IAP.
+In order to evaluate the accuracy of the OCE in terms of false
+positive IAP generated, we consider the following parameters:
+• The probability P_LLC_F P that monitors in the network
+generate and propagate alerts not corresponding to any
+real attack.
+• The threshold T used to generate IAP.
+• The length |AP | of the AP we are monitoring.
+Given these parameters, we computed the probability that
+the first generated IAP is a false positive. Let us note that this
+happens when all the alerts used to estimate the on-going attack
+and to generate the IAP are false positive generated by monitors.
+In particular, we computed for each considered threshold T , the
+minimum number xmin of matches needed to generate the first
+
+Definition 5.2. The OCE is generating a false negative when
+it misses to generate an IAP for an APi and an attack is ongoing over it.
+Again, if the monitors are perfect (i.e., they notify any alert
+related to a real on-going attack and does it in an accurate
+way) then the OCE will not generate any false negative. In fact,
+independently from the selected threshold T , any generated
+IAP will correspond to an AP with an on-going attack. In this
+case, the only impact of the threshold T is on the time interval
+between the time of the on-going attack detection (i.e., the
+time at which the first IAP is generated) and the time of the
+completed attack. On the contrary, if monitors are not perfect
+some false negative may be generated due to:
+(1) Alerts filtered by monitors due to their setup (e.g., because they have been interpreted as not relevant) or
+(2) Too low accuracy in the generated alerts.
+In order to evaluate the accuracy of the engine in terms of
+false negative (IAP not generated), we consider the following
+parameters:
+7
+
+False Negative Prob
+
+|EAP| = 5
+1,0
+0,9
+0,8
+0,7
+0,6
+0,5
+0,4
+0,3
+0,2
+0,1
+0,0
+0,1
+
+0,2
+
+0,3
+
+0,4
+
+0,5
+
+0,6
+
+0,7
+
+0,8
+
+0,9
+
+1,0
+
+Figure 8: Test 1 - 10% Matching, 90% Unmatching - Memory usage
+
+Threshold (T)
+p=0,25
+
+p=0,5
+
+p=0,75
+
+Figure 7: Comparison of False Negative IAP generation for
+different monitors.
+• The probability P_LLC_F N that monitors filter and do
+not propagate proper alerts to the OCE. This is done to
+make our analysis independent from the current configuration of monitors.
+• The threshold T used to generate IAP.
+• The length |AP | of the path we are monitoring.
+Given these parameters, we computed the probability of
+generating a false negative i.e., the probability of not generating
+an IAP for a real on-going attack. This happens when the
+engine misses (or is not able to match) a number of alerts that
+prevent the similarity scores to overcome the fixed threshold.
+In particular, we computed, for each considered threshold T ,
+the maximum number xmax of matches needed to prevent the
+generation of an IAP on an AP of a given length |AP | and used
+such number to compute the probability that all the xmax alerts
+are false negatives.
+Figure 7 shows the probability of generating a false negative
+for different values of the threshold T and different monitors
+with decreasing accuracy. This comparison is done by considering an AP of length 5 that is a realistic scenario with respect
+to what we observed in the disaster recovery site.
+
+5.2
+
+Figure 9: Test 1 - 10% Matching, 90% Unmatching - Incoming Alerts Queue Size
+
+Figure 10: Test 2 - 20% Matching, 80% Unmatching Memory usage
+
+Performance Evaluation
+
+In this Section, we show how the OCE scales with respect to
+the alerts rate of the input stream.
+All the experiments presented in the following share the
+same AG and differ only in terms of incoming alerts stream.
+In particular, in each test we have an incoming alerts stream
+divided into Matching Alerts and Unmatching Alerts; The firsts
+have a match on the used AG, while the seconds have not. The
+incoming Alert Rate is 200Al/s for the first, second and third
+test, while it is 550Al/s for the last one.
+For the tests, we run the OCE in a dedicated virtual machine
+(VM) in order to take measurements in isolation. Such VM
+has four cores and 6 GB of RAM and has been deployed on
+a physical machine with two physical processors Intel Xeon
+X5560 2.8 GHz with 24 GB of RAM.
+The used AG is composed by 9,098 possible APs (for a
+memory occupation of 40 MB).
+To evaluate the scalability of the OCE, the following metrics
+are considered:
+• HEAP Memory Space Utilization
+• Size of Incoming Alerts Queue
+
+Figure 11: Test 2 - 20% Matching, 80% Unmatching - Incoming Alerts Queue Size
+Figures 9-13 show three different proportions of matched
+and unmatched alerts; it is possible to see that the memory
+usage is limited. It grew up and then falls down due to the
+activity of the JAVA Garbage Collector that let the OCE to take
+a large quantity of memory and then de-allocate useless data
+structures when needed. Changing the amount of Matching
+Alerts changes only the stress of the memory used.
+Hence, with the proposed tests we have shown that the component is able to overcome the ∼20 Matching Alerts per second
+rate. Now we want to demonstrate which is its limit. For doing this we test it with the 550 alerts per second rate, and we
+demonstrate that the OCE is able to sustain this rate without
+losing performances or accuracy.
+8
+
+from IDSs and an attack graph of the network, estimates the
+presence and progression of on-going multi-step attacks. These
+estimations are passed to the VE, that allows the security operator, through the raising of her situation awareness, to monitor
+the attacks progression in real-time and be supported in deciding the needed counter-measures. The resulting system allows
+to detect, manage and react to a cyber-attack in a timely manner, decreasing the needed identification time from hours to
+minutes.
+Currently, the OCE uses the three metrics independently to
+estimate the presence of an on-going attack. As future works,
+we are currently defining a mechanism to combine together JS
+(or CS) with 1-ED in order to get benefit from all of them. In
+addition, we are also investigating a variation of 1-ED whose
+aim is to analyze where the violations of the ordering happen
+and assign to them different weights. The intuition behind this
+extension is that having order inversion (or missing event) at
+the end of an AP is very much different from having the same
+phenomenon at the beginning of an AP and the two scenarios
+should be evaluated differently.
+
+Figure 12: Test 3 - 40% Matching, 60% Unmatching Memory usage
+
+Figure 13: Test 3 - 40% Matching, 60% Unmatching - Incoming Alerts Queue Size
+
+7
+
+ACKNOWLEDGMENTS
+
+This work has been partially supported by the FP7 EU Project
+PANOPTESEC.
+
+REFERENCES
+[1] [n. d.]. Common Vulnerabilities and Exposures: the Standard for Information Security Vulnerability Names. https://cve.mitre.org. ([n. d.]).
+[2] [n. d.]. The Esper project. http://esper.codehaus.org/. ([n. d.]).
+[3] [n. d.]. The PANOPTESEC Project. http://www.panoptesec.eu. ([n. d.]).
+[4] Ahmed Aleroud and George Karabatis. 2017. Contextual information fusion
+for intrusion detection: a survey and taxonomy. Knowledge and Information
+Systems (2017), 1–57. https://doi.org/10.1007/s10115-017-1027-3
+[5] Marco Angelini, Nicolas Prigent, and Giuseppe Santucci. 2015. PERCIVAL:
+proactive and reactive attack and response assessment for cyber incidents
+using visual analytics. In Visualization for Cyber Security (VizSec), 2015
+IEEE Symposium on. IEEE, 1–8.
+[6] Marco Angelini and Giuseppe Santucci. 2017. Cyber situational awareness:
+from geographical alerts to high-level management. Journal of Visualization
+20, 3 (2017), 453–459.
+[7] Marco Angelini and Giuseppe Santucci. August 24-26, 2015, Tokyo, Japan.
+Visual Cyber Situational Awareness for Critical Infrastructures. In Proceedings of ACM VINCI ’15.
+[8] J. M. Bonifacio, A. M. Cansian, A. C. P. L. F. De Carvalho, and E. S.
+Moreira. 1998. Neural networks applied in intrusion detection systems. In
+1998 IEEE International Joint Conference on Neural Networks Proceedings.
+IEEE World Congress on Computational Intelligence (Cat. No.98CH36227),
+Vol. 1. 205–210 vol.1. https://doi.org/10.1109/IJCNN.1998.682263
+[9] Yacine Bouzida and Sylvain Gombault. 2003. Intrusion detection using principal component analysis. In Proceedings of the 7th World Multiconference
+on Systemics, Cybernetics and Informatics. Citeseer.
+[10] Rung-Ching Chen and Su-Ping Chen. 2008. Intrusion detection using a
+hybrid support vector machine based on entropy and TF-IDF. International
+Journal of Innovative Computing, Information, and Control (IJICIC) 4, 2
+(2008), 413–424.
+[11] Domenico Cotroneo, Andrea Paudice, and Antonio Pecchia. 2016. Automated Root Cause Identification of Security Alerts. Future Gener. Comput.
+Syst. 56, C (March 2016), 375–387. https://doi.org/10.1016/j.future.2015.
+09.009
+[12] Ozgur Depren, Murat Topallar, Emin Anarim, and M. Kemal Ciliz. 2005.
+An Intelligent Intrusion Detection System (IDS) for Anomaly and Misuse
+Detection in Computer Networks. Expert Syst. Appl. 29, 4 (Nov. 2005),
+713–722. https://doi.org/10.1016/j.eswa.2005.05.002
+[13] Bingrui Foo, Yu-Chun Mao, and Eugene Spafford. 2005. ADEPTS: Adaptive Intrusion Response Using Attack Graphs in an E-Commerce Environment. In Proceedings of the 2005 International Conference on Dependable
+Systems and Networks (DSN ’05). IEEE Computer Society, Washington,
+DC, USA, 508–517. https://doi.org/10.1109/DSN.2005.17
+
+Figure 14: Test 4 - 40% Matching, 60% Unmatching Memory usage
+
+Figure 15: Test 4 - 40% Matching, 60% Unmatching - Incoming Alerts Queue Size
+Also in this case, the previous memory considerations are
+still valid. To measure the throughput, we monitored the size
+of the queue of incoming alerts. When the CPU is not able to
+sustain the incoming alerts rate, the queue size would increase
+indefinitely. However, this condition never happened in all the
+proposed tests. Therefore, we can say that the component is
+able to carry on the proposed workload, effectively scaling to a
+very high alerts rate.
+
+6
+
+CONCLUSIONS
+
+This paper coped with the problem of detecting multi-step
+attacks. The proposed solution is based on the seamless integration of an On-line Correlation Engine (OCE) with a Visualization Engine (VE); the former, taking as inputs alerts coming
+9
+
+[14] Emden R. Gansner and Stephen C. North. 2000. An open graph visualization system and its applications to software engineering. SOFTWARE PRACTICE AND EXPERIENCE 30, 11 (2000), 1203–1233.
+[15] Richard P. Lippmann. 2002. NetSPA : a Network Security Planning Architecture. Master Thesis. (2002).
+[16] Guisong Liu, Zhang Yi, and Shangming Yang. 2007. A hierarchical intrusion detection model based on the {PCA} neural networks. Neurocomputing
+70, 7âĂŞ9 (2007), 1561 – 1568. https://doi.org/10.1016/j.neucom.2006.10.
+146 Advances in Computational Intelligence and Learning14th European
+Symposium on Artificial Neural Networks 200614th European Symposium
+on Artificial Neural Networks 2006.
+[17] S. Mathew, R. Giomundo, S. Upadhyaya, M. Sudit, and A. Stotz. 2006.
+Understanding Multistage Attacks by Attack-Track based Visualization of
+Heterogeneous Event Streams. In VizSec 2006.
+[18] S. Mathew, C. Shah, and S. Upadhyaya. 2005. An alert fusion framework
+for situation awareness of coordinated multistage attacks. In Third IEEE
+International Workshop on Information Assurance (IWIA’05). 95–104. https:
+//doi.org/10.1109/IWIA.2005.3
+[19] S Noel, E Harley, KH Tam, M Limiero, and M Share. 2016. CyGraph:
+Graph-Based Analytics and Visualization for Cybersecurity. Handbook of
+Statistics 35 (2016), 117–167.
+[20] Steven Noel and Sushil Jajodia. 2005. Understanding Complex Network
+Attack Graphs Through Clustered Adjacency Matrices. In Proceedings
+of the 21st Annual Computer Security Applications Conference (ACSAC
+’05). IEEE Computer Society, Washington, DC, USA, 160–169. https:
+//doi.org/10.1109/CSAC.2005.58
+[21] Steven Noel, Sushil Jajodia, Brian O’Berry, and Michael Jacobs. 2003. Efficient Minimum-Cost Network Hardening Via Exploit Dependency Graphs.
+In Proceedings of the 19th Annual Computer Security Applications Conference (ACSAC ’03). IEEE Computer Society, Washington, DC, USA, 86–.
+http://dl.acm.org/citation.cfm?id=956415.956451
+[22] Steven Noel, Eric Robertson, and Sushil Jajodia. 2004. Correlating Intrusion
+Events and Building Attack Scenarios Through Attack Graph Distances. In
+Proceedings of the 20th Annual Computer Security Applications Conference
+(ACSAC ’04). IEEE Computer Society, Washington, DC, USA, 350–359.
+https://doi.org/10.1109/CSAC.2004.11
+[23] Xinming Ou, Sudhakar Govindavajhala, and Andrew W. Appel. 2005. MulVAL: A Logic-based Network Security Analyzer. In Proceedings of the
+14th Conference on USENIX Security Symposium - Volume 14 (SSYM’05).
+USENIX Association, Berkeley, CA, USA, 8–8. http://dl.acm.org/citation.
+cfm?id=1251398.1251406
+[24] Ali Ahmadian Ramaki, Morteza Amini, and Reza Ebrahimi Atani. 2015.
+RTECA: Real time episode correlation algorithm for multi-step attack
+scenarios detection. Comput er s&Secur ity 49 (2015), 206 – 219.
+[25] P. M. Rathod, N. Marathe, and A. V. Vidhate. 2014. A survey on Finite
+Automata based pattern matching techniques for network Intrusion Detection System (NIDS). In 2014 International Conference on Advances in
+Electronics Computers and Communications. 1–5. https://doi.org/10.1109/
+ICAECC.2014.7002456
+[26] Indrajit Ray and Nayot Poolsapassit. 2005. Using Attack Trees to Identify
+Malicious Attacks from Authorized Insiders. In Proceedings of the 10th
+European Conference on Research in Computer Security (ESORICS’05).
+Springer-Verlag, Berlin, Heidelberg, 231–246. https://doi.org/10.1007/
+11555827_14
+[27] Layal Samarji, Frédéric Cuppens, Nora Cuppens-Boulahia, Wael Kanoun,
+and Samuel Dubus. 2013. Situation Calculus and Graph Based Defensive
+Modeling of Simultaneous Attacks. In Cyberspace Safety and Security - 5th
+International Symposium, CSS 2013, Zhangjiajie, China, November 13-15,
+2013, Proceedings. 132–150. https://doi.org/10.1007/978-3-319-03584-0_
+11
+[28] Oleg Sheyner, Joshua Haines, Somesh Jha, Richard Lippmann, and Jeannette M. Wing. 2002. Automated Generation and Analysis of Attack
+Graphs. In Proceedings of the 2002 IEEE Symposium on Security and
+Privacy (SP ’02). IEEE Computer Society, Washington, DC, USA, 273–.
+http://dl.acm.org/citation.cfm?id=829514.830526
+[29] Grant Vandenberghe. 2008. Network Traffic Exploration Application: A
+Tool to Assess, Visualize, and Analyze Network Security Events. In VizSec
+2008.
+[30] Wei Wang and T. E. Daniels. 2005. Building evidence graphs for network
+forensics analysis. In 21st Annual Computer Security Applications Conference (ACSAC’05). 11 pp.–266. https://doi.org/10.1109/CSAC.2005.14
+[31] Leevar Williams, Richard Lippmann, and Kyle Ingols. 2007. An Interactive
+Attack Graph Cascade and Reachability Display. In VizSec 2007.
+[32] Saman A. Zonouz, Himanshu Khurana, William H. Sanders, and Timothy M.
+Yardley. 2014. RRE: A Game-Theoretic Intrusion Response and Recovery
+Engine. IEEE Trans. Parallel Distrib. Syst. 25, 2 (Feb. 2014), 395–406.
+https://doi.org/10.1109/TPDS.2013.211
+
+10
+
+

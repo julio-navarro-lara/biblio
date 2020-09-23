@@ -1,0 +1,2905 @@
+c o m p u t e r s & s e c u r i t y 4 8 ( 2 0 1 5 ) 3 5 e5 7
+
+Available online at www.sciencedirect.com
+
+ScienceDirect
+journal homepage: www.elsevier.com/locate/cose
+
+Combating advanced persistent threats: From
+network event correlation to incident detection
+Ivo Friedberg, Florian Skopik*, Giuseppe Settanni, Roman Fiedler
+Austrian Institute of Technology, Safety and Security Department, Donau-City-Straße 1, 1220, Vienna, Austria
+
+article info
+
+abstract
+
+Article history:
+
+An advanced persistent threat (also known as APT) is a deliberately slow-moving cyber-
+
+Received 11 June 2014
+
+attack that is applied to quietly compromise interconnected information systems without
+
+Received in revised form
+
+revealing itself. APTs often use a variety of attack methods to get unauthorized system
+
+3 September 2014
+
+access initially and then gradually spread throughout the network. In contrast to tradi-
+
+Accepted 28 September 2014
+
+tional attacks, they are not used to interrupt services but primarily to steal intellectual
+
+Available online 13 October 2014
+
+property, sensitive internal business and legal documents and other data. If an attack on a
+system is successful, timely detection is of paramount importance to mitigate its impact
+
+Keywords:
+
+and prohibit APTs from further spreading. However, recent security incidents, such as
+
+Advanced persistent threat
+
+Operation Shady Rat, Operation Red October or the discovery of MiniDuke e just to name a
+
+Anomaly detection
+
+few e have impressively demonstrated that current security mechanisms are mostly
+
+Log file analysis
+
+insufficient to prohibit targeted and customized attacks. This paper therefore proposes a
+
+Intrusion detection
+
+novel anomaly detection approach which is a promising basis for modern intrusion
+
+Event correlation
+
+detection systems. In contrast to other common approaches, which apply a kind of black-
+
+Self-learning system model
+
+list approach and consider only actions and behaviour that match to well-known attack
+patterns and signatures of malware traces, our system works with a white-list approach.
+Our anomaly detection technique keeps track of system events, their dependencies and
+occurrences, and thus learns the normal system behaviour over time and reports all actions that differ from the created system model. In this work, we describe this system in
+theory and show evaluation results from a pilot study under real-world conditions.
+© 2014 Elsevier Ltd. All rights reserved.
+
+1.
+
+Introduction
+
+Global connectivity is the core principle of our information
+age (O'Neill, 2014) and the vital backbone for our economy.
+From an information provisioning point of view, distances
+seem to shrink since information can be immediately
+accessed from all over the world. We are used to, and highly
+dependent on, information and communication services.
+This dependency, however, is a considerable vulnerability
+
+too, and increasingly motivates a certain criminal exploitation (Barber, 2001). As ICT networks and their complexity
+have evolved in recent years, so did the goals and technical
+progress of attacks (Steer, 2014; Sood and Enbody, 2013).
+Further, the motivation for attacks has changed from causing
+immediate damage on abroad basis to more sophisticated
+and targeted forms of attacks, where stealing proprietary
+information or personal data is just one step in a multi-stage
+attack (Kraemer-Mbula et al., 2013; Tankard, 2011; Kjaerland,
+2006; Caldwell, 2013).
+
+* Corresponding author.
+E-mail addresses: florian.skopik@ait.ac.at, florian.skopik@gmx.at (F. Skopik).
+http://dx.doi.org/10.1016/j.cose.2014.09.006
+0167-4048/© 2014 Elsevier Ltd. All rights reserved.
+
+36
+
+c o m p u t e r s & s e c u r i t y 4 8 ( 2 0 1 5 ) 3 5 e5 7
+
+Since the emergence of the first ICT networks significant
+effort went into securing critical assets. Most companies have
+numerous guidelines and processes in place to decrease the
+chance of human failure. Additionally, one can choose from a
+variety of security solutions that deal with different attack
+schemes at different levels in the network: Firewalls that filter
+traffic at network borders between sub-networks, malware
+scanners that investigate binaries and executables for suspicious behaviour or intrusion detection systems (IDSs) that
+monitor events all over a network and verify them against
+predefined rules for anomalies. While IDSs are a widely
+accepted de-facto standard today, their common signature
+based approach brings two major drawbacks (Garca-Teodoro
+et al., 2009):
+
+obvious relation exists between incoming connections on a
+firewall, followed by an http request on a Web server and
+finally an issued SQL query on a database server. Consequently, a single direct SQL query without a preceding Web
+server request is an anomaly; moreover a firewall entry
+without a succeeding Web server request might be the sign of
+an intrusion too. The stronger these events coming from
+machines, network devices, and high level services, are connected, the harder it is for an attacker to exploit vulnerabilities
+without violating some of these implications and thus being
+detected. The actual art is to find these relations, model them,
+and enforce them with minimal human intervention e and
+with acceptable false positive rates.
+The contributions of this article are as follows:
+
+i Pre-defined rules are often insufficient to detect unique or
+tailored attacks. Those rules are often commonly known
+and, given enough effort is invested, can be circumvented.
+However, producing custom rule sets is mostly not feasible
+for most organizations.
+ii For applications with low market share no sufficient
+parsers and rule sets are available (e.g., for specific industrial control components). As a consequence, the lack of
+sufficient rule sets that verify application specific operation
+sequences make common solutions inapplicable.
+
+ APT Detection Approach. We explain why current security
+solutions are often insufficient to counter APT attacks and
+motivate the need for novel approaches.
+ Anomaly Detection Model. We discuss the formal model
+definition of a novel anomaly detection approach based on
+log-line analysis (Skopik et al., 2014a; Skopik and Fiedler,
+2013) that fulfils the motivated requirements.
+ Real-World Evaluation. We perform a sophisticated evaluation of a prototype implementation of the presented
+approach, including an optimal configuration and the
+performance when challenged with real anomalies in a
+large-scale dataset.
+
+System architects and administrators need to tackle these
+inadequacies in order to increase security. However, recent
+attacks like Operation Aurora (McClure et al., 2010) or Operation Shady RAT (Alperovitch et al., 2011) demonstrate that the
+current security mechanisms are insufficient to prevent
+unique sophisticated and tailored attacks, also known as
+Advanced Persistent Threats (APT). Furthermore, these
+advanced attacks raise the question if it is even possible to
+prevent intrusions with reasonable certainty (Alperovitch
+et al., 2011; Thomson, 2011). Some new approaches even
+deliberately accept successful first stages of attacks, and
+instead focus on the timely detection to limit negative effects
+on the longer run (Brewer, 2014).
+Eventually, timely detection of intrusions is one major
+challenge when securing complex critical systems. As current
+security solutions are often not sufficient to deal with sophisticated and tailored attacks, novel approaches are
+required. One interesting core concept of these novel approaches is the mining of typically unnoticed relationships
+between different applications and components of a computer network. While many experts today argue that these
+disregarded relationships are the major weak spot abused by
+attackers to compromise systems (Patcha and Park, 2007) (e.g.,
+users that utilize the same passwords on multiple services
+(Ives et al., 2004) or standard architectural patterns), we
+emphasize disregarded (and often much more subtle) relationship as one of the major strength for future intrusion
+detection systems.
+This means, if we are able to detect these relations and
+harness them by correlating events on multiple machines
+across the entire network e and thus discovering unknown
+dependencies e we are able to automatically generate a system behaviour model that describes the common events and
+their relations. For example, in a hosting environment a quite
+
+The remainder of this paper is organized as follows: Section 2 gives an overview about recent research in the field of
+anomaly detection and intrusion detection systems. Sections
+3 and 4 define the novel anomaly detection approach. Section
+3 defines the general functionality; Section 4 describes how
+the system model is generated and continuously refined.
+Section 5 describes the test environments and the test data
+generation for the evaluation of the prototype implementation. Section 6 discusses the results of the different evaluation
+steps, and Section 7 concludes this article.
+
+2.
+
+Related work
+
+Nowadays various systems are in place in a corporate ICT
+network to ensure the three properties confidentiality, availability and integrity known as the security triangle (von Solms
+and van Niekerk, 2013). Any action attempting a violation of
+any of those properties can be seen as an intrusion (Yu, 2012).
+Intrusion Detection Systems (IDSs) (as originally proposed by
+Denning (1987)) aim at detecting those intrusions to take actions from triggering warnings to actively preventing the
+attacker from causing further harm. Literature as (Yu, 2012) or
+Sabahi and Movaghar (2008) classifies IDSs by different
+means. Differentiations can be made between host based,
+network based and hybrid approaches (Yu, 2012; Sabahi and
+Movaghar, 2008). While host based approaches focus on the
+events on one single host to detect suspicious behaviour,
+network based approaches look at parts of networks and
+analyse the traffic and protocol data to detect intrusions.
+Sabahi and Movaghar (2008)further classifies Hybrid approaches that use host and network data simultaneously as
+
+c o m p u t e r s & s e c u r i t y 4 8 ( 2 0 1 5 ) 3 5 e5 7
+
+well as network behaviour analysis approaches monitoring
+traffic flows. Another way to classify IDSs is to look at the
+types of intrusions they try to detect. We can differentiate
+between misuse and anomaly intrusion detection (Axelsson,
+2000). Misuse detection systems try to detect intrusions by
+matching events in the monitored domain against defined
+security policies. They can further be classified as signature
+based, rule based or based on state transitions (Sabahi and
+Movaghar, 2008). Anomaly intrusion detection detects deviations of the events in the monitored domain from an as
+normal behaviour defined base line (Yu, 2012; Garca-Teodoro
+et al., 2009). Here further differentiation can be taken between statistical based, distance based, rule based, profile
+based and model based methods (Sabahi and Movaghar, 2008).
+This way to differentiate intrusion detection systems also
+leaves the possibility of hybrid approaches as proposed for
+example by Kim et al. (2014). Yu (2012) has a different notion of
+differentiation regarding anomaly intrusion systems. Here the
+categories are statistical techniques, machine learning techniques, neural network techniques, data mining techniques
+and computer immunology techniques. Each category is
+supported by various projects (Sommer and Paxson, 2010; Lee
+et al., 1999; Zhang et al., 2009b). Intrusion detection systems
+can also differ by their application domain. Mitchell and Chen
+(2014) for example provides a comprehensive survey on current IDS research in cyber-physical systems.
+Anomaly detection is an actively researched field in many
+domains. Chandola et al. (2009) identified the application domains as intrusion detection, fraud detection, medical and
+public health anomaly detection, image processing, anomaly
+detection in text data and anomaly detection in sensor networks apart from other not so prominent domains. In each
+domain we find different problems to solve, as well as
+different sets of data. In order to detect anomalies, a system
+has to use training data to define a ground truth about what is
+to be considered normal behaviour of a system (Chandola
+et al., 2009; Zhang et al., 2009a). The training data will be
+analysed to establish a notion about normality further used to
+mark patterns (also known as events or instances) in the data
+as normal or abnormal. Furthermore, it is important to note
+that systems evolve i.e., systems have to periodically reconstruct their notion of normality to adapt to this changes
+(Zhang et al., 2009a). Chandola et al. (2009) distinguishes three
+kinds of anomalies: (i) Point Anomalies, if a single event can be
+considered anomalous given the notion of normality we call it
+point anomaly. (ii) Contextual Anomalies when an event can
+be considered anomalous in respect to a given context. This
+contextual evaluation has to be encoded in the formulation of
+the problem. We can then deduce an anomaly given the
+events' behavioural attributes in its context. The same attributes might not be considered anomalous in another context.
+(iii) Collective Anomalies, if a series of events is considered
+anomalous we call it collective anomaly. Each event on its
+own in some other place in the stream might not be considered an anomaly. But the collective relation between them
+makes them anomalous.
+Thottan and Ji (2003) describe two main categories of
+anomalies in ICT networks. The first category describes
+anomalies due to system failures. The second category consists of security related problems resulting in anomalies.
+
+37
+
+Various classifications of anomaly detection approaches were
+taken by (Chandola et al., 2009; Zhang et al., 2009a; Yu, 2012;
+Thottan and Ji, 2003) just to name a few. The broadest classification by Chandola et al. (2009) distinguishes six classes with
+various subclasses from all of the before described domains:
+Classification Based Anomaly Detection Techniques try to
+classify every data instance as either normal or abnormal.
+Given a labelled training data set it generates a classifier later
+used to generate a label for every instance. Depending on the
+provided labels we can distinguish between multi-class
+(normal data has different labels) and one-class (either normal
+or abnormal as label) techniques. The general assumption of
+this approach says that it is possible to learn a classifier distinguishing between normal and abnormal data instances.
+Following techniques fall in this category: (i) Neural NetworksBased, (ii) Bayesian Networks-Based, (iii) Support Vector MachinesBased and (iv) Rule-Based. Nearest Neighbour-Based Anomaly
+Detection Techniques work on the general assumption that
+“normal data instances occur in dense neighbourhoods, while
+anomalies occur far from their closest neighbours” (Chandola
+et al., 2009). A metric has to be found serving as distance or
+similarity measure. This metric can then be used to generate
+an anomaly score for each data instance by two different
+means. First, when using Distance to kth Nearest Neighbour, the
+anomaly score is the distance to its kth nearest neighbour.
+Second, when using Relative Density, the density of an instance's neighbourhood works as anomaly score where low
+density means that the instance is more likely an anomaly.
+Clustering-Based Anomaly Detection Techniques try to
+generate clusters of similar data. The assumption here is that
+anomalies do not belong to any cluster, are far from the centre
+of the nearest cluster or occur only in a small cluster with low
+density while normal instances are near to the centre of a
+dense cluster. Then again an anomaly score can be used
+together with a threshold to identify anomalies. Statistical
+Anomaly Detection Techniques assume the input data follows a stochastic model. This model usually describes normal
+behaviour. For each instance a statistical inference test decides if the data instance belongs to the model, hence is
+normal, or not. Two techniques can be observed. Parametric
+Techniques generally assume to know the underlying distribution and estimate its parameter from the training data. NonParametric Techniques do not assume to know the underlying
+distribution but try to learn it from the training data. Information Theoretic Anomaly Detection Techniques assume
+that anomalies can be detected because they result in irregularities in the information content of the data set. Therefore,
+these techniques try to generate a model of normality about
+the information in the data in order to detect inconsistencies.
+Spectral Anomaly Detection Techniques try to map the data
+space to a smaller subspace. They assume that there exists a
+subspace where normal data and anomalies can easily be
+identified and that there exists a transformation to get the
+data into this subspace. Zhang et al. (2009a) and Thottan and Ji
+(2003) distinguish anomaly detection approaches with focus
+on ICT networks. They come up with subsets of the already
+described approaches before with Zhang et al. (2009a) using
+anomaly detection using statistics, anomaly detection using classifier, anomaly detection using machine learning and anomaly
+detection using finite state machines. Thottan and Ji (2003)
+
+38
+
+c o m p u t e r s & s e c u r i t y 4 8 ( 2 0 1 5 ) 3 5 e5 7
+
+distinguishes between rule-based approaches, finite state machines, pattern matching and statistical analysis. Various challenges in anomaly detection are identified by Chandola et al.
+(2009). The most prominent is of course to identify a complete notion of normality. This is made even harder by the
+fact, that there is only a fuzzy and changing border between
+normal and abnormal behaviour. When anomaly detection is
+used to detect malicious activity it has to be pointed out, that
+an attacker disguises his actions by making them look normal.
+In some cases it might be possible he tampers the testing data
+or the system. Connected with the problem of getting a
+complete notion of normality is also the problem of getting
+representative, labelled training data and to differentiate
+a
+ dnı́k, 2012). The
+noise from actual anomalies (Bartos and Z
+number of papers describing novel or optimised mechanisms
+of anomaly detection in different contexts is far from countable and ever increasing. Li et al. (2012); Zhang et al. (2009b);
+Zhao et al. (2010); Thottan and Ji (2003); Yin et al. (2004) are
+just some examples to show the diversity in the approaches. A
+good overview on anomaly detection in the domain of intrusion detection can be found in Yu (2012).
+The approach proposed in this work is a hybrid IDS
+approach that analyses host based data from various components in a network in order to make assumptions about
+relations between the components on the network level.
+Therefore, the approach can be considered as an Information
+Theoretic Anomaly Detection Technique. From the way the data
+sources are analysed and evaluated it is also a Statistical
+Anomaly Detection Technique with a parametric characteristic.
+
+3.
+Anomaly detection through event
+correlation
+The proposed approach is designed to extend common security mechanisms e especially ”packet-level” IDS systems e to
+improve their results. It further integrates seamlessly into the
+administrator's work-flow. Instead of replacing existing solutions or establishing an additional security system, the
+approach aims at acting as an additional source for alerts in
+existing monitoring infrastructures. Similar to some existing
+mechanisms the proposed approach exploits log files. However it does not rely on existing knowledge about the syntax
+and the semantics of the lines. On the contrary, the approach
+constructs a model while processing the input. This system
+model M is built by the following items:
+
+rules continuously to detect anomalous behaviour in the
+system.
+This approach tackles both above mentioned shortcomings; it also provides additional benefits:
+i The model is generated following the real relationships of
+components in the monitored environment. The detected
+relationships involve expected relationships (e.g. firewall
+rules being evaluated before a request is transmitted to a
+secured server) but are not limited to those.
+ii The rules in the model are automatically generated and
+unique for each monitored environment. A potential
+attacker cannot easily tailor an attack to prevent rules from
+failing; the attack, after all, alters the system behaviour.
+iii Syntax and semantics of the log lines are widely irrelevant,
+since the model is tailored to the log input.
+iv Sharing information about attacks with state actors, competitors or other third parties is often forbidden by companies, although information sharing is a requirement to
+monitor critical infrastructures on a national level. The
+reasons, to forbid information sharing, vary from legal
+obligations (e.g. privacy issues) to fear of the loss of customer's trust. Given the abstract form the algorithm
+transfers processed log-lines to, information sharing is
+possible without compromising privacy. Intrusion Detection Systems only fulfil monitoring tasks. Actions to emit
+detected anomalies are not taken e humans still have to
+interpret a detected anomaly. Manual intervention is also
+required to determine the actions to take, in order to prevent further harm to the monitored ICT system.
+Fig. 1 provides a conceptional overview of the described
+approach's functionality, as first published partly in Skopik
+et al. (2014a). This visualisation splits the approach in two
+dimensions: On a horizontal dimension, the Evaluation Stack
+(visualised by the squared elements on the left side) is
+distinguished from the Refinement Branches (pictured by the
+elliptic elements on the right side). The Evaluation Stack describes the tasks performed to prepare and analyse the input
+and to detect anomalies. The approach performs all
+
+Search-Patterns (P): Patterns are random substrings of the
+processed lines. Patterns are used to categorise information contained in a log-line.
+Event Classes (C): Event classes classify log-lines using the
+set of known patterns. Each line can be classified by multiple event classes.
+Hypothesis (H): Hypotheses describe possible implications1
+between log-lines based on their classification.
+Rules (R): A rule is a proven hypothesis. This proof is given
+if the implication that is described by the hypothesis holds
+in a significant time of evaluations. The system evaluates
+1
+
+Implication in a logical sense as A/B≡:A∨B.
+
+Fig. 1 e Conceptual overview.
+
+39
+
+c o m p u t e r s & s e c u r i t y 4 8 ( 2 0 1 5 ) 3 5 e5 7
+
+(Eq. (5)). The information reported by La is encoded using the
+set of currently existing search patterns ℙ. The occurrence of
+each search pattern P, as a substring in La, is encoded with a bit
+!
+pi∊{0,1} in F (see Table 1 for an example).
+
+operations iteratively. The Refinement Branches on the other
+hand, are triggered by the Evaluation Stack's tasks; they evaluate and optimise the system model continuously. Fig. 1
+shows that refinement works in two steps. First, new knowledge is extracted from the currently processed line. Afterwards, the refinement process evaluates the knowledge and
+deletes deprecated or redundant information. The updated
+information is then available in the next iteration of the
+Evaluation Stack.
+The system model M (see Eq. (1)) is defined as a tuple built
+from the sets of: known search-patterns ℙ, known event
+classes ℂ, known hypothesis ℍ and known rules ℝ.
+M ¼ 〈ℙ; ℂ; ℍ; ℝ〉
+
+!
+F ¼ p1 …pn ;
+
+where pi 2f0; 1g
+
+(5)
+
+Fingerprinting La reduces the amount of data the next
+steps need to process e and speeds up the overall
+!
+anomaly detection e significantly. F can also be used to
+transmit log-data for external analysis; privacy issues do
+not require special consideration. Without ℙ there is no
+way to extract sensitive data. Once La is vectorised,
+!
+further analysis is performed solely on F . Information
+encoded in La, that cannot be encoded by any combinations of ℙ, is inevitably lost for further steps in the Evaluation Stack.
+
+(1)
+
+Tasks in the Evaluation Stack are performed in sequential
+order. The tasks describe the general functionality of the
+system regarding input analyses and anomaly detection:
+
+Fingerprinting Example
+1 service-3.v3ls1316.d03.arc.local apache: 2227 169.254.0.3:80 “mantis-3.v3ls1316.d03.arc.local” “mantis-3.v3ls1316.
+d03.arc.local” 169.254.0.2 - - [12/Feb/2014:13:30:16 þ 0000] “GET/mantis/login_page.php HTTP/1.1” 200 1343 “-”.
+“Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.65 Safari/537.36”.
+Listing 1: Apache log excerpt from test environment.
+Table 1 e Example of a fingerprint. Consider the sample log-line in Lst. 1 from an Apache server running Mantis in our test
+environment. This table shows an example set of patterns ℙ0 and how a fingerprint of the line in Lst. 1 would look like.
+Patterns ℙ0 :
+Fingerprint:
+
+3.1.
+
+p1
+
+p2
+
+p3
+
+p4
+
+p5
+
+p6
+
+p7
+
+p8
+
+p9
+
+GET
+1
+
+POST
+0
+
+[12/Feb/2014:13:30:15 þ 0000]
+1
+
+v3ls13
+1
+
+s1316.d0
+1
+
+ice-4.v3
+0
+
+apache:
+1
+
+login_page.php
+1
+
+mysql-n
+0
+
+Log-event extraction
+
+3.3.
+
+A basic unit of logging information, e.g., one line for line-based
+logging, one binary log data record or one XML-element, is
+called a log-atom La; an La consists of a series of single symbols
+s (Eq. (2)).
+La ¼ s1 …sn
+
+(2)
+
+Further a log event Le (Eq. (3)) is the association of a logatom La with a timestamp t; Le describes when La has been
+created.
+Le ¼ 〈La ; t〉
+
+Fingerprint generation
+
+The next task vectorises each log-atom using ℙ. A
+search pattern P (Eq. (4)) is a substring (an n-gram) of a logatom La.
+P ¼ s1þi …smþi ;
+
+!
+Once an La is vectorised and F is generated the fingerprint
+(and therefore the underlying La) gets classified. Log event
+classification is the process that determines ℂLa e the set of all
+event classes C a log-atom La belongs to (see Eq. (6)). One La can
+belong to a multitude of classes, e.g., a log-atom might be an
+‘incoming connection event’, an ‘ssh service event’ and an ‘IPzone X service event’ at the same time. Each event class, that
+La belongs to, encodes a specific type of information that was
+originally encoded in La. Notice that La is classified, not Le
+because the categorization is timestamp-independent.
+
+(3)
+
+The first task collects the logging information from various
+distributed sources in the monitored network and emits them,
+one by one, to the next state in the Evaluation Stack. Assuming
+a complete and correctly sorted stream, atoms are emitted
+individually and timely sorted to the next task.
+
+3.2.
+
+Log-atom classification
+
+where 0  i and m þ i  n
+
+(4)
+
+The vectorisation process transforms a log-atom La into an
+!
+n-dimensional pattern vector e the so-called fingerprint F
+
+ℂLa ¼ fCjLa 2Cg
+
+(6)
+
+A log-atom might also belong to no class at all. In this case
+La is discarded and not used for further evaluation. Information encoded in La is lost, since it could not be mapped to any
+existing event class C.
+An event class C (Eq. (7)) is defined as the combination of a
+!
+!
+mask C m and a value C v .
+! !
+C ¼ 〈 C m; C v〉
+
+(7)
+
+!
+The event mask C m acts as a filter and decides, what search
+patterns are considered relevant for the classification in the
+!
+respective class (see Eq. (8)). The value C v decides for all
+!
+relevant search patterns, if they are enforced on F or pro!
+hibited from being part of F , for La to be classified by C (see Eq.
+
+40
+
+c o m p u t e r s & s e c u r i t y 4 8 ( 2 0 1 5 ) 3 5 e5 7
+
+!
+(9)). Note that C v does only enforce or prohibit search patterns
+!
+that are considered relevant
+ by C m .
+!
+1 if P at i is relevant
+(8)
+C m ¼ p1 …pn where pi ¼
+0 if P at i is irrelevant
+!
+C v ¼ p1 …pn where
+
+1 if P at i is enforced
+pi ¼
+0 if P at i is prohibited or irrelevant
+
+!
+Each generated fingerprint F is classified by C if the condition in Eq. (10) holds.
+!
+! !
+Cv ¼ F ∧Cm
+
+(10)
+
+(9)
+
+Fingerprint Classification Example
+The idea of the log-atom classification is, to apply a basic concept of human reasoning. When a human analyses log-lines s/
+he scans each line and makes implications on the line's meaning from the line's content. Consider again the sample log-line
+in Lst. 1 from an Apache server running Mantis in our test environment.
+One can understand certain aspects of the log-line, without detailed knowledge about an Apache log-line’s syntax. One
+identifiable substring is apache: that tells us that this log was printed by an Apache server. We can further identify a
+timestamp with substring [12/Feb/2014:13:30:16 þ 0000] or, given some knowledge about HTTP commands, identify GET as
+one of those. We are able to extract a considerable amount of information without a lot of prior knowledge on the syntax
+and the semantics. We know the triggering application as well as the time and the request.
+Of course, the substrings used in this basic sample are chosen intelligently and not completely random (as it is done by
+the system). But this simple sample is supposed to prove something different: Replacing one of the substrings (e.g. GET with
+POST) changes the meaning of the line fundamentally. This is the concept applied by classification. The meaning of the line
+e ”‘There was a GET-request on an apache server at time t”’ e is inseparably connected with the fact, that the substrings
+apache:, [12/Feb/2014:13:30:16 þ 0000] and GET can be found in the respective line. On the other hand, those three substrings
+are insufficient to fully cover the information encoded in the line. We know that something was requested. But we don't
+know what was requested, who requested it or from which server it was requested from.
+The translation of the example above, into the formal structure of the approach, looks as follows: An event class C has to
+encode the knowledge given by the three selected patterns from above. Without loss of generality we can say, that P1 ¼ GET
+and P7 ¼ apache:. C encodes the information carried by P1 and P7 if the following two conditions hold: Cm has to consider
+!
+!
+those two patterns as relevant and Cv has to enforce them. In a more formal way that means: p1 and p7 in C m and C v have to
+be 1 and pi ¼ 0 for i ; {1,7}. C can also encode more information. Cm would have to consider more patterns as relevant
+!
+!
+!
+(formal: dpi ¼ 1 in C m for i ; {1,7}). If pi is 1 in C m but 0 in C v the represented patterns are prohibited. C might then not
+!
+classify GET-requests on a specific page (see Table 3 for an example). If pi is also 1 in C v , a certain page (e.g./mantis/login_page.php) can be enforced on La, for La to be classified by C (see Table 4 for an example). In general a prohibited pattern
+carries less information than an enforced one.
+Table 2 e Example of an event class that classifies the sample log-line in Lst. 1. While the bold patterns are enforced by C
+(i.e., they have to occur in La for it to be classified by C), italic patterns are prohibited by C (i.e., they must not occur in La for La
+to be classified by C). Other patterns are considered irrelevant by C.
+0
+
+Patterns ℙ :
+Fingerprint:
+!
+Cm
+!
+Cv
+
+p1
+
+p2
+
+p3
+
+p4
+
+p5
+
+p6
+
+p7
+
+p8
+
+p9
+
+GET
+1
+1
+1
+
+POST
+0
+0
+0
+
+[12/Feb/2014:13:30:15 þ 0000]
+1
+1
+1
+
+v3ls13
+1
+0
+0
+
+s1316.d0
+1
+0
+0
+
+ice-4.v3
+0
+1
+0
+
+apache:
+1
+1
+1
+
+login_page.php
+1
+0
+0
+
+mysql-n
+0
+0
+0
+
+Table 3 e Example of an event class that prohibits/mantis/login_page.php. The line in Lst. 1 is not classified by this event class
+C but all apache GET-requests on other pages are classified by C.
+Patterns ℙ0 :
+!
+Cm
+!
+Cv
+
+p1
+
+p2
+
+p3
+
+p4
+
+p5
+
+p6
+
+p7
+
+p8
+
+p9
+
+GET
+1
+1
+
+POST
+0
+0
+
+[12/Feb/2014:13:30:15 þ 0000]
+0
+0
+
+v3ls13
+0
+0
+
+s1316.d0
+0
+0
+
+ice-4.v3
+1
+0
+
+apache:
+1
+1
+
+login_page.php
+1
+0
+
+mysql-n
+0
+0
+
+Table 4 e Example of an event class that enforces/mantis/login_page.php. The line in Lst. 1 is classified by this event class C
+but only apache GET-requests on this pages are classified by C.
+0
+
+Patterns ℙ :
+!
+Cm
+!
+Cv
+
+p1
+
+p2
+
+p3
+
+p4
+
+p5
+
+p6
+
+p7
+
+p8
+
+p9
+
+GET
+1
+1
+
+POST
+0
+0
+
+[12/Feb/2014:13:30:15 þ 0000]
+0
+0
+
+v3ls13
+0
+0
+
+s1316.d0
+0
+0
+
+ice-4.v3
+1
+0
+
+apache:
+1
+1
+
+login_page.php
+1
+1
+
+mysql-n
+0
+0
+
+41
+
+c o m p u t e r s & s e c u r i t y 4 8 ( 2 0 1 5 ) 3 5 e5 7
+
+After classifying La the approach generates an event EC (Eq.
+(11)) for every event class C2ℂLa . An event EC carries the information that a log-event Le at time t got classified by C. These
+events are further investigated by the anomaly detection system.
+EC ¼ 〈t; C〉
+
+3.4.
+
+(11)
+
+Rule evaluation
+
+The last task of the Evaluation Stack changes the focus from
+single log-events to the relations between them. A hypothesis
+H (Eq. (12)) is a non-validated correlation rule between events
+of two different event classes. A hypothesis is used to evaluate
+the events that were triggered by the processed log-events.
+One evaluation of a hypothesis is therefore written as the
+test if ECcond /ECimpl holds in tw. The time window tw describes
+the time span (relative to t at which Le that triggered ECcond
+occurred), in which the implication has to hold. The system
+automatically creates such correlation hypotheses, and subsequently tests them, to learn about event dependencies.
+Notice that tw>0 does not hold in general. Some hypothesis
+make assumptions about events that have to have occurred
+before other events. tw is fixed at generation time of H.
+H ¼ 〈Ccond ; Cimpl ; /; tw 〉
+
+(12)
+
+The system evaluates the stream of events against the hypotheses in ℍ continuously. This evaluation process foresees
+one event queue Qi for every existing hypothesis Hi. All queues
+Qi listen to events relevant to the respective hypothesis; they
+
+
+. A periodic evaluation process acts on the
+add ECi 
+C¼Ccond ∨C¼Cimpl
+
+entries in the respective Qi; its actions are described in Table 5.
+The evaluation is performed until none of the described cases
+hold. Then there are no more evaluations to be done in the
+current state. The rule is completely evaluated e until a new
+event is received by Qi.
+
+whenever a new evaluation is stored. The most recent evaluation has always pos ¼ 0.
+SHi ¼ fejH ¼ Hi g
+
+(14)
+
+A slot Sl is a filter, that can be applied on evaluation
+streams. The operation size(Sl) returns a natural number,
+specifying the size of the slot. Applying a slot on an evaluation
+stream returns the newest size(Sl) evaluations in that stream
+(see Eq. (15)). The system generates k slots at initialization
+time with size(Sli) < size(Sli þ 1).
+   
+ 
+Sl SH ¼ ee2SH ∧pos < size Sli
+
+(15)
+
+Considering the position of evaluations as timely ordered, the
+evaluation's results produce a binary stream. The continuous
+evaluation process can then be interpreted as a Bernoulli process; a discrete-time stochastic process that takes only two
+values. This Bernoulli process is used to decide about the stability of a hypothesis; a stable hypothesis is transferred into a
+rule R. The stability function in Eq. (16) implements a left-sided
+binomial test; isS table(H) analyses the current evaluation
+stream against a pre-defined stochastic distribution that is
+described by a statistical hypothesis p0.2 A binomial test evaluates, if a given sample supports a pre-defined distribution.
+
+Bðip0 ; nÞ returns the probability that i out of n evaluations are
+positive, given that p0 is the assumed chance of an evaluation
+being positive. A significance level a is the threshold below
+which the tested sample (and with it the evaluated hypothesis H)
+are refused.3 Let further be feHt g the set of evaluations belonging
+to hypothesis H with res ¼ true. The sample of evaluations, used
+for the stability evaluation of H, is Slk(SH); the biggest slot defined.
+isStableðHÞ ¼
+
+H
+jfeHt 2Sl
+Xk ðS Þj
+
+Bðijp0 ; sizeðSlk Þ  a
+
+(16)
+
+i¼0
+
+If isS table(H) evaluates to true the tested hypothesis H is
+considered a stable rule R and becomes part of the set of rules
+ℝ (see Eq. (17)). Note that ℝ3ℍ.
+
+Table 5 e Possible evaluation results of a hypothesis.
+
+ℝ ¼ fHjisStableðHÞg
+
+Occurrence
+
+Rules are considered currently accepted hypotheses; they
+undergo the same periodical evaluations as all hypotheses.
+Additionally, their evaluation stream is analysed for anomalies. Testing a rule R2ℝ for anomalies uses the same left-sided
+binomial test, as proving stability does. Only the parameters
+change (see Eq. (19)). Let feRt 2Slk ðSR Þg be the set of all positive
+evaluations, of a given rule, passing the filter applied by Slk.
+The test tries to verify a statistical hypothesis4 p0, that is now
+given by the ratio of positive evaluations in Slk to total evaluations in Slk (see Eq. (18)). An anomaly significance aa specifies
+the threshold below which a sample is considered anomalous.
+The anomaly analysis is performed for all slots Sli with i<k.
+
+E1 ∧:E2
+
+E1 ∧E2
+
+:E1
+
+Evaluation result
+Given tw has passed the rule
+evaluates to false and a negative
+evaluation is stored. E1 will be
+deleted.
+Given both events occurred within
+tw the rule evaluates to true and a
+positive evaluation is stored. E1 and
+E2 will be deleted.
+All occurrences of E2 that lack an E1
+are deleted without an evaluation
+result being returned.
+
+The result of an evaluation of Qi e one evaluation e is
+called e (see Eq. (13)). One evaluation stores the result res (true
+or false) of the evaluation, the hypothesis Hi with respect to
+which the evaluation was performed and the position pos that
+e has in the stream of evaluations.
+e ¼ 〈res; H; pos〉
+
+(13)
+Hi
+
+Every hypothesis Hi stores evaluations in a stream S (see
+Eq. (14)). The position of an evaluation is defined as its position
+in this stream; pos is incremented for all evaluations in SHi ,
+
+2
+
+(17)
+
+p0 in this case relates to a hypothesis about the statistical
+distribution of the sample and is not comparable to an implication hypothesis as defined in Eq. (12).
+3
+n, H0 and a are part of the initial configuration and will be
+discussed in more detail in Section 6.1.
+4
+Note that this statistical hypothesis is not comparable to an
+hypothesis H2ℍ. It describes the expected probability that the
+next evaluation is positive and is tested by statistical means to
+decide if the different evaluations still support this probability or
+if a significant change is measured (i.e., an anomaly is detected).
+
+42
+
+c o m p u t e r s & s e c u r i t y 4 8 ( 2 0 1 5 ) 3 5 e5 7
+
+p0 ¼
+
+ R
+
+ e 2Slk ðSR Þ 
+t
+
+0
+k1
+
+isAnomalousðRÞ ¼ ∨ @
+j¼0
+
+1
+2Slj gj
+jfeRtX
+
+ 
+
+B i p0 ; size sj  aa A
+
+(19)
+
+i¼0
+
+An anomaly A (see Eq. (20)) is a highly significant
+deviation of the sample of evaluations that is given by
+applying slot Slj on the stream of evaluations SR (i.e., Slj(SR)),
+with respect to the expected distribution given by the
+evaluations in Slk(SH). A consists of a probability
+PjfeR 2Slj gj 
+p ¼ 1  i¼0t
+Bði p0 ; sizeðSlj ÞÞ, a rule R, on which the
+anomaly was detected, and a time t, at which the anomaly
+was detected.
+A ¼ 〈p; R; t〉
+
+(20)
+
+Rule Evaluation Example
+Example: Consider the event class described in Table 4 as
+C1 and the event class described in Table 3 as C2. We can
+now construct a hypothesis as in Eq. (21). This hypothesis
+would state that after an apache GET-request was issued
+on login_page.php there is also an apache GET-request on
+another page within at most 10 s Table 6 shows the status
+of Q1 at different timestamps. Table 7 shows how different
+evaluation results affect the evalution stream SH1 and how
+different slots access different evaluations.
+H1 ¼ 〈C1 ; C2 ; þ10s〉
+
+(21)
+
+Taking into account the last snapshot of SH1 in Table 7,
+we can calculate p0 by counting the number of positive
+
+
+evaluations that are considered by Sl3 (feRt 2Slk ðSR Þg ¼ 9).
+The size of Sl3 is 10 and the resulting p0 is then calculated
+based on Eq. (18) as 0.9. Table 8 describes all possible
+values for Sl1 and Sl2 that can be calculated by Eq. (19).
+Let's assume that aa ¼ 0.01. In this case:
+isAnomalousðH1 Þ ¼ 0:19  0:1∨0:08146  0:1 ¼ false
+Table 6 e Sample status of the event queue Q1.
+Time
+
+Q1
+
+10:30:40
+10:30:42
+10:30:50
+10:30:57
+10:30:59
+
+〈10 : 30 : 35; C1 〉
+〈10 : 30 : 41; C2 〉
+〈10 : 30 : 45; C1 〉
+〈10 : 30 : 57; C2 〉
+
+〈10 : 30 : 35; C1 〉
+〈10 : 30 : 45; C1 〉
+
+Table 7 e Sample development of the evaluation stream
+SH1 . In this sample we assume three slots (k ¼ 3) with
+size(Sl1) ¼ 2,size(Sl2) ¼ 5 and size(Sl3) ¼ 10.
+Slot 3
+
+Buffer
+
+Slot 2
+
+Sl2
+
+Slot 1
+
+Sl1
+
+10:30:40
+10:30:50
+10:30:59
+pos
+
+1
+1
+0
+1
+
+Table 8 e This table describes the values of a Cumulative
+Distribution Function (CDF) based on the slots from the
+last timeslot in Table 7. All possible values are calculated;
+the bold values are the ones valid for the values in
+Table 7.
+
+ R
+fe 2Slk ðSR Þg:
+0
+1
+2
+3
+4
+5
+t
+
+(18)
+
+sizeðSlk Þ
+
+1
+1
+1
+2
+
+Sl3
+
+0
+1
+1
+3
+
+1
+0
+1
+4
+
+1
+1
+0
+5
+
+1
+1
+1
+6
+
+1
+1
+1
+7
+
+1
+1
+1
+8
+
+1
+1
+1
+9
+
+1
+1
+1
+10
+
+1
+1
+1
+11
+
+1
+1
+1
+12
+
+Sl1
+Sl2
+
+4.
+
+0.01
+0.19
+1
+1.0e5 4.6e4 8.56e3 0.08146 0.40951 1
+
+System model management
+
+The analysis of system behaviour, as described in Section. 3, is
+highly dependent on knowledge, represented by the system
+model M. Since the proposed system does not rely on any predefined knowledge, M has to be built while analysing the
+input. A first step generates knowledge about processed input;
+this generated knowledge builds M. The lack of information
+about the meaning of good (meaningful) knowledge, justifies
+the need to evaluate M and delete deprecated or redundant
+information. The following section will go into more detail
+about how knowledge is generated and refined for search
+patterns ℙ, event classes ℂ, hypothesis ℍ and rules ℝ.
+
+4.1.
+
+Search pattern refinement
+
+Generation. Search patterns ℙ (see Eq. (4) for a single search
+pattern) are created by the system based on currently processed log-atoms La. Since search patterns are the only basis
+for vectorisation of La, it is essential, that all log-atoms are
+matched by multiple search patterns. It is therefore important
+to get a sufficient coverage of occurring log-events with search
+patterns. To achieve this the system generates new patterns
+with Alg. 1. Patterns are generated for:
+i an uncovered La (e.g., when new log sources are being
+connected).
+ii a well-covered La (in order to refine the knowledge).
+Generation of new search patterns P is balanced by generating new patterns more frequently for uncovered or weakly
+covered log-atoms.5 The system applies a simple but effective
+token bucket algorithm. Processing an Le increases the number
+of tokens in a bucket. The system generates a new search
+pattern, if there are enough tokens in the bucket. An important
+configuration parameter is the cost of a new pattern t. It is
+calculated by the configured base cost t0 plus a balancing cost t00
+that depends on the coverage of Le. This algorithm is an easy
+way to overcome the pattern balancing problem that deals with
+the fact that rarely occurring log-atoms are not properly
+indexed by the search patterns currently in ℙ, while frequently
+occurring log lines are indexed (i.e., covered with patterns) very
+well. But especially the rarely occurring log-atoms are the most
+interesting ones; they represent exceptional events. To overcome this problem, the generation of a search pattern from rare
+5
+
+Coverage in this sense means the number of already collected
+search patterns matching an La.
+
+c o m p u t e r s & s e c u r i t y 4 8 ( 2 0 1 5 ) 3 5 e5 7
+
+log-atoms is cheaper, i.e., less tokens are withdrawn from the
+bucket when a search pattern for a rare log-atom is created. This
+allows the creation of several patterns for one rare La. Buying a
+pattern for a well covered type of log atom on the other hand is
+expensive, but still affordable from time to time. The generation
+of search patterns for well covered log-atoms is not prevented,
+in order to be able to generate more restrictive event classes.
+Too general event classes result in a high number of trivial rules
+that cloud the system model.
+
+search patterns is a critical task. Existing search patterns are
+often already relevant for event classes. Merging patterns can
+have second level effects on event classes e effects on the
+information encoded in an event class. Proving that the condition in Eq. (22) holds would ensure that a merge has no effects on the information encoded in the event classes. But this
+proof is not possible without complete knowledge about
+syntax and semantics of the input data. The system has to
+substitute this proof by approximation.ses the Pr Given a
+specified threshold6 the system evaluates the number of times
+a substitution of P1 and P2 by their merge candidate P0 would
+be valid.7 A merge is considered iff the condition in Eq. (23)
+holds:
+P1 2Le 4P2 2Le ;
+
+Balancing Example
+Let's assume t0P ¼ 10 and La is the log-line from Lst. 1. Lets
+further assume that ℙ0 is again given by the set of pat!
+terns used in Table 1. Based on F La the matchCount is 6
+and the total cost t would be calculated as:
+t ¼ 10þ26 ¼ 74. So if bucketSum  74 a new pattern will be
+generated on La. Otherwise no pattern gets generated.
+
+Merging. Each La can be classified by multiple event classes and
+can therefore trigger a multitude of events E. These events are
+then used in hypotheses and rules to analyse implications
+between event classes. Given the assumptions made in the
+design of the system (namely no use of pre-defined knowledge
+about the analysed dataset) it is not possible to formally decide
+which search patterns should be generated or which search
+patterns should be combined in a new event class. Instead the
+decision process is completely random. To limit the risk of
+redundant event classes the system approximates the existence of the case given in Eq. (22) between two search patterns.
+iff P1 2La /P2 2La ; cLa
+
+(22)
+
+A merge candidate P0 is a new search pattern, that is
+created by merging two existing search patterns. A merge is
+considered possible, if (i) one pattern is a substring of another
+pattern, (ii) two patterns overlap, (iii) two patterns can be
+found next to each other in La or (iv) two patterns are only
+separated by a space in La. If one condition holds, Eq. (22) gets
+evaluated before the merge is actually performed. Merging
+
+43
+
+cLe with t now
+
+(23)
+
+The system further has to ensure that the proposed merge
+candidate is a valid substitution (i.e.: would be generated
+again if the generation process was performed on the current
+Le). If one of these conditions fails at any time during the
+evaluation P1 and P2 will not get merged. After a merge one
+pattern gets deleted while the other pattern is changed to the
+merge candidate P0 . This merge makes it necessary to update
+!
+all event classes. Table 9 shows the required changes on C m
+!
+and C v in each event class to mitigate second level effects.
+Ageing. Search patterns represent the substrings of a line that
+are known to the system as part of M. Because search pattern
+generation happens completely random not all generated
+search patterns carry useful information. Patterns can be
+categorised into (i) periodically occurring patterns (e.g.: timestamps), (ii) rare patterns (e.g.: session ids, or measurement
+values) and (iii) reoccurring patterns (e.g.: enumeration
+values, usernames, …). Most information is carried by reoccurring patterns: Localisers can give information about source
+and destination of a logged event. They can be used to identify
+involved parties. Keys are used to set information carried in a
+log-atom into a specific context (e.g., value ¼ …). Values
+contain information about the action reported by a given logevent. These values can be reoccurring (if they are part of an
+enumeration or a well defined set of possible values) or
+infrequent if they represent measurement results from a
+sensor. Arbitrary sequences, unique measurement values,
+punctuation marks or syntax dependent special characters
+provide less useful search patterns. Changes to the monitored
+system's architecture can also render certain search patterns
+useless.
+Ageing is a periodic process, that identifies and removes
+search patterns from ℙ that have no use for classifying log
+lines. This can have many reasons; two are tackled with
+ageing:
+i P reflects a unique substring from a previously processed
+log-event Le (e.g. a session ID). It will not occur any more e
+or is at least extraordinary rare e in future log-events. P is
+therefore useless for classification.
+6
+This threshold is defined manually in the configuration file of
+the system.
+7
+The substitution is considered valid if both search patterns
+have the same merge candidate on the current Le as on all Le
+before where they matched.
+
+44
+
+c o m p u t e r s & s e c u r i t y 4 8 ( 2 0 1 5 ) 3 5 e5 7
+
+Table 9 e Changes performed on event classes after pattern merge.
+!
+Cm
+!
+Cv
+!
+Cm
+!
+Cv
+!
+Cm
+!
+Cv
+!
+Cm
+!
+Cv
+!
+Cm
+!
+Cv
+!
+Cm
+!
+Cv
+!
+Cm
+!
+Cv
+!
+Cm
+!
+Cv
+!
+Cm
+!
+Cv
+
+p1
+
+p2
+
+p01
+
+Description
+
+1
+1
+
+1
+1
+
+1
+1
+
+Both patterns are enforced. Since the merged pattern covers both C has to
+enforce p01 to classify the same log-atoms as before the merge.
+
+1
+0
+
+1
+1
+
+e
+e
+
+This event class should get deleted. Since 22 holds:
+eLa : :P1 2La ∧P2 2La .
+
+0
+0
+
+1
+1
+
+1
+1
+
+P1 is ignored. Since Eq. (22) holds P1∊La has to hold anyway for La to be in C.
+
+1
+1
+
+1
+0
+
+e
+e
+
+This event class should get deleted since Eq. (22) holds:
+eLa : P1 2La ∧:P2 2La .
+
+1
+0
+
+1
+0
+
+1
+0
+
+Both search patterns are prohibited. The same has to be true for there
+merged successor.
+
+0
+0
+
+1
+0
+
+1
+0
+
+One search pattern is ignored, so the other search pattern determines the
+status of the merged one.
+
+1
+1
+
+0
+0
+
+1
+1
+
+One search pattern is ignored, so the other search pattern determines the
+status of the merged one.
+
+1
+0
+
+0
+0
+
+1
+0
+
+One search pattern is ignored, so the other search pattern determines the
+status of the merged one.
+
+0
+0
+
+0
+0
+
+0
+0
+
+Both search patterns are ignored. The same has to be true for the merged
+search pattern.
+
+Pattern Merging Example
+Table 10 e Example of the effects of a pattern merge on an event class. The patterns P3 and P4 can get merged, since they are
+overlapping parts of the general network name that is part of every network address in our sample network. Before the
+merge P4 is enforced by C while P3 is ignored. During the preparation phase it is ensured that C is not dependent on P4 any
+more since it should get deleted. Instead P3 gets enforced and P4 is ignored. After the merge ℙ0 transcended into ℙ00 after the
+!
+!
+old P4 was deleted. C m and C v are adapted accordingly.
+p1
+
+p2
+
+p3
+
+p4
+
+p5
+
+p6
+
+p7
+
+!
+Cm
+!
+Cv
+!
+Cm
+!
+Cv
+
+GET
+1
+1
+1
+1
+GET
+
+POST
+0
+0
+0
+0
+POST
+
+v3ls13
+0
+0
+1
+1
+v3ls1316.d0
+
+s1316.d0
+1
+1
+0
+0
+ice-3.v3
+
+ice-3.v3
+1
+0
+1
+0
+apache:
+
+apache:
+1
+1
+1
+1
+login_page.php
+
+login_page.php
+1
+0
+1
+0
+
+!
+Cm
+!
+Cv
+
+1
+1
+
+0
+0
+
+1
+1
+
+1
+0
+
+1
+1
+
+1
+0
+
+0
+
+Patterns ℙ :
+Old
+Prep
+00
+
+Patterns ℙ :
+New
+
+ii P reflects a substring that does not occur any more due to
+changes in the monitored system (e.g. the network name of
+a server that was shut down).
+Again e as in previous refinement steps e the system
+cannot prove behaviour of the input in the future. Knowing
+that any search pattern fulfils (i) and (ii) is not possible and
+approximations have to be applied.
+The Monitored System Behaviour Period T is defined as the
+smallest time window, in which every periodic task, in the
+monitored system, occurs at least once.8 In a corporate environment T will typically be set to one week. Given that there are
+daily and weekly backup processes, a period of one day would
+be too short. The weekly backup process would not occur in all
+periods. There can also be different workloads over the
+weekends than during week days, making a one day period not
+8
+
+This definition considers normal behaviour in the monitored
+system.
+
+optimal. A SCADA set-up allows a much shorter period. Given a
+24/7 operation mode and only non-periodic maintenance access, a period of one day is probably a good choice.
+Given a certain period T, with respect to the monitored
+system, approximation is performed as follows: a search
+pattern should age out (i.e. get deleted) iff Eq. (24) 9 and Eq. (25)
+hold:
+eLe jðtnow  rP T < tLe < tnow Þ∧P2Le
+
+(24)
+
+!
+eC C m ðiÞ ¼ 1 with Pi being the ageing candidate
+
+(25)
+
+This approximation substitutes the proof, that a search
+pattern P is not occurring any more in future log-events. In the
+condition in Eq. (24) T is used to ensure that search patterns, that
+
+9
+rP is a global configuration parameter that specifies the
+number of periods a search pattern P is kept in ℙ without occurring in any Le.
+
+c o m p u t e r s & s e c u r i t y 4 8 ( 2 0 1 5 ) 3 5 e5 7
+
+describe periodic log-events, do not get deleted during normal
+system behaviour. Search patterns that get deleted because of
+ageing, cannot be substituted by other search patterns, carrying
+the same information. Second level effects on event classes,
+from deleting a search pattern because of ageing can only be
+eliminated by the condition in Eq. (25); it ensures that there are
+no event classes considering P as relevant. The corresponding
+!
+!
+position in C m and C v can be deleted without effects on C.
+
+4.2.
+
+Event class refinement
+
+45
+
+Algorithm 2 shows the class creation process. Each event
+!
+class is generated based on the fingerprint F of the currently
+processed
+log-event.
+The
+method
+number!
+OfClassifyingEventClasses ( F ) returns the number of
+!
+event classes C2ℂ that already classify F . Once the algorithm
+!
+decided if a new event class can be generated based on F , and
+how many search patterns have to be considered, enforced
+and prohibited, the methods enforceNRandomPatterns
+!
+!
+!
+C v,
+F)
+and
+prohib(number_enforced_bits,
+C m,
+! ! !
+itNRandomPatterns (number_prohibited_bits C m , C v , F ) set
+!
+!
+the bits in C m and C v accordingly.
+
+Generation. The system defines event classes C automatically
+using a similar token bucket algorithm10 as the one used when
+generating search patterns. Each log-atom La is characterised by
+!
+its corresponding fingerprint F . Balancing event class generation
+is important because any log-event Le, that cannot be classified by
+an event class C2ℂ, contains no information interpretable to
+detect anomalies. The system ensures the following two cases in
+order to balance event class generation:
+i A new
+!
+F
+
+event
+
+class
+
+gets
+
+generated
+
+for
+
+every
+
+!
+
+eC2ℂ classifying F
+
+!
+ii New event classes might be generated for every F . Generation is less probable the more existing event classes
+!
+classify F .
+One property of event classes is generality. Event classes
+carry information because they classify a subset of the logevents described by the input. The entropy of an event EC, is
+inverse proportional to the percentage of log-events in a finite
+input set classifiable by C (see Eq. (26)).
+EntropyðEC Þ ¼
+
+jfLe gj
+jfLe jC classifies Le gj  1
+
+(26)
+
+Trivial event classes that classify all possible log-events,
+carry no information about a specific log-event. Table 11 establishes three parameters used to ensure proper levels of
+entropy on newly generated event classes.
+
+Table 11 e Configuration parameters used to ensure
+entropy on newly generated event classes.
+me
+fe
+
+fp
+
+10
+
+Enforced search patterns: This parameter defines a
+minimum of enforced bits in a new event class.
+Percentage of matching search patterns that will be
+enforced: This parameter defines a percentage of the
+search patterns matching Le. This is then the number
+of search patterns that should be enforced by a new
+event class.
+Percentage of not matching search patterns that will
+be prohibited: This parameter defines a percentage of
+the search patterns not matching Le . This is then the
+number of search patterns that should be prohibited
+by a new event class.
+
+Here, tokens (a kind of virtual credits) are generated over time
+and put into a basket. If there are enough tokens in the bucket, a
+new class is generated and the required amount of tokens
+removed from the bucket.
+
+Ageing. Event classes store information about the composition
+of log-atoms from search patterns P2ℙ. The set of known
+event classes ℂ also represents the search space used for
+creating new hypotheses in the search for rules. The monitored system can dynamically change. Certain event classes
+might not be classifying any log-events any more because of
+intended changes in the monitored system. These never
+triggered event classes increase the search space without
+increasing the set of hypotheses. As described in Section 3,
+hypotheses are generated based on the event classes classifying the currently processed log-events. Event classes that do
+not classify any log-events cannot be used to generate
+meaningful hypotheses. The ageing of event classes is a periodic process on ℂ that identifies and removes unused elements C2ℂ.
+An event class gets deleted if the conditions in Eq. (27) and
+in Eq. (28) hold:
+eLe jðtnow  rC T < tLe < tnow Þ∧C classifies Le
+
+(27)
+
+eH2ℍjC relevant for H
+
+(28)
+
+46
+
+c o m p u t e r s & s e c u r i t y 4 8 ( 2 0 1 5 ) 3 5 e5 7
+
+rules ℝ is a subset of the set of hypotheses ℍ. A hypothesis is
+considered to be a rule if isS table(H) (see Eq. (16)) evaluates to
+true. A Probability Density Function (PDF) states the probability for every number of positive elements in the sample; a
+Cumulative Distribution Function (CDF) shows the probability
+for every number of positive elements in the sample, that at
+least that many elements are positive. The CDF is used to
+determine the threshold of the hypothesis' stability. Eq. (29)
+shows the formula to calculate a PDF; Eq. (30) shows the
+calculation of a CDF.
+
+The concept is similar to the concept of the ageing process
+on ℙ. Hypotheses depend on certain event classes. The condition in Eq. (28) ensures that the ageing process only deletes
+event classes without dependent hypotheses. Event classes
+with dependent hypotheses, cannot be deleted without deleting the dependent hypotheses too. There is no way to find a
+substitution for C without possibly altering the information
+encoded in a hypothesis. Furthermore hypotheses model relations between event classes. The lack of log-events being
+classified by an event class C does not automatically mean
+that C is deprecated. Anomalous behaviour would also result
+in missing log-events. The ageing process therefore has to
+take ℍ into account. Given that the condition in Eq. (28) holds,
+the condition in Eq. (27) specifies the threshold for deleting an
+event class. The system uses the already introduced period T
+to ensure that periodic tasks occur at least once before deleting an event class. The constant configuration parameter rC
+specifies the accuracy of the approximation.
+
+
+PDFðxÞ ¼
+
+CDFðxÞ ¼
+
+n x
+p ð1  pÞnx
+x
+
+x 
+X
+n
+k¼0
+
+k
+
+(29)
+
+pk ð1  pÞnk
+
+(30)
+
+Eq. (16) describes how stability of a hypothesis is evaluated.
+But the evaluation of stability of a hypothesis is only per-
+
+Event Class Generation Example
+Table 12 e Example of a newly generated event class based on me ¼ 2, phie ¼ 0.5 and phip ¼ 0.3 and the fingerprint from Table 1.
+Patterns ℙ0 :
+Fingerprint:
+!
+Cm
+!
+Cv
+
+p1
+
+p2
+
+p3
+
+p4
+
+p5
+
+p6
+
+p7
+
+p8
+
+p9
+
+GET
+1
+1
+1
+
+POST
+0
+1
+0
+
+[12/Feb/2014:13:30:15 þ 0000]
+1
+0
+0
+
+v3ls13
+1
+0
+0
+
+s1316.d0
+1
+0
+0
+
+ice-4.v3
+0
+0
+0
+
+apache:
+1
+1
+1
+
+login_page.php
+1
+1
+1
+
+Mysql-n
+0
+0
+0
+
+If both conditions hold, the system assumes that there will
+not be a log-event in the future that can be classified by C and
+C will be deleted. If this assumption was wrong the dynamic
+generation process can potentially generate a new event class
+C0 that classifies {LejC classifies Le}.
+
+4.3.
+
+Hypothesis and rule refinement
+
+Generation. The system generates hypotheses based on ℂLa (see
+Eq. (6)) e the set of event classes that classify the currently
+processed log-atom. The generation process applies the same
+bucket algorithm as the one used for balancing the generation
+of search patterns and the generation of event classes, for
+balancing the generation of hypotheses. The algorithm increases the bucket count for every processed log-atom and
+ensures that the cost for a new hypothesis, calculated based
+on the current log-event, can be served by the bucket. The
+choice of the connected event classes and the time window tw
+is random. The evaluation of hypotheses is the most time
+consuming task performed by the system. The system is
+therefore designed to prohibit the re-generation of: (i) hypotheses that are currently in ℍ, (ii) hypotheses that can be
+substituted by a hypothesis that is currently in ℍ and (iii) hypotheses that were already discarded by the ageing process (as
+well as substitutes of those).
+Stability. The periodic generation process only generates hypotheses and cannot extend the set of rules directly. The set of
+
+formed once a reliable number of evaluations e (see Eq. (13))
+can be found in SH (see Eq. (14)). Some input has to be processed before stability of a hypothesis can be decided. The
+stability evaluation is performed on Slk(SH) (see Eq. (15)). The
+use of statistical means every time stability gets evaluated e
+in contrast to just calculating a fixed threshold once, for a
+sample set of size(Slk) e makes it possible to decide on stability,
+even if jSH j < < sizeðSlk Þ. Therefore, the decision can be made
+shorter after the generation of a new hypothesis.
+Ageing. The ageing process for hypotheses is again a periodic
+process, that checks that one of two conditions holds before
+deleting a hypothesis. The condition described by Eq. (31)
+states, that the ageing process deletes unstable hypotheses.
+Hypotheses are also deleted if they cannot be evaluated over a
+long time period. The lack of evaluations means, that the
+processed input triggers no condition events. The behaviour
+described by the rule is therefore not represented in the processed log-files. The event class, that describes the condition
+events, does not classify any log-atoms and should have been
+deleted by the event class ageing process before H got generated (see Eq. (27)). But now that H2ℍ the condition in Eq. (28)
+prohibits the deletion of the condition event class. H can never
+be evaluated, and therefore it has to be deleted by the ageing
+process. Eq. (32) describes this condition. The ageing process
+again uses the period T as estimation and a constant parameter rH  1 as a multiplier to ensure the occurrence of periodic
+log-events before deletion. The function time(e) returns the
+
+c o m p u t e r s & s e c u r i t y 4 8 ( 2 0 1 5 ) 3 5 e5 7
+
+timestamp of a given evaluation e. As described in Eq. (14) e0 is
+the newest evaluation in any SH.
+isStableðHÞ ¼ false
+
+(31)
+
+
+
+time e0 2SH < now  rH T
+
+(32)
+
+In contrast to the ageing processes for search patterns and
+event classes, the ageing process of hypotheses is applied if
+any of the before mentioned conditions holds. There are no
+atoms in M that H depends on. Eq. (31) also shows, that ageing
+can only be applied on hypotheses, never on rules since
+feR2ℝjisStableðRÞ ¼ falseg.
+
+Table 13 e Differences between recorded datasets.
+
+Recorded Time
+Simulated Users
+Mantis Instances
+
+5.
+
+2U8h
+
+4U12h
+
+8 Hours
+2
+1
+
+12 Hours 30 Minutes
+4
+2
+
+Test environment
+
+The following evaluations in Section 6 use three datasets
+that were generated with a semi-synthetic data generation
+approach as described and evaluated by Skopik et al. (2014b);
+a hybrid approach between synthetic data generation and
+collection of productive log-data. A virtual ICT network is
+stimulated by virtual users. These virtual users are implemented by scripts and are executed on separated virtual
+machines. They simulate realistic user behaviour in terms of
+service interaction properties. The data for later evaluation
+is recorded from real systems in the virtual setting. The
+result is very similar to data generated by a similar productive setting but without possible noise coming from
+malicious users or users with erroneous behaviour. The
+behaviour of virtual users is based on an analysis of user
+behaviour in a productive system with a similar setup over 3
+months.
+For the following evaluation, two datasets were recorded
+on a clean system. They will be used in the further evaluations of system parameters and performance when
+generating the system model M. Anomalies in these datasets would lead to biased results because the effects of
+anomalies on the extracted figures cannot be calculated at
+this evaluation stage. Additionally, a solid evaluation has to
+
+47
+
+show that the analysed results are not over-fitting the
+analysed dataset. The choice of two different datasets gives
+the evaluator the means to prove consistent results over
+various systems. Table 13 shows the differences between
+the two datasets. One can see that dataset 4U12h is in all
+aspects more complex than dataset 2U8h. Not only the
+recording time, but also the number of simulated users and
+the number of simulated Mantis instances (all operating on
+one database server) is higher.
+An additional dataset was recorded while anomalies were
+injected in the monitored system at different time periods.
+The configurations of the monitored system were equal to the
+ones taken when recording dataset 4U12h. It contains 12 h and
+30 min of log information. During that time 4 virtual users
+used two different Mantis instances that operated on one
+database server. The dataset consists of two main parts:
+i Training Phase: The first 7 h of the dataset are recorded on
+a clean system. In this first phase no anomalies are injected. The data are used by the algorithm to build a clean
+system model M.
+ii Attack Phase: After the Training Phase, two types of
+anomalies are injected several times in different time slots.
+One time slot is 30 min long and for each type of anomaly,
+four different slots are generated. Fig. 2 shows a timeline of
+the anomalous phase.
+Two different types of anomalies are injected in this
+dataset:
+A1 At each injection point in a time slot A1 in Fig. 2 a malicious script dumps all databases on the central database
+server. This dump is not performed remotely but directly
+on the host of the database server. After dumping the
+database, the script uses the mail server to send the dump
+files to an external network.
+A2 At each injection point in a time slot A2 in Fig. 2, a
+malicious script disables the logging facility on the central
+database server, for a certain time period. This might be
+done in order to hide the attacker's tracks while
+tampering the database. In contrast to the first type of
+anomalous time slots, the simulated attacker increases
+the number of anomalies in the monitored system by
+extending the time span the logging facility gets turned
+off, rather than performing the attack more often. The
+time periods, in which logging is turned off, range from
+30 s to 4 min; each time slot doubles the anomalous time
+span of the previous one.
+
+Fig. 2 e Timeline of the Anomalous Phase in the anomalous dataset.
+
+48
+
+c o m p u t e r s & s e c u r i t y 4 8 ( 2 0 1 5 ) 3 5 e5 7
+
+The described injections are representative. Especially
+when talking about advanced persistent threats, the attack is
+often coming from inside the network. Sophisticated attacks
+often happened beforehand to enumerate and footprint
+various users. The actual harm is then done silently when
+extracting further sensitive information. Disabling or
+tampering logging facilities in order to cover up malicious
+actions is also a common approach.
+
+6.
+
+Evaluation
+
+The following section discusses the evaluation of the approach,
+performed on the dataset described in Section 5. An evaluation
+of the configuration parameters in Section 6.1 precedes a
+detailed evaluation of the anomaly detection capabilities in
+Section 6.2. Additional evaluations were performed about the
+quality of the system model or the applicability of the approach
+in the domain of SCADA systems.
+
+6.1.
+
+Parameter evaluation
+
+As a first step this section evaluates the different parameters in
+the prototype implementation. One goal is to define a stable
+configuration of the system. Another goal is to get a practical
+impression about the influences different parameters have on
+the system model M and on the results produced by the system. Prior to the detailed evaluation a Monitored System Behaviour Period T has to be defined (see Section 4). For the given
+datasets, a period of 20 min is chosen. Although the datasets
+are based on an ICT infrastructure, the recorded setting did not
+contain any backup facilities or periodic tasks except the
+simulated user input. Based on the evaluation of the data
+generation approach (see Skopik et al. (2014b)), the actions of
+the simulated users reach a request distribution, similar to a
+productive setting after 15 min. Since the 2U8h dataset does
+only record a virtual system that is stimulated by two users, the
+period is extended with a buffer of 5 min, to be sure that the
+request distribution is comparable to the one in a real system.
+The system parameters can be divided into three
+categories:
+
+values of each parameter in the base configuration. This base
+configuration was determined in preceding iterations of evaluations of the same type. We do not go into detail about earlier
+iterations at this point. The results of the approach highly rely
+on a reasonable setting for all parameters. In early iterations
+several parameters were not chosen in a valid range which
+resulted in biased evaluation results. It was only possible after
+multiple iterations to get to a state where trends for each
+parameter could be detected. Additionally listing or visualising
+all iterations would exceed the scope of this section.
+Starting from the described base configuration all parameters in Table 14 get changed to various values separately. This
+evaluation is performed on both clean datasets from Section 5
+(namely 2U8h and 4U12h) in order to prohibit results that overfit one dataset. The figures extracted at the end of the execution
+can be seen as one arbitrary state of the system model during a
+continuing analysis. Higher absolute numbers in the results
+generated with the 4U12h dataset, compared to the 2U8h dataset
+are a result of the increased complexity of the recorded infrastructure rather than a result of a longer recording time. Each
+evaluation run will be evaluated based on six metrics:
+
+Table 14 e Basic configurations of relevant system
+parameters.
+Parameter
+Pattern Base Cost
+Event Class Base Cost (t0C )
+00
+Event Class Balancing Cost (tC )
+Hypothesis Base Cost (t0H )
+00
+Hypothesis Balancing Cost (tH )
+Prohibited Patterns (fp)
+Enforced Patterns (fe)
+
+1
+1
+30
+30
+300
+50%
+40%
+
+Number of Patterns: Describes the number of search patterns in M (also: jℙj), at the end of the execution.
+Number of Event Classes: Describes the number of event
+classes in M (also: jℂj), at the end of the execution.
+Number of Rules: Describes the number of rules in M (also:
+jℝj), at the end of the execution.
+% of Rules in ℍ: Describes the ratio between stable rules ℝ
+jℝj
+).
+and undecidable hypotheses ℍyℝ in M (also jðℍyℝÞj
+Number of Anomalous Rules: The number of rules ℝ that
+detected any anomaly during the execution.11
+False Positive Rate: Every rule is evaluated multiple times,
+during the runtime of the algorithm. Since we know that
+we are operating on a clean dataset, we expect no anomalies to be detected. We define a false positive as an evaluation of a rule that results: (i) in the rule entering an
+anomalous state, or (ii) in extending the anomalous state a
+rule is currently in. Thus not every negative evaluation of a
+rule is considered a false positive. This would be wrong
+since the system is designed to accept unique negative
+
+i Utility parameters that do not influence the direct result of
+the system. Examples are the parameters defining how the
+system can access the database to persist execution
+results.
+ii Input independent parameters that have an optimal setting
+which is not influenced by the structure and complexity of
+the analysed dataset.
+iii Input dependent parameters that have a different optimal
+setting depending on the structure and size of the analysed
+dataset.
+Several qualitative and quantitative evaluation steps preceded the following categorization of parameters. Table 14
+shows all parameters with an optimal setting that depends
+on the analysed network. The following evaluation will focus
+on the settings of dependent parameters. Starting with a base
+configuration, each parameter is altered separately to analyse
+its effects on the resulting system model. Table 14 states the
+
+Setting
+(t0P )
+
+11
+
+This is the only metric that is not completely independent of
+the execution time. A longer execution time would result in a
+higher number of anomalous rules since the chance of false
+positives increases if the analysed timespan increases. This fact
+is not considered, since this metric describes a total number and
+not a ratio depending on the time.
+
+c o m p u t e r s & s e c u r i t y 4 8 ( 2 0 1 5 ) 3 5 e5 7
+
+evaluations as accepted input. At the same time it would be
+wrong to consider every detected anomaly as a false positive. The problem here lies in the definition of true negatives. The only way to define true negatives is as: Every
+evaluation of a rule, that did not trigger an anomaly. This leads
+to the above definition of false positives.
+Based on these metrics the effects of each parameter on
+the system are analysed. In the following graphs the red line
+always describes the results produced by using the base
+configuration; the other lines describe results produced by
+altering the parameter under evaluation. The possible values
+for the various cost-parameters are not randomly chosen but
+set as a fraction of the period T. The lowest possible value is 1
+which is considered independent of T. The other values are
+T * 1E3 and T * 1E2.
+
+6.1.1.
+
+Combined parameter evaluation
+
+After evaluating each parameter separately, an optimal
+setting can be generated. Therefore, the combined configuration contains deviations from the base configuration
+regarding four different parameters:
+i The base cost for event classes is increased from 1 to 30.
+The expectation is to see a decrease in the False Positive
+Ratio and in the Number of Anomalous Rules.
+ii The base cost of hypotheses is decreased from 30 to 1. The
+expectation is an increase in the Number of Rules that is not
+caused by multiple rules describing the same relationships
+(which would be the result if the hypotheses balancing cost
+would be adapted instead).
+iii The percentage of enforced patterns is increased from 50%
+to 60%. The expectation is that more specific event classes
+are generated and that this results in a higherNumber of
+Event Classes. Additionally we expect a lower False Positive
+Rate as well as a lower Number of Anomalous Rules.
+iv The percentage of the prohibited patterns is decreased
+from 40% to 30%. The expectation is that a lower Number of
+Anomalous Rules, as well as a lower False Positive Rate, is
+generated. Additionally we expect that the Number of Event
+Classes does not decrease significantly.
+
+49
+
+Fig. 3 shows the evaluated parameters, that fulfil most of
+the expectations we had from the combined configuration file.
+Statistical outliers, in configurations where only one parameter was adapted, can be removed by the combination of
+different changes. Fig. 4 compares the combined configuration
+to the base configuration. The trend towards a lower Number of
+Anomalous Rules can be shown as well as the trend towards a
+lower False Positive Rate. Additionally the system model does
+not lose any quality. Further evaluations will now use this
+combined setting.
+
+6.2.
+
+Anomaly detection in common ICT networks
+
+This section covers the evaluation of the anomaly detection
+capabilities of the prototype implementation, based on the
+anomalous dataset described in Section 5. After a short
+introduction into the used metrics, the evaluation will be split
+into two parts; one for each type of anomaly that was injected.
+
+6.2.1.
+
+Metrics
+
+False Positive Rate. The false positive rate describes the ratio
+between the number of events that were considered positives
+(in our case the number of detected anomalies) out of the
+number of events that should have been negatives (in our case
+events where no anomaly is expected). The denominator of
+Eq. (33) is therefore the sum of false positives and true negatives (i.e., the number of events correctly considered normal).
+FPR ¼
+
+FP
+FP þ TN
+
+(33)
+
+In order to calculate this rate a definition of false positives
+and true negatives regarding the system under evaluation is
+required. We define them as follows:
+False Positive: Every evaluation of a rule that either: (i) results in an anomaly being detected by the rule, or (ii) extends the anomalous state of the rule, if the rule should not
+be anomalous, is considered a false positive.
+True Negative: Every evaluation of a rule that does not fulfil
+the conditions of a false positive, given that the system is in
+
+Fig. 3 e Comparison of the combined configuration with the different single parameter adaptions.
+
+50
+
+c o m p u t e r s & s e c u r i t y 4 8 ( 2 0 1 5 ) 3 5 e5 7
+
+Fig. 4 e Comparison of the combined configuration with the base configuration.
+
+a normal state at the time of the evaluation, is considered a
+true negative.
+A definition of false positives as the number of anomalies
+that were detected incorrectly would seem better suited at
+first sight. But when we use this definition, the calculation of a
+false positive rate is not possible any more, due to the lack of
+an equivalent definition for true negatives. Therefore calculation of the false positive rate needs to be based on single
+evaluations of rules.
+For the proposed definitions, it is not possible to calculate
+the false positive rate in an anomalous slot. Instead for every
+anomalous time slot that is evaluated we calculate the false
+positive rate in the same time slot but in the clean 4U12h
+dataset. Since complexity, number of stimulating virtual users
+and recording time are equal, the results are comparable.
+Although the actions of the virtual users are highly random,
+the evaluation does not rely on single actions of certain users
+but on the random noise that is generated by their
+interactions.
+True Positive rate. The true positive rate is the ratio between the
+number of events that were correctly classified as positives
+and the number of events that should have been classified as
+positives. Eq. (34) shows the ratio. The denominator is the sum
+of the already described true positives and the false negatives
+(i.e., events that should have been considered anomalous but
+were not).
+TPR ¼
+
+TP
+TP þ FN
+
+False Negative: Given the same time range Dt in which a
+rule should detect an anomaly, all evaluations of the rule
+are considered false negatives, if they cannot be considered true positives by its definition.
+
+6.2.2.
+
+Illegal database dump
+
+The first anomaly type that gets injected, is an illegal dump of
+all databases on the database server in the network. This
+evaluation considers four different time slots of 30 min. Each
+timeslot contains one more injected anomaly than the previous one (see also Section 5).
+In order to calculate the TPR for every anomalous slot, we
+identify a set of rules which should trigger anomalies due to
+the injections. Two examples of these rules are analysed
+below.
+Rule 849. The following rule describes the relation between a
+SHOW TABLES database command and a database connect
+request. The time frame in which this implication has to hold
+is 10 s. This means that at most 10 s before a SHOW TABLES
+command is logged, a connection to the database has to has
+happened. The last lines matched by the condition and the
+implied event are the following:
+Condition Event: database-0.v3ls1316.d03.arc.local mysqlnormal #011#01133179 Query#011SHOW TABLES
+Implied Event: database-0.v3ls1316.d03.arc.local mysqlnormal #011#01133179 Connect#011mantis_user_4@service4.v3ls1316.d03.arc.local on
+
+(34)
+
+Regarding the proposed system under evaluation true
+positives and false negatives are defined as follows:
+True Positive: Given a time range Dt in which a rule should
+detect an anomaly, all evaluations of the rule in that time
+range are considered true positives, if there is at least one
+evaluation that either: (i) results in an anomaly being
+detected by the rule, or (ii) extends the anomalous state of
+the rule, and the cause of this state is related to the
+anomaly in the monitored system.
+
+This rule has to be considered very relevant for detecting
+the injected anomalies. During a database dump, the SHOW
+TABLES command is executed multiple times. In contrast to
+the regular system behaviour, all of these commands are only
+preceded by a single connect statement. The Mantis instances
+on the other hand, reconnect for every new user request. Thus
+every database dump should trigger an anomaly in rule 849.
+Fig. 5 shows the stability development of the rule's slots,
+before and during injection A1.1. The orange line in the
+smallest slot indicates the anomaly threshold. Only if the
+
+c o m p u t e r s & s e c u r i t y 4 8 ( 2 0 1 5 ) 3 5 e5 7
+
+51
+
+Fig. 5 e Overview of the slot stabilities in rule 849 during the injection slot A1.1.
+
+certainty for an anomaly is above this threshold, an anomaly
+gets triggered. The red area marks the duration of the injection; the time stamp, at which an anomaly is detected (exactly
+2 s after the injection finished), is marked by the green line.
+Fig. 5 shows that there were some false evaluations prior to
+the injection, but they were not significant enough to be
+considered an anomaly. The anomaly probability only exceeds the threshold right after the injection is finished and an
+anomaly is detected. The anomaly is only detected by the
+short-term slot. It is not significant enough to trigger an
+anomaly in the middle- or long-term slot, but the effects on
+the anomaly probability are clearly visible.
+Rule 286. The following rule describes the fact that a database
+event is always followed by a firewall entry within 10 s. This
+rule is not optimal since it does not show a relation enforced
+by the system behaviour. Instead the described relationship
+is caused by the regular input from various users. It is not
+enforced by the system that a firewall log-event follows a
+database request. But it is normal in the monitored system
+because virtual users act in bursts of actions. It is rarely the
+case that a user only sends one single request. Instead multiple consecutive requests can be expected. There are also
+time ranges where no users interact with the system. The
+behaviour that the database server answers requests while,
+in the same time range, no user acts is considered abnormal.
+But exactly this system behaviour is triggered by the injected
+database dump if it occurs in a time window of low user activity. The last lines matched by the condition event class and
+the implied event class were as follows:
+Condition Event: database-0.v3ls1316.d03.arc.local mysqlnormal #011#01133179 Query#011UPDATE mantis_user_table
+
+Implied
+Event:
+v3ls1316.d03.arc.local
+kernel:
+[165361.740449] iptables:ACCEPT-INFO IN¼lo OUT¼ MAC¼
+00:00:00:00:00:00:00:00:00:00:00:00:08:00 SRC¼169.254.0.4
+DST¼169.254.1.0 LEN¼60 TOS¼0x00 PREC¼0x00 TTL¼64
+ID¼19898
+DF
+PROTO¼TCP
+SPT¼52372
+DPT¼3306
+SEQ¼1271940985 ACK¼0 WINDOW¼43690 RES¼0x00 SYN
+URGP¼0 OPT (0204FFD70402080A02760AC30000000001030
+306)
+Fig. 6 shows the stability development of the rule's slots,
+before and during injection slot A1.1.
+As expected the rule possesses limited stability. We can see
+that various failed evaluations prior to the injection set the
+middle-term slot into a somewhat anomalous stage, but the
+evaluations are not considered anomalous enough to be an
+anomaly. The anomaly probability in the short-term slot only
+exceeds the threshold at 9:30:25 (exactly 2 s after the injection
+is finished) and triggers an anomaly.
+Overall performance. After we decided on the set of rules that
+are considered relevant for detecting the injected anomalies,
+the FPR and the TPR for each anomalous time slot in the
+dataset can be calculated. Fig. 7 shows the results in a scatter
+diagram. The metrics were calculated with the combined
+configuration and with the base configuration, to evaluate the
+effects that the performed parameter changes have on the
+results.
+The injected anomalies are detected in every timeslot, but
+the detection rates of different rules are not very constant.
+Only about 40% of the rules in the identified rule set detected
+the anomaly timely with the combined configuration. But the
+approach did not perform constantly with either configuration. With each configuration it had difficulties to detect the
+
+52
+
+c o m p u t e r s & s e c u r i t y 4 8 ( 2 0 1 5 ) 3 5 e5 7
+
+Fig. 6 e Overview of the slot stabilities in rule 286 during the injection slot A1.1.
+
+anomalies in one of the anomalous slots. Overall, the base
+configuration had a higher detection rate (i.e., true positive
+rate) on average. But it has to be noted that the combined
+configuration was designed to reduce the false positive rate of
+the system. This tendency can be seen in the results and it is
+one reason for the lower true positive rate. The results in
+detecting the injected anomalies are not optimal but show
+that every anomaly was detected by at least one of the expected rules.
+
+Fig. 7 e ROC scatter for the time slots containing injected
+database dumps calculated with the base configuration as
+well as the combined configuration.
+
+6.2.3.
+
+Database logging disabled
+
+The second type of anomaly that is injected in the anomalous
+dataset is a time period where the logging functionality of the
+database server gets disabled. Four anomalous time slots get
+evaluated. The duration of each slot is 30 min and the duration
+of the injection differs. The injection times are: 30 s, 1 min,
+2 min and 4 min. As in the previous case, a set of rules is
+selected which are expected to detect the injected anomaly.
+Two examples are given below.
+Rule 708. This rule describes the fact that a firewall log-event is
+followed by a database connect event. This is a highly relevant
+rule that describes a very stable system behaviour: Every user
+request is handled by the firewall before it is passed on to the
+web-server. The web-server on the other hand queries the
+requested data from the database. If something turns off the
+logging facilities on the database server, an anomaly should be
+immediately detected by this rule. The last classified lines by
+the condition event class and the implied event class are as
+follows:
+Condition
+Event:
+v3ls1316.d03.arc.local
+kernel:
+[165361.682603] iptables:ACCEPT-INFO IN¼eth0 OUT¼
+MAC¼00:50:56:9c:25:67:02:01:f4:01:00:30:08:00 SRC¼172.20.
+120.49 DST¼169.254.0.2 LEN¼60 TOS¼0x00 PREC¼0x20
+TTL¼59 ID¼26264 DF PROTO¼TCP SPT¼57999 DPT¼80
+SEQ¼1135473877 ACK¼0 WINDOW¼14600 RES¼0x00 SYN
+
+c o m p u t e r s & s e c u r i t y 4 8 ( 2 0 1 5 ) 3 5 e5 7
+
+URGP¼0 OPT (020405B40402080A012C924D000000000103
+0306)
+Implied Event: database-0.v3ls1316.d03.arc.local mysqlnormal #011#01133179 Connect#011mantis_user_4@service4.v3ls1316.d03.arc.local on
+Fig. 8 shows the stability development of the rule's slots,
+before and during the injection of anomalies of the second
+type.
+The rule and its slots behave exactly as expected. The time
+before the injection starts is completely regular. Only the longterm slot measured some disturbances which seem to be late
+effects of the anomalies injected in slot A1.4. But the rule is on
+a good way to a completely stable status. Exactly when the
+first anomaly starts, all three slots exceed the anomaly
+threshold. Already the first anomaly is significant enough for
+the long-term slot to turn anomalous. It further cannot get
+stable again until the next injection hits. The anomaly probabilities in the short-term and in the middle-term slots show,
+how the size of the different slots affect their sensibility towards anomalies. Since the long-term slot does not get into a
+normal state any more, no new anomalies can be triggered for
+the second, third and fourth injection. Anyway, the effects in
+the short- and middle-term slots confirm that every single
+injection would have been discovered by the rule.
+Rule 804. This rule describes that every web-server request (it
+does not matter if it is recorded by the firewall or by the webserver directly) is followed by a database query. The
+
+53
+
+motivation to put this rule into the rule set is similar to the
+motivation for rule 708. The last lines classified by the condition event class and the implied event class are as follows:
+Condition
+Event:
+v3ls1316.d03.arc.local
+kernel:
+[165361.682603] iptables:ACCEPT-INFO IN¼eth0 OUT¼
+MAC¼00:50:56:9c:25:67:02:01:f4:01:00:30:08:00 SRC¼172.20.
+120.49 DST¼169.254.0.2 LEN¼60 TOS¼0x00 PREC¼0x20
+TTL¼59 ID¼26264 DF PROTO¼TCP SPT¼57999 DPT¼80
+SEQ¼1135473877 ACK¼0 WINDOW¼14600 RES¼0x00 SYN
+URGP¼0 OPT (020405B40402080A012C924D0000000001030
+306)
+Implied Event: database-0.v3ls1316.d03.arc.local mysqlnormal #011#01133179 Query#011UPDATE mantis_user_
+table
+Fig. 9 shows the stability development of the rule's slots,
+before and during the injections of anomalies of the second
+type.
+This rule proves even more stable than rule 708. Even
+the negative evaluations that where considered a false
+positive in rule 708 at 13:00:01 are not significant enough
+and the short-term slot probability does not exceed the
+threshold. The other results are similar to the results of rule
+708. A stable detection rate can be derived from the
+collected data.
+Overall performance. After the selection of a set of rules that has
+to detect the injected anomaly, we calculate the false positive
+
+Fig. 8 e Overview of the slot stabilities in rule 708 during all four injection slots of the second anomaly type.
+
+54
+
+c o m p u t e r s & s e c u r i t y 4 8 ( 2 0 1 5 ) 3 5 e5 7
+
+Fig. 9 e Overview of the slot stabilities in rule 804 during all injections of anomalies of the second anomaly type.
+
+rate and the true positive rate of the evaluated time slots.
+Fig. 10 shows the familiar ROC scatter. It shows that the prototype implementation performs much better on the second
+anomaly type. There is a stable true positive rate above 80%
+with a reasonable false positive rate of around 3% using the
+combined dataset. Not all rules in ℝ that we identified as rules
+that should detect the anomalies were constantly able to do
+so, but about 80% were. In the analysed slots the combined
+
+Fig. 10 e ROC scatter for the time slots containing time
+slots with disabled database logging. The values are
+calculated with the base configuration as well as the
+combined configuration.
+
+configuration also shows more stable results than the base
+configuration. The trend towards the lower false positive rate
+is again supported by the extracted data.
+
+6.2.4.
+
+Conclusion
+
+The detection capability of the prototype implementation
+regarding two types of anomalies was analysed in different
+time slots with different injection rates. The prototype
+detected all inserted anomalies but injected database dumps
+were not detected consequently by a single rule. Given the
+defined set of rules, every injected dump is detected by about
+40% of the rules in the set. This guarantees detection of the
+injected anomalies, but a relatively high false positive rate of
+3% clouds the results.
+Tampering with logging capabilities on the other hand,
+was detected at a very stable rate. It was possible to prove the
+detection of every injected anomaly by one single rule. Also
+the results of the ROC metric looked very promising.
+The discussed results support the assumption that the
+proposed anomaly detection approach can be used to detect
+the effects of abnormal requests in a system or network. Not
+all of these abnormal requests have to be caused by an
+advanced persistent threat but it was shown that typical
+anomalies can be detected timely, based on a stable system
+model. All injected anomalies where detected while the
+anomalous behaviour was still ongoing.
+
+c o m p u t e r s & s e c u r i t y 4 8 ( 2 0 1 5 ) 3 5 e5 7
+
+55
+
+Fig. 11 e Overview of the slot stabilities in rule 169 during the injection of anomalous firewall connections.
+
+6.3.
+
+Anomaly detection in SCADA networks
+
+This section covers the evaluation of the anomaly detection
+capabilities in a real world SCADA network. The used dataset
+was recorded during 1 h on a branch of a real network infrastructure from an Austrian utility provider's SCADA system
+that is coupled to the corporate LAN. Three different datasources were monitored: a Firewall that recorded and filtered
+incoming connections, a Switch that forwarded traffic to and
+from the SCADA system and the actual SCADA system that
+issued switching commands and provided measurement
+values on request.
+The events triggered in a SCADA system are highly structured and well defined. Therefore the limitations of the proposed anomaly detection approach carry less weight while its
+strengths are more prominent (namely syntax-independent
+applicability without high configuration effort). On the other
+hand the monitored systems create a very limited number of
+log-events while they are in a normal state. The number of
+log-lines in the recorded dataset is not sufficient for an evaluation. In order to achieve a reasonable number of lines, the
+existing hour is duplicated and the log-file is extended to
+represent recordings of 10 h of recorded data. This duplication
+results in a highly periodic dataset. But given the very stable
+nature of the log-lines this way to extend the dataset is
+applicable.
+The injected anomaly consists of two lines that indicate
+connection attempts from the corporate LAN that were
+accepted by the firewall. In a time range of about 10 s after the
+connections were accepted, no measurement values are sent
+
+by the SCADA system. This anomaly can either describe a
+malicious component in the corporate LAN that tampers with
+the SCADA system in an unexpected way. But it could also
+mean that the SCADA system is not responsive. An analysis of
+the system model results in a set of rules that state that every
+accepted database connection is followed by the transmission
+of measurement values back to the requester. Since the results of all rules in this set are very similar, the results for one
+rule are considered sufficient as an example (see Fig. 11). The
+events are considered completely normal up to the injection
+of the anomalous connections. The anomaly is considered
+very significant. Even the middle-term slot reaches an
+abnormal state.
+This evaluation showed that the prototype implementation was able to detect all injected anomalies with all rules
+that were expected to detect the injections. At this point we do
+not show a ROC scatter diagram. The true positive rate in this
+dataset is 1 while the false positive rate is nearly 0. We can
+conclude that the suggested approach performs very well in
+the limited SCADA dataset. The limitations of the evaluated
+dataset prohibit a more formal conclusion but the results
+show that the suggested approach is able to analyse data from
+a real-world setting in a sample domain.
+
+7.
+
+Conclusion
+
+In this work a novel anomaly detection approach that utilizes
+log-lines produced by various systems and components in
+ICT networks has been presented. After reviewing the
+
+56
+
+c o m p u t e r s & s e c u r i t y 4 8 ( 2 0 1 5 ) 3 5 e5 7
+
+current state of the art, we concluded that preventive security mechanisms and signature-based detection methods are
+insufficient to handle novel, targeted and persistent threats.
+The novel approach was first defined formally. This definition started by positioning the approach in common security
+settings before we split the actual approach into two parts.
+First, the definition of the core functionality was given and
+we stated how different parts of the automatically generated
+system model are used to detect anomalies. The second part
+defined how the system model is built. Three types of atoms
+were defined that build the system model: search patterns,
+event classes and hypotheses. Using a semi-synthetic testdata generation approach, two clean datasets were generated. We started with an evaluation of the system's
+parameters before different types of anomalies were injected
+into one dataset and the detection capabilities of the prototype were evaluated. Additionally the approach was tested
+using a real-world dataset provided from an Austrian utility
+provider that shows the approach's applicability to nonartificial input data.
+Based on the conducted evaluations we can split the results into two parts. First, we can conclude that the proposed
+approach is able to extract a system model from the combination of log-information that is collected from distributed
+systems and nodes in a network without prior knowledge of
+syntax and semantics of the log-lines. The extracted system
+model can be used to detect and distinguish different meaningful subsets of log-lines (by the means of event classes), and
+further contains complex information about implications (socalled rules) between different log-events. Single rules often
+describe implications between events from different components or systems in the network. The set of rules is therefore
+sufficient to describe the most important relations between
+different components in the network. Using this automatically generated and continuously evolving system model, the
+proposed approach is able to detect anomalies that are the
+consequence of realistic APT attacks (e.g., direct access to
+database servers, copying large amounts of data). The detection rate of different types of anomalies varies depending on
+the complexity of the dataset as well as on the effects of the
+anomalies on the generated log-lines. In complex networks, a
+reoccurring anomaly might not be detected consequently by a
+single rule. Only by combining multiple rules in the model, the
+approach is able to detect the evaluated anomaly reliably.
+Although this behaviour is sufficient to detect most anomalies, it causes a high workload on the administrator when
+performing a root-cause analysis.
+Future work deals with a more intelligent approach for the
+generation of event classes. The lack of information about
+similarities of event classes results in redundant hypotheses
+that might overload the system model. However, a more
+intelligent approach for the generation of hypotheses is not
+possible without knowledge about relations or a hierarchy
+between event classes. Given an event class hierarchy, an
+improved algorithm for the generation of hypotheses should
+be developed. One approach would be an algorithm that
+generates all possible rules in a limited subtree of similar
+event classes and only allows the most meaningful or most
+stable hypothesis to become a rule.
+
+Acknowledgements
+This work was partly funded by the Austrian FFG research
+program KIRAS in course of the project CIIS (840842) and the
+European Union FP7 project ECOSSIAN (607577).
+
+references
+
+Alperovitch D. Revealed: operation shady RAT. McAfee; 2011.
+Axelsson S. Intrusion detection systems: A survey and
+taxonomy. Technical Report. Chalmers University of
+Technology; 2000.
+Barber R. Hackers profiled who are they and what are their
+motivations? Comput Fraud Secur 2001;2001(2):14e7.
+a
+ dnı́k M. Network anomaly detection: comparison and
+Barto
+s V, Z
+real-time issues. Dependable networks and services. Springer;
+2012. p. 118e21.
+Brewer R. Advanced persistent threats: minimising the damage.
+Netw Secur 2014;2014(4):5e9.
+Caldwell T. Spear-phishing: how to spot and mitigate the menace.
+Comput Fraud Secur 2013;2013(1):11e6.
+Chandola V, Banerjee A, Kumar V. Anomaly detection: a survey.
+ACM Comput Surv (CSUR) 2009;41(3):15.
+Denning DE. An intrusion-detection model. Softw Eng IEEE Trans
+1987;2:222e32.
+Garca-Teodoro P, Daz-Verdejo J, Maci-Fernndez G, Vzquez E.
+Anomaly-based network intrusion detection: techniques,
+systems and challenges. Comput Secur 2009;28(12):18e28.
+Ives B, Walsh KR, Schneider H. The domino effect of password
+reuse. Commun ACM 2004;47(4):75e8.
+Kim G, Lee S, Kim S. A novel hybrid intrusion detection method
+integrating anomaly detection with misuse detection. Expert
+Syst Appl 2014;41(4, Part 2):1690e700.
+Kjaerland M. A taxonomy and comparison of computer security
+incidents from the commercial and government sectors.
+Comput Secur 2006;25(7):522e38.
+Kraemer-Mbula E, Tang P, Rush H. The cybercrime ecosystem:
+online innovation in the shadows? Technol Forecast Soc
+Change 2013;80(3):541e55. Future-Oriented Technology
+Analysis.
+Lee W, Stolfo SJ, Mok KW. A data mining framework for building
+intrusion detection models. In: Security and Privacy, 1999.
+Proceedings of the 1999 IEEE Symposium on. IEEE; 1999.
+p. 120e32.
+Li G, Japkowicz N, Yang L. Anomaly detection via coupled
+gaussian kernels. In: Advances in Artificial Intelligence.
+Springer; 2012. p. 343e9.
+McAfee Labs and McAfee Foundstone Professional Services.
+Protecting your critical assets. McAfee; 2010.
+Mitchell R, Chen IR. A survey of intrusion detection techniques
+for cyber-physical systems. ACM Comput Surv 2014;46(4).
+55:1e55:29.
+O'Neill M. The internet of things: do more devices mean more
+risks? Comput Fraud Secur 2014;2014(1):16e7.
+Patcha A, Park JM. An overview of anomaly detection techniques:
+existing solutions and latest technological trends. Comput
+Netw 2007;51(12):3448e70.
+Sabahi F, Movaghar A. Intrusion detection: a survey. In: Systems
+and Networks Communications, 2008. ICSNC'08. 3rd
+International Conference on. IEEE; 2008. p. 23e6.
+Skopik F, Fiedler R. Intrusion detection in distributed systems
+using finger-printing and massive event correlation. In: 43
+Jahrestagung der Gesellschaft fr Informatik eV (GI)
+(INFORMATIK 2013); 2013.
+
+c o m p u t e r s & s e c u r i t y 4 8 ( 2 0 1 5 ) 3 5 e5 7
+
+Skopik F, Friedberg I, Fiedler R. Dealing with advanced
+persistent threats in smart grid ict networks. In: 5th IEEE
+Innovative Smart Grid Technologies Conference. IEEE;
+2014a.
+Skopik F, Settanni G, Fiedler R, Friedberg I. Semi-synthetic data
+set generation for security software evaluation. In: 12th
+Annual Conference on Privacy, Security and Trust. IEEE;
+2014b.
+Sommer R, Paxson V. Outside the closed world: on using machine
+learning for network intrusion detection. In: Security and
+Privacy (SP), 2010 IEEE Symposium on; 2010. p. 305e16. http://
+dx.doi.org/10.1109/SP.2010.25.
+Sood AK, Enbody RJ. Crimeware-as-a-servicea survey of
+commoditized crimeware in the underground market. Int J
+Crit Infrastructure Prot 2013;6(1):28e38.
+Steer J. The gaping hole in our security defences. Comput Fraud
+Secur 2014;2014(1):17e20.
+Tankard C. Advanced persistent threats and how to monitor and
+deter them. Netw Secur 2011;2011(8):16e9.
+Thomson G. Apts: a poorly understood challenge. Netw Secur
+2011;2011(11):9e11.
+Thottan M, Ji C. Anomaly detection in ip networks. Signal Process
+IEEE Trans 2003;51(8):2191e204.
+von Solms R, van Niekerk J. From information security to cyber
+security. Comput Secur 2013;38(0):97e102. Cybercrime in the
+Digital Economy.
+Yin J, Zhang G, Chen YQ, Fan XL. Multi-events analysis for
+anomaly intrusion detection. In: Machine Learning and
+Cybernetics, 2004. Proceedings of 2004 International
+Conference on, volume 2. IEEE; 2004. p. 1298e303.
+Yu Y. A survey of anomaly intrusion detection techniques.
+J Comput Sci Coll 2012;28(1):9e17.
+Zhang W, Yang Q, Geng Y. A survey of anomaly detection
+methods in networks. In: Computer Network and Multimedia
+Technology, 2009. CNMT 2009. International Symposium on.
+IEEE; 2009a. p. 1e3.
+Zhang Yl, Han Zg, Ren Jx. A network anomaly detection method
+based on relative entropy theory. In: Electronic Commerce and
+Security, 2009. ISECS'09. Second International Symposium on,
+vol. 1. IEEE; 2009b. p. 231e5.
+Zhao Y, Zheng Z, Wen H. Bayesian statistical inference in
+machine learning anomaly detection. In: Communications
+and Intelligence Information Security (ICCIIS), 2010
+International Conference on. IEEE; 2010. p. 113e6.
+
+57
+
+Ivo Friedberg finished his master's studies of Software Engineering & Internet Computing at Vienna University of Technology in
+2014 and is currently a researcher at the Austrian Institute of
+Technology. His research interests lie in intrusion detection,
+machine learning, and control systems.
+Florian Skopik joined AIT in 2011 and is currently working in the
+research program “IT Security”, focusing on applied research of
+security aspects of distributed systems and service-oriented architectures. Current research interests include the security of
+critical infrastructures, especially in course of national cyber
+defence. Before joining AIT, Florian received a bachelor degree in
+Technical Computer Science 2006, and master degrees in Computer Science Management and Software Engineering and
+Internet Computing from the Vienna University of Technology in
+2007. He was with the Distributed Systems Group at the Vienna
+University of Technology as a research assistant and postdoctoral research scientist from 2007 to 2011, where he was
+involved in a number of international research projects. In context
+of these projects, he also finished his PhD studies. Florian further
+spent a sabbatical at IBM Research India in Bangalore for several
+months. He published around 60 scientific conference papers and
+journal articles, and is member of various conference program
+committees and editorial boards. Florian is IEEE Senior Member.
+Giuseppe Settanni joined AIT in 2013 as a junior scientist and is
+currently working on national and European applied research
+projects regarding security in communication and information
+systems. Before joining AIT, Giuseppe Settanni worked for 2 years
+at FTW (Telecommunication Research Center in Vienna), as a
+communication network researcher, on the development of a
+network-based anomaly detection tool in the context of DEMONS
+European Project. His current research interests include security
+of critical infrastructures, information sharing and anomaly
+detection in national cyber defence. Giuseppe Settanni will
+contribute to this project by working on design, development and
+evaluation of the system components.
+Roman Fiedler is Scientist at the AIT Austrian Insititute of Technology and runs projects in the areas of telehealth and ict security.
+Roman has got a decade of experience in network security and
+operations. He finished his Master studies in the domain of biochemistry at the University of Technology Graz.
+
+

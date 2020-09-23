@@ -1,0 +1,976 @@
+Rochester Institute of Technology
+
+RIT Scholar Works
+Theses Thesis/Dissertation Collections
+
+11-2009
+
+CACTUSS: Clustering of Attack Tracks using Significant Services
+Christopher Thomas Murphy
+
+Follow this and additional works at: http://scholarworks.rit.edu/theses Recommended Citation
+Murphy, Christopher Thomas, "CACTUSS: Clustering of Attack Tracks using Significant Services" (2009). Thesis. Rochester Institute of Technology. Accessed from
+
+This Thesis is brought to you for free and open access by the Thesis/Dissertation Collections at RIT Scholar Works. It has been accepted for inclusion in Theses by an authorized administrator of RIT Scholar Works. For more information, please contact ritscholarworks@rit.edu.
+
+CACTUSS: Clustering of Attack Tracks using Significant Services
+by
+
+Christopher Thomas Murphy
+A Thesis Submitted in Partial Fulfillment of the Requirements for the Degree of Master of Science in Computer Engineering Supervised by Associate Professor Dr. Shanchieh Jay Yang Department of Computer Engineering Kate Gleason College of Engineering Rochester Institute of Technology Rochester, New York November 2009
+
+Approved by:
+
+Dr. Shanchieh Jay Yang, Associate Professor Thesis Advisor, Department of Computer Engineering
+
+Dr. Roy Czernikowski, Professor Committee Member, Department of Computer Engineering
+
+Dr. Andres Kwasinski, Assistant Professor Committee Member, Department of Computer Engineering
+
+Thesis Release Permission Form
+Rochester Institute of Technology Kate Gleason College of Engineering
+
+Title: CACTUSS: Clustering of Attack Tracks using Significant Services
+
+I, Christopher Thomas Murphy, hereby grant permission to the Wallace Memorial Library to reproduce my thesis in whole or part.
+
+Christopher Thomas Murphy
+
+Date
+
+Dedication
+To my loving Parents, my sister Joelle, and all other friends and family.
+
+iii
+
+Acknowledgments
+I am grateful for all Dr. Yang's help and especially his "talent" for motivation. I want to thank Dr. Roy Czernikowski and Dr. Andres Kwasinski for sitting on my committee. I would also like to thank Charles Gruener for helping me understand the finer points of network setup. Also, I would like to give a special thanks to Richard Tolleson for all of his help. Lastly, I would like to thank my Engineering Wingman, Jordan Bean, and all my other classmates who are too numerous to mention here.
+
+iv
+
+Abstract
+CACTUSS: Clustering of Attack Tracks using Significant Services Christopher Thomas Murphy Supervising Professor: Dr. Shanchieh Jay Yang Network analysts are bombarded with large amounts of low level data, posing great challenges for them to differentiate and recognize critical multistage attacks. Multistage attacks are performed by hackers to compromise one or more machines in a network to gradually gain access to critical information or network operation hidden behind layers of firewall rules. These multistage attacks, composed of correlated Intrusion Detection System (IDS) alerts, can be diverse in the way they progress and penetrate the network. There exists no current literature defining how these diverse multistage attacks may be classified or categorized. This work aims to perform unsupervised learning to cluster and identify types of multistage attacks. Multistage attacks may attack services of different types, often indicating the behavior of attack penetration into the network. Divisive Hierarchical Clustering has been shown to effectively uncover underlying community structure of entities sharing similar features. This work investigates the use of attacked services as the feature and performs Divisive Hierarchical Clustering to identify groups of similar multistage attacks. The notion of social network analysis is leveraged to determine the optimal community structure with the highest modularity. The resulting clusters and dendrograms provide not only insights on characterizing multistage attacks, but also a means of reducing the data volume while enhancing the level of analysis. The outcomes of the proposed methodology are expected to improve situation awareness in the presence of many diverse multistage attacks.
+
+v
+
+Contents
+
+Dedication . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Acknowledgments . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Abstract . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 1 Introduction . . . . . . . . . . . . . . . . . 1.1 Motivation . . . . . . . . . . . . . . . . 1.2 Impact Assessment of the Attack Track 1.2.1 Feature Set Selection . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+iii iv v 1 1 2 3
+
+2
+
+Related Work . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6 2.1 Agglomerative Hierarchical Clustering . . . . . . . . . . . . . . . . . . . . 8 2.2 Divisive Hierarchical Clustering . . . . . . . . . . . . . . . . . . . . . . . 10 Methodology . . . . . . . . . . . . . . . . . . . . . . . . . . . . 3.1 Creating the Attack Service Matrix . . . . . . . . . . . . . . . 3.2 Collaborative Filtering and the Pearson Correlation Coefficient 3.3 Outlier and Residuals . . . . . . . . . . . . . . . . . . . . . . 3.4 Creating the Social Network Graph . . . . . . . . . . . . . . . Experiments and Results Analysis . . . . . 4.1 Simulator . . . . . . . . . . . . . . . . 4.2 Description of the Network . . . . . . . 4.3 Data Sets . . . . . . . . . . . . . . . . 4.3.1 Data Set sans Noise . . . . . . . 4.3.2 Data Set with Noise . . . . . . 4.4 Generating the Social Network Graph . 4.4.1 Threshold Selection . . . . . . 4.4.2 Clustering . . . . . . . . . . . . 4.4.3 Dendrograms . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 18 19 20 23 26 31 31 32 33 33 36 37 37 38 39
+
+3
+
+4
+
+vi
+
+4.5
+
+Analysis . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4.5.1 Separation of Attacks with Common Services . . . . . . . . 4.5.2 Noise vs. Noiseless Separation . . . . . . . . . . . . . . . . 4.5.3 Effects of Network Setup and Attack Types . . . . . . . . . 4.5.4 Completely Random Data . . . . . . . . . . . . . . . . . . 4.5.5 Dendrogram: Good vs. Bad Clusters . . . . . . . . . . . . . 4.5.6 Alternate Similarity Metric: Longest Common Subsequence
+
+. . . . . . .
+
+. . . . . . .
+
+. . . . . . .
+
+. . . . . . .
+
+39 41 44 46 47 51 51
+
+5
+
+Conclusion and Future Work . . . . . . . . . . . . . . . . . . . . . . . . . 59 5.1 Conclusion . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 59 5.2 Future Work . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 60 62
+
+Bibliography . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+vii
+
+List of Tables
+1.1 1.2 3.1 3.2 3.3 3.4 4.1 4.2 4.3 4.4 4.5 4.6 4.7 4.8 4.9 4.10 4.11 4.12 4.13 Virtual Terrain Attributes [2] . . . . . . . . . . . . . . . . . . . . . . . . . Properties of an IDS Alert . . . . . . . . . . . . . . . . . . . . . . . . . . Example of an Attack Service Matrix Example of a Residual Matrix . . . Example of a Similarity Matrix . . . Example of a Similarity Matrix . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4 4 21 25 27 29 35 36 36 37 42 43 45 45 48 49 54 57 58
+
+Services for Each Machine on the Academic Subnet of the Network Services for Each Machine on the Financial Subnet of the Network . Description of the Attacks Parameters for the Data Set sans Noise . Description of the Attacks Parameters for the Data Set with Noise . Description of the Resulting Clusters from Data Set sans Noise . . . Description of the Resulting Clusters from the Data Set sans Noise . Description of the Resulting Clusters from the Data Set with Noise . Description of how the different clustering results are related. . . . . Description of the Attacks Parameters of the Random Data . . . . . Description of the Resulting Clusters from the Random Data Set . . Description of the Clustering based on the LCS Similarities . . . . . Description of LCS Clustering Results . . . . . . . . . . . . . . . . Description of LCS Clustering Results . . . . . . . . . . . . . . . .
+
+viii
+
+List of Figures
+2.1 2.2 A taxonomy of clustering approaches [16] . . . . . . . . . . . . . . . . . . 7 Example of clustering by an agglomerative algorithm where the peripheral nodes, the light colored dots, were not clustered with the sub-community to which they clearly belong [24] . . . . . . . . . . . . . . . . . . . . . . . 9 Example showing how clusters contain the majority of the edges and have very few edges in between them [24] . . . . . . . . . . . . . . . . . . . . . 10 Zachary karate study social network [24]. . . . . . . . . . . . . . . . . . . 14 Resulting dendrogram and modularity plots with and without edge-betweenness recalculation [24] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 14 The Bottlenose Dolphin Community [17] . . . . . . . . . . . . . . . . . . 16 Clustered Bottlenose Dolphin Community [24] . . . . . . . . . . . . . . . 16 Methodology used in this thesis to produce results . . . . . . . . . . . . . Distribution of the values in the Example Attack Service Matrix. . . . . . Distribution of the values in the Example Attack Service Matrix . . . . . On the left, the initial graph produced if the threshold is 1.0, and on the right, the initial graph if the threshold is -1.0 . . . . . . . . . . . . . . . . Scatterplot showing number of initial edges and the number of vertices versus a sweep of threshold values . . . . . . . . . . . . . . . . . . . . . On the left there is the Original Graph created from 10 example attack tracks, created with a threshold of 0.27, and on the right, there is the Best Graph with a modularity of 0.405. . . . . . . . . . . . . . . . . . . . . . Dendrogram produced by the clustering shown in Figure 3.6 . . . . . . . XML representation of an attack tracks and its first alert. . . . . . . . . . Network used to create the results . . . . . . . . . . . . . . . . . . . . . On the left, the threshold scatter plot for the Data Set sans Noise, and on the right, the scatter plot but for the Data Set with Noise. . . . . . . . . . On the left there is the Original Graph created from 200 attack tracks of the Data Set sans Noise created with a threshold of 0.60, and on the right, there is the Best Graph with a modularity of 0.687 . . . . . . . . . . . . . . . . . 19 . 21 . 24 . 28 . 28
+
+2.3 2.4 2.5 2.6 2.7 3.1 3.2 3.3 3.4 3.5 3.6
+
+3.7 4.1 4.2 4.3 4.4
+
+. 30 . 30 . 32 . 34 . 37
+
+. 38
+
+ix
+
+4.5
+
+4.6 4.7 4.8 4.9
+
+4.10 4.11 4.12 4.13
+
+On the left there is the Original Graph created from 400 attack tracks of the Data Set with Noise. created with a threshold of 0.59, and on the right, the Best Graph created with a modularity of 0.743. . . . . . . . . . . . . . . Dendrogram produced from Figure 4.4. . . . . . . . . . . . . . . . . . . Dendrogram produced from Figure 4.5. . . . . . . . . . . . . . . . . . . Scatter plot used to determine the threshold value of 0.52 for the Random Data Set . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . On the left there is the Original Graph created from 100 attack tracks of the Random Data Set created with a threshold of 0.52, and on the right, there is the Best Graph with a modularity of 0.695. . . . . . . . . . . . . . . . Dendrogram produced from the Random Data Set. . . . . . . . . . . . . Staircase and the Tournament Tree dendrogram connections . . . . . . . Threshold scatter plots created from the LCS similarity matrices. . . . . . On the left there is the Original Graph created from LCS Data, and on the right, there is the Best Graph . . . . . . . . . . . . . . . . . . . . . . . .
+
+. 39 . 40 . 40 . 49
+
+. . . .
+
+50 52 53 54
+
+. 55
+
+x
+
+Chapter 1 Introduction
+
+1.1
+
+Motivation
+
+Network security is becoming more and more important as an ever increasing amount of data is accessible from the Internet. With this increased accessibility comes more risk, as more intruders try to gain access to networks with sensitive information. The goal of an Intrusion Detection System (IDS) is to generate an alert every time there is an unwanted attempt to access a computer system via a network. An IDS alert usually includes information such as the system type, source and target IP address, alert description, network protocol, and the time of the attack. There are two different types of intrusion detection approaches that are used to detect the intrusion alerts: an anomaly based approach and a signature based approach. These systems, although useful, have a tendency to produce false negatives and false positives, which correspond to non-detected attacks and false alerts, respectively [9]. Although they contain a lot of data, pure IDS alerts, by themselves, provide very little in the way of aiding threat identification and mitigation at the network level. A single IDS alert by itself cannot predict the next event of an ongoing attack, but rather is produced when malicious attacks on a network are discovered [2]. These low level alerts pose challenges to any analyst trying to differentiate and recognize multistage attacks. Although IDS alerts do produce useful information, real-time IDS systems, by themselves, are not nearly
+
+1
+
+advanced enough to detect sophisticated multistage network attacks created by "trained professionals" [3]. In order for more useful analysis to be done, some sort of classification or correlation will need to be performed first. One proposed correlation method uses CRIM, "a cooperative module for intrusion detection systems," which is part of the MIRADOR project researched under the auspices of the French Defense Agency [9]. This approach reduces the total number of alerts sent to a network administrator by clustering groups of alerts together, and then merging the alerts within a cluster to create a new representative alert for each cluster [9]. Since with this alert merging strategy there are still too many alerts, alert correlation is then performed to further reduce the number of alerts [9]. This correlation uses automatically generated correlation rules, which scrutinize the post condition of one alert and the pre condition of another alert to see if correlation is possible [9]. Another correlation scheme, presented in [18], proposes using a fusion engine to cluster thousands of alerts into 14 classes of multistage attack categories. These attack categories are Recon Sniffing, Recon Footprinting, Recon Scanning, Recon Enumeration, Intrusion Root, Intrusion User, Escalation OS, Escalation Service, Goal DOS, Goal Ethical, Goal Corruption, Goal Espionage, Goal Backdoor, and Goal Pilfering [19]. The attack stage categories of the alerts are then employed to generate multistage attack tracks of alerts. Using the categories of the alerts, the source IP address, and the destination IP address of the alerts, it becomes possible to dynamically generate the sequential attack track of an ongoing attack [19].
+
+1.2
+
+Impact Assessment of the Attack Track
+
+In order to detect these ever more sophisticated attacks, the attacks need to be classified and correlated to be beneficial to the network analyst. It has therefore been decided to classify and correlate the sequential multistage attack tracks. For this to be done, the properties of the attack tracks must be known. Since a singular attack track is nothing more than a
+2
+
+sequential set of IDS alerts, the properties and attributes of the alerts within an attack track are the properties and attributes of the attack track itself. Ultimately, the impact assessment of the attack track will in some way be used to classify and correlate the attack tracks created by the fusion engine. Currently, classification is dependent on first correlating individual alerts into sequential attack tracks, and then either assigning attack tracks to non-scalable attack models [26] or using machine learning on observed attack tracks [13]. This classification of attack tracks can allow for a more concrete understanding of group behavior, but unfortunately, there are no available ground truths, and machine learning may "lead to misleading predictions" [10]. The answer to these obstacles is to use unsupervised classification. According to Jain in [16], "Clustering is the unsupervised classification of patterns (observations, data items, or feature vectors) into groups (clusters)." Clustering will be used to provide the unsupervised classification of the attack tracks. However, the features of the attack tracks that will allow the clustering to be performed have yet to be decided. In order for this to be determined, the nature of the data needs to be analyzed carefully. 1.2.1 Feature Set Selection
+
+Clustering relies on some kind of connections or similarity between the nodes. In this thesis, similarity between attack tracks will be determined by the impact of the attack track on the virtual terrain. The thesis of Argauer [2], presents the concept of using a virtual terrain to accumulate and update all pertinent information regarding a computer network. The virtual terrain is modeled as a directed graph where hosts, users, and routers are nodes connected by directed edges, which allows for the calculation of impact assessment [2]. The virtual terrain, which has its attributes defined in Table 1.1, is the terrain on which all attack tracks attack the network. In Table 1.2, all the entries within an IDS alert are listed. Collectively, all these properties in Table 1.2 can be considered the potential feature sets of the attack track.
+
+3
+
+Host A node identifier IP address(es) Host name(s) Machine criticality Neighbor list Allowed (Boolean) Permission List Service tree(s) List of users
+
+Router A node identifier Router name Neighbor Permission List Allowed (Boolean) Traffic flow permission list
+
+User User ID Account(s) with privilege level Account criticalities
+
+Table 1.1: Virtual Terrain Attributes [2]
+
+Alert Properties Time Service Exploited Description Protocol Source IP Destination Priority Table 1.2: Properties of an IDS Alert
+
+4
+
+One (or perhaps multiple) features from Table 1.2 must be chosen as the metric to perform clustering on the attack tracks. For this thesis, the most important features are the attacked services, which correspond to the service trees of the host nodes. According to the virtual terrain model described in [2], services are represented as the "service tree(s)" attribute in Table 1.1. The service tree keeps track of the services, the version of the services, and the corresponding IDS alerts to those services for the given host node [2]. The privilege level of the service attacked on the exploited machines is a good indication of the privilege level that an attacker has on a compromised machine. If this is to happen, the attacker is most likely to have access to all the other services and data at the same or lower privilege level [13]. In addition to this, services are not distributed evenly throughout the network. The services throughout a network are setup as needed. Because of this, some "unique" services are bound to be set up unevenly throughout the network. Also, it may very well be possible that same or similar services may be susceptible to the same kind of attack [13]. Consequently, clustering attack tracks (sometimes just referred to as "attacks") by the similarity of the services that they target has potential to perform classification and correlation needed by network analysts.
+
+5
+
+Chapter 2 Related Work
+As stated in the previous chapter, the classification of the attack tracks is going to be performed by service based clustering. However, a method or series of methods need to be explored and analyzed to determine the optimal mathematical algorithm to extract the necessary data from the attack tracks so that the clustering can be performed. According to [16], "Clustering is useful in several exploratory pattern-analysis, grouping, decision-making, and machine learning situations, including data mining, document retrieval, image segmentation, and pattern classification." As clustering is a type of unsupervised learning and because there are no predetermined categories prior to clustering, it is ideal for grouping attack tracks into sub-communities. In unsupervised learning, the category labels are "data driven," where the category labels are calculated purely from the data [16]. At this point, it is necessary to explore several clustering algorithms before choosing one to cluster the attack tracks. In the clustering taxonomy suggested by [16] in Figure 2.1, the top level division is between hierarchical and partitional clustering. Although there are "other taxonomic representations," [16], this taxonomic representation is useful in showing the top-level division between hierarchical and partitional clustering. This taxonomic representation also shows the major types of partitional clustering algorithms. K-means clustering and graph theoretic clustering are two examples of partitional clustering. K-means clustering works by converting the data into an n-dimensional vector and
+
+6
+
+Figure 2.1: A taxonomy of clustering approaches [16]
+
+then clustering the data into k clusters by their proximity in n dimensional space [16]. Graph theoretic clustering operates by separating the data into k clusters by placing separations between the clusters where the separations would create the largest distances between clusters [16]. Partitional clustering algorithms have advantages and disadvantages over the hierarchical algorithms. The main advantage is that for large data sets, partitional algorithms are less computationally expensive than the hierarchical clustering algorithms [16]. One of the reasons for this is because the number of output clusters is required as an input to the partitional clustering algorithm [16]. This downside alone is enough to discount all partitional algorithms, such as squared error algorithms (including k-means clustering) and graph theoretic clustering, because the number of clusters is not known before the clustering is performed. The main feature of hierarchical clustering, the other type of clustering algorithm, is the production of a dendrogram, which allows for the display of the breakdown of clusters at any time during the clustering algorithm. The main division in hierarchical clustering as shown in Figure 2.1 is between single link hierarchical and complete link hierarchical
+
+7
+
+clustering. However, in [24], the authors suggest a different division for hierarchical clustering. They suggest there is agglomerative clustering, which depends on the addition of edges, and also divisive clustering, which depends on the removal of edges. This new top level division of hierarchical clustering methods has superseded all others, including the representation in Figure 2.1.
+
+2.1
+
+Agglomerative Hierarchical Clustering
+
+In [11], the authors suggest that agglomerative hierarchical clustering can be used to organize "gene expression of data." The first step in this process was to find a measure of similarity between two genes. The genes, in this case, are represented as "n-dimension vectors, which represented a series of n measurements" [11]. Euclidean distance, angle, and dot product were considered in the past for the similarity metric, but the dot product was chosen because it "conformed well to the intuitive biological notion of what it means for two genes to be coexpressed," but this method placed no emphasis on the magnitude of two series of measurements [11]. For this experiment, tables are set-up where the rows were genes and the columns represented a certain experiment. The values in the table itself are each a fluorescence ratio, which is then log base 2 transformed [11]. Then, the Pearson correlation coefficient is used to calculate the similarity between each single pair of genes, which are placed into an upper-diagonal matrix. From this upper-diagonal matrix, agglomerative hierarchical clustering can be performed. The algorithm is shown in Algorithm 1.
+Algorithm 1 Agglomerative hierarchical clustering proposed in [11] while there is more than one node do Find the highest similarity value Find the weighted average of the two corresponding nodes (so we now have one less node) Recalculate the similarity matrix end while A hierarchical tree will show how the nodes are related
+
+8
+
+Figure 2.2: Example of clustering by an agglomerative algorithm where the peripheral nodes, the light colored dots, were not clustered with the sub-community to which they clearly belong [24]
+
+This process continues until all the nodes have been clustered together into one node. The dendrogram is produced by drawing an edge on the dendrogram every time a pair of nodes has the highest similarity. The results of the clustering were positive as genes with similar functionality were clustered together [11]. Despite its success in [11], agglomerative clustering has two main problems. The first problem is that the method sometimes fails to find sub-communities when the subcommunities are known ahead of time [24]. Because of this, Newman and Girvan [24] find it "difficult to place much trust" in agglomerative hierarchical clustering algorithms. The second problem is that "peripheral nodes that have no strong similarity to others tend to get neglected, leading to structures as shown in Figure 2.2 [24]. There are a number of peripheral nodes whose "community membership is obvious to the eye," but agglomerative clustering often fails at assigning such nodes to the correct cluster [24]. For these reasons, divisive hierarchical clustering will now be explored.
+
+9
+
+Figure 2.3: Example showing how clusters contain the majority of the edges and have very few edges in between them [24]
+
+2.2
+
+Divisive Hierarchical Clustering
+
+Social networking and the clustering of a social network into naturally occurring subcommunities has been well studied [15, 21, 23, 24, 28]. In [24], the authors suggest instead of agglomerative clustering, divisive clustering should be done instead. This means that instead of adding edges to the graph, edges must be removed from the graph one at a time to reveal the underlying sub-communities. The goal is to find naturally occurring subcommunities within the network graph. According to Newman in [23], the vertices within a network graph will fall naturally into sub-communities. The overwhelming majority of edges should be present within a sub-community, and ideally, there should be very few edges between them. An example of this is shown in Figure 2.3. The questions of how many edges and which order to remove them become important. Luckily, there is a measurement to calculate the quality of the community structure in a
+
+10
+
+social network graph after any number of edges have been removed. This measurement is defined in Equation 2.1,
+m
+
+Q=
+s=1
+
+ds 2 ls - [14] L 2L
+
+(2.1)
+
+where m is the number of sub-communities in the particular partition, ls is the number of edges within the sub-community, L is the number of edges in the graph, ds is the degree of the nodes in sub-community s, and a partition is any instance of the social network graph after edges have been removed. However, there are countless unique ways to partition a network graph. It is computationally expensive to mathematically determine the modularity of each and every partition to determine which is the most effective. According to Newman and Girvan in [24], finding the perfect partition is believed to be an NP-complete problem. Because of this, an algorithm has been developed to find a partition that may not be the very best, but still performs quite well in a reasonable amount of time. The edge removal algorithm is used in conjunction with modularity to find what is hoped to be the best partition of the original network graph. The essence of this divisive clustering algorithm is to remove an edge and then check the modularity. This is done iteratively until the graph has no more edges left to remove. Determining which edges to remove and what order to remove them is more complicated and more theoretical. The whole concept of modularity is based on the belief that in the best clustering instance, the majority of edges are found within sub-communities rather than between them. Consequently, if two separate sub-communities are connected by only a few edges, the goal of the divisive algorithm is to find these edges and systematically remove them, leaving natural occurring sub-communities behind [24]. The task is to find these edges, which are defined by their edge betweenness, the calculation of which is a two step procedure [24]. The first step in calculating this edge betweenness is the breadth-first search where the distance between every pair of vertices, and the number of shortest paths
+11
+
+(the weights) are calculated. The algorithm for the breadth-first search is explained in detail in Algorithm 2.
+Algorithm 2 Breadth-first algorithm for edge betweenness [24] 1. The initial vertex s is given distance ds = 0 and a weight ws = 1. 2. Every vertex i adjacent to s is given distance di = ds + 1 = 1, and weight wi = ws = 1. 3. For each vertex j adjacent to one of those vertices i we do one of three things: (a) If j has not yet been assigned a distance, it is assigned distance dj = di + 1 and weight wj = wi . (b) If j has already been assigned a distance and dj = di + 1, then the vertex's weight is increased by wi , that is wj = wj + wi . (c) If j has already been assigned a distance and dj < di + 1, we do nothing. 4. Repeat from step 3 until no vertices remain that have been assigned distances but whose neighbors do not have assigned distances.
+
+Using these weights and edges in step two, the actual edge betweenness can then be calculated in reference to every starting path that starts at vertex s. The belief is that most of these shortest paths or at least a high percentage of them must traverse edges that run in-between natural sub-communities within a network. This second step is shown in Algorithm 3.
+Algorithm 3 Edge betweenness [24] 1. Find every "leaf" vertex t, i.e., a vertex such that no paths from s to other vertices go through t. 2. For each vertex i neighboring t assign a score to the edge from t to i of wi /wt . 3. Now, starting with the edges that are farthest from the source vertex s. To the edge from vertex i to vertex j , with j being farther from s than i, assign a score that is 1 plus the sum of the scores on the neighboring edges immediately below it (i.e., those with which it shares a common vertex), all multiplied by wi /wj . 4. Repeat step 3 until vertex s has been reached.
+
+There is now an edge betweenness value for every edge in reference to all m vertices as s, the source vertex. The edge betweenness values are then summed together to find an overall edge betweenness value for each edge. The edge with the highest edge betweenness is then removed. The unique part about this algorithm (besides being divisive), which Newman and Girvan are quick to point out, is the recalculation step [24]. After each edge removal, the edge betweenness values need to be recalculated. With this recalculation
+12
+
+included, the algorithm is shown in Algorithm 4.
+Algorithm 4 Hierarchical Divisive Clustering [24] while edges are present do Remove the edge with the highest betweenness value Calculate the modularity for the resulting graph Recalculate the edge-betweenness for all the edges end while Graph with highest modularity is the resulting graph
+
+Newman and Girvan explained the need for the recalculation step by using the Zachary karate club study [24]. The Zachary karate club study social network, which will be explained in further detail later, is shown in Figure 2.4. Using this network, it is possible to see the importance of the recalculation step in Algorithm 4, where the resulting dendrogram and plot of modularity for the results of clustering are shown with and without the recalculation step in Figure 2.5. It is not debatable; the recalculation of the edge betweenness is a necessary step in the algorithm. With this recalculation, Figure 2.5(a) shows a definitive community structure; there is no community structure in Figure 2.5(b) without recalculation. One downside to divisive hierarchical clustering is the length of time it takes to compute the edge betweenness for every edge removal. Finding the edge betweenness for one removal is done in time O(mn), where m is the number of vertices and n is the number of edges [24]. Since n edges have to be removed, divisive hierarchical clustering can be run in time O(mn2 ) (or O(m3 ) for a sparse graph) [24]. On the other hand, agglomerative hierarchical clustering, which was discussed earlier, runs in time O(m3 ). It takes time O(m2 ) to find the highest similarity, and then this needs to be multiplied by m for all m vertices to get time O(m3 ). Since n is significantly larger than m, agglomerative hierarchical clustering is significantly faster in a standard network. Now that divisive hierarchical clustering has had its intricacies explained, it is time to explore actual previous applications of the algorithm. The authors of [22] show how divisive hierarchical clustering was able to detect sub-communities known ahead of time.
+13
+
+Figure 2.4: Zachary karate study social network [24].
+
+(a) With Recalculation
+
+(b) Without Recalculation
+
+Figure 2.5: Resulting dendrogram and modularity plots with and without edge-betweenness recalculation [24]
+
+14
+
+In order for already known sub-communities to be detected, the original social network graph needs to be constructed. This construction is synonymous with the adding of initial edges to the social network graph. For the Zachary karate club study, the initial edges were drawn by Newman and Girvan if Zachary had drawn an edge between the pair in his study [24, 29]. In [29], Zachary came up with a list of 8 contexts for friendship, all of which were forms of social interaction outside the karate club. If a pair of students met the criteria for at least one of the eight contexts, they were considered friends, and an edge was drawn between them in [29]. In the process of studying the social dynamics of the karate club, the karate club split, with half of the club following the teacher and half of the club following the administrator. This split that Zachary studied allowed Newman and Girvan to draw initial edges between people, and allowed for the testing of the divisive hierarchical clustering algorithm in [24]. Very convincingly, only one node, node 31, was misclassified by the clustering algorithm [24]. Not all networks will have edges conveniently drawn by others for clustering to be performed on. In [17], Doubtful Sound bottlenose dolphins of New Zealand were studied. The interactions between the adult members of the communities were analyzed. A halfweight index was used to determine if the presence of two dolphins together was more than 95% certain that it was not random; if it was determined the pair spending time together was not random, an edge was drawn between them on a social network graph [17]. A picture of this network is shown in Figure 2.6. In [24], the authors then performed clustering, which created the network that Lusseau created in Figure 2.6. The network was clustered into four clusters with a modularity of 0.52, which is quite high, in Figure 2.7. In Figure 2.7, four clusters were found, but if we only look at the two clusters created from the first split, then the divisive hierarchical clustering algorithm was successful as the algorithm found two large groups, which were known ahead of time [17]. What is of
+
+15
+
+Figure 2.6: The Bottlenose Dolphin Community [17]
+
+Figure 2.7: Clustered Bottlenose Dolphin Community [24]
+
+16
+
+particular interest is the use of a threshold to determine whether or not the pair of dolphins were friends, which allowed for an initial edge to be drawn between them. Despite the many positive aspects of hierarchical clustering, the downsides must also be discussed. This approach, where the highest modularity is the best partition, can present a minor problem as well. The quality of any partition has no inherent meaning unless it is compared to the "expected" graph of the exact same size [14]. Specifically, in [14], Santo Fortunato and Marc Barthlemy show that "modularity contains an intrinsic scale that depends on the total number of links in the network. Modules that are smaller than this scale may not be resolved, even in the extreme case where there are complete graphs connected by single bridges" [14]. This means that the algorithm might not be able to determine if a single large cluster is indeed a single cluster or rather a group of smaller clusters [14]. A related "problem" to this was seen in the Zachary karate club and the Doubtful Sound dolphin clustering. Mathematically, the best sub-community found using the algorithm was a further break down of the real life sub-communities. The modularity equation has no concept of size or social dynamics; it purely looks edges, vertices, and clusters. Despite this, modularity is still a good measure of the sub-community quality of the graph. These embedded smaller clusters can easily be seen through the use of the produced dendrogram, which is the main product of the divisive hierarchical clustering algorithm.
+
+17
+
+Chapter 3 Methodology
+The methodology employed in this thesis needs to find sub-communities of attack tracks based on the services exploited. These sub-communities are to be found using divisive hierarchical clustering, which was chosen over other forms of clustering. Before divisive hierarchical clustering can be performed, the attack tracks need to be converted into a starting social network graph complete with initial edges. The first issue is how to mathematically model the services exploited by a particular attack. Two potential methods for doing this are to either analyze the order the services were attacked or to analyze how many time each service was attacked by each attack track (service counts). It was decided that because social network graphs can be easily represented as an adjacency matrix, the group of attack tracks should also be represented as a matrix. Because of this, service counts were chosen. Looking at the sequences is also relevant as it is analyzed by Bean in his master's thesis [4]. Computing the service counts for each attack is trivial and results in a matrix of attack service counts, the Attack Service Matrix, which is formally defined in the next section. Part of the methodology involves the design of a series of steps that can convert the attack service matrix into an adjacency matrix, which can then be converted into a pre-clustering social network graph. An overview of this methodology with the intermediate steps is shown in Figure 3.1.
+
+18
+
+Figure 3.1: Methodology used in this thesis to produce results
+
+3.1
+
+Creating the Attack Service Matrix
+
+The first step is to create the attack service matrix from the actual set of attack tracks. If T is an attack track, then ti is the ith alert in attack track T , and then x is the number of alerts in attack track T ,
+
+T = {t1 , t2 , t3 , . . . tx }
+
+(3.1)
+
+where the sequential attack track is represented in Equation 3.1. Since in this thesis, the services attacked by the attack tracks are of interest, the set of potential service targets can be represented as service array, S ,
+
+S = {s1 , s2 , s3 , . . . sn }
+
+(3.2)
+
+where n is the number of distinct services. Then, in order to represent services attacked by an attack track, let R be the attack service array, where ai is the number of visits the corresponding attack track made to service si , the service count, which is part of service set S ,
+
+R = [a1 , a2 , a3 , . . . an ]
+
+(3.3)
+
+19
+
+where si represents service i and where the number of distinct services is n. Since the number of attack tracks is m, the attack service arrays can be put together to form the two dimensional m by n attack service matrix, A.     . . . a1,n   . . . a2,n    . . . a3,n    . .. . . .    . . . am,n  R1   a1,1 a1,2 a1,3     R2   a2,1 a2,2 a2,3         A=  R3  =  a3,1 a3,2 a3,n  .   . . .  .   . . . . .  .   .    am,1 am,2 am,n Rm
+
+(3.4)
+
+3.2
+
+Collaborative Filtering and the Pearson Correlation Coefficient
+
+Once the attack service matrix is constructed, the process towards creating the adjacency matrix begins. In an attack service matrix, the services targeted by an attack track are represented by an array, and the services targeted by a group of attack tracks are represented by a matrix. Similarity between attack tracks are calculated by the similarity between the values of the rows in the attack service matrix. There are a number of intermediate steps between the attack service matrix and the creation of the adjacency matrix. Attack tracks, in this thesis, are to be clustered by service based similarity. An example of an attack service matrix is shown in Table 3.1. The example attack service matrix shown in Table 3.1 in some ways resembles the rankings of movies that are given by movie goers. In this comparison, we have movie goers (or users) instead of attack tracks, and movies instead of services. However, there are some distinct differences. In Table 3.1, there is a high number of service counts of zero. A table of movie ranks would also be scaled where perhaps five would be the highest rank and one would be the lowest rank. There is no scale of values in the example attack service matrix shown in Table 3.1; the lowest value is zero, and the highest value just happens to be six. In a table of movie ranks provided by users, the distribution of the data would be
+
+20
+
+NetBIOS Server
+
+SMTP Server
+
+HTTP Server
+
+IMAP Server
+
+POP3 Server
+
+DNS Server
+
+RPC Server
+
+FTP Server
+
+Service A
+
+Service B
+
+Telnet
+
+AIM 0 0 0 0 0 0 0 0 0 0
+
+Attack Track 1 Attack Track 2 Attack Track 3 Attack Track 4 Attack Track 5 Attack Track 6 Attack Track 7 Attack Track 8 Attack Track 9 Attack Track 10
+
+4 0 5 0 5 4 2 2 6 2
+
+4 2 0 1 0 1 0 0 4 1
+
+2 0 0 0 0 0 0 0 1 0
+
+2 3 0 2 1 4 1 2 3 6
+
+0 0 0 0 0 0 0 0 1 1
+
+0 0 0 0 0 0 0 0 0 0
+
+0 0 0 0 0 2 0 1 0 0
+
+0 0 0 0 0 2 0 0 0 0
+
+0 0 0 0 0 0 0 0 0 0
+
+0 0 0 0 0 0 0 0 0 0
+
+0 0 0 0 0 1 0 1 5 1
+
+0 0 0 0 0 0 0 0 0 0
+
+Table 3.1: Example of an Attack Service Matrix
+
+distributed in a bell or Gaussian curve. The distribution of attack service matrix values from Table 3.1 is shown in Figure 3.2, and is not bell shaped. Instead, the data is heavily skewed. If we assume the data in the attack service matrix is bell shaped and evenly distributed, the Pearson correlation coefficient could be applied. In the case of movie rankings, which are distributed in a bell shape, collaborative filtering can be used as a recommendation system that is built on the assumption that others who have liked the same movies as you in
+
+Figure 3.2: Distribution of the values in the Example Attack Service Matrix.
+
+21
+
+SQL 0 0 0 0 0 0 0 0 0 0
+
+SSH
+
+the past will be able to recommend movies to you in the future [5]. The thinking behind this logic is that a group of people with similar ranking tendencies will be able to recommend movies to others within the sub-community. In the case of this thesis, as stated earlier, there are attack tracks and services instead of people and movies. By using this collaborative filtering approach to find similar attack tracks, the grouping of attack tracks may be possible via this method. The seminal paper on collaborative filtering, [27], introduced GroupLens, which was one of the first recommendation systems, and it helped Usenet users find articles that would be interesting to them. GroupLens worked on the simple principle that users who liked the same articles in the past were likely to enjoy the same articles in the future [27]. GroupLens had the users rank the articles, and then correlated the ratings to find similar users. A pool of similar users was then created for each individual user. However, being in one user's similarity pool did not guarantee vice versa. In order to calculate similarity between pairs of users so that the predictions could be made, the Pearson correlation coefficient was used [27]. This equation is shown in Equation 3.5, where Wi,j is the similarity between users i and j , Ri,k is the ranking given by user i Ż i is the average ranking for user i. for movie k and R Żi Ri,k - R Żi Ri,k - R
+2
+
+Wi,j =
+
+Żj Rj,k - R Żj Rj,k - R
+2
+
+[5]
+
+(3.5)
+
+The number in this similarity pool is generally capped at a certain value. However, the number of users in this pool does not have to be capped as the preferences of dissimilar users are negatively weighted, but the idea of caps does introduce the notion that these caps may limit overlapping. Since the interest here is the groups and not predictions, the possibility of using discrete groups instead of similarity pools to create the clusters is an interesting one. If the data in an attack service matrix was evenly distributed, the Pearson correlation
+
+22
+
+coefficient could be applied to create a similarity matrix. However, before the similarity matrix can be created, the data in the attack service matrix must be in some way modified to allow for the successful application of the Pearson correlation coefficient so that similarity values can be calculated.
+
+3.3
+
+Outlier and Residuals
+
+Although the values in the attack service matrix can technically be used to create the values in the similarity matrix, for reasons discussed above, this cannot be done. Since the attack tracks are different lengths, different services are targeted with different frequencies, and the values are all scaled differently, one of the challenges of this thesis is to find a mathematically sound method for modifying the attack service matrix so that the Pearson correlation coefficient can be applied. The obvious approach, applying standard vector normalization to the rows, cannot be used on the attack service matrix because this will not take into account the skewing of the attack service counts towards certain services. Because of this, a different approach needs to be utilized to find the important services for each attack track. Important services in the attack service matrix are likely to stand out as outliers; finding the outliers in the attack service matrix would be useful. Given a two dimensional matrix, residuals (that result from fitting row column averages to the observed entries) can be used to detect outliers in a two dimensional matrix [1]. For example, within the attack service matrix, the values are dispersed throughout the matrix non-uniformly. This non-uniformity makes sense as attack tracks are of different lengths, and different services are attacked with different frequencies. These outliers can indicate which services are important to which attack tracks. Residuals can be calculated from a matrix and allow outliers to be easily distinguished from the non-outliers. The attack service matrix can be classified as a two-way table where the IDS alerts are classified in two ways (attack track and service), which is why the residuals of the attack service matrix are of interest. The method for finding the residuals is to
+23
+
+Figure 3.3: Distribution of the values in the Example Attack Service Matrix
+
+first find the difference between the observed values in the attack service matrix and the fitted values, which are calculated from the observed values. Let C be an m by n residual matrix (same dimensions as the attack service matrix), and A be the attack service matrix defined earlier in the thesis, then the residuals can be calculated using Equation 3.6 where Fi,j is the fitted value.
+
+Ci,j = Ai,j - Fi,j [1]
+
+(3.6)
+
+Żi. + A Ż.j - A Ż[1] Fij = A
+
+(3.7)
+
+Żi. is The fitted values used in Equation 3.6 can be calculated using Equation 3.7 where A Ż.j is the mean of the jth column, and A Ż is the mean of the entire the mean of the ith row, A attack-service matrix. Using this formula, it is possible to find the outliers in a matrix, or in this case, an attack service matrix. The residual value will be positive if it is higher than expected, negative if is lower than expected, and zero if it is the expected value. The residual values calculated from the example attack service matrix are shown in Table 3.2. Now, by looking at Figure 3.3, the distribution of these values is a bell curve where the distribution of values in Figure 3.2 clearly is not. Although the values in the residual matrix are not ranks, they do follow a scale. With
+24
+
+POP3 Server
+
+Service A Service B
+
+SSH
+
+AIM -1.05 -0.55 -0.55 -0.41 -0.62 -0.19 -0.41 0.38 3.38 0.02 -0.25 0.25 0.25 0.39 0.18 -0.39 0.39 0.18 -0.82 -0.18 -0.25 0.25 0.25 0.39 0.18 -0.39 0.39 0.18 -0.82 -0.18
+
+FTP Server
+
+SMTP Server
+
+HTTP Server
+
+NetBIOS Server
+
+RPC Server
+
+IMAP Server
+
+DNS Server
+
+Attack Track 1 Attack Track 2 Attack Track 3 Attack Track 4 Attack Track 5 Attack Track 6 Attack Track 7 Attack Track 8 Attack Track 9 Attack Track 10 0.75 -2.75 2.25 -2.61 2.18 0.61 -0.61 -0.82 2.18 -1.18 Table 3.2: Example of a Residual Matrix 2.45 0.95 -1.05 0.09 -1.12 -0.69 -0.91 -1.12 1.88 -0.48 1.45 -0.05 -0.05 0.09 -0.12 -0.69 0.09 -0.12 -0.12 -0.48 -0.65 0.85 -2.15 -0.01 -1.22 1.21 -1.01 -0.22 -0.22 3.42 -0.45 0.05 0.05 0.19 -0.02 -0.59 0.19 -0.02 -0.02 0.62 -0.25 0.25 0.25 0.39 0.18 -0.39 0.39 0.18 -0.82 -0.18 -0.55 -0.05 -0.05 0.09 -0.12 1.31 0.09 0.88 -1.12 -0.48 -0.45 0.05 0.05 0.19 -0.02 1.41 0.19 -0.02 -1.02 -0.38 -0.25 0.25 0.25 0.39 0.18 -0.39 0.39 0.18 -0.82 -0.18
+
+-0.25 0.25 0.25 0.39 0.18 -0.39 0.39 0.18 -0.82 -0.18
+
+Telnet
+
+-0.25 0.25 0.25 0.39 0.18 -0.39 0.39 0.18 -0.82 -0.18
+
+SQL
+
+25
+
+these "ranks" in the residual matrix, the Pearson correlation coefficient, Equation 3.5, can now be applied to the values in the residual matrix to find similarity values between pairs of attack tracks.
+
+3.4
+
+Creating the Social Network Graph
+
+The idea of using similarity values to create discrete groups was discussed earlier. Now that the values in the residual matrix represent which services are significant for each attack, the Pearson correlation coefficient can be applied to create a similarity matrix. How are discrete groups going to be created from the similarity matrix? Unlike the attack service matrix and the residual matrix, the similarity matrix is an m by m symmetric matrix that contains the similarity value between every single pair of attack tracks. The values in the similarity matrix will range between -1.0 and 1.0. A value of 1.0 indicates positive correlation, a value of -1.0 indicates negative correlation, and a value of 0.0 indicates a complete lack of correlation. An example of a similarity matrix produced by applying the Pearson correlation coefficient to the example residual matrix (Table 3.2) is shown in Table 3.3. Which similarity values should result in connections between attack tracks, and which similarity values should not? The idea is to add a "few" too many edges and then have the clustering remove the edges to find the underlying sub-communities. Capping the number of attack tracks that each attack track can be adjacent to is inappropriate because some attack tracks may be similar to many attack tracks, and some attack tracks may be similar to very few attack tracks. Reminiscent of the threshold value used to create the dolphin social network in [17], a threshold value will be used to determine if the similarity value is high enough to justify the presence of an initial edge, rather than using a cap on the number of similar attack tracks. In the social network graph, an attack track is represented by a vertex and the similarities between attack tracks are represented by the edges. Since divisive hierarchical clustering
+26
+
+Attack Track 1 Attack Track 2 Attack Track 3 Attack Track 4 Attack Track 5 Attack Track 6 Attack Track 7 Attack Track 8 Attack Track 9 Attack Track 10
+
+1.00 -0.02 0.05 -0.21 -0.00 -0.35 -0.37 -0.76 0.29 -0.36
+
+-0.02 1.00 -0.78 0.91 -0.84 -0.20 0.13 0.19 -0.47 0.46
+
+0.05 -0.78 1.00 -0.54 0.97 -0.10 0.41 -0.03 0.02 -0.75
+
+-0.21 0.91 -0.54 1.00 -0.64 -0.29 0.52 0.48 -0.63 0.24
+
+-0.00 -0.84 0.97 -0.64 1.00 0.03 0.30 -0.08 0.01 -0.58
+
+-0.35 -0.20 -0.10 -0.29 0.03 1.00 -0.31 0.15 -0.12 0.28
+
+-0.37 0.13 0.41 0.52 0.30 -0.31 1.00 0.64 -0.68 -0.39
+
+-0.76 0.19 -0.03 0.48 -0.08 0.15 0.64 1.00 -0.49 0.03
+
+Attack Track 8
+
+0.29 -0.47 0.02 -0.63 0.01 -0.12 -0.68 -0.49 1.00 -0.12
+
+-0.36 0.46 -0.75 0.24 -0.58 0.28 -0.39 0.03 -0.12 1.00
+
+Table 3.3: Example of a Similarity Matrix
+
+is an edge removal algorithm, it is necessary at this point to insert the initial edges into the social network graph. The adjacency matrix, G is created by applying the threshold value,  , to the similarity matrix W . A '1' in the adjacency matrix in location Wi,j represents an edge between attack track i and attack track j , and '0' represents the lack of an edge.   1 if Wi,j   =  0 if W <  i,j
+
+Gi,j
+
+(3.8)
+
+A threshold value of -1.0 indicates that every vertex is connected to every other vertex, while a threshold value of 1.0 indicates that there are only very few or possibly no initial edges. Examples of these two unacceptable starting social network graphs are shown in Figure 3.4. Based on the images in Figure 3.4, choosing a threshold value is important. A value somewhere between -1.0 and 1.0 must be chosen. An edge should only be drawn if there is a similarity between two attack tracks. Although there is an easily determined similarity value, at what point does the similarity value become similar? The goal is to maximize
+
+27
+
+Attack Track 10
+
+Attack Track 1
+
+Attack Track 2
+
+Attack Track 3
+
+Attack Track 4
+
+Attack Track 5
+
+Attack Track 6
+
+Attack Track 9
+
+Attack Track 7
+
+(a) All Separate
+
+(b) All Connected
+
+Figure 3.4: On the left, the initial graph produced if the threshold is 1.0, and on the right, the initial graph if the threshold is -1.0
+
+Figure 3.5: Scatterplot showing number of initial edges and the number of vertices versus a sweep of threshold values
+
+the connections between the vertices, but at the same time, minimize the number of initial edges. In order to do this, a sweep of threshold values between 0.0 and 1.0 is used to find the point where there is the steepest drop off in the number of vertices that are connected to another vertex. An example plot of this is shown in Figure 3.5. From this plot, the first drop off that allows the maximum number of connected vertices but allows for a minimal number of edges is the threshold of 0.27. With a threshold of 0.27, the adjacency matrix shown in Table 3.4 can easily be created. The heuristic used to determine the threshold value,  , is to simply find the threshold value that allows for the minimum number of edges while still allowing the maximum number of connected
+28
+
+Attack Track 1 Attack Track 2 Attack Track 3 Attack Track 4 Attack Track 5 Attack Track 6 Attack Track 7 Attack Track 8 Attack Track 9 Attack Track 10
+
+1 0 0 0 0 0 0 0 1 0
+
+0 1 0 1 0 0 0 0 0 1
+
+0 0 1 0 1 0 1 0 0 0
+
+0 1 0 1 0 0 1 1 0 0
+
+0 0 1 0 1 0 1 0 0 0
+
+0 0 0 0 0 1 0 0 0 1
+
+0 0 1 1 1 0 1 1 0 0
+
+0 0 0 1 0 0 1 1 0 0
+
+Attack Track 9 1 0 0 0 0 1 0 0 1 0
+
+Table 3.4: Example of a Similarity Matrix
+
+vertices. With the adjacency matrix shown in Table 3.4, the initial social network graph and the graph that is produced by the clustering algorithm is shown in Figure 3.6. As stated before, the defining feature of hierarchical clustering is the resulting dendrogram. For the example clustering shown in Figure 3.6, a dendrogram has been produced. At the top of the dendrogram, all the vertices (attack tracks) are connected, but at the bottom of the dendrogram, all the vertices are separate. As one moves from the top of the dendrogram to the bottom, the breakdown of the dendrogram shows how the clusters were broken apart. This dendrogram is shown in Figure 3.7.
+
+29
+
+Attack Track 10 0 1 0 0 0 1 0 0 0 1
+
+Attack Track 1
+
+Attack Track 2
+
+Attack Track 3
+
+Attack Track 4
+
+Attack Track 5
+
+Attack Track 6
+
+Attack Track 7
+
+Attack Track 8
+
+(a) Original
+
+(b) Best
+
+Figure 3.6: On the left there is the Original Graph created from 10 example attack tracks, created with a threshold of 0.27, and on the right, there is the Best Graph with a modularity of 0.405.
+
+Figure 3.7: Dendrogram produced by the clustering shown in Figure 3.6
+
+30
+
+Chapter 4 Experiments and Results Analysis
+The setup of a physical network, the setup of services on the machines, and the running of attacks on the network are time consuming to perform. Because of these difficulties, running attacks on a physical network to generate necessary data is not desirable, and a simulator will be used to generate the attacks that the clustering will be performed on. For this thesis, a simulator originally developed by Costantini [8] will be used to generate the necessary data.
+
+4.1
+
+Simulator
+
+The simulator allows for the creation of tree structure networks made up of routers and machines. These machines can be either servers, hosts, or generic machines. Furthermore, the simulator allows the user to customize each machine with a specific set of services. The routers are also customizable, as IDS sensors can be added and firewall rules can be set between pairs of routers. Once the network has been set up, attack scenarios can be designed on the created network. These automated attack scenarios allow the setting of various parameters to choose exactly how the simulations will run. For instance, the attack scenario generation tool allows the setting of the types of noise, alerts per hour, efficiency, stealth, success, goal, target, goal type, and the total attack time of the attack [8]. Once the attack scenario has been created, it can be simulated. The output of a single run of the simulator is an XML
+31
+
+Figure 4.1: XML representation of an attack tracks and its first alert.
+
+formatted attack track. The output of the simulator, showing an example of an attack track along with its first alert is shown in Figure 4.1.
+
+4.2
+
+Description of the Network
+
+The constructed network for this thesis has a tree structure that can be effectively divided into three main parts. There are four external servers (Website, File, Email, and DNS), an academic subnet, and a financial subnet. A picture of the network used in this thesis is shown in Figure 4.2. The services that are set on each machine are listed in Table 4.1 and Table 4.2. From the picture of the network, in Figure 4.2, one can see that the academic subnet is split into an Art College, an Engineering College, and a Science College. The
+
+32
+
+Engineering College is further split into Mechanical, Electrical, and Computer Engineering Departments. The Science College has been specially set up in such a way so that there is only one machine for each router, each of which has only one service running. The financial section of the network is split into Food Service and Bursar's Office Departments. Although the network may, in some ways, resemble the RIT Campus Network, it is not intended on being a factual representation of this network. It is more accurate to describe the created network as an artificially created network that uses RIT place names. The different subnets have been specifically setup to highlight different configurations and how the CACTUSS algorithm responds to different network configurations and setups.
+
+4.3
+4.3.1
+
+Data Sets
+Data Set sans Noise
+
+The plan of this data set was to only attack the machines in the College of Science because there is only one machine per router and only one service per machine. The Math Lab, Physics Lab, Organic Lab, and the Inorganic Lab only have the Microsoft Windows service on these machines. The Research Server, the Scientific Server, and the Chemistry Server all have distinct services running. With this setup, the SSH service is running on the Scientific Server, the XWindows service is running on the Chemistry Server, and the Research Server has the Apache and the Apache Server services running. There are four different target machines according to Table 4.3, but the target service at each of the four machines is the same. The first steps in the attacks are completely random as the External Web Server, External File Server, External Email Server, and External DNS Server all have a multitude of services running. After the first steps, the attack progresses through the specifically designed Science College portion of the network. With this setup, the first steps are random, the middle steps are dependent on the machine target, and the final steps are the same. Despite this, because of the high stealth factor, it may appear that
+
+33
+
+Figure 4.2: Network used to create the results
+
+34
+
+IP Address 192.168.1.1 192.168.1.2 192.168.1.3 192.168.1.4 192.168.2.1 192.168.2.2 192.168.7.1
+
+Machine External Website Server External File Server External Email Server External DNS Server Registration Server ArtShow Art Server
+
+192.168.7.2 192.168.3.1 192.168.4.1 192.168.4.2 192.168.5.1 192.168.5.2 192.168.5.10 192.168.6.1 192.168.6.2 192.168.6.3 192.168.6.11 192.168.6.19 192.168.11.1 192.168.12.1 192.168.13.1 192.168.14.1 192.168.15.1 192.168.16.1 192.168.14.1
+
+ArtLab Engineering Email Server ME File Server Thermodynamics Lab EE File Server CEDA Lab Studio Lab CE File Server VLSI Server VLSI Lab DCO Lab Website Server Research Server Math Lab Scientific Server Physics Lab Chemistry Server Organic Lab Inorganic Lab
+
+Services ICMP, ColdFusion, PHP, SNMP, UNIX, WebCGI, Apache Tomcat, Apache ICMP, NFS, RPC, SNMP, UNIX, CVS, FTP, Netbios, SSH, TFTP ICMP, IMAP, Lotus Server, POP3, SNMP, SMTP ICMP, DNS MS-SQL, ICMP, MySQL, SSH ICMP, Apache Tomcat, Apache ColdFusion, Frontpage98, ICMP, IMAP, PHP, POP3, SNMP, WebCGI,Windows, DNS, Frontpage 98, IIS, FPSE, Quicktime, SMTP, SSH, TFTP, UPnP Windows ICMP, IMAP, POP3, SNMP, SMTP ICMP, NFS, SNMP, UNIX, CVS, FTP, Netbios, SSH, TFTP ICMP, XFS, SSH ICMP, NFS, RPC, SNMP, UNIX, CVS, FTP, Netbios, SSH, TFTP ICMP, XFS, SSH ICMP, XFS, SSH ICMP, NFS, RPC, SNMP, UNIX, CVS, Netbios, SSH, TFTP ICMP, NFS, RPC, SSH ICMP, NFS, SSH ICMP, XFS, SSH ICMP, XFS, SSH Apache, Apache Tomcat Windows SSH Windows X Windows Windows Windows
+
+Table 4.1: Services for Each Machine on the Academic Subnet of the Network
+
+35
+
+Machine 192.168.8.1 192.168.8.2 192.168.9.1 192.168.9.2 192.168.9.8 192.168.9.14 192.168.10.1 192.168.10.2 192.168.10.3 192.168.10.9
+
+Services Payroll Server Oracle HTTP Server Food Service File Server RITZ Crossroads Commons Flex Server Debit Server Financial Services Payroll Services
+
+Oracle, Oracle Web App Server ICMP, NFS, UNIX, Oracle Web Application Server ICMP, NFS, RPC, SNMP UNIX, CVS, FTP, SSH, TFTP ICMP, XFS, SSH ICMP, NFS, SSH ICMP, XFS, SSH ICMP, RPC, SNMP, UNIX, SSH ICMP, MS-SQL, SNMP, UNIX, SSH ICMP, XFS, UNIX, SSH ICMP, NFS, UNIX, SSH
+
+Table 4.2: Services for Each Machine on the Financial Subnet of the Network Scenario Attack (Runs) Attack 1(50) - Math Lab Attack 2(50) - Physics Lab Attack 3(50) - Organic Lab Attack 4(50) - Inorganic Lab IP Address 192.168.12.1 192.168.14.1 192.168.16.1 192.168.17.1 Type DoS DoS DoS DoS Efficiency 1.0 1.0 1.0 1.0 Stealth 0.9 0.9 0.9 0.9 Color Blue Green Red Yellow
+
+Table 4.3: Description of the Attacks Parameters for the Data Set sans Noise
+
+some of the machines have been "skipped" during the attack, which will directly affect the clustering results. 4.3.2 Data Set with Noise
+
+After the Data Set sans Noise was created, additional attack tracks were needed to add noise to the data set. This new data set contains the same 200 efficient attack tracks as the Data Set sans Noise plus 200 noisy additional attack tracks. The parameters used to create all 400 attack tracks are shown in Table 4.4. The additional 4 noise scenarios attack 3 targets that were attacked previously by the efficient attacks in addition to one entirely new target. These four new scenarios have a much lower efficiency value. The results from this data set were analyzed by themselves and then compared to the data generated without the noise. The hope is that the algorithm will be able to distinguish between these attack
+36
+
+Scenario Attack (Runs) Attack 1(50) - Math Lab Attack 2(50) - Physics Lab Attack 3(50) - Organic Lab Attack 4(50) - Inorganic Lab Attack 5(50) - Math Lab Attack 6(50) - Physics Lab Attack 7(50) - Organic Lab Attack 8(50) - CEDA Lab
+
+IP Address 192.168.12.1 192.168.14.1 192.168.16.1 192.168.17.1 192.168.12.1 192.168.14.1 192.168.16.1 192.168.5.2
+
+Type DoS DoS DoS DoS DoS DoS DoS DoS
+
+Efficiency 1.0 1.0 1.0 1.0 0.4 0.4 0.4 0.4
+
+Stealth 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
+
+Color Blue Green Red Yellow Magenta Gray Orange White
+
+Table 4.4: Description of the Attacks Parameters for the Data Set with Noise
+
+(a) Sans Noise
+
+(b) With Noise
+
+Figure 4.3: On the left, the threshold scatter plot for the Data Set sans Noise, and on the right, the scatter plot but for the Data Set with Noise.
+
+tracks with different paths through the network.
+
+4.4
+4.4.1
+
+Generating the Social Network Graph
+Threshold Selection
+
+After the generation of the attack tracks specified in Table 4.3 and Table 4.4, an appropriate threshold value needed to be determined for both data sets separately. As explained in the Methodology Chapter, the threshold value is determined heuristically by looking at the scatter plots shown in Figure 4.3.
+37
+
+(a) Original
+
+(b) Best
+
+Figure 4.4: On the left there is the Original Graph created from 200 attack tracks of the Data Set sans Noise created with a threshold of 0.60, and on the right, there is the Best Graph with a modularity of 0.687
+
+By applying this heuristic to the scatter plots in Figures 4.3, it was determined that for the Data Set sans Noise, a threshold of 0.59 should be used, and for the Data Set with Noise, a threshold of 0.60 should be used. With these thresholds, the similarity matrices can be converted into adjacency matrices and then into the initial social network graph so that clustering can be performed. 4.4.2 Clustering
+
+With the initial social networks constructed, the clustering can now be performed. The clustering is an automated procedure, that as described earlier, removes every edge, one at a time, until the best cluster is detected. The resulting clusters are the products of this algorithm. In Figure 4.4, there is the clustering performed on the Data Set sans Noise, and in Figure 4.5, the clustering is performed on the Data Set with Noise. Using this automatic procedure, the resulting clusters produced from the social network graph have the highest modularity.
+
+38
+
+(a) Original
+
+(b) Best
+
+Figure 4.5: On the left there is the Original Graph created from 400 attack tracks of the Data Set with Noise. created with a threshold of 0.59, and on the right, the Best Graph created with a modularity of 0.743.
+
+4.4.3
+
+Dendrograms
+
+The clustering results on the two data sets can be visualized as dendrograms. The dendrograms created from Figure 4.4 and Figure 4.5 are shown as Figure 4.6 and Figure 4.7. These visualizations of the resulting hierarchies shows how the individual clusters are related to one another. Despite these visualizations of clusters and dendrograms, analysis needs to be performed to further understand the clustering results.
+
+4.5
+
+Analysis
+
+A number of conclusions can be drawn from the visualizations shown in Figure 4.4, Figure 4.5, Figure 4.6, and Figure 4.7. One immediate observation is that the beginning of the attack track (the service attacked at the external servers) is a large contributor to which cluster the attack track is assigned to.
+
+39
+
+Figure 4.6: Dendrogram produced from Figure 4.4.
+
+Figure 4.7: Dendrogram produced from Figure 4.5.
+
+40
+
+4.5.1
+
+Separation of Attacks with Common Services
+
+The resulting clusters from the Data Set sans Noise, as suspected, show a definitive community structure. It is now time to analyze the contents of the clusters. Since, the four targeted machines are in the specially designed Science College section of the network, there is only a finite number of service sequences for each target machine. The contents of these clusters, in the forms of their sequences are shown in Table 4.5 and Table 4.6. From these tables, an analysis of each of the clusters can be made. Although identifying sequences was not part of this thesis, their identification was a side effect of the specific setup of the network. Cluster 1 from the Data Set sans Noise contains all the attack tracks that have targeted the DNS service. Since this service is found only in the External DNS Server along the path through the Science College section of the network, all the attack tracks in Cluster 1 have passed through the External DNS Server. Cluster 3 contains all the attack tracks that contain an attack on the SSH service. Along the direct path through the College of Science subnet, the SSH service is only running the External File Server and the Scientific Server. Since no attacks in the entire data set attacked the SSH service on the External File Server, all the attack tracks that attacked the SSH service went through the Scientific Server. Since all the attacks in the data set had to go through the Scientific Server, the contents of Cluster 3 are really the attack tracks that were detected attacking the Scientific Server. All the attack tracks in Cluster 2 have attacked the RPC service once, the FTP service once, and the Apache service twice. In fact, all the tracks that meet this specification except for those that are clustered in Cluster 3 are found in Cluster 2. The attack tracks in Cluster 2 and Cluster 3 are for the most apart separated by whether or not the attack tracks attacked the SSH service on the Scientific Server. Cluster 4 contains all the attack tracks that attacked RPC, TFTP, MySQL, Apache, and Windows services within a single attack track. Cluster 6 contains the remaining attacks that
+41
+
+Cluster 1 16 Blue 12 Green 1 Red 12 Red 12 Yellow 43 6 Red 6 Red 39 13 Green 7 Red 6 Yellow 12 12 Green 13 Green 31 Blue
+
+Attacks 56
+
+Contents 3 Blue
+
+2
+
+42
+
+3
+
+4
+
+Sequence DNS > DNS > MySQL > Apache > Windows .1.4 > .1.4 > .2.1 > .11.1 > .12.1 DNS > DNS > MSSQL > Apache > Windows .1.4 > .1.4 > .2.1 > .11.1 > .12.1 DNS > DNS > MySQL > Apache > Windows .1.4 > .1.4 > .2.1 > .11.1 > .14.1 DNS > DNS > MySQL > Apache > XWindows > Windows .1.4 > .1.4 > .2.2 > .11.1 > .15.1 > .16.1 DNS > DNS > Apache > Apache > XWindows > Windows .1.4 > .1.4 > .2.2 > .11.1 > .15.1 > .16.1 DNS > DNS > Apache > Apache > XWindows > Windows .1.4 > .1.4 > .2.2 > .11.1 > .15.1 > .17.1 RPC > FTP > Apache > Apache > Windows .1.2 > .1.2 > .2.2 > .11.1 > .12.1 RPC > FTP > Apache > Apache > XWindows > Windows .1.2 > .1.2 > .2.2 > .11.1 > .15.1 > .16.1 RPC > FTP > Apache > Apache > XWindows > Windows .1.2 > .1.2 > .2.2 > .11.1 > .15.1 > .17.1 RPC > FTP > Apache > Apache > SSH > SSH > Windows .1.2 > .1.2 > .2.2 > .11.1 > .13.1 > .13.1 > .14.1 Apache > ColdFusion > MSSQL > Apache > SSH > SSH > SSH > Windows .1.1 > .1.1 > .2.1 > .11.1 > .13.1 > .13.1 > .13.1 > .14.1 RPC > FTP > Apache > Apache > SSH > SSH > XWindows > Windows .1.2 > .1.2 > .2.2 > .11.1 > .13.1 > .13.1 > .15.1 > .16.1 RPC > FTP > Apache > Apache > SSH > SSH > XWindows > Windows .1.2 > .1.2 > .2.2 > .11.1 > .13.1 > .13.1 > .15.1 > .17.1 RPC > TFTP > MySQL > MySQL > Apache > Apache > Windows .1.2 > .1.2 > .2.1 > .2.1 > .11.1 > .11.1 > .14.1
+
+Table 4.5: Description of the Resulting Clusters from Data Set sans Noise
+
+Cluster 5 6 Red 7 Yellow 5 Red 6 Yellow 6 Red 6 Yellow 6 Red 6 Yellow
+
+Attacks 14
+
+Contents 1 Red
+
+6
+
+11
+
+43
+
+7
+
+12
+
+8
+
+12
+
+Sequence Apache > UNIX > MySQL > MySQL > Apache > Apache > XWindows > Windows .1.1 > .1.1 > .2.1 > .2.1 > .11.1 > .11.1 > .15.1 > .16.1 SMTP > IMAP > Apache > MySQL > Apache > Apache > XWindows > XWindows > Windows .1.3 > .1.3 > .2.2 > .2.1 > .11.1 > .11.1 > .15.1 > .15.1 > .16.1 SMTP > IMAP > Apache > MySQL > Apache > Apache > XWindows > XWindows > Windows .1.3 > .1.3 > .2.2 > .2.1 > .11.1 > .11.1 > .15.1 > .15.1 > .17.1 RPC > TFTP > Windows .1.2 > .1.2 > .16.1 RPC > TFTP > Windows .1.2 > .1.2 > .17.1 RPC > FTP > MySQL > Apache > XWindows > Windows .1.2 > .1.2 > .2.1 > .11.1 > .15.1 > .16.1 RPC > FTP > MySQL > Apache > XWindows > Windows .1.2 > .1.2 > .2.1 > .11.1 > .15.1 > .17.1 Apache > ColdFusion > Apache > Apache > Apache > XWindows > Windows .1.1 > .1.1 > .2.2 > .11.1 > .11.1 > .11.1 > .15.1 > .16.1 Apache > ColdFusion > Apache > Apache > Apache > XWindows > Windows .1.1 > .1.1 > .2.2 > .11.1 > .11.1 > .11.1 > .15.1 > .17.1
+
+Table 4.6: Description of the Resulting Clusters from the Data Set sans Noise
+
+attacked both the RPC service and the TFTP service. The main difference between Cluster 4 and Cluster 6 is whether or not the IDS detected the attacks on the Registration Server and the Research Server. If the attack on these two machines was detected, the attack was clustered within Cluster 4; if the attack was not detected, the attack was clustered in Cluster 6. Cluster 7 contains all the attack tracks that attacked the RPC, FTP, and MySQL service. Out of the remaining attack tracks, those which attacked the ColdFusion service were clustered into Attack Track 8, and those that did not attack the ColdFusion service were clustered into Cluster 5. 4.5.2 Noise vs. Noiseless Separation
+
+All of the attack tracks analyzed in the previous subsection had a high efficiency value used to generate the attack tracks. When the attacks with low efficiency value are added (noisy attacks) to the attacks already made (efficient attacks), the majority of the noisy attacks are clustered together separately from the efficient attacks. According to Table 4.8, all the clusters found in Figure 4.4 were found intact in Figure 4.5. Some of the clusters found in 4.4 are sometimes combined with each other, but are ultimately found in Figure 4.5. The majority of the noisy attacks were, for the most part, clustered independently from efficient attacks. The 44 attack tracks of Cluster 9 in Figure 4.5 and the 98 attack tracks of Cluster 11 in Figure 4.5 make up 71% of the total noisy attacks. Another 11 noisy attack tracks are isolated by themselves, which brings down the number of noisy attack tracks sharing a cluster with efficient attacks down to less than 25%. This is interesting because only the noisy attacks that are truly similar to the first 200 efficient attack tracks get clustered with the efficient attack tracks. For example, Cluster 2 and Cluster 7 from Figure 4.4 form Cluster 10 from Figure 4.5, but there are also six "noisy" attacks in Cluster 10. Attack track 203, a noisy attack, follows the sequence of RP C > F T P > Apache > Apache > W indows, which is just like the
+
+44
+
+Cluster 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+
+Attacks 11 2 1 1 1 1 1 77 44 62 98 2 2 41 56
+
+Contents 5 Red and 6 Yellow 2 Magenta 1 Magenta 1 Magenta 1 Orange 1 White 1 White 19 Blue, 12 Green, 12 Yellow, 13 Red, 8 Magenta, 2 Gray, 3 Orange, and 6 White 7 Magenta, 12 Gray, 23 Orange, and 2 White 31 Blue, 18 Red, 6 Yellow, and 6 Purple 19 Magenta, 26 Gray, 15 Orange, and 38 White 1 Gray and 1 Orange 1 Magenta and 1 Orange 26 Green, 7 Red, 6 Yellow, 1 Gray, and 1 Orange 13 Red, 13 Yellow, 12 Green, 6 Magenta, 5 Gray, 5 Orange, and 2 White
+
+Table 4.7: Description of the Resulting Clusters from the Data Set with Noise
+
+Data Set sans Noise - 0.60 Cluster 1 Cluster 2 Cluster 3 Cluster 4 Cluster 5 Cluster 6 Cluster 7 Cluster 8
+
+Data Set with Noise - 0.59 Cluster 8 Cluster 10 Cluster 14 Cluster 15 Cluster 15 Cluster 1 Cluster 10 Cluster 15
+
+Table 4.8: Description of how the different clustering results are related.
+
+45
+
+31 attack tracks in Cluster 2, shown in Table 4.5. Another example is Cluster 3 from Figure 4.4, which when joined by two noisy attack tracks, forms Cluster 14 from Figure 4.5. Attack Track 302, a noisy attack, has a service sequence of RP C > F T P > Apache > W indows > Apache > Apache > SSH > SSH > XW indows > W indows, which does not share the sequence, but does not share common services with the attack tracks in Cluster 3 from Table 4.5. This shows that the CACTUSS approach can successfully separate efficient attacks from noisy attacks targeting either the same machines or other machines. 4.5.3 Effects of Network Setup and Attack Types
+
+Now that efficient attacks and noisy attacks have been analyzed, the network setup can be analyzed. The network itself has a very large impact on the clustering algorithm results. For instance, the clustering results shown in Figure 4.4 show an initial social network that is very segregated and does not begin with one large initial cluster. This has to do with the network setup and the setup of the attack scenarios. All the attacks created in Figure 4.4 are highly efficient, meaning the attack goes directly to the targeted machine. Also, most of the machines along the path towards the target only had one service running. This created a situation where there was only one possible direct service path to each target. As a result, there were a high number of identical attack tracks created. There would have been even more identical attack tracks created, but a high stealth value was used so some of the steps of the attack tracks were not detected. These setup parameters create a situation where the attack tracks are closely related to a small number of attack tracks, which make up the cluster, and not related to any of the other attack tracks. As a result of this, the best cluster is the initial cluster. The clustering algorithm, in this case, does little other than verify that the initial social network was the best social network graph. If all the attack tracks within a cluster are too similar, the clustering algorithm will not perform any clustering.
+
+46
+
+Although lowering the threshold value will allow for the initial social network graph to be one contiguous graph in situations like this, this is not advisable. Lowering the threshold value creates extra edges between dissimilar attack tracks, which will make finding the community structure in a social network graph impossible. This is why choosing the threshold value at the highest value where all the vertices in the social graph network are connected to at least one other vertex makes sense. If every vertex is connected to at least one other vertex, then there must be some underlying community structure that can be detected through the use of clustering or the data set is such that, the clusters have all ready been detected. The specially designed network heavily influenced the results, but the stealth parameter can also influence the results. The stealth parameter for all the attacks created for Figure 4.4 was 0.9, which means that all the attack tracks have a chance of not detecting all the alerts. By looking at Table 4.5 and Table 4.6, one can see that Cluster 6 and Cluster 7 are similar except that the attacks in Cluster 7 have attacked the MySQL and Apache services on the Research Server and the Chemistry Server, but the attacks in Cluster 6 have not attacked those machines. If the stealth factor had been set lower, the alerts would have been detected and all the attack track sequences would have been RP C > F T P > M ySQL > Apache > XW indows > W indows, thereby resulting in a single cluster. This just shows what the CACTUSS algorithm can do; it is able to cluster separately two group of attacks that are identical with the exception of a few undetected alerts. 4.5.4 Completely Random Data
+
+After the prior results showed the results from highly designed data sets, it is time to look at results from a "random" data set. The parameters which were used to construct this data set are shown in Table 4.9. There was a total of 20 scenarios run, each five times, for a total of 100 attack tracks.
+
+47
+
+Scenario Attack (Runs) Attack 1(5) - Math Lab Attack 2(5) - Physics Lab Attack 3(5) - Organic Lab Attack 4(5) - Inorganic Lab Attack 5(5) - Math Lab Attack 6(5) - Physics Lab Attack 7(5) - Organic Lab Attack 8(5) - CEDA Lab Attack 9(5) - CEDA Lab Attack 10(5) - CEDA Lab Attack 11(5) - CEDA Lab Attack 12(5) - RITZ Attack 13(5) - Flex Server Attack 14(5) - Debit Server Attack 15(5) - Art Server Attack 16(5) - VLSI Server Attack 17(5) - CE File Server Attack 18(5) - Engineering Email Server Attack 19(5) - Registration Server Attack 20(5) - External DNS Server
+
+IP Address 192.168.12.1 192.168.14.1 192.168.16.1 192.168.17.1 192.168.12.1 192.168.14.1 192.168.16.1 192.168.5.2 192.168.5.2 192.168.5.2 192.168.5.2 192.168.9.2 192.168.10.1 192.168.10.2 192.168.7.1 192.168.6.2 192.168.6.1 192.168.3.1 192.168.2.1 192.168.1.4
+
+Type DoS DoS DoS DoS DoS DoS DoS DoS DoS DoS DoS DoS DoS DoS DoS DoS DoS DoS DoS DoS
+
+Efficiency 1.0 1.0 1.0 1.0 0.4 0.4 0.4 0.4 1.0 0.4 1.0 1.0 0.4 1.0 1.0 0.4 1.0 0.4 1.0 1.0
+
+Stealth 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.1 0.1 0.9 0.9 0.1 0.9 0.9 0.1 0.9 0.1 0.9
+
+Table 4.9: Description of the Attacks Parameters of the Random Data
+
+48
+
+Figure 4.8: Scatter plot used to determine the threshold value of 0.52 for the Random Data Set Cluster Cluster 1 Cluster 2 Cluster 3 Cluster 4 Cluster 5 Cluster 6 Cluster 7 Attacks 4,18,26,30,35,39,48,59,60,61,62,71,74,76,81,82,84,86,89,94,97,99 2,5,9,12,15,20,23,24,25,28,37,40,47,55,64,66,69,83,85,91,92,93,96,98,100 36,42,45,49,50,51,52,56,57,58,63,65,67,68,70,80,87,88,90,95 27,31,34,46,77 43,53 1,3,6,7,8,10,11,13,14,16,17,19,21,22,29,32,33,38,54,72,78,79 41,44,73,75
+
+Table 4.10: Description of the Resulting Clusters from the Random Data Set
+
+The social network graph for this network was created the same way by first determining the threshold and then analyzing the resulting clusters. The scatter plot, shown in Figure 4.8, was used to determine the threshold value of 0.52. The threshold value was used to determine an adjacency matrix, which was then, in turn, used to create the social network graph. The resulting network graph and the clustered network graph are shown in Figure 4.9. The contents of the clusters are shown in Table 4.10. Since there are five attack tracks created for every scenario, the mapping of Attack Track to Scenario can be explained by Equation 4.1.
+
+AttackScenario = (AttackT rack - 1)/5 + 1
+
+(4.1)
+
+49
+
+(a) Original
+
+(b) Best
+
+Figure 4.9: On the left there is the Original Graph created from 100 attack tracks of the Random Data Set created with a threshold of 0.52, and on the right, there is the Best Graph with a modularity of 0.695.
+
+Even if attack tracks were created by the same attack scenario in the simulator, there is no guarantee that attack tracks created from the same scenario will be clustered together. Equation 4.1 shows a useful tool in analyzing the attack tracks, but it shows nothing definitive. It is time to analyze the clustering results from the random data set. Cluster 7 has four attack tracks: two of which originated from Scenario 9 and the other two attack tracks originated from Scenario 15. All four attack tracks follow the service sequence of RP C > F T P > Apache > XF S/ColdF usion. Cluster 5, with only 2 attack tracks, contains every attack which attacks both the Apache Tomcat and XFS service. Cluster 2 includes all the attack tracks that attacked the DNS service twice. Cluster 3 has 20 attack tracks, 19 of which attacked the SMTP service and 17 attack tracks that attacked the IMAP service, which are both email protocols. The majority of the attack tracks in Cluster 1 attacked both RPC and FTP services. Also, all but one of the attack tracks that attacked the Oracle Web Application Server are found in Cluster 1. All five attack tracks in Cluster 4 have attacked the Windows service. The last cluster, Cluster 6, contains a number of attack tracks, all of
+50
+
+which have attacked the Apache service multiple times. The resulting dendrogram from the Random Data Set is shown in Figure 4.10. 4.5.5 Dendrogram: Good vs. Bad Clusters
+
+The dendrograms produced by the Random Data Set are ideal for analyzing dendrograms. Just by looking at the resulting dendrogram in Figure 4.10, it is possible to determine if the resulting cluster is a good one. Within a cluster, there should be a "staircase" and between clusters, there should be a "tournament tree." Close ups of the "staircase" and the "tournament tree" are shown in Figure 4.11. The clustering algorithm tries to split a cluster in two by removing the edge. This tournament tree, arises from when edge removals result in cluster splits, meaning that the separated clusters are distinct. Specifically, this separation occurs when there are multiple sub-communities within a cluster. The reason for the two different kinds of breakdowns is simple. The second kind, a staircase, appears when the clustering algorithm removes one attack track at a time from the cluster instead of splitting the cluster because clustering is unable to split the cluster. When a large number of individual attack tracks begin to be removed from the cluster, the best cluster has probably already been identified. The appearance of a dendrogram can show how effective the clustering is. 4.5.6 Alternate Similarity Metric: Longest Common Subsequence
+
+So far, similarity between attack tracks has been calculated by applying the Pearson correlation coefficient to the residual values of the attack service matrix. However, different methods for generating similarity between attacks are possible. One possibility is the use of the Longest Common Subsequence (LCS) algorithm in place of the current similarity algorithm. The LCS algorithm, as used in [4], produces four similarity matrices because [4] uses four feature sets. The CACTUSS algorithm only deals with a single similarity matrix, and as a result, this "replacement" cannot be used directly. Specifically, in [4], services,
+51
+
+Figure 4.10: Dendrogram produced from the Random Data Set.
+
+52
+
+(a) Staircase
+
+(b) Tournament Tree
+
+Figure 4.11: Staircase and the Tournament Tree dendrogram connections
+
+severity (category), destination IP address, and protocol are used as the four feature sets in the LCS algorithm. Bean's research has discouraged the use of the protocol attribute because it is the least interesting characteristic out of the four [4]. In this extension of the CACTUSS algorithm, only subsequences of services, severity, and destination IP address will be used. Since there are three similarity matrices, a threshold value will need to be found for each similarity matrix separately. For this experiment, the data set created in Table 4.4 (the Data Set with Noise) was used so that reasonable comparisons and analysis can be made. Coincidentally, the threshold value for each of the three similarity matrices was found to be 0.75. The scatter plots used to determine the thresholds are shown in Figure 4.12. The results of this clustering are different than the results of the previous experiments. There were a total of 104 distinct clusters produced from a total of 400 attack tracks. Seventy-four of these clusters only contained a single attack track. Twelve more clusters contained only two attack tracks, and two more clusters contained exactly three attack tracks. This leaves the remaining 296 attacks tracks to be divided among 16 clusters. This information is tabulated in Table 4.11. The original and best social network graph are shown in Figure 4.12. A "representative" attack track is shown for each cluster in Table 4.12 and Table 4.13.
+
+53
+
+(a) Services
+
+(b) Severity
+
+(c) Destination
+
+Figure 4.12: Threshold scatter plots created from the LCS similarity matrices.
+
+Tracks in Cluster 1 Track
+
+Number of Clusters 74
+
+Number of Tracks Represented 74
+
+Attack Tracks 6,8,9,11,12,14,15,16,17,19,21,22,25, 26,27,28,29,32,33,34,35,37,38,39,40, 41,42,44,45,46,47,48,49,50,51,52,53, 54,55,56,57,58,59,60,61,62,63,64,65, 66,67,68,69,71,73,74,77,78,79,80,81, 82,83,84,85,86,87,88,89,90,92,93,94,95 7,20,23,24,30,31,36,43,70,72,75,76 10,91 1,2,3,4,5,18,96,97,98, 99,100,101,102,103,104
+
+2 Tracks 3 Tracks More than 3 Tracks
+
+12 3 15
+
+24 6 296
+
+Table 4.11: Description of the Clustering based on the LCS Similarities
+
+54
+
+(a) Original
+
+(b) Best
+
+Figure 4.13: On the left there is the Original Graph created from LCS Data, and on the right, there is the Best Graph
+
+By looking at Table 4.12 and Table 4.13, we can see the sequence of exploited services, the sequence of severities, and the sequence of destination IP addresses. The "representative" attack track for each cluster does not guarantee that each attack track within the cluster is identical, but does show a good representation of the cluster. By comparing the pre-clustering groups and the post-clustering groups, some observations can be made. Before the clustering was performed, the attacks in clusters 96 through 104, were initially one large cluster. These 9 clusters contain 234 attack tracks and were separated by the clustering algorithm. Clusters 1 through 5 contain 49 attack tracks. The interesting thing about these attack tracks is that every attack track within each Cluster 1 through 5 are identical and were all attacks from Table 4.4. Because of these facts, it is not surprising that these clusters were grouped together prior to the clustering. Clusters 6 through 95, were all generally small (1, 2, or 3 attacks each), and every attack that composes clusters 6 through 95 was a noisy attack. Clusters 96 through 104, which originated as one cluster, contain both efficient and noisy attack tracks from Table 4.4. The clustering algorithm was only performed on the attack tracks in cluster 96 through
+
+55
+
+104. Coincidentally, these are the only clusters that contain both efficient and noisy attacks. Although there are similarities between clusters in Figure 4.4 and Figure 4.5, the clusters were not intact. This is not surprising as two different similarity metrics were used. However, the clustering results from both data sets was logical.
+
+56
+
+Cluster Cluster 1
+
+Attack Tracks 5
+
+Cluster 2
+
+12
+
+Cluster 3
+
+13
+
+Cluster 4
+
+13
+
+57
+
+Cluster 5
+
+6
+
+Cluster 13
+
+8
+
+Cluster 18
+
+5
+
+"Representative" Attack Track RPC > TFTP > Windows All Recon Enumeration .1.2 > .1.2 > .16.1/.17.1 RPC > FTP > MySQL > Apache > XWindows > Windows All Recon Enumeration .1.2 > .1.2 > .2.1 > .11.1 > .15.1 > .16.1/.17.1 SMTP > IMAP > Apache > MySQL > Apache > Apache > XWindows > XWindows > Windows All Recon Enumeration .1.3 > .1.3 > .2.2 > .2.1 > .11.1 > .11.1 > .15.1 > .15.1 > .16.1/.17.1 RPC > FTP > Apache > Apache > Xwindows > Windows All Recon Enumeration .1.2 > .1.2 > .2.2 > .11.1 > .15.1 > .16.1/.17.1 RPC > TFTP > Windows All Recon Enumeration .1.2 > .1.2 > .16.1/.17.1 RPC > FTP > Oracle Web Application Server > SSH > MySQL > ... First 5 Recon Enumeration .1.2 > .1.2 > .8.20 > .9.X > .2.1 > ... RPC > FTP > ICMP > Oracle > MSSQL > Apache > ... First 6 Recon Enumeration .1.2 > .1.2 > .1.1 > .8.1 > .11.1 > ... Table 4.12: Description of LCS Clustering Results
+
+Cluster Cluster 91
+
+Attack Tracks 3
+
+Cluster 96
+
+43
+
+Cluster 97
+
+15
+
+Cluster 98
+
+60
+
+Cluster 99
+
+16
+
+58 Cluster 100 10 Cluster 101 36 Cluster 102 16 Cluster 103 13 Cluster 104 25
+
+"Representative" Attack Tracks FTP > UNIX > FTP > Apache > ... Four Misc Other .1.X > .1.2 > .1.2 > .2.2 > RPC > FTP > Apache > Apache > ... First 4 Recon Enumeration .1.2 > .1.2 > .2.2 > .11.1 > ... RPC > TFTP > MySQL > Apache > Apache > Windows All Recon Enumeration .1.2 > .2.1 > .2.1 > .11.1 > .11.1 > .14.1 Various services All Recom Enumeration .1.X > .1.X > .2.X > DNS > DNS > Apache > XWindows > Windows All Enumeration .1.4 > .2.2 > .11.1 > .15.1 > .17.1 > RPC > FTP > ICMP > ... First 3 Recon Enumeration .1.2 > .1.2 > .1.X/.2.1 > DNS > Apache/MySQL > Apache > ... First 4 Recon Enumeration or Recon Footprinting .1.4 > .1.4 > .2.4 > .11.1 > ... WebCGI > UNIX > FTP > Apache > ... Recon Footprinting > Recon Footprinting > ... .1.X > .1.X > .1.X > .2.X > ... RPC > FTP > Apache > Windows > ... First 4 Recon Enumeration .1.2 > .1.2 > .2.2 > .7.X > RPC > FTP > Apache > Apache > Windows All Recon Enumeration 192.168.1.2 > Table 4.13: Description of LCS Clustering Results
+
+Chapter 5 Conclusion and Future Work
+
+5.1
+
+Conclusion
+
+The main contribution of this thesis was showing that clustering is a valuable tool in the analysis of attack tracks. In order to perform the clustering, divisive hierarchical clustering was chosen over other unsupervised learning methods. The divisive hierarchical clustering method was able to (along with the other components of the CACTUSS algorithm) effectively find the sub-communities of attack tracks and identify the underlying community structure based solely on the service counts of each attack track. Using the CACTUSS algorithm, clustering was able to successfully cluster efficient attack tracks on the attacked services using a specially designed network. These clusters were tightly connected, and clustering was not required to separate the clusters. With the addition of the noisy attacks, the efficient attack clusters were still found in the social network graph. The efficient attacks were "cores" of these clusters with similar noisy attacks slightly less connected. The majority of the noisy attacks, however, were clustered separately from the efficient attacks. It is important to recognize from the results that the setup of the attacks, the stealthiness of the attacks, and the services running on the machines all directly affected the created attack tracks and therefore the resulting clusters. With these results from specifically designed data, it became necessary to view the results from "random data." The results from the random data were similar to that of the specifically
+
+59
+
+designed data; there was a community structure in the attack tracks. For each of the clustering results, a dendrogram was produced. This resulting dendrogram showed how the different clusters were related and how the attack tracks within a cluster were related. This outlook gives an accurate representation of the hierarchical relationship within the clusters. The creation of clusters using other similarity metrics was also explored. In particular, similarity values produced by Bean's LCS algorithm [4] were used to create the initial social network graph. Although community structure was found, there was a high number of clusters with only one attack track. More research is needed to explain why this is. Specifically, the hope of this combined work is to more accurately predict the capability of attack tracks.
+
+5.2
+
+Future Work
+
+The use of Bean's algorithm leads into the use of other feature sets. The feature set used to cluster in this thesis are the counts of the attacked services. One potential choice of future work would be to replace or to enhance the feature set chosen for clustering. Source and destination IP addresses, protocol, category of the alert, time of the attack, and other potential features all hold the possibility of being used in place of using services. The use of multiple edge graphs or the requirement of not requiring all similarity matrix values to be above the threshold values is being explored in an upcoming journal paper. Currently, there is also an improved and more robust network simulator being developed. One of the first steps towards any future work would be to utilize this new simulator with the current CACTUSS algorithm. This will allow more complicated networks to be designed and more sophisticated attacks to be simulated to generate entirely new sets of data. With these new data sets being created, more insight into the inner working of the CACTUSS algorithm will be gained. With this insight, it is likely that improvements to
+
+60
+
+the algorithm can be made. One improvement, which could be made with more mathematical research, is the further formalization of the calculation of the threshold value used to create the adjacency matrix from the similarity matrix. Since the current method is only a heuristic, having a more concrete mathematical equation to determine a threshold would be preferred.
+
+61
+
+Bibliography
+[1] F. J. Anscombe and John W. Tukey. The examination and analysis of residuals. Technometrics, 5(2):141 ­ 160, May 1963. [2] Brian Argauer. VTAC: Virtual terrain assisted impact assessment for cyber attacks. Master's thesis, Rochester Institute of Technology, 2007. [3] Tim Bass. Intrusion detection systems and multisensor data fusion. Commununications of the ACM, 43(4):99­105, 2000. [4] Jordan Bean. Characterization of relevant attributes using cyber trajectory similarities. Master's thesis, Rochester Institute of Technology, 2009. In progress. [5] John S. Breese, David Heckerman, and Carl Kadie. Empirical analysis of predictive algorithms for collaborative filtering. In Proceedings of the Fourteenth Conference on Uncertainty in Artificial Intelligence, pages 43­52, July 1998. [6] Robin Burke. Integrating knowledge-based and collaborative-filtering recommender systems. In AAAI Workshop on AI and Electronic Commerce, pages 69 ­ 72. AAAI, 1999. [7] Stephen Byers. Realtime fusion and projection of network activity. Master's thesis, Rochester Institute of Technology, 2008. [8] Kevin C. Costantini. Development of a cyber attack simulator for network modeling and cyber security analysis. Master's thesis, Rochester Institute of Technology, 2007. [9] F. Cuppens and A. Miege. Alert correlation in a cooperative intrusion detection framework. pages 202 ­ 215. IEEE Computer Society, 2002. [10] Haitao Du, Christopher Murphy, Jordan Bean, and Shanchieh Jay Yang. Toward unsupervised classification on non-uniform cyber attack tracks. In 12th International Conference on Information Fusion, 2009. [11] Michael B. Eisen, Paul T. Spellman, Patrick O. Brown, and David Botstein. Cluster analysis and display of genome-wide expression patterns. Proceedings of the National Academy of Sciences, 95(25):14863­14868, 1998.
+62
+
+[12] D. Fava, S. Byers, and S. Jay Yang. Projecting cyberattacks through variable-length markov models. IEEE Transactions on Information Forensics and Security, 3(3):359 ­ 369, 2008. [13] D. Fava, J. Holsopple, S. Jay Yang, and B. Argauer. Terrain and behavior modeling for projecting multistage cyber attacks. In 10th International Conference on Information Fusion, pages 1­7, 2007. [14] Santo Fortunato and Marc Barthelemy. Resolution limit in community detection. Proceedings of the National Academy of Sciences, 104(1):36­41, 2007. [15] M. Girvan and M. E. J. Newman. Community structure in social and biological networks. Proceedings of the National Academy of Sciences, 99(12):7821­7826, 2002. [16] A. K. Jain, M. N. Murty, and P. J. Flynn. Data clustering: a review. ACM Computing Surveys (CSUR), 31(3):264 ­ 323, 1999. [17] David Lusseau. The emergent properties of a dolphin social social network. In Biological Sciences, volume 270, pages S186 ­ S188. The Royal Society, 2003. [18] S. Mathew, D. Britt, R. Giomundo, S. Upadhyaya, M. Sudit, and A. Stotz. Real-time multistage attack awareness through enhanced intrusion alert clustering. In IEEE Military Communications Conference, number 3, pages 1801­1806, 2005. [19] S. Mathew, R. Giomundo, S. Upadhyaya, M. Sudit, and A. Stotz. Understanding multistage attacks by attack-track based visualization of heterogeneous event streams. In Proceedings of the 3rd international workshop on Visualization for computer security, pages 1 ­ 6. ACM, 2006. [20] Batul Mirza. Jumping connections: A graph-theoretic model for recommender systems. Master's thesis, Virginia Polytechnic Institute and State University, 2001. [21] M. E. J. Newman. Scientific collaboration networks. I. Network construction and fundamental results. Physical Review E, 64:016131, 2001. [22] M. E. J. Newman. Analysis of weighted networks. Physical Review E, 70:056131, 2004. [23] M. E. J. Newman. Modularity and community structure in networks. Proceedings of the National Academy of Sciences, 103(23):8577­8582, 2006. [24] M. E. J. Newman and M. Girvan. Finding and evaluating community structure in networks. Physical Review E, 69:026113, 2004.
+63
+
+[25] S. Noel and S. Jajodia. Understanding complex network attack graphs through clustered adjacency matrices. In 21st Annual Computer Security Applications Conference, pages 10­169, 2005. [26] X. Qin and W. Lee. Attack plan recognition and prediction using causal networks. In 20th Annual Computer Security Applications Conference, pages 370­379, Dec. 2004. [27] Paul Resnick, Neophytos Iacovou, Mitesh Suchak, Peter Bergstrom, and John Riedl. Grouplens: an open architecture for collaborative filtering of netnews. In Proceedings of the 1994 ACM conference on Computer supported cooperative work, pages 175 ­ 186, 1994. [28] Lyle Ungar and Dean Foster. Clustering methods for collaborative filtering. In AAAI Workshop on AI and Electronic Commerce. AAAI, 1998. [29] Wayne W. Zachary. An information flow model for conflict and fission in small groups. Journal of Anthropological Research, 33(4):452 ­ 473, 1977.
+
+64
+
+

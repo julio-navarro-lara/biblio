@@ -1,0 +1,670 @@
+Using Supervised and Transductive Learning Techniques to Extract Network
+Attack Scenarios
+Narges Khakpour, Saeed Jalili
+
+School of Electrical and Computer Engineering, Tarbiat Modares University
+{nkhakpour,sjalili}@modares.ac.ir
+Abstract
+Intrusion detection can no longer satisfy security
+needs of an organization solely. Recently, the attention
+of security community turned to automatic intrusion
+response and prevention, as the techniques, to protect
+network resources as well as to reduce the attack
+damages. Knowing attack scenarios enables the system
+administrator to respond to the threats swiftly by either
+blocking the attacks or preventing them from
+escalating. Alert correlation is a technique to extract
+attack scenarios by investigating the correlation of
+intrusion detection systems alerts. In this paper, we
+propose a new learning-based method for alert
+correlation that employs supervised and transductive
+learning techniques. Using this method, we are able to
+extract attack scenarios automatically.
+
+1.
+
+Introduction
+
+Although intrusion detection systems have a key
+role in protection of network resources, pure intrusion
+detection is unable to provide network security
+perfectly. We require techniques to respond to the
+discovered attacks appropriately by either preventing
+them from escalating or blocking them. Furthermore,
+current intrusion detection systems generally produce a
+large number of alerts which makes it hard to organize
+and interpret the alerts. To manage the alerts, we need
+a method to extract attack scenarios behind the raised
+alerts which enables us to respond the attacks properly.
+Alert correlation allows for automatic alert clustering,
+which groups logically interconnected alerts into one
+group and allows easy analysis of attacks [1]. Having
+the attack scenario, the system administrator will be
+able to predict the subsequent phases of the attack and
+as a consequence react suitably to prevent the attacks
+from escalating.
+Various approaches to correlate IDS alerts were
+proposed in the literature. A class of the alert
+correlation techniques is feature-similarity based which
+works by comparison of the similarity of the features of
+alerts[1 -6]. Supervised learning techniques are
+employed in this class of approaches too. However, a
+
+significant drawback of using supervised machine
+learning algorithms is lack of a suitable labeled dataset.
+Authors in [6] labeled and classified the training
+examples manually which requires expert knowledge.
+Moreover this process is time-consuming and errorprone. [1] used a small set of records (18 records)
+labeled by hand to build their classifier. However, its
+efficiency for different dataset needs more study.
+In this paper, we propose a new feature-similarity
+based method to extract attack scenarios from intrusion
+detection alerts focusing on the combination of
+transductive and supervised learning methods. The
+fundamental part of extracting attack scenario is
+determining whether two alerts are correlated or not.
+To do that, we build a binary classifier which its output
+denotes the correlation of two input alerts. To this aim,
+we first take advantage of Transductive Support Vector
+Machine (TSVM) algorithm[7] to produce a dataset.
+TSVM is a semi-supervised method which uses of
+unlabeled data, together with the labeled data, to build
+a classifier. Because semi-supervised learning requires
+less human effort and gives higher accuracy, it is of
+great interest both in theory and in practice[8].
+Afterward, we use the supervised learning techniques
+to build binary classifiers using the dataset produced by
+TSVM. Finally, we introduce an algorithm to construct
+attack scenarios from an alert stream which uses the
+built binary classifier to decide whether two alerts are
+correlated or not. Our major contribution is the use of
+semi-supervised learning techniques to tackle the lack
+of labeled dataset which is the main problem of using
+feature-similarity based techniques to extract attack
+scenarios.
+The remainder of the paper is organized as
+follows. We give a summary of related works in
+Section 2. In Section 3 we explain how to visualize the
+correlation between alerts. Section 4 explains the
+features used in our method. Section 5 introduces the
+proposed method. Section 6 presents our experiment
+results and Section 7 gives conclusion.
+
+Proceedings of the 14th International CSI Computer Conference (CSICC'09)
+978-1-4244-4262-1/09/$25.00 Â©2009 IEEE
+71
+
+2.
+
+Related Works
+
+Several alert correlation approaches were proposed
+in the past several years to construct high-level attack
+scenarios which are classified into three categories.
+â€¢ The first category includes approaches that work
+based on the similarity of alert features(e.g.,[1-4]).
+This class of alert correlation approaches correlates
+alerts based on the similarity of alert attributes, such
+as source IP address, target IP address, and port
+number etc.
+â€¢ The second category of alert correlation
+approaches is the pre-defined attack scenario based
+approach(e.g., [6, 9]). They detect the scenarios by
+matching the alert streams with the predefined attack
+patterns. Although they work well for well-defined
+attack sequences, but they cannot discover novel
+attack scenarios [9].
+â€¢ The last category is the Prerequisite/C onsequence
+approaches [10-12]. While an attack is happening in
+the network, different alerts are reported. The alerts
+are not isolated and each one relates to the different
+stages of the attack scenario. This kind of approaches
+discover attack scenarios through matching the postcondition of an alert with the pre-condition of its later
+ones. Even though using this class of approaches one
+can detect novel scenarios however specifying the
+pre-condition and post-condition of alerts is timeconsuming and error-prone and requires specific
+knowledge about the attacks in order to identify their
+prerequisites and consequences.
+
+3.
+
+Alert Correlation Representation
+
+A hyper-alert correlation graph shows the set of
+alerts belonging to the same scenario. It can potentially
+reveal intrusion strategies behind a series of attacks,
+and thus leads to a better understanding of the
+attackersâ€™ intention[13].
+Definition 1.
+A hyper-alert correlation graph
+  ,  is a directed acyclic graph, where the set
+N of nodes is a set of alerts and for each pair alerts
+and , there is a directed edge from
+to
+in E if
+and only if prepares for .
+The high-volume of alerts in the hyper-alert
+correlation graphs makes them large, complex and
+subsequently hard to understand and analyze. To
+overcome this problem, one way is to aggregate alerts
+in a hyper-alert correlation graph on some heuristics.
+Since an attacker may compromise a machine several
+times, so we can aggregate alerts with same source IP
+addresses, destination IP addresses and alert types.
+However, our experiments show that this technique can
+not reduce the nodes of graphs remarkably. Therefore,
+
+we aggregate alerts with the same destination IP
+addresses and alert types occurred in a predetermined
+time interval. Using this technique, the size of the
+graph reduces dramatically. Therefore, in this paper we
+define the attack graphs as Definition 2:
+Definition 2.
+An attack graph   ,  is a
+directed graph, where each member of N is a collection
+of alerts aggregated based on their destination IP
+addresses and alert types. Also, for each pair alert
+clusters C , C  N, there is a directed edge from  to
+ in E if and only if there is at least an alert such as
+  C that is correlated to alert   C .
+It is worth noting that we use the hyper-alert
+correlation graphs to extract and construct the
+scenarios, but the attack graphs are used just to
+visualize the final constructed attack scenarios. The
+hyper-alert correlation graphs enable us to explore the
+attack scenario over time, but the attack graphs cannot
+represent the progress of the attack over time explicitly.
+Therefore, in some situations we need both graphs to
+analyze the attack scenario accurately.
+
+4.
+
+Feature Extraction
+
+As mentioned before, our method is categorized as
+a feature similarity-based approach. It works by pairwise comparison of the features of alerts in order to
+determine whether those alerts are correlated or not.
+Therefore, first we are supposed to introduce the
+features we use. When an intrusion detection system
+triggers an alert, it provides raw data associated to that
+alert, such as source IP address, target IP address,
+source port number, destination port number, alert
+type, alert ID, timestamp, etc. These attributes are used
+to determine the correlation of two alerts. In our
+method, we take into account the following features to
+evaluate the correlation of the alerts which four first
+features are common in the literature.
+Source IP Addresses Similarity The most
+obvious way to correlate alerts together is by source IP
+address. Actually, the source IP address denotes the
+identity of the attacker. Therefore, it is likely that alerts
+belonging to a single scenario share a common source
+address. However, the attacker may coordinate the
+attack from different source addresses in a more
+complex attack. The value of this feature is calculated
+[6] as formula (1) that indicates the likelihood that the
+same attacker directs two alerts. In this formula, n
+shows the maximum number of high order bits
+matched between two addresses. In the cases that the
+source IP address is unknown, we perform rigorously
+and consider the similarity of the source IP addresses
+of the alerts as 1.
+
+Proceedings of the 14th International CSI Computer Conference (CSICC'09)
+72
+
+Î³IP , IP
+
+n
+32
+
+
+
+Identical Destination Ports Before an attacker
+can exploit the vulnerability of a service that is running
+on a particular port; she must firstexamine if the port is
+opened[1]. Therefore, alerts with identical destination
+ports are probably associated to the same attack
+scenario. This feature is binary that values 1 and 0
+denote the alerts with the same and different
+destination ports respectively.
+Destination IP Addresses Similarity Destination
+IP address can be viewed as the identity of the victim.
+Therefore, alerts with the same destination IP addresses
+are expected to belong to the same attack scenario. The
+similarity between two destination IP addresses is
+calculated by formula (1) too.
+Matching Source Address and Destination
+Address In various types of attacks, the attacker first
+compromises an intermediary machine as zombie and
+then uses it to attack the target victim. Therefore, if the
+source address of an alert matches the destination
+address of a previous alert, they probably are
+correlated.
+Correlation Strength of Alert Types It is
+obvious that the features of alerts cannot solely
+determine the correlation between alerts, i.e. we must
+enter the expert knowledge in some way. To do that,
+we define the correlation probability of the alert types
+which its value is updated frequently at runtime.
+Suppose  and  denote the classes of alerts  and 
+respectively. The value of this feature varies between 0
+and 1 shown with  ,  . The algorithm of extracting
+scenarios (Fig. 1) starts with a default value for all
+ ,   that is determined by the expert knowledge.
+The value of  ,   is calculated by formula (2)
+where N denotes the number of times that the
+correlation of the alerts with types  and  were
+computed and n denotes the number of times they are
+indicated as correlated. Furthermore, m=N-n and Î³ ,
+indicate the previous correlation strength of  and  .
+We consider two sigmoid functions to consider the
+effects of the preceding correlation results in the new
+value of  ,  . The parameters  and  show the
+weight of the number of times the alert types were and
+were not correlated respectively. We choose sigmoid,
+since it changes smoothly respect to the parameters 
+and . Authors in [1] consider a similar feature,
+however it differs from us in definition and update
+method.
+ , 
+
+
+
+
+2
+
+ "
+#$!  %&' ,&( /3
+!
+2
+
+
+
+5.
+
+The Proposed Method
+
+In order to determine whether two alerts are
+correlated or not, we build a classifier by the
+supervised learning techniques. However, we should
+first prepare the training examples to train the
+classifier. We employ the transductive learning
+techniques to set up the dataset. Then, we propose an
+algorithm that extracts the attack scenarios from an
+alert stream. This algorithm uses the built binary
+classifier in the previous phase to decide on the
+correlation of two alerts. This section explains our
+approach in more details.
+5.1.
+
+Phase 1- Dataset Creation
+
+The fundamental concern to build a classifier
+using supervised algorithms is the availability of an
+appropriate labeled dataset to train the classifier. In
+many real-world applications, labeling is often
+expensive, while an enormous amount of unlabeled
+examples are available easily. The acquisition of
+labeled data often requires an expert to manually
+classify the training examples. Nonetheless, the cost of
+the labeling process may make a fully labeled training
+set infeasible. In such situations, semi-supervised
+learning can be of great practical value, which uses
+both labeled and unlabeled data for training process.
+Transductive learning is a category of semi-supervised
+learning approaches which uses a small number of
+labeled examples and a large number of unlabeled
+examples. A large number of unlabeled examples often
+provide enough information about the distribution of
+the whole sample space [14]. The learning phase task is
+to predict the labels of input dataset including the
+unlabeled data.
+The Transductive Support Vector Machine
+(TSVM) [7] algorithm proposed by Vapnik is a
+transductive learning algorithm that we use in this
+research to create the training dataset. To do that, we
+first manually prepare a small set of labeled data (20
+records) as the background knowledge. Then, we
+combine 600 more records generated randomly with 20
+labeled data as the input training set of TSVM. The
+output of TSVM contains 620 labeled data which is
+used to train the classifiers in the next phase.
+5.2.
+
+Phase 2- Building Classifiers
+
+Having the training dataset, we are able to build
+binary classifiers. In this phase, we built the binary
+classifiers by means of a supervised learning algorithm.
+In this research, we use decision trees (C4.5 and
+Ripper), AdaBoosting and NaÃ¯ve Bayse learning
+techniques. However, due to the lack of space, in this
+
+Proceedings of the 14th International CSI Computer Conference (CSICC'09)
+73
+
+paper we only focus on the results of C4.5
+AdaBoosting.
+5.3.
+
+Phase 3Scenarios
+
+Construction
+
+of
+
+the
+
+and
+
+âˆ‘  , 
+
+ 
+||
+
+3
+
+Algorithm BUILDSCENARIO
+WHILE there are still alerts in the file
+Read the next alert from the file
+FOR eachscenario in memory
+Compute its correlation strength with the new
+alert
+END FOR
+Find the scenario with the greatest correlation
+strength
+If the correlation strength of the found scenario is
+greater than Î±
+Add new alert to the current scenario
+If recent alert has not been merged with existing
+scenarios
+Generate a new scenario with current alert
+END WHILE
+
+Figure 1. The Algorithm to build the attack scenarios
+
+6.
+
+Step
+1
+
+Attack
+
+Fig. 1 shows the algorithm to build the attack
+scenarios from an alert stream. Here we refer to the
+hyper-alert correlation graphs (not the attack graphs) as
+the scenarios. When a new alert is triggered, we must
+first identify the scenario that the alert belongs to. To
+do that, the correlation strength between the new alert
+and all the current scenarios are computed separately
+and the alert finally will join with the scenario with the
+greatest correlation strength provided that the
+corresponding correlation strength is greater than a
+predefined threshold. If there is no such scenario, a
+new scenario is created with the new alert as its only
+member. As mentioned before, to identify if two alerts
+are correlated or not, we use the classifier built in phase
+2. The correlation strength of alert  and scenario  is
+defined as formula (3) wherein || denotes the number
+of alerts of S and  and  show the alert class of 
+and  respectively.
+ , 
+
+Table 1. Alerts correspondent to the different stages of
+LLDOS 1.0
+
+Experiment Results
+
+We performed a series of experiments using the
+2000 DARPA intrusion detection scenario specific data
+sets [15] that includes LLDOS 1.0 and LLDOS2.02
+scenarios to examine the effectiveness of the proposed
+method. Due to the lack of space, we just focus on the
+results of applying our method on LLDOS 1.0
+scenario.
+
+Raised alert types
+-
+
+2
+
+Sadmind_Ping
+
+3
+
+Admind, SadmindAmslVerify_Overflow
+
+4
+
+RSH, Telnet, MStreamZombie
+
+5
+
+MStream_DDOS
+
+LLDOS 1.0 contains a series of attacks in which
+an intruder probes, breaks-in, installs a daemon to
+launch the Distributed Denial of Service (DDOS)
+attack, and finally launches a DDOS attack against an
+off-site server. It consists of a multistage attack as
+follows:
+Step 1. The attacker IP sweeps for live host IPs from
+a remote site. The attacker sends ICMP echo-requests
+in this sweep and listens for ICMP echo-replies to
+determine which hosts are "up"[15].
+Step 2. The hosts identified live in the previous phase
+are probed to determine which hosts are running the
+"sadmind" daemon. Therefore, the attacker can
+identify the vulnerable hosts to the exploit that she
+has. To probe the host, the intruder uses the "ping"
+option of the sadmind exploit program.
+Step 3. The attacker then tries to break into the hosts
+running the sadmind service in the previous phase.
+Then she compromises target hosts via the sadmind
+vulnerability (sadmind buffer overflow), totally there
+are 6 exploit attempts on each potential victim host.
+To test whether or not a break-in was successful, the
+attack script attempts a login, via telnet.
+Step 4. In this phase, the attacker for each
+compromised hosts performs a telnet login and install
+the Trojan mstream DDoS software on the
+compromised hosts.
+Step 5. In the final phase, the DDOS is launched
+manually.
+In our experiment, we use the alert log file [16]
+generated by RealSecure IDS. RealSecure produces
+922 alerts for LLDOS1.0. The alerts related to the
+different steps of LLDOS scenario is shown in Table 1.
+Realsecure does not raise any alert for the ICMP
+probing activity executed by the attacker[1, 13, 17].
+In our experiment, the Weka data mining package
+was used for all experiments.
+6.1.
+
+Extracting Attack Scenarios using C4.5
+
+C4.5 is an algorithm used to generate a decision
+tree which builds decision trees by recursively
+selecting attributes on which to split. The criterion for
+choosing an attribute is information gain. In the first
+experiment, we use C4.5 algorithm to build the binary
+classifier, which uses the dataset generated by TSVM
+for training.
+
+Proceedings of the 14th International CSI Computer Conference (CSICC'09)
+74
+
+Then, we apply the proposed method on the inside
+traffic in LLDOS 1.0 with the binary classifier built by
+C4.5 as its correlator engine. We perform this
+experiment with   2 and   2. Multiple attack
+graphs were discovered that exhaustive analysis of all
+the constructed attack graphs is out of the scope of this
+paper. Figures 2 and 3 show the attack graphs
+corresponding to the DDoS attack scenario. The text
+inside each node represents the name of the alert type
+followed by the alert destination IP address. The attack
+graph shown in Figure 3 clearly shows the strategy
+behind the sequences of the attack. The first step is
+
+missing in this attack scenario since RealSecure does
+not report any alert for this stage. Our method splits the
+LLDOS 1.0 scenario in three subgraphs.
+Although our algorithm for building the hyperalert correlation graphs does not relate these sub-graphs
+but it does not mean that their contained alerts are not
+correlated too. When a new alert arrives, its
+correlations with all the current hyper-alerts graphs are
+computed and it joins with the scenario with higher
+correlation strength. In other words, an alert can be
+correlated to the alerts in other hyper-alert graphs.
+
+Figure 2. The attack graph correspondent to the LLDOS1.0 scenario (C4.5 result)-Part 1
+
+Figure 3. The attack graph correspondent to the LLDOS 1.0 scenario (C4.5)-Part 2
+
+Figure 4. The attack graph correspondent to the
+LLDOS1.0 scenario(AdaBoosting)-Part 1
+
+Figure 5. The attack graph correspondent to
+LLDOS1.0 scenario (AdaBoosting)-Part2
+
+Proceedings of the 14th International CSI Computer Conference (CSICC'09)
+75
+
+In addition to the LLDOS1.0 attack scenario
+described above, other attack graphs are constructed
+too: (1) our method correlates a high number of
+Email_Almail_Overflow and Email_Ehlo alert types
+together. This scenario is extracted since an attacker
+tries to gain unauthorized access to several hosts inside
+the
+network
+[1]
+which
+triggers
+multiple
+Email_Almail_Overflow and Email_Ehlo alerts. (2)
+Another similar attack scenario revealed by the
+proposed method contains multiple FTP alerts such as
+FTP User, FTP Pass and FTP Syst. (3) A further
+discovered scenario correlates multiple telnet alerts
+TelnetTerminaltype. Actually this alert type does not
+indicate a threat, however it is used to log the terminal
+type used for forensics purposes. It denotes the
+beginning of a telnet session. Therefore, this scenario
+explains that the intruder attempts to telnet to the other
+hosts.
+6.2.
+
+Extracting
+AdaBoosting
+
+Attack
+
+Scenarios
+
+using
+
+Boosting is a general method for improving the
+accuracy of any given learning algorithm. In the first
+experiment, though the DDOS attack scenario were
+extracted to good extent, however it was split into three
+scenarios. In order to improve the results, in another
+experiment we use AdaBoosting [18] as the learning
+algorithm to build the binary classifier that relies on
+C4.5 as its base learning algorithm. Moreover, we use
+the same dataset used in the prior experiment.
+Then, we apply the proposed method on inside
+traffic in LLDOS 1.0. The method constructs several
+attack graphs. Figures 4 and 5 show the attack graphs
+corresponding to the DDoS attack scenario. In this
+experiment, the results are improved a bit because the
+scenario is split into two subgraphs. The DDOS attack
+scenario discovered by C4.5 identifies 172.016.112.050
+as the IP-swept host while AdaBoosting specifies
+172.016.112.010. We explained the reason behind
+splitting the graphs before. Furthermore, in this
+experiment other hyper-alert correlation graphs like
+those constructed by C4.5 are extracted too.
+
+7.
+
+Conclusion
+
+In this paper, we proposed a new learning-based
+method to correlate alerts generated by an intrusion
+detection system. This method employs the combination
+of supervised and transductive machine learning
+techniques to determine the correlation of the alerts. To
+evaluate our method, we conducted various experiments
+using DARPA Dataset 2000. Our results show that the
+proposed method can extract the attack scenarios to a
+reasonable extent.
+
+8.
+
+References
+
+[1] B. Zhu and A. A. Ghorbani, "Alert Correlation for
+Extracting Attack Strategies," International Journal of
+Network Security, vol. 3, pp. 244-258, Nov. 2006.
+[2] F. Cuppens, "Managing Alerts in a Multi-Intrusion
+Detection Environment," in Proceedings of the 17th Annual
+Computer Security Applications Conference: IEEE Computer
+Society, 2001.
+[3] S. Stuart, A. H. James, and M. M. Joseph, "Practical
+automated detection of stealthy portscans," Journal of
+Computer Security,vol. 10, pp. 105 -136, 2002.
+[4] J. Klaus, "Clustering intrusion detection alarms to
+support root cause analysis," ACM Transactions on
+Information and System Security (TISSEC), vol. 6, pp. 443471, 2003.
+[5] V. Alfonso and S. Keith, "Probabilistic Alert
+Correlation," in Proceedings of the 4th International
+Symposium on Recent Advances in Intrusion Detection:
+Springer-Verlag, 2001.
+[6] O. M. Dain and R. K. Cunningham, "Fusing a
+heterogeneous alert stream into scenarios," in Proceedings of
+the 2001 ACM Workshop on Data Mining for Security
+Applications, 2001, pp. 1-13.
+[7] V. N. Vapnik, Statistical Learning Theory, 1998.
+[8] Z. Xiaojin, "Semi-supervised learning with graphs,"
+Doctoral Thesis, Carnegie Mellon University, 2005.
+[9] B. Morin and H. Debar, "Correlation of Intrusion
+Symptoms: An Application of Chronicles," in Recent
+Advances in Intrusion Detection, 2003, pp. 94-112.
+[10] J. T. Steven and L. Karl, "A requires/provides model for
+computer attacks," in Proceedings of the 2000 workshop on
+New security paradigms, Ireland, 2000.
+[11] F. Cuppens and A. Mige, "Alert Correlation in a
+Cooperative Intrusion Detection Framework," in Proceedings
+of the 2002 IEEE Symposium on Security and Privacy: IEEE
+Computer Society, 2002.
+[12] N. Peng, C. Yun, and S. R. Douglas, "Constructing attack
+scenarios through correlation of intrusion alerts," in
+Proceedings of the 9th ACM conference on Computer and
+communications security Washington, DC, USA: ACM, 2002.
+[13] P. Ning, Y. Cui, and D. Reeves, "Analyzing Intensive
+Intrusion Alerts Via Correlation," Technical Report: TR-200204, North Carolina State University at Raleigh, 2002.
+[14] Y. Chen, G. Wang, and S. Dong, "Learning with
+progressive transductive support vector machine " Pattern
+Recognition Letters, vol. 24, pp. 1845-1855, August 2003.
+[15] MIT Lincoln Laboratory, 2000 Darpa Intrusion
+Detection Scenario Specific Datasets, 2000.
+[16] "Tiaa: A toolkit for intrusion alert analysis," North
+Carolina State University, Cyber Defense Laboratory,
+http://discovery.csc.ncsu.edu/software/correlator/ver0.4/index.
+html, 2005.
+[17] L. F. Salim and A. Mezrioui, "Improving the Quality of
+Alerts with Correlation in Intrusion Detection," International
+Journal of Computer Science and Network Security, vol. 7, pp.
+210-215, 2007.
+[18] Y. Freund and R. E. Schapire, "A decision-theoretic
+generalization of on-line learning and an application to
+boosting," Journal of Computer and System Sciences, vol. 55,
+pp. 119-139, 1997.
+
+Proceedings of the 14th International CSI Computer Conference (CSICC'09)
+76
+
+

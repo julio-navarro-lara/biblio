@@ -1,0 +1,168 @@
+2009 International Conference on Computer Technology and Development
+
+Alert Correlation Using Correlation Probability Estimation and Time Windows
+Seyed Hossein Ahmadinejad and Saeed Jalili Computer Engineering Dept. Tarbiat Modares University Tehran, Iran Email: {ahmadinejad, sjalili}@modares.ac.ir
+Abstract--Intrusion detection systems (IDS) as a part of today's networks raise millions of low-level alerts every day. Consequently, it is difficult for human to analyze them. Alert correlation techniques have been developed during recent years to decrease the number of alerts and provide a high-level abstraction of them for a network administrator. In this paper, we suggest a new method for correlating alerts based on their attributes. We use time windows along with a classification method to distinguish those received alerts that are correlated with the new alert. Time windows are applied for reducing the number of comparisons and improving the accuracy of correlation. Our experiments which were done on DARPA2000 show that while the cost of comparisons dropped noticeably, the correlation method performed accurately. Our method is not limited to known attack scenarios and does not need extra domain knowledge except for training the classifier. Keywords-Alert Correlation; Network Security; Time Window; Intrusion Detection
+
+I. I NTRODUCTION Nowadays, the need for large-scale networks is increasing more than before. Meanwhile, problems and difficulties in wide networks have emerged as well. One of the great concerns in such networks is security that is a vital matter for them. One of the solutions to assure the security of networks is intrusion detection systems. Unfortunately, IDSs raise a huge number of alerts. Moreover, these alerts are so low-level that it is hard or even impossible for a network administrator to analyze them. Therefore a higher level management is required not only to reduce the number of alerts but also to provide a succinct and high-level view of the security state of the protected network. To address this issue, Alert Correlation methods have been proposed. Quite a number of techniques from various approaches have been suggested, although all of them have merits and drawbacks. In this paper, the correlation mechanism is based on correlation probability. If correlation probability between two alerts is more than a predefined threshold, they will be correlated. To estimate the correlation probability, a similarity vector is constructed for the two alerts based on a correlation knowledge base and their attributes such as IP, Port etc. Then, the similarity vector is fed into a classification method. The output of the classification method is the correlation probability between the two alerts.
+978-0-7695-3892-1/09 $26.00 Š 2009 IEEE DOI 10.1109/ICCTD.2009.22 171 170
+
+When IDS raises a new alert, the new alert is compared with previous alerts to distinguish those of which that are correlated with it. We avoid comparing the new alert with all the previous ones because it is impossible in the real world. For this purpose, alerts are organized in time windows. Although time window is an old concept, we propose a novel approach of using it which will be discussed in next sections. Correlated alerts are placed in hyper alert graphs being created gradually according to the correlation between alerts. At the first step of correlation process, some of the previous alerts are selected from time windows of the created hyper alert graphs. We propose a new way of selecting alerts using a special formula. Then, correlation probabilities are estimated by the classification method as briefly discussed in previous paragraph. A hyper alert graph is chosen as a host of the new alert according to a novel factor. Subsequently, the new alert should be correlated with some of the previous alerts as a new node in the selected hyper alert graph. Each comparison and correlation leads to different updates in the correlation knowledge base. The remainder of this paper is organized as follows: next section presents main principles and steps of the proposed method. Section 3 illustrates the experiments we have done to show the abilities of our method. Section 4 discussed related works and advantages of our method over them. Last section concludes this paper and points out some future research directions. II. P ROPOSED A LERT C ORRELATION M ETHOD A. Correlation Knowledge Base Each Alert has a type determined by IDS. We use a matrix structure to store the correlation strength between any two types of alerts. If  alerts have been received since the IDS began generating alerts and these  alerts have  distinct types, correlation knowledge base will be a    matrix while rows and columns demonstrate alerts types and each cell is a record with 4 elements. The first element shows the correlation strength between corresponded types which is computed as follows:  ( ,  ) =
+  =1
+
+, ( )
+
+(1)
+
+Where , ( ) is the probability of   correlation between  and  (types of  and   alerts). Moreover,  is the number of times these two types of alerts have been correlated. The frequency that two alert types were correlated is saved in the second element. The number of times two types were correlated is stored in the third element and the number of times they were compared with each other is saved in the fourth element. The main goal of correlation knowledge base is to know how likely an alert type is followed by another type. Every time two alerts are compared with each other, the fourth element of a cell in the knowledge base is updated and if our method correlates them, the first and the third elements of that cell are updated too. B. Features Alerts generated by IDS have a few attributes that we use six of them to create similarity vectors. We use all features introduced in [1]: Feature 1: Source IPs Similarity. Similarity between two IPs is computed by counting the number of high-order bits in the first IP which are the same as another IP. The value of this feature is between 0 and 1. For example: 1 = 192.168.12.12  11000000 10101000 00001100 00001100 = 192.168.24.13  2 11000000 10101000 00011000 00001101 The similarity between these two IP addresses is 19/32 = 0.59. Feature 2: Destination IPs Similarity. It is computed like Feature 1. Feature 3: Destination Ports Similarity. If the destination port numbers of two alerts are just the same, this feature will be 1, otherwise it will be 0. Feature 4: Alerts IP Chain. The value of this feature will be 1 if the source IP address of the new alert matches the destination IP address of the previous alert. Feature 5: Alerts Type Chain. The likelihood that an alert type would be followed by another alert type.This feature is computed according to the following equation:  ( ,  )   ( ,  ) =  =1  ( ,  ) (2)
+
+used. If multi-class methods are selected, the classifier will predict the correlation probability and if we select twoclass methods, the classifier can only predict weather two alerts are correlated or not. We chose the second one to avoid complexity in creating the train set, although there might be a slight reduction in the accuracy of the proposed method. Labels in the train set are 1 or -1. The former shows that alerts should be correlated and the later indicates that alerts are not correlated. However, since we aim at using correlation probability for decision making about correlation of two alerts and also for updating the knwoledge base, we took an advantage of WEKA [2], which can calculate the class membership probabilities for the given test instance. For instance, in addition to specifying that a similarity vector belongs to the second class, it can predict the probability of this allocation. Boosting [3], is one of the most important techniques for supervised learning developed nearly ten years ago. It is based on the fact that we can boost and improve the accuracy of a weak learning algorithm which performs just slightly better than random guessing by sequentially applying it to the input data and then taking the majority vote of the classifiers produced. We applied boosting in our classification step. Moreover, we used LogitBoost [4], (a boosting algorithm formulated by Jerome Friedman, Trevor Hastie and Robert Tibshirani) as the boosting algorithm. As we should select a weak learning algorithm as the base learner for boosting algorithm, DecisionStump was selected for this purpose. D. Correlation Method First of all, the classifier should be trained. We produced a small training set based on the principles of correlation and relation between alerts attributes. The main structure of our method is hyper alert graphs (or hyper alert, in brief). Nodes in a hyper alert are alerts and edges depict correlation between alerts. Each group of correlated alerts is placed in a different hyper alert. When a new alert is received, a hyper alert whose alerts have the highest average of correlation with the new alert should be selected as the host hyper alert. To find the host hyper alert, we should compare the new alert with previous alerts scattered across a few hyper alerts. Since comparing the new alert with all received alerts in all hyper alerts is time consuming and it might be even impossible when the number of alerts is rocketing, a part of alerts in each hyper alert is selected for comparison. For the purpose of selecting some delegate alerts from hyper alerts, we consider time windows over them. However, unlike those methods which use time windows to avoid investigating the correlation of old alerts with the new one, we just want to focus more on newer alerts not to omit old alerts. This more attention to recent alerts which is not too severe decreases the probability of being affected by too old alerts. To do so, a few alerts not all of them are selected from time windows using a novel technique. Assume that there is totally  time
+171 172
+
+Alert Type Chain helps to find which previous alert should be correlated with the new alert based on their types. Feature 6: Correlation Frequency. The number of times two alert types were correlated divided by the number of times these two types were compared. C. Correlation Probability Estimation In order to estimate the correlation probability between two alerts based on their constructed similarity vector, we use a classification method. For the purpose of classification, either multi-class or two-class methods could be
+
+windows in a hyper alert.  alerts are selected from time window  ( time window in the hyper alert) according to the following formula:  =   ×         =  ×  (3) (4)
+
+Where  is a number less than the number of alerts in  and  is a constant value (set by an expert) between 0 and 1 helps us to select even fewer alerts. We aim to pick more alerts from those time windows that are closer to current time or contain a considerable number of alerts. For example, if we want to select candidate alerts from time window number 3 with 10 alerts, while there is totally 6 time windows created until now in that hyper alert, 5 alerts should be selected randomly from it. Candidate alerts are picked using (4) for all time windows of a hyper alert. Similarity vectors including six features (described before) are constructed and fed into the classifier. Subsequently, the outputs of the classifier - correlation probabilities - are added together and divided by the number of selected alerts. The result is called CorrelationFactor and shows the average correlation probability between the new alert and the hyper alert. CorrelationFactor is computed for all hyper alerts. During this process, for each hyper alert the maximum of correlation probabilities found there is stored. Before keep detailing the rest of the method, it is necessary to introduce two thresholds: Correlation Threshold. a threshold which is used in finding the host hyper alert for the new alert. Correlation Sensitivity. a threshold which is used in finding those alerts that are correlated with the new alert in the host hyper alert. Once CorrelationFactor is computed for all hyper alerts, the new alert will belong to such a hyper alert that has the maximum value of CorrelationFactor if the maximum correlation probability stored before for it is more than the Correlation Threshold. Otherwise, a new hyper alert is created and the new alert will be placed there. In the former case, the new alert is added to the host hyper alert as a new node and then is compared this time with all of the alerts in the hyper alert to specify some of which that are correlated with it. This comparison step is done exactly like the previous step (constructing similarity vector and using classifier). Those alerts examined in the previous step are not required to be compared again. If  is the correlation probability between the new alert  and an alert  in the host hyper alert and  is the maximum correlation probability saved during the process of computing CorrelationFactor,  is correlated with  if the following condition evaluates to true:  -  <   (5)
+172 173
+
+In other words,  should be correlated with those alerts that the difference between their correlation probabilities and  is less than the Correlation Sensitivity threshold. Once the correlator acknowledges that two alerts are correlated, a cell in the correlation knowledge base corresponded to their types should be updated in its first, third and fourth elements. However, in order to lighten the impact of ordering of the received alerts in comparison procedure, the second element of the cells which shows the correlation frequencies will be updated when the process of correlating alerts with the new alert finished. Finally, all correlated alerts raised for intrusive actions of the attacker will be collected with reasonable relations in a hyper alert. III. E XPERMINTAL R ESULTS A. Method Validation In order to evaluate the proposed method, we used DARPA 2000 dataset [5], which is a famous test data and has been applied in quite a number of researches. There are 2 attack scenarios: LLDOS1.0 and LLDOS2.0.2. In the both scenarios a novice attacker tries to install components necessary to run a Distributed Denial of Service, and then launch a DDOS at a US government site. The main difference between 2.0.2 and 1.0 is that in 2.0.2 the attacker probes for host operating system by doing DNS HINFO queries, rather than sweeping IP's and rpc ports, and that they break-into one host first, then fan out from there, rather than attacking each host individually. We tested our method on both of the datasets, but we can illustrate the result of our experiments only on the first dataset due to space limitations. Alert logs generated by RealSecure and collected by Ning in [6], are used in our experiments. Fig. 1 displays a hyper alert built for LLDOS1.0 from 4 created hyper alerts. Table I shows the variables values used to construct the hyper alert. RealSecure does not raise any alert for the first step of attack but a few 'sadmind-ping' alerts are generated for step 2 when the attacker tries to find out which hosts are running the "sadmind" remote administration tool. In the next step, attacker wants to penetrate into the hosts recognized as vulnerable machines in previous step. So IDS raises several 'admind' and 'sadmind- amslverify-overflow' in response to the third pace of intrusion. For the fourth step, logging into victims and installing 'mstream' software cause five types of alerts, 'Rsh', 'TelnetXdisplay'", 'TelnetEnvAll', 'TelnetTerminaltype'" and 'Mstream-Zombie'.
+Table I VARIABLES USED TO GENERATE F IG . 1 Time windows length 0 10  0 1
+
+Correlation Threshold 0.5 0.5
+
+Correlation Sensitivity 0.05 0.05
+
+sadmind_ping:257
+
+0-150000
+
+150000-300000
+
+300000-450000
+
+admind:258
+
+N Number r of com mparisons(tho ousand ds)
+
+450 300 150 0 0. .5 0.6 0.7 0.85 0 5 10 15 20 60 0 120 150 195 1
+
+sadmind_ping:259
+
+admind:327
+
+sadmind_amslverify_overflow:331
+
+0 0.9
+
+admind:333
+
+sadmind_amslverify_overflow:337
+
+Figure 2. Change in number of comparisons when length of time windows and  change
+
+admind:338
+
+rsh:447
+
+rsh:455
+
+telnetterminaltype:674
+
+rsh:456
+
+TelnetXdisplay:675
+
+mstream_zombie:458
+
+rsh:460
+
+TelnetEnvAll:675
+
+mstream_zombie:682
+
+mstream_zombie:685
+
+mstream_zombie:686
+
+Figure 1.
+
+Hyper alert graph created for LLDOS1.0
+
+The last stage of attack which leading to a few 'streamDOS' alerts could be included in the hyper alerts through initializing the corresponded cells in the ACM with proper values. B. Method Evaluation In this section, we evaluate our method in terms of accuracy and number of comparisons when the values of time window length and  change. When the length of time windows increases, more alerts are selected according to (4) for comparison with the new alert. Therefore, there will be a growing trend in the number of comparisons. On the contrary, by reducing the value of , fewer alerts are chosen for comparison phase. However, as shown in Fig. 2, there is no consistent rising or falling trend. When the values of  or time window length change, the distribution of alerts over hyper alerts changes too. As a result, the number of alerts in time windows could decrease or increase that it has a direct effect on the number of comparisons. So, in spite of the general predictable falling movement in the comparisons
+173 174
+
+number, expanding time windows or increasing the value of  might cause a growth in the time needed for alert correlation. Nevertheless, something that is really important is the fact that we could reduce the number of comparisons, while the accuracy is kept high. In order for a hyper alert graph to be verified in terms of accuracy of correlation, there has not been introduced any special method. Furthermore, there is no accuracy evaluation in the papers introduced a new approach of correlation. In this paper, we suggest a model to show how good our method correlates alerts. Each hyper alert includes edges and nodes. If a security expert could extract an ideal hyper alert that consists of those alerts that are related to an attack, comparison between the ideal hyper alert and a hyper alert generated by a correlation method will reveal the accuracy of the correlation technique. Since DARPA2000 identified the IPs involved in the attack steps, we could easily distinct those alerts which were raised for an adverse action. By contrast, it is not an easy job to specify the relation between alerts because there could be a variety of relationships among them. For instance, an expert might believe that an 'Rsh' could be a direct consequence of 'sadmind-ping' action, whereas in another expert idea, 'sadmind-ping' leads to 'Rsh' only through a middle action. Thus, we consider only nodes of hyper alerts in assessing of our method. For computing the errors of the method, we define error concept as follows: Error: sum of the false negative and false positive alerts. False positive alert: an alert existing in the hyper alert generated by the correlation system but does not exist in the hyper alert created by the expert. False negative alert: an alert existing in the hyper alert created by the expert but does not exist in the hyper alert generated by the correlation system. Fig. 3 shows that the worst case is when we use a small value for  and length of time windows alike. The reason for this problem is that low values for these two variables cause small proportion of alerts to be selected and consequently, CorrelationFactor used to determine the host hyper alert will be untrustworthy.
+
+0.95 5
+
+Error
+2128 1421 714 0 7
+
+150 120 60 20 15 10 5 1
+0.8 85 0.9 95 0.9 0.5 0.6 0.7 1
+
+Ti ime window w length h (min nute)
+
+195
+
+Table II C ONFIGURATIONS USED FOR TESTS Correlation Threshold 0.5 0.5 Correlation Sensitivity 0.05 0.05 Time windows length 0 10  0 1
+
+Configuration C1 C1
+
+Numb ber of c compari isons(th housand ds)
+
+Value of 
+Figure 3. Errors when length of time windows and  change
+
+Finally, we compared two configurations of our implementation to show the effectiveness of the method. The configurations are shown in Table II. In the first configuration, we did not use time windows. In the second configuration, we added time windows. Fig. 4 indicates how is the difference between these configurations when we consider the number of comparisons. Evidently, the number of comparisons almost was halved in the second configuration for LLDOS1.0. As regards LLDOS2.0.2, there is a slight improvement because a small number of alerts were raised for the attack. Moreover, accroding to Fig. 5, the second configuration performed better than the other one in regard to accuracy because it considers time of the alerts in comparison. IV. R ELATED W ORKS Correlation methods could be divided into four groups: Rule-based, Scenario-based, Machine learning, and Temporal approaches. Rule-based approach tries to find causal relationships among alerts through their pre and post conditions [6]­[10]. If post conditions of an alert satisfy pre conditions of another alert, they will be correlated. A main weakness of this approach is that specifying pre and post conditions for all alerts is time-consuming and error-prone. Additionally, if there are not any causal relationships between two alerts, they will not be correlated. Compared with [6], our method could correlate "TelNet" alerts whereas the result graph shown in [6] does not include them. The second group of alert correlation techniques are predefined attack scenario based methods [11], [12]. If alerts contribute to construction of a predefined attack scenario, they should be correlated. As long as the attack scenario followed by the attacker is known, they work well but they have trouble discovering novel strategies. For example, Wang, Liu and Jajodia use attack graph for alert correlation [11]. It is not reasonable to assume that defender can reliably know all vulnerabilities on the network to create a complete attack graph. Moreover, if IP addresses of the network hosts are reassigned, the attack graph should be updated. Significantly
+174 175
+
+450 400 350 300 250 200 150 100 50 0
+
+Configuration
+
+C1
+
+C2
+
+LLDOS1.0
+
+Dataset
+
+LLDOS2.0.2
+
+Figure 4.
+
+Number of comparisons in the two configurations
+
+10 9 8 7 6 5 4 3 2 1 0
+
+Configuration
+
+C1
+
+C2
+
+Er rror
+
+LLDOS1.0
+
+Dataset
+
+LLDOS2.0.2
+
+Figure 5.
+
+Errors in the two configurations
+
+if the attacker follows a new attack scenario, [11] can not find relation between alerts. However, our method can deal with novel attack scenarios because it is based on alert attributes not predefined relations between them. Also, IP addresses reassignment does not affect our method. Those methods that utilize machine learning techniques for alert correlation are in the third group [1], [13], [14]. Our work in this paper is slightly similar to [1]. However the method proposed in [1] seems costly and impractical. Comparing the new alert with all received alerts used in [1] is not practical. We use time windows to avoid this problem. Additionally, if an alert is placed mistakenly in a wrong hyper alert, their method could be disrupted easily ever since because a new alert is placed in a hyper alert even with only one similar alert whereas in our method, average of correlation probabilities is used. Finally, temporal based methods [15], [16] correlate alerts
+
+according to their temporal relationships. Reference [15] aims at using Granger Causality Test (GCT) which is a time series-based statistical analysis to determine whether two alerts are correlated or not. This class of methods is capable of correlating alerts that may contribute to unknown attacks. However, if the attacker put delays into his attack strategy, he can evade the security system. The way that we apply time windows can resolve this problem to a great extent because we do not ignore old alerts but rather we put more emphasize on recent alerts. V. C ONCLUSION AND F UTURE W ORKS In this paper, we presented a method for alert correlation based on the fact that correlated alerts have similar attributes. We used 6 features along with a classification method (boosting with decision stump as the base learner) to determine whether two alerts are correlated or not. Some of these features are related to statistical similarity and some of them are related to causal relationship. Correlated alerts are placed in hyper alerts dividing to several time windows. Special way of using time windows helps to select sample alerts from hyper alerts. We avoid comparing the new alert with all received alerts because following such methods that have a comprehensive comparison step like [7] seems costly and with less effectiveness. Moreover, we introduced a new factor called CorrelationFactor for finding a hyper alert that has the highest average of correlation probability between all of its alerts and the new alert. Correlation between alerts is investigated using correlation probability computed by a classifier. Our experiments show that the method performs well and improvement in the number of comparisons is very considerable, while the error rate reduced, too. On the other hand, it can correlate alerts related to novel attacks as well as known attacks unlike the scenario-based approach. Additionally, the need to domain knowledge is restricted only to a training set. In our future research, we plan to devise a method for mapping the hyper alerts to an attack graph. This helps us to predict the next step of the attacker strategy. Also, we will develop a technique to find the values of thresholds and variables automatically during the correlation process. R EFERENCES
+[1] B. Zhu and A. Ghorbani, "Alert correlation for extracting attack strategies," International Journal of Network Security, vol. 3, no. 3, pp. 244­258, 2006. [2] S. Garner, "Weka: The waikato environment for knowledge analysis," in Proc. of the New Zealand Computer Science Research Students Conference. Citeseer, 1995, pp. 57­64. [3] Y. Freund, "Boosting a weak learning algorithm by majority," Information and computation, vol. 121, no. 2, pp. 256­285, 1995.
+
+[4] J. Friedman, T. Hastie, and R. Tibshirani, "additive logistic regression: A statistical view of boosting," Annals of statistics, pp. 337­374, 2000. [5] "Darpa 2000 intrusion detection evaluation datasets," 2000. [Online]. Available: http://www.ll.mit.edu/mission/ communications/ist/corpora/ideval/data/index.html [6] P. Ning and Y. Cui, "An intrusion alert correlator based on prerequisites of intrusions. Submitted for publication," Available as Technical Report TR-2002-01, Department of Computer Science, North Carolina State University, Tech. Rep., 2002. [7] P. Ning and D. Xu, "Learning attack strategies from intrusion alerts," in Proceedings of the 10th ACM conference on Computer and communications security. ACM New York, NY, USA, 2003, pp. 200­209. [8] S. Templeton and K. Levitt, "A requires/provides model for computer attacks," in Proceedings of the 2000 workshop on New security paradigms. ACM New York, NY, USA, 2001, pp. 31­38. [9] Z. Jimmy, M. Heckman, B. Reynolds et al., "Modeling network intrusion detection alerts for correlation," ACM Transactions on Information and System Security, vol. 10, no. 1, pp. 1­31, 2007. [10] G. Tedesco and U. Aickelin, "Real-Time Alert Correlation with Type Graphs," in Proceedings of the 4th International Conference on Information Systems Security. Springer, 2008, pp. 173­187. [11] L. Wang, A. Liu, and S. Jajodia, "Using attack graphs for correlating, hypothesizing, and predicting intrusion alerts," Computer Communications, vol. 29, no. 15, pp. 2917­2933, 2006. [12] A. Siraj and R. Vaughn, "A cognitive model for alert correlation in a distributed environment," in Proceedings: IEEE International Conference on Intelligence and Security Informatics. Springer, 2005, pp. 218­230. [13] Z. Li, A. Zhang, J. Lei, and L. Wang, "Real-Time Correlation of Network Security Alerts," in Proceedings of the IEEE International Conference on e-Business Engineering. IEEE Computer Society Washington, DC, USA, 2007, pp. 73­80. [14] O. Dain and R. Cunningham, "Fusing a heterogeneous alert stream into scenarios," Applications of Data Mining and Computer Security, 2002. [15] X. Qin and W. Lee, "Statistical causality analysis of infosec alert data," in Proceedings of the sixth International Symposium on Recent Advances in Intrusion Detection (RAID). Springer Verlag, 2003, pp. 73­93. [16] M. Benjamin and D. Herve, "Correlation of Intrusion Symptoms: An Application of Chronicles," in Proc. of the 6th International Symposium on Recent Advances in Intrusion Detection, Pittsburgh, PA. USA: Springer-Verleg, 2003.
+
+175 176
+
+

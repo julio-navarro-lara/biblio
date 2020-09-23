@@ -1,0 +1,1655 @@
+Active Event Correlation in Bro IDS to Detect Multi-stage Attacks
+Bing Chen, Joohan Lee, and Annie S. Wu
+School of Electrical Engineering and Computer Science
+University of Central Florida
+Orlando, FL 32816
+bchen,jlee,aswu@cs.ucf.edu
+
+Abstract
+Many recent computer attacks have been launched in
+multiple stages to evade the detection of existing Intrusion
+Detection Systems (IDS). Some stages of the attack may appear innocent if checked separately. Furthermore, the intervals between these separate attack stages can be on the
+order of hours, days, or even months. These characteristics of multi-stage attacks make the detection task challending for most existing IDSs that are stateless in that they
+perform intrusion detection by independently checking individual packets, connections or sessions. In this paper, we
+propose a novel approach, Active Event Correlation (AEC),
+which collects and correlates suspicious network events inside a Network Intrusion Detection System (NIDS). AEC infers the possibility of attacks in the context of security policies and blocks attacks before they are completed. We have
+implemented AEC on top of the Bro NIDS [13]. Experiments indicate that AEC can effectively recognize and correlate individual stages of multi-stage attacks, stop incomplete attack stages, and give network administrators meaningful and concise alerts.
+
+1. Introduction
+For computer attackers, hiding their identities is as important as achieving their goals of attack. One effective way
+to evade detection by IDS is to perform an attack in multiple stages. A typical multi-stage attack consists of the following stages: probing, breaking in, installing attack tools
+and launching the attack. A good example of a multi-stage
+attack is the Distributed Denial of Service (DDoS) attack.
+In order to launch a DDoS attack, the attacker needs to
+setup an attack network, which typically includes clients,
+agents and handlers in terms of the DDoS Agent-Handler
+Attack Model [16]. Clients are computers to which attackers have direct access to and through which attackers can
+deliver attack commands. Agents (also called daemons in
+
+the literature) are those computers that have already been
+compromised by attackers and are the actual platforms of
+the ﬁnal DDoS attack. Handlers (also called masters in the
+literature) are communication bridges between clients and
+agents. A client can send commands to multiple handlers,
+each of which can in turn direct multiple agents to launch
+the DDoS attack to a speciﬁc target.
+One challenge in detecting multi-stage attacks arise from
+the fact that the network activities associated with individual stages of an attack can appear similar to normal trafﬁc.
+Probing can be done in a stealthy way. If an attacker manages to hide his activity of gaining access to a remote host
+via an exploit code, the subsequent activities such as login
+and ftp will be considered as normal trafﬁc by NIDS most
+of the time. Second challenge is the fact that the time between stages of multi-stage attacks can last long enough to
+evade the detection of most existing NIDS because they are
+stateless and therefore do not have the capability of analyzing network activities having multiple sessions and lasting
+hours or days.
+In order to detect multi-stage attacks and recognize the
+entire process of such attacks, a technique called Alert Aggregation and Correlation (AAC) was recently proposed.
+The AAC approaches aggregate and correlate alerts from
+different IDS sensors and only send high-level alarms to the
+security ofﬁcers [1, 2, 5, 9, 17, 18]; furthermore, they build
+attack scenarios or recognize attack plans based on the correlated alerts so that we can predict and prevent unﬁnished
+attack steps [11, 10, 12, 15].
+All of these previous approaches are independent of speciﬁc IDS sensors. They collect alerts from IDS sensors, correlate them according to the predeﬁned algorithms, and try
+to draw a big picture of what happens in the monitored network. These approaches have some properties such as IDS
+independency and wide network coverage. There are, however, some shortcomings associated with these approaches:
+• They are passive in collecting alerts from IDS sensors.
+IDS sensors could miss some steps of a multi-stage attack because these steps may appear normal to them.
+
+Proceedings of the Fourth IEEE International Workshop on Information Assurance (IWIA’06)
+0-7695-2564-4/06 $20.00 © 2006
+
+IEEE
+
+Although some AAC approaches try to recover missing steps, how well such recovery can be done remains
+a question.
+• Since they just receive alerts from IDS sensors and do
+not have the context of the actual packets that cause
+these alerts, it is hard to determine which alerts are
+more trustworthy than others if there is discrepancy
+among these alerts.
+• The fact that IDS sensors may misinterpret network
+trafﬁc can be a problem. This problem cannot be
+solved by correlation because the correlating components do not know which sensors interpreted the trafﬁc
+correctly and which sensors did not. This problem can
+be better handled with additional contextual information [14].
+To address the disadvantages of the current AAC approaches mentioned above, we propose a novel approach,
+Active Event Correlation (AEC), which pushes the aggregation and correlation of events ahead into the NIDS. At
+ﬁrst, AEC looks for triggering events caused by signature
+matching, protocol analyses and violation of security policies. AEC then quarantine suspicious subjects that cause the
+triggering events, and actively recording subsequent events
+related to these quarantined subjects. AEC generates alerts
+at the beginning of each possible stage of a multi-stage attack and a mata-alert for the whole attack. AEC has the
+potential to stop an uncomplete attack. We have ﬁnished a
+proof-of-concept implementation of the proposed approach
+using Bro [13], a distributed event-based intrusion detection
+system.
+
+2 Related Work
+Many alert aggregation and correlation approaches have
+recently been proposed with the goal of reducing the false
+alarm rates of IDSs and building attack scenarios to recognize attack plans. We review related approaches that motivate our approach and describe their features in this section.
+There are three major categories of alert correlation approaches. The ﬁrst category is based on alert feature similarity. Valdes and Skinner [17] deﬁne a similarity function and a minimum similarity value for each feature of IDS
+alerts. Two features match if their similarity value is greater
+than the minimum similarity value. The overall similarity
+between two alerts is calculated based on their common features. These two alerts are fused into a single meta-alert if
+their overall similarity is greater than the minimum expectation of similarity.
+The second category is based on the prerequisites and
+consequences of alerts. Cuppens and Mige [1] correlate
+alerts by looking for logical links from the pre-condition of
+
+attack B to the post-condition of attack A. Such logical links
+can tell us if executing attack A can contribute to the execution of attack B. Ning et al. [10] present a similar approach.
+They represent attack scenarios by constructing hyper-alert
+correlation graphs based on prerequisites and consequences
+of intrusion alerts. Ning et al. [11] further extend their work
+by integrating causal correlation methods with clustering
+correlation methods. They integrate two correlation graphs
+with several methods if they contain common alerts from
+the same alert cluster. They also try to hypothesize the possible missed attacks through the relationship between alerts
+and their prerequisites. Xu and Ning [18] cluster alerts
+based on the triggering events shared by these alerts and examine these clusters in the context of local network and host
+conﬁguration. They also correlate two attacks by examining the common resources between the output resources of
+one attack and the input resources of the other attack.
+The third category correlates alerts with attack scenarios,
+graphs, or networks built from known attacks or network
+vulnerability analysis. Morin and Debar [9] use Chronicles Formalism to correlate intrusion alarms. A chronicle
+consists of a set of intrusion events and time constraints on
+these events. A chronicle has to be built for each known
+attack. Qin and Lee [15] build causal networks from attack trees, probabilistically infer the attack steps, and correlate possibly isolated attack scenarios. Noel et al. [12] ﬁrst
+build attack graphs for known exploits and then map intrusion events to attack graphs. The correlation of two events
+is quantiﬁed by the distance of those two exploits that correspond to these events. A consecutive sequence of events
+is considered to be an attack scenario if this sequence lies
+above a predeﬁned correlation threshold.
+The approaches discussed above all work in a passive
+way: they simply collect alerts from IDS sensors and miss
+whatever these IDS sensors miss. These approaches do not
+increase the detection capability of IDS sensors and basically work at the data management layer. While effective
+at the data management layer, their computational requirements make their application to the node level correlation
+infeasible. For example, [11, 10, 12, 15] need to build attack graphs and [2, 9, 17] require complicated computations such as clustering or probabilistic inference. Finally,
+these approaches don’t take into consideration the context
+of events that generate alerts in an IDS sensor which can
+give us valuable information for alert correlation.
+An additional related approach is the dynamic quarantine method [20] that dynamically quarantines a host whenever its behavior becomes suspicious and releases this quarantine after a short time period to reduce the number of
+false alarms. This approach mainly aims to detect scanning worms and defend the system from them. AEC uses
+not only scanning rate but also violations of local security
+policies as triggers for quarantining suspicious events.
+
+Proceedings of the Fourth IEEE International Workshop on Information Assurance (IWIA’06)
+0-7695-2564-4/06 $20.00 © 2006
+
+IEEE
+
+3 Active Event Correlation
+In this paper, events can be innocent: an established tcp
+connection, icmp echo request, ftp request, etc., or suspicious: sending portmapper requests at a high rate, trying
+to access private services from an outside network, ftp to a
+DNS server, etc. An event is called Triggering Event if it
+violates a security policy. The key idea is to judge the maliciousness of an event by its history and in the context of
+local networks and hosts.
+The basic idea of AEC is to create a record for a network
+subject after receiving a triggering event. A network subject is an abstract concept that represents a virtual network
+device. A network subject can be a host identiﬁed by an IP
+address or a service by a port number. Currently, the possible network subjects are a host originating a connection or
+responding to a connection request and a service identiﬁed
+by a destination port. A triggering event can be a suspicious
+low-level event or a summary of suspicious events during
+a short time window. An example of a triggering event is
+when a remote host sends more than 12 icmp echo requests
+to the monitored network within a one second time window.
+Another example is when a remote host sends an ftp request
+to a DNS server in the local network. We believe that there
+must be some abnormal behaviors in a multi-stage attack;
+otherwise, we will not be able to detect it at all. The triggering events try to capture such abnormal behaviors.
+The concept of triggering events in this paper is slightly
+different from that addressed by Xu and Ning in [18] where
+a triggering event is a low-level event. The other two major differences between our approach and their work in [18]
+are: (1) We actively aggregate events related to a triggering
+event while they passively analyze the triggering events for
+clustering alerts; (2) The way triggering events are used is
+different. They ﬁnd triggering events for each alert and cluster similar alerts sharing the same triggering events. Each
+cluster may correspond to an attack. An attack in their work
+generally consists of multiple triggering events. A triggering event in this paper is a suspicous activity and acts as a
+starting point to monitor a relevant network subject in order
+to detect ongoing attacks, so one attack may have only one
+triggering event.
+The deﬁnition of triggering events comes from three
+sources: signature detection, protocol analysis, and security
+policy. The ﬁrst source focuses on known attacks. If an IDS
+sensor sends out an alert based on signature detection, a triggering event may be ﬁred. The second source addresses the
+anomaly detection. If the assignment of a string parameter
+in a RPC request is too long, this connection is suspicious
+and a triggering event could be ﬁred against it. The third
+source emphasizes the resource access policy of a local site.
+If there is a policy saying that no web server is allowed to
+initiate an outgoing connection, a triggering event can be
+
+deﬁned to capture a violation of this policy. Generation of
+triggering events for the ﬁrst two cases is quite simple: we
+ﬁre one triggering event for each critical IDS alert in this
+paper. We will discuss what kind of alerts we are handling
+in the next section.
+The design of triggering events for security policy is a
+little bit tricky because policies that are too strict will cause
+many false positive alerts and policies that are too loose will
+not be useful. Bro IDS comes with default policies for popular network protocols and provides low-level event handlers to allow network administrators to deﬁne customized
+security policy. We deﬁne the following triggering events
+for the security policy of the local network:
+1. A host sends icmp echo requests to the local network
+more than 12 times in 2 seconds.
+2. One host has caused icmp unreachable events more
+than 3 times in one second.
+3. Both the source IP address and destination IP address
+of a packet are not in local address space.
+4. A host sends requests to services not available in the
+target server. This observation was also mentioned
+in [17].
+5. The monitored servers request services not expected
+by network administrators.
+6. Failed login to servers more than 3 times in one
+minute.
+The rates of host scan, port scan and login attempt can
+be adjusted according to local network environment. Event
+1 and 2 are deﬁned to capture scanning and probing. Event
+3 indicates that local hosts are used to ﬂood external hosts.
+Event 6 tries to capture the attacks of guessing passwords.
+A special attention should be paid to the Event 4 and 5.
+We monitor a server’s behavior by checking connections to
+and from this server. If we know which services this server
+provides and which service it needs to access, we will be
+able to detect many backdoors and spyware that usually use
+non-standard ports to function as mentioned in [19].
+Once a triggering event ﬁres, a corresponding network
+subject is created for this event. This newly created subject will be monitored by the IDS. If subsequent events are
+related to this subject, the information from these events
+will be stored with this subject. All of these operations are
+performed in an add-on component called Event Processing
+Center (EPC) as shown in Figure 1. AEC is implemented in
+the Bro script language [13] and put in one policy ﬁle that
+can be easily loaded into Bro IDS. The event processing
+center consists of three components: a Subject List (SL), an
+Event Aggregation Component (EAC) and a Host Conﬁguration Table (HCT).
+
+Proceedings of the Fourth IEEE International Workshop on Information Assurance (IWIA’06)
+0-7695-2564-4/06 $20.00 © 2006
+
+IEEE
+
+Events
+Subject List
+Event
+Aggregation
+Component
+
+Host
+Configuration
+Table
+
+Alerts or
+Commands
+
+Figure 1. Event Processing Center
+The Subject List is an array that stores network subjects,
+whose data structure is shown in Figure 2. Each network
+subject consists of a list of events ordered by the start time
+of the ﬁrst occurrence of the respective events. Each event
+entry in the event list holds information about the occurrence of the same type of events related to the monitored
+subject. The ﬁelds in each event entry include the start
+time of the ﬁrst occurrence of this event, the rate of this
+event, the potential attacking hosts whose behaviors have
+triggered this event, the potential victims that could possibly be attacked by the involved subject, and other relevant
+information.
+Event sequence
+Event_1
+
+Event_2
+
+------
+
+Event_n
+
+Data items for each event
+start_time
+
+rate
+
+targets
+
+-------
+
+Figure 2. Data Structure of the Subject
+The EAC takes as input low-level events directly sent by
+the detection engine of the IDS. The EAC aggregates those
+events that may generate a triggering event. If a triggering
+event occurs, the EAC creates a subject for it and stores this
+subject on the subject list. If any incoming event is related
+to this subject, the EAC updates the subject. In order to
+determine which events we should monitor for this subject,
+we deﬁne Security-sensitive Event Set (SES) and only consider event types in this set as relevant to a subject. The SES
+consists of those events that can possibly cause exploitation
+of software vulnunerabilities, information exposure, or ﬁle
+transfer. The following is the deﬁnition of SES in this paper:
+Security-sensitive Event Set {
+telnet success/failure event,
+rlogin success/failure event,
+ftp request/reply event,
+tftp event,
+
+http request event,
+TCP connection reject/reset event,
+portmapper getport event,
+icmp unreachable event,
+UDP originating Connection
+}
+The deﬁnition of SES can be adjusted according to the
+security policy changes. Each subject has an identiﬁer,
+which can be an IP address or port number. Each network
+event comes with source and destination IP addresses and
+possibly a destination port. We correlate an event to a network subject if both contain the same IP address or port
+number. How about those events that are not related to any
+monitored subject? We just leave them to the underlying
+NIDS, so that AEC will not negatively impact the detection
+capabilities of this NIDS.
+The HCT is a lookup table that stores the service information of hosts in the monitored network. Unlike the Active
+Mapping technique presented in [14] where host proﬁles are
+built to store policies about how each host in the monitored
+network interprets network trafﬁc, we are more concerned
+with the public servers in our local network since they are
+known to the outside world and therefore have more chance
+of being attacked. We assume that attackers only know the
+IP addresses, the OS versions, and available services of the
+public servers, but do not have such information about internal hosts without probing. As a result, if the IDS is aware
+of the services to be provided from the local network, it can
+treat any connection request to unknown services in a server
+as suspicious. An HCT record consists of the following
+ﬁelds: host name, host IP address, a set of services that this
+host will provide, and a set of services that this host needs to
+access. The initial HCT can be manually populated by network administrators since they know what services servers
+provide in their administrative network. A more efﬁcient
+method is to probe these servers with some scanning tools
+such as NMAP [4]. One problem with the probing method
+is that some operating systems such as Windows XP have
+host-based ﬁrewalls that can detect and block probing. In
+this case, we can passively sniff network trafﬁc and parse
+out what services this kind of servers provides and need access to. The HCT could be initially stored in a text ﬁle or
+a database and loaded into memory during the start of the
+IDS. Since Bro language currently does not support disk
+read function, we just manually add the service list into the
+code for every server we are monitoring.
+As the number of subjects and the events related to subjects increases, so does the size of Subject List. If we do
+not constrain the size of the Subject List, we will have a
+scalability problem. We design a retirement mechanism to
+handle this issue. This mechanism regularly retires (or removes) those inactive subjects that have not been updated
+for a given period of time. The following tasks must be per-
+
+Proceedings of the Fourth IEEE International Workshop on Information Assurance (IWIA’06)
+0-7695-2564-4/06 $20.00 © 2006
+
+IEEE
+
+formed before a subject is retired from the Subject List: (1)
+a meta-alert is logged for this subject, and (2) the subject
+is placed into a list of potential attackers if it is considered
+an attack or into a list of potential victims if it is considered
+a victim. We perform task (2) for detection of stealthy attacks. If a remote host has ever been placed in the list of potential attackers, we check its IP address against the events
+that we are interested in for a ﬁxed period of time that can
+be set by administrators. If this host revisits the local networks within this period, we will again create a subject for
+it and begin to track it.
+There is a trade-off for a NIDS sensor between the immediate response to an attack and the delayed but complete
+understanding of the on-going attack strategy. In order to
+handle both cases efﬁciently, AEC is designed to send an
+initial alert for the triggering event of a subject, an alert for
+a clear stage of the attack, and a meta-alert for retirement of
+this subject.
+Given the above properties for the proposed approach,
+Event Processing Center performs the following steps.
+1. Aggregate low level events and check if triggering
+events occur.
+2. If yes, create a network subject for this triggering event
+and issue an initial alert. Block the IP address or the
+port associated with this event, if necessary.
+3. Aggregate events related to this subject based on their
+IP address or destination port number. The following
+events are ignored during this step:
+(a) Events not speciﬁed by the Security-sensitive
+Events Set.
+(b) Events associated with services that the monitored server is designed to provide.
+(c) Events associated with services that the monitored server is designed to access.
+4. If this subject has not been updated for the time threshold, go to step 5; otherwise, go to step 1.
+5. Issue a meta-alert for this subject and remove this subject from the subject list. Go to step 1.
+
+4 Implementation and Performance Study
+4.1 Implementation
+A proof-of-concept implementation of our approach is
+done with Bro [13]. Bro captures network trafﬁc using
+Libpcap [8] and generates events in the Event Engine for
+the captured trafﬁc based on the network protocols. Events
+
+are sent to the Policy Script Interpreter for processing. A variety of protocol analyzers are written in the Bro Script Language for intrusion detection. Customized security policies
+can be written in the same language. Policies can be easily
+loaded into Bro. We chose Bro as our experimental platform because it separates mechanism from policy, which allows us to efﬁciently implement AEC without dealing with
+low level issues such as packet capture, session reassembly and generation of low-level events. Bro allows us to
+incorporate AEC in it seamlessly with the Bro script language. We implement AEC by writing event handlers and
+functions to collect and process speciﬁc events generated
+by a Bro IDS sensor. The core function of our algorithm
+is the QC Detector function, in which we aggregate lowlevel events, generate triggering events and network subjects, and correlate events to subjects. We call QC Detector
+in the handlers of events that we are interested in and pass
+connection and context information to QC Detector.
+We refer to the events that may generate triggering events
+as Atomic Events. We currently handle 47 atomic events
+(detailed description is omitted due to space limit). Seven
+events are deﬁned according to security policy that is speciﬁed by the authors of this paper. Thirty nine Events are from
+the corresponding notices sent by Bro IDS. The last event
+Bro Alarm is a special event. Bro generates alarms for important notices and stores them in the log ﬁle, alarm.log.
+We deﬁne the event Bro Alarm to represent all alarms. Any
+alarm generated by Bro will trigger a Bro Alarm event and
+different actions can be taken according to context information in these alarms.
+The module we implement works as a special analyzer
+loaded together with other default Bro analyzers when Bro
+is started. We let our analyzer write logs into a separate ﬁle
+so that we can clearly compare the log entries generated by
+AEC with those by Bro.
+If a host causes a triggering event, we put its IP address in
+the array, QC potential attackers. If a host has been probed
+by a potential attacker, we put its IP address in the array,
+QC potential victims and the destination port number in the
+array, QC risky ports, if any.
+In order to evaluate our proposed approach, we perform
+two types of experiments: testing on tcpdump trace data
+and detecting real attacks in real time. We could compare
+our approach, AEC, with existing AAC approaches so that
+we shall know if AEC is better than AAC. Such a comparison, however, is not appropriate because AAC approaches
+and AEC have different inputs. AAC approaches take IDS
+alerts as input while our approach, AEC, takes as input network events. Although events in AEC can be generated
+from IDS alerts, they are normal network activities most of
+the time. Every alert is suspicious but an event is not necessarily suspicious. Therefore, we evaluate our approach,
+AEC, by checking the performance improvement of the un-
+
+Proceedings of the Fourth IEEE International Workshop on Information Assurance (IWIA’06)
+0-7695-2564-4/06 $20.00 © 2006
+
+IEEE
+
+derlying IDS after adding the AEC component.
+
+4.2 Testing on Tcpdump data
+We run Bro with AEC against the 2000 DARPA Intrusion Detection Scenario Speciﬁc Data Set [7] which consists of two datasets: LLDOS 1.0 and LLDOS 2.0.2. They
+include two multi-stage distributed DoS attack scenarios.
+We use inside tcpdump trace ﬁles. Both of these datasets
+contain a distributed DOS attack. In Scenario One, the attack consists of ﬁve phases: probing the network, breaking
+into those hosts with the Solaris Sadmind vulnerability, installing the Mstream DDoS software on the compromised
+hosts, and launching a DDoS attack at a remote server. The
+attack method in Scenario Two is more stealthy than that of
+Scenario One. The attack ﬁrst breaks into a DNS server by
+exploiting the Solaris Sadmind vulnerability and then uses
+this DNS server as a stepping stone to attack other hosts
+with the same vulnerability. Finally, it launches a DDoS
+attack to a remote server.
+Our evaluation criterion against this dataset is to test
+whether the proposed method implemented within Bro can
+detect the multi-phase attacks successfully before the ﬁnal
+phase of the attacks is completed.
+Bro logs 18,284 entries for Scenario One and 13,588 entries for Scenario Two. The entry statistics logged by Bro
+are shown in Table 1 and Table 2. In Scenario One, of
+18,284 entries, there are only 192 entries relevant to the attack. In Scenario Two, of 13,588 entries, there are only 70
+entries relevant to the attack. At the last row of Table 1,
+there are 52 entries that are logged for ACK ﬂooding packets. These entries are scattered in 9951 connection summary
+entries. It is difﬁcult for security administrators to ﬁnd these
+valuable entries in such a large dataset if the IP address of
+the victim is unknown, which is the usual case. The more
+critical issue is that those log entries related to the attack
+are randomly distributed in different log ﬁles and there are
+no links among them. It is the security administrators’ responsibility to ﬁgure out what relationships exist between
+different log entries and what has happened in the local networks. We are not saying that those entries not related to
+attacks are not important. Log entries such as connection
+summary are actually useful for forensic analysis, but they
+are not very helpful for quick response to attacks.
+The experimental results show that AEC is able to aggregate log records associated with the DDoS attack and
+signiﬁcantly reduce the number of log entries to a manageable level. AEC records 34 entries for Scenario One, 27 of
+which are relevant to the attack. AEC records 25 entries
+for Scenario Two, 22 of which are relevant to the attack.
+We discuss the content of the log entries for Scenario One
+and Scenario Two in Table 3 and Table 4, respectively. The
+addresses and roles of the hosts participating in the DDOS
+
+attack of Scenario One and Scenario Two are shown in Table 5. Many log entries generated by AEC are effective
+summaries of activities related to a network subject, so reduction of the number of log entries with AEC does not
+mean loss of meaningful information. AEC can detect most
+of attack activities. As seen in Table 3 (for Scenario One),
+entry 1 and 2 capture the probing phase of this attack, entry
+3 to 5 capture the break-in phase, entry 6 to 9 capture possible attack tool download, entry 7 captures the attacker’s
+return, entry 10, 17 and 18 capture communication between
+the DDOS handler and agents, and ﬁnally entry 12 caputres
+the ACK ﬂooding attack. As seen in Table 4 (for Scenario
+Two), entry 1 reports the attacker’s probing activity, entry 3
+reports the attaker’s break-in activity, entry 4, 6 and 8 report
+the DDOS handler’s probling activities, entry 9 reports attack tool transfer activity, entry 10 reports communication
+between the DDOS handler and agents, and entry 11 reports
+the DDOS ﬂooding activities.
+The readers may notice that there are some entries for
+event update in the log ﬁle. This type of entry is designed to
+display a summary of previous events when a new event occurs to this quarantined subject. In Scenario Two, Although
+the step in which the attacking machine uploads data to the
+DNS server is not seen in the early entries for triggering
+events, this activity is actually logged in the ﬁnal meta-alert
+for the attacking machine. The readers may refer to Appendix A for the details of the log ﬁle. With AEC, the security administrators can easily notice what is happening in
+their local network without digging into a huge volume of
+log entries and therefore save precious time for administrators to take necessary countermeasures to virulent attacks.
+
+4.3 Detecting real-time attacks
+4.3.1 Experimental Environment
+In order to evaluate AEC in the practical network environment, we set up a testing network shown as Figure
+3. There are seven machines to form three broadcast
+network domains: 192.168.1.0/24, 200.200.200.0/24 and
+172.16.112.0/24. The names, IP addresses, Operating system versions and roles of these hosts are shown in Table
+6. The server named Gateway/Firewall/IDS is the default
+gateway of these networks and the Bro IDS sensor. It has
+three NICs, each of which is connected to a network. The
+Bro IDS monitors the network 172.16.112.0/24, where all
+four hosts are running RedHat Linux 7.3 operating system.
+RedHat Linux 7.3 has a known buffer-overﬂow vulnerability in OpenSSL v0.9.6b and REP 0.15.1 software. Exploitation of the ﬁrst vulnerability allows remote arbitrary code
+to be run as Apache user privilege. Exploitation of the second vulnerability allows a local user to obtain root privilege. The attacking machine 192.168.1.2 is equipped with
+NMAP scanning tool [4], OpenSSL exploit code and REP
+
+Proceedings of the Fourth IEEE International Workshop on Information Assurance (IWIA’06)
+0-7695-2564-4/06 $20.00 © 2006
+
+IEEE
+
+Table 1. Bro’s Log Entries for Scenario One
+Entry Categories
+
+# of Entries
+
+Comments
+
+Content Gap
+Sensitive Portmapper Access
+
+12
+4
+
+all entries are related to the attack
+all entries are related to the attack
+
+http-proxy-signature
+
+14
+
+all entries are false alerts
+
+ICMP Unreachable
+Notice
+
+76
+1147
+
+72 entries are related to the attack
+16 entries are related to the attack
+
+Weird Connection
+
+7080
+
+38 entries are related to the attack
+
+Connection Summary
+
+9951
+
+52 entries for ﬂooding packets of DDoS
+
+Table 2. Bro’s Log Entries for Scenario Two
+Entry Categories
+
+# of Entries
+
+Comments
+
+Sensitive Portmapper Access
+
+2
+
+all entries are related to the attack
+
+Stepping
+ICMP Unreachable
+
+2
+7
+
+all entries are related to the attack
+all entries are related to the attack
+
+Notice
+Weird Connection
+
+597
+5583
+
+2 entries for true alerts
+no entries are related to the attack
+
+Connection Summary
+
+7397
+
+57 entries for ﬂooding packets of DDoS
+
+Table 3. AEC’s Log Entreies for Scenario One
+Entry
+No.
+
+Entry Content
+
+Reason for Logging
+
+Relevant
+Attack
+
+1
+
+The attack machine (202.77.162.213) scans the local
+network 172.16.113.0
+
+Violation of the policy of ICMP Echo Request
+
+Yes
+
+2
+
+Event update, display more information about the ﬁrst
+Entry
+The attack machine is trying to exploit vulnerable Sadmind service
+
+An update to the quarantined subject
+
+Yes
+
+An update to the quarantined subject
+
+Yes
+
+The attack machine is attempting to access some other
+machines for portmapper service but failed
+The host 172.16.115.20 (172.16.112.10 or
+172.16.112.50) remotely accesses (rsh) to the
+attacker 202.77.162.213
+
+An update to the quarantined subject
+
+Yes
+
+Any host that rsh to a potential attacker is suspicious
+
+Yes
+
+The attacker 202.77.162.213 telnet to a local machine.
+The host 172.16.115.20 (172.16.112.50 or
+172.16.112.10) sends a request for udp port 9325
+service to the broadcast address 255.255.255.255.
+9325/udp is the port by which the handler and agents
+communicate
+A packet with spoofed source address is sent to the
+victim host 131.84.1.31
+
+An update to the quarantined subject
+Unexpected access. The host 172.16.115.20
+(172.16.112.50 or 172.16.112.10) is a monitored server and restriction is put on the services
+it need access for its functionality
+
+Yes
+Yes
+
+Both source address and destination address do
+not belong to the local network
+
+Yes
+
+The host 172.16.115.20 has rejected by the outside
+web server 192.168.1.20
+Event updates becasue of either connection rejection
+or ftp to a potential attacker
+
+An update to the quarantined subject
+
+No
+
+An update to the quarantined subject
+
+No
+
+Summary for the previous entries with detailed information
+
+Final meta-alerts
+
+23-24: No,
+others: Yes
+
+3-4
+5
+6,8,9
+
+7
+10,17,18
+
+12
+11
+13-16
+19-34
+
+Proceedings of the Fourth IEEE International Workshop on Information Assurance (IWIA’06)
+0-7695-2564-4/06 $20.00 © 2006
+
+IEEE
+
+to
+
+Table 4. AEC’s Log Entreies for Scenario Two
+Entry
+No.
+
+Entry Content
+
+Reason of Logging
+
+Relevant to Attack
+
+1
+
+The attack machine (202.77.162.213) sends portmapper
+getport request to the host 172.16.115.20 for Sadmind
+service
+
+Sensitive portmapper access from outside network
+
+Yes
+
+2
+
+Event update, display more information about the ﬁrst
+Entry
+The attack machine is trying to exploit vulnerable Sadmind service of 172.16.115.20
+
+An update to the quarantined subject
+
+Yes
+
+An update to the quarantined subject
+
+Yes
+
+The host 172.16.115.20 sends portmapper getport request to 172.16.112.50 for Sadmind service
+
+Unexpected access. The host 172.16.115.20 is
+a server and restriction is put on the services it
+need access for its functionality
+
+Yes
+
+5
+
+Event update, display more information for entry 4
+
+An update to the quarantined subject
+
+Yes
+
+6
+
+The host 172.16.115.20 is trying to exploit vulnerable
+Sadmind service of 172.16.112.50
+
+Unexpected access. The host 172.16.115.20 is
+a server and restriction is put on the services it
+need access for its functionality
+
+Yes
+
+7
+
+Event update, display more information for entry 6
+
+An update to the quarantined subject
+
+Yes
+
+8
+
+The host 172.16.115.20 sends portmapper getport request to 172.16.112.207 for Sadmind service
+
+Unexpected access. The host 172.16.115.20 is
+A server and restriction is put on the services it
+need access for its functionality
+
+Yes
+
+9
+
+The host 172.16.115.20 ftp to 172.16.112.50
+
+Yes
+
+10
+
+172.16.112.50 tries to access 9325/udp port of
+172.16.115.20. 9325/udp is the port by which the
+handler and agents communicate
+
+Unexpected access. The host 172.16.115.20 is
+a server and restriction is put on the services it
+need access for its functionality
+Unexpected access. The host 172.16.112.50 is
+a server and restriction is put on the services it
+need access for its functionality
+
+11
+12
+
+A packet with spoofed source address is sent to the victim host 131.84.1.31
+Event update, display more information for entry 10
+
+Both source address and destination address do
+not belong to the local network
+An update to the quarantined subject
+
+13
+
+The host 172.16.114.50 ftp to 172.16.115.20
+
+1425
+
+Summary for the previous entries with detailed information
+
+Once a subject is quarantined, ftp request to this
+subject is monitored
+Final meta-alerts
+
+3
+4
+
+Yes
+
+Yes
+Yes
+No
+19-20:
+No,
+Others: Yes
+
+Table 5. Hosts and Their Roles in the Attack
+IP address
+
+Role
+
+202.77.162.213
+
+Attacking machine
+
+172.16.115.20
+172.16.112.10
+
+DDoS handler & Agent
+DDoS Agent
+
+172.16.112.50
+
+DDoS Agent
+
+131.84.1.31
+Other machines
+
+Victim host
+These machines are not directly relevant to the attack, But we can obtain useful intrusion
+information from their Response to the attacks probing
+
+Proceedings of the Fourth IEEE International Workshop on Information Assurance (IWIA’06)
+0-7695-2564-4/06 $20.00 © 2006
+
+IEEE
+
+exploit code, and MStream DDoS tool. Please refer to [3]
+for details of MStream DDoS tool. The goal of the attack is
+to attack the victim 200.200.200.3 with the MStream DDoS
+tool after breaking in and getting control of some hosts in
+the network 172.16.112.0/24. The next section will discuss
+the detailed attack steps and detection performance.
+4.3.2 Attack Scenarios and Detection Performance
+Attack Scenario One:
+1. Scan the network 172.16.112.0/24 with NMAP using
+-O option to get operating system information.
+2. Attack the Linux web server 172.16.112.5 with
+OpenSSL exploit code.
+3. Exploit REP vulnerability to gain root privilege.
+4. Ftp back to the attacking host 192.168.1.2 from the
+victim 172.16.112.5, and download MStream DDoS
+tool including master software and server software.
+5. Start MStream master and server software.
+6. Repeat step 2 to 5 to attack another Linux Web Server
+172.16.112.8, and install and start MStream server
+software in this host.
+7. Access the Linux web server 172.16.112.5 to launch
+DDoS attack to a remote web server 200.200.200.3.
+There is one trick in this attack scenario. The REP exploit code only works in the home directory of a normal user
+so the code was actually downloaded to the DDoS handlers
+and agents before the attack began. We then used chmod
+command to allow any user to run it. This method is just a
+workaround and will not happen in a real attack.
+Corresponding detection and defense: Case one: in
+this experiment, we only show the detection capability of
+AEC and do not block trafﬁc from suspicious subjects. The
+following is the screen capture of the IDS machine during
+the attack.
+[root@mypc policy]# ./bro -C -i eth0 mt
+
+1. Stop collecting service information
+2. connection rejected, Access Not Intended
+From 192.168.1.2 to 172.16.112.5
+A triggering event was ﬁred by event connection rejected, source IP: 192.168.1 .2, destination IP:
+172.16.112.5, dst port: 2432/tcp, start time: 17/08/05
+23:05 :25
+
+3. ftp request, from 172.16.112.5 to 192.168.1.2
+A triggering event was ﬁred by event ftp request,
+source IP: 172.16.112.5, destination IP: 192.168.1.2,
+dst port: 21/tcp, start time: 17/08/05 23:12:22
+4. ftp request, from 172.16.112.8 to 192.168.1.2
+A triggering event was ﬁred by event ftp request,
+source IP: 172.16.112.8, destination IP: 192.168.1.2,
+dst port: 21/tcp, start time: 17/08/05 23:17:28
+5. spoofed address, Spoofed Address
+From 142.120.12.39 to 200.200.200.3
+We now explain what these displayed entries mean as
+follows:
+1. This entry shows the IDS stops collecting service information for monitored servers. As we discussed in
+previous sections, we monitor the service access to a
+server in the local network and also out-bound connections by the server. We can do this job only after we have service information about this server. We
+ﬁrst manually record the port numbers of major services provided or wanted by a server, for example,
+store 80/tcp in a data structure for a web server. We
+then monitor the network trafﬁc and automatically collect this information with Bro IDS. Before we launch
+a testing attack, we allow the IDS to collect service
+information for a couple of hours. This method is especially effective and efﬁcient in a busy network.
+2. This entry says that the IDS has seen a few connection
+rejection events caused by a remote host and quarantined this host. We were actually expecting a triggering
+event such as an address scan event or a port scan event
+but we did not see any of them. The reason we did not
+see an address scan event is that the Bro IDS was monitoring the NIC 172.16.112.2 and the router was using
+the ARP protocol to get IP addresses of local hosts to
+respond the attacking machines address scan. As a result, the IDS did not see icmp echo request events in
+the network 172.16.112.0/24. The Bro IDS has indeed
+logged the port scan by the attacking machine, but the
+detection of the probing was triggered by connection
+rejection events instead of a port scan event because
+connection rejection events came much earlier than the
+port scan event.
+3. This entry shows an ftp request from a local server
+172.16.112.5 to the attacking machine. This event is
+ﬁred because the attacking machine has already been
+quarantined and marked as a potential attacker. Any
+data transfer between a potential attacker and a local
+host is suspicious.
+
+Proceedings of the Fourth IEEE International Workshop on Information Assurance (IWIA’06)
+0-7695-2564-4/06 $20.00 © 2006
+
+IEEE
+
+Figure 3. Conﬁguration of the Testing Network
+Table 6. Detailes of Hosts in the Attack Test
+Host Name
+
+IP address
+
+Operating System
+
+Description
+
+Attacking
+Machine
+
+192.168.1.2
+
+Redhat Fedora 3
+
+Equipped with NMap, MStream DDoS tools, OpenSSL exploit
+code, REP exploit code.
+
+Victim
+Gateway/
+Firewall/ IDS
+
+200.200.200.3
+192.168.1.1
+200.200.200.1
+172.16.112.2
+
+Windows XP
+Redhat Fedora 3
+
+Running Web server, ﬁrewall enabled
+It has three NICs and works as a router for this testing environment.
+Bro 0.9a is running on this machine.
+
+Host1
+
+172.16.112.5
+
+Redhat Linux 7.3
+
+Host2
+
+172.16.112.8
+
+Redhat Linux 7.3
+
+Runs https service with vulnerable OpenSSL and has vulnerable
+REP program.
+Runs https service with vulnerable OpenSSL and has vulnerable
+REP program.
+
+Host3
+Host4
+
+172.16.112.6
+172.16.112.7
+
+Redhat Linux 7.3
+Redhat Linux 7.3
+
+4. This entry means an ftp request from a local server
+172.16.112.8 to the attacking machine. The reason is
+the same as item (3).
+5. This entry shows the IDS has seen a few packets with
+source and destination addresses not belonging to the
+local network. Such spoofed source address events
+should be always taken care of by the IDS.
+Many events are not displayed on the screen but logged
+in the log ﬁle. These events include breaking in two local servers through buffer-overﬂow attacks, communications between the MStream handler and agents and the ﬁnal
+ﬂooding attack. Because we did not drop any trafﬁc from
+the attacking machine and the DDoS handler and agents,
+the DDoS attack was successful and consumed about 60%
+network bandwidth of the network 200.200.200.0/24 during
+the ﬂooding attack.
+Case two: We drop trafﬁc from suspicious hosts in this
+case to achieve the goal of stopping an unﬁnished multistage attack as early as possible. The Bro IDS provides a
+function system() that can run an arbitrary program with the
+
+https is not running. It does not affect the testing result.
+https is not running. It does not affect the testing result.
+
+privilege of the Bro IDS process, i.e., the root privilege in
+our case. Because the Bro IDS runs on the default gateway
+of these testing networks, we can easily drop trafﬁc from
+a speciﬁc IP address by running iptables command through
+the system() function. The following is the screen capture
+of the IDS machine during the attack.
+[root@mypc policy]# ./bro -C -i eth0 mt
+
+1. Stop collecting service information
+2. connection rejected, Access Not Intended
+From 192.168.1.2 to 172.16.112.5
+A triggering event was ﬁred by event connection rejected, source IP: 192.168.1.2, destination IP:
+172.16.112.5, dst port: 335/tcp, start time: 17/08/05
+23:44:55
+Drop trafﬁc from the following address: 192.168.1.2
+As in case one, the Bro IDS ﬁrst collected service information for the monitored servers. When the attacking machine begins to scan the protected network 172.16.112.0/24,
+a triggering event is ﬁred because of connection rejection
+
+Proceedings of the Fourth IEEE International Workshop on Information Assurance (IWIA’06)
+0-7695-2564-4/06 $20.00 © 2006
+
+IEEE
+
+events. The IDS then quarantines the attacking machine
+192.168.1.2 and immediately drops the trafﬁc from the attacking machine. The defense measure is so quick that
+NMAP is stuck and unable to ﬁnish the scan task. We run
+iptables with L option and see the ﬁrewall rules of dropping
+trafﬁc from the attacking machine. In reality, although the
+IDS might not be able to be installed together with the ﬁrewall machine, a private service could be open for the IDS in
+the ﬁrewall machine to perform the task above.
+Attack Scenario two: We suppose that the attacker
+somehow already knows the IP addresses, operating system
+versions and the vulnerable services of the local servers.
+The attacker uses the OpenSSL exploit code to attack the
+vulnerable servers without any probe. So the attack in this
+scenario is a little bit more stealthy than scenario one. The
+following are the steps of the attack.
+1. Attack the Linux web server 172.16.112.5 by the
+OpenSSL exploit code.
+2. Exploit REP vulnerability to gain root privilege.
+3. ftp back to the attacking host 192.168.1.2 from the victim 172.16.112.5, and download MStream DDoS tool
+including master software and server software.
+
+5 Limitations of AEC
+We do not have a good mechanism to determine the maliciousness of a subject. One way to solve this problem is
+Event Mining [6]. We can mine the network events generated by multi-stage attacks and abstract Malicious Event
+Patterns (MEP). Once we have an effective set of MEP, we
+can drop the trafﬁc of a malicious subject with more conﬁdence, efﬁciently stop the unﬁnished steps of a multi-stage
+attack and also ease the task of retirement of subjects. MEP
+is a key topic of our future research. In addition, AEC is currently a centralized approach that does not share subject information among the IDS sensors in different network segments. Future work will explore the ideal approach which
+will be able to share information about network subjects so
+that an IDS sensor can see more clearly what happens to a
+speciﬁc subject.
+
+6 Conclusion
+
+5. Repeat step 2 to 5 to attack another Linux web Server
+172.16.112.8, and install and start MStream server
+software in this host.
+
+By correlating alerts based on triggering events at an IDS
+sensor, AEC is able to draw a big picture about a multistage attack and give security administrators more meaningful and concise alerts. AEC also has the potential capability
+to stop unﬁnished steps of multi-stage attacks. We plan to
+run AEC in a real network for a long period, improve the
+disadvantages mentioned in the previous section and extend
+AEC to the host-based IDS.
+
+6. Access the Linux web server 172.16.112.5 to launch
+DDoS attack to a remote web server 200.200.200.3.
+
+References
+
+4. Start master and server software.
+
+Corresponding detection and defense:
+We set up a security policy in this scenario that drops all
+trafﬁc from any suspicious host immediately. The following
+is the screen capture of the IDS machine.
+[root@mypc policy]# ./bro -C -i eth0 mt
+
+1. Stop collecting service information
+2. Bro Alarm, IDS Alert
+From 192.168.1.2 to 172.16.112.8
+A triggering event was ﬁred by event Bro Alarm,
+source IP: 192.168.1.2, destination IP: 172.16.112.8,
+dst port: 443/tcp, start time: 18/08/05 00:14:53
+Drop trafﬁc from the following address: 192.168.1.2
+As shown in the display entry (2), a triggering event is
+ﬁred by the Bro Alarm event, where the Bro IDS indicates
+a possible buffer-overﬂow attack. After the attacking machine is quarantined, its trafﬁc is immediately dropped according to the security policy. We can see from the screen
+capture of the attacking machine (not shown in the paper),
+the attacking machine even did not obtain the remote shell.
+
+[1] F. Cuppens and A. Mige. Alert correlation in a cooperative
+intrusion detection framework. In Proc. of the 2002 IEEE
+Symposium on Security and Privacy, May 2002.
+[2] H. Debar and A. Wespi. Aggregation and correlation of intrusion detection alerts. In Proc. of the 4th symposium on
+Recent Advances in Intrusion Detection, Davis, CA, USA,
+October 2001.
+[3] D. Dittrich, G. Weaver, S. Dietrich, and N. Long.
+The mstream distributed denial of service attack tool.
+http://staff.washington.edu/dittrich/misc/mstream.analysis.txt,
+May 2000.
+[4] Fyodor. Nmap. http://www.insecure.org/nmap, 2001.
+[5] J. Haines, D. K. Ryder, L. Tinnel, and S. Taylor. Validation
+of sensor alert correlators. IEEE Security & Privacy Magazine, 1(1):46–56, 2003.
+[6] J. L. Hellerstein and S. Ma. Mining event data for actionable
+patterns. In Proc. of the 26th International Computer Measurement Group Conference, Orlando, FL, USA, December
+2000.
+[7] LincolnLab. 2000 DARPA intrusion detection scenario speciﬁc data sets. http://www.ll.mit.edu/IST/ideval/data/2000
+/2000 data index.html, July 2000.
+[8] S. McCanne, C. Leres, and V. Jacobson. Libpcap, 1994.
+Available via anonymous ftp to ftp.ee.lbl.gov.
+
+Proceedings of the Fourth IEEE International Workshop on Information Assurance (IWIA’06)
+0-7695-2564-4/06 $20.00 © 2006
+
+IEEE
+
+[9] B. Morin and H. Debar. Correlation of intrusion sysmptoms:
+an application of chronicles. In Proc. of the 6th International Symposium on Recent Advances in Intrusion Detection, Pittsburgh, PA, September 2003.
+[10] P. Ning, Y. Cui, and D. S. Reeves. Constructing attack scenarios through correlation of intrusion alerts. In Proc. of the
+9th ACM Conference on Computer and Communications Security, pages 245–254, Washington, D. C., November 2002.
+[11] P. Ning, D. Xu, C. G. Healey, and R. S. Amant. Building
+attack scenario through integration of complementary alert
+correlation methods. In Proc. of the Network and Distributed
+System Security Symposium, San Diego, California, 2004.
+[12] S. Noel, E. Robertson, and S. Jajodia. Correlating intrusion
+events and building attack scenarios through attack graph
+distances. In Proc. of the 20th Annual Computer Security
+Applications Conference, Tucson, Arizona, December 2004.
+[13] V. Paxson. Bro: A system for detecting network instruders
+in real-time. Computer Network, 31, 1999.
+[14] V. Paxson and U. Shankar. Active mapping: resisting NIDS
+evasion without altering trafﬁc. In Proc. of the 2003 IEEE
+Symposium on Security and Privacy, Berkeley, California,
+May 2003.
+[15] X. Qin and W. Lee. Attack plan recognition and prediction
+using causal networks. In Proc. of the 20th Annual Computer Security Applications Conference, Tucson, Arizona,
+December 2004.
+[16] S. M. Specht and R. B. Lee. Distributed denial of service: taxonomies of attacks, tools, and countermeasures. In
+Proc. of the 17th International Conference on Parallel and
+Distributed Computing Systems, pages 543–550, September
+2004.
+[17] A. Valdes and K. Skinner. Probabilistic alert correlation.
+In Proc. of Recent Advances in Intrusion Detection (RAID
+2001), Springer LNCS 2212, Davis, CA, USA, October
+2001.
+[18] D. Xu and P. Ning. Alert correlation through triggering
+events and common resources. In Proc. of the 20th Annual
+Computer Security Applications Conference, Tucson, Arizona, December 2004.
+[19] Y. Zhang and V. Paxson. Detecting backdoors. In Proc.
+of the 9th USENIX Security Symposium, Denver, Colorado,
+August 2000.
+[20] C. C. Zou, W. Gong, and D. Towsley. Worm propagation
+modeling and analysis under dynamic quarantine defense. In
+Proc. of the ﬁrst Workshop on Rapid Malcode (WORM03),
+Washington DC, USA, October 2003.
+
+A Appendix
+A.1 Log entries for Scenario One of Experiment
+One:
+(1) An triggering event ﬁred by event icmp echo request,
+source IP: 202.77.162.213, destination IP: 172.16.113.207,
+start time: 07/03/00 09:51:36
+(2) Event Update: the host 202.77.162.213 has pinged
+20 times, start time:07/03/00 09:51:36.
+
+(3) Event Update: The host 202.77.162.213 has
+sent portmapper requests (pm getport) to the following
+hosts(ports), start time:07/03/00 10:08:07:
+Host:172.16.115.20(port:
+111/udp;
+),
+target service & result of portmapper:
+sadmind –
+32773/udp(result:succeed);
+(4) Event Update: The host 202.77.162.213 has tried
+to access the following hosts(ports), start time:07/03/00
+10:08:07 Counter:1
+Host:172.16.115.20(port: 32773/udp; ).
+(5) Event Update: The host 202.77.162.213 attempted
+(failed) to access the following hosts/ports (total 72 times),
+start time: 07/03/00 10:08:07:
+Host:172.16.112.105(port:111/udp).
+Host:172.16.113.148(port:111/udp).
+Host:172.16.115.87(port:111/udp).
+Host:172.16.113.105(port:111/udp).
+Host:172.16.112.194(port:111/udp).
+Host:172.16.112.100(port:111/udp).
+(6) An triggering event ﬁred by event danger rsh, source
+IP: 172.16.115.20, destination IP: 202.77.162.213, dst port:
+514/tcp, start time: 07/03/00 10:50:02
+(7) Event Update: The host 202.77.162.213 has logged
+in the following hosts(ports), start time:07/03/00 10:35:01
+Counter:1
+Host:172.16.112.50(port:23/tcp).
+(8) An triggering event ﬁred by event danger rsh, source
+IP: 172.16.112.10, destination IP: 202.77.162.213, dst port:
+514/tcp, start time: 07/03/00 10:50:21
+(9) An triggering event ﬁred by event danger rsh, source
+IP: 172.16.112.50, destination IP: 202.77.162.213, dst port:
+514/tcp, start time: 07/03/00 10:50:38
+(10) Event Update: The host 172.16.115.20 has tried
+to access the following hosts(ports), start time:07/03/00
+10:50:21 Counter:1
+Host:255.255.255.255(port:9325/udp).
+(11) Event Update: The host 172.16.115.20 has rejected
+by the following hosts(ports), start time:07/03/00 11:02:15
+Counter:3
+Host:192.168.1.20(port:53/tcp).
+(12) An triggering event ﬁred by event spoofed address,
+source IP: 35.128.254.130, destination IP: 131.84.1.31, dst
+port: 994/tcp, start time: 07/03/00 11:27:51
+(13) Event Update: The host 172.16.115.20 attempted
+(failed) to access the following hosts/ports (total 4 times),
+start time: 07/03/00 11:03:38:
+Host:172.16.115.1(port:
+33549/udp;
+33590/udp;
+33674/udp; 33526/udp; ).
+(14) An triggering event ﬁred by event ftp request,
+source IP: 172.16.114.50, destination IP: 172.16.112.50, dst
+port: 21/tcp, start time: 07/03/00 12:03:04
+(15) Event Update: The host 172.16.114.50 has tried
+to ftp to the following hosts(ports), start time:07/03/00
+
+Proceedings of the Fourth IEEE International Workshop on Information Assurance (IWIA’06)
+0-7695-2564-4/06 $20.00 © 2006
+
+IEEE
+
+12:03:04 Counter:1
+Host:172.16.112.50(port:21/tcp).
+(16) Event Update: The host 172.16.114.50 has rejected
+by the following hosts(ports), start time:07/03/00 12:15:28
+Counter:1
+Host:172.16.112.100(port:25/tcp).
+(17) Event Update: The host 172.16.112.50 has tried
+to access the following hosts(ports), start time:07/03/00
+10:50:54 Counter:1
+Host:255.255.255.255(port:9325/udp).
+(18) Event Update: The host 172.16.112.10 has tried
+to access the following hosts(ports), start time:07/03/00
+10:50:38 Counter:1
+Host:255.255.255.255(port:9325/udp).
+(19) The host 172.16.112.10 has remotely access (rsh)
+the following hosts, start time:07/03/00 10:50:21.
+Host:202.77.162.213(port:514/tcp).
+(20) The host 172.16.112.10 has tried to access the following hosts(ports), start time:07/03/00 10:50:38 Counter:1
+Host:255.255.255.255(port:9325/udp).
+(21) The host 172.16.115.20 has remotely access (rsh)
+the following hosts, start time:07/03/00 10:50:02.
+Host:202.77.162.213(port:514/tcp).
+(22) The host 172.16.115.20 has tried to access the following hosts(ports), start time:07/03/00 10:50:21 Counter:4
+Host:172.16.112.50(port:7983/udp).
+Host:172.16.112.10(port:7983/udp).
+Host:255.255.255.255(port:9325/udp).
+(23) The host 172.16.115.20 has rejected by the following hosts(ports), start time:07/03/00 11:02:15 Counter:12
+Host:192.168.1.20(port:53/tcp).
+(24) The host 172.16.115.20 attempted (failed) to access the following hosts/ports (total 4 times), start time:
+07/03/00 11:03:38:
+Host:172.16.115.1(port:
+33549/udp;
+33590/udp;
+33674/udp; 33526/udp; ).
+(25) Event icmp echo request: the host 172.16.115.20
+has scaned 1 times, start time:07/03/00 11:28:18.
+(26) The host 172.16.112.50 has remotely access (rsh)
+the following hosts, start time:07/03/00 10:50:38.
+Host:202.77.162.213(port:514/tcp).
+(27) The host 172.16.112.50 has tried to access the following hosts(ports), start time:07/03/00 10:50:54 Counter:1
+Host:255.255.255.255(port:9325/udp).
+(28) Event icmp echo request: the host 202.77.162.213
+has scaned 20 times, start time:07/03/00 09:51:36.
+(29) The host 202.77.162.213 has sent portmapper requests (pm getport) to the following hosts(ports), start
+time:07/03/00 10:08:07:
+Host:172.16.113.50(port:111/udp), target service & result of portmapper: sadmind – 0/udp(result:succeed);
+Host:172.16.112.105(port:111/udp), target service & result of portmapper: sadmind(result:failed);
+
+Host:172.16.113.148(port:111/udp), target service & result of portmapper: sadmind(result:failed);
+Host:172.16.115.87(port:111/udp), target service & result of portmapper: sadmind(result:failed);
+Host:172.16.113.105(port:111/udp), target service & result of portmapper: sadmind(result:failed);
+Host:172.16.112.194(port:111/udp), target service & result of portmapper: sadmind(result:failed);
+Host:172.16.112.10(port:111/udp), target service & result of portmapper: sadmind – 32774/udp(result:succeed);
+Host:172.16.112.50(port:111/udp), target service & result of portmapper: sadmind – 32773/udp(result:succeed);
+Host:172.16.115.20(port:111/udp), target service & result of portmapper: sadmind – 32773/udp(result:succeed);
+Host:172.16.112.100(port:111/udp), target service & result of portmapper: sadmind(result:failed);
+(30) The host 202.77.162.213 has tried to access
+the following hosts(ports), start time:07/03/00 10:08:07
+Counter:17
+Host:172.16.112.10(port:32774/udp).
+Host:172.16.112.50(port:32773/udp).
+Host:172.16.115.20(port:32773/udp).
+(31) The host 202.77.162.213 attempted (failed) to access the following hosts/ports (total 72 times), start time:
+07/03/00 10:08:07:
+Host:172.16.112.105(port:111/udp).
+Host:172.16.113.148(port:111/udp).
+Host:172.16.115.87(port:111/udp).
+Host:172.16.113.105(port:111/udp).
+Host:172.16.112.194(port:111/udp).
+Host:172.16.112.100(port:111/udp).
+(32) The host 202.77.162.213 has logged in the following hosts(ports), start time:07/03/00 10:35:01 Counter:2
+Host:172.16.112.50(port:23/tcp).
+(33) The host 202.77.162.213 has remotely access (rsh)
+the following hosts, start time:07/03/00 10:50:06.
+Host:172.16.112.10(port:514/tcp).
+Host:172.16.112.50(port:514/tcp).
+Host:172.16.115.20(port:514/tcp).
+(34) The host 131.84.1.31 has been ﬂooded by the following spoofed hosts(ports), start time:07/03/00 11:27:51:
+Host:115.52.150.164(port:9867/tcp)
+Host:69.89.57.40(port:14603/tcp)
+Host:125.249.209.191(port:22361/tcp)
+Host:96.10.43.233(port:23361/tcp)
+Host:59.108.230.24(port:30922/tcp)
+Host:7.193.58.20(port:34697/tcp)
+Host:31.219.27.75(port:10337/tcp)
+Host:75.60.227.51(port:19453/tcp)
+Host:35.153.116.103(port:26226/tcp)
+Host:16.248.130.234(port:30202/tcp)
+Host:81.11.97.93(port:32355/tcp)
+Host:66.129.54.83(port:16315/tcp)
+
+Proceedings of the Fourth IEEE International Workshop on Information Assurance (IWIA’06)
+0-7695-2564-4/06 $20.00 © 2006
+
+IEEE
+
+Host:16.31.146.94(port:29625/tcp)
+Host:113.236.200.13(port:19986/tcp)
+Host:102.80.167.66(port:19770/tcp)
+Host:20.208.22.244(port:24960/tcp)
+Host:112.26.251.196(port:5653/tcp)
+Host:61.56.22.170(port:16489/tcp)
+Host:119.128.131.194(port:30824/tcp)
+Host:120.11.77.149(port:12487/tcp)
+Host:2.70.7.212(port:26606/tcp)
+Host:57.7.232.146(port:10733/tcp)
+Host:22.27.10.110(port:9720/tcp)
+Host:84.112.209.201(port:12408/tcp)
+Host:100.3.198.110(port:25831/tcp)
+Host:59.184.239.158(port:18449/tcp)
+Host:82.188.244.209(port:28277/tcp)
+Host:47.204.218.119(port:7976/tcp)
+Host:29.162.78.184(port:13502/tcp)
+Host:75.251.205.61(port:17241/tcp)
+Host:116.56.161.95(port:25173/tcp)
+Host:35.128.254.130(port:7318/tcp)
+Host:120.42.177.54(port:18215/tcp)
+Host:105.102.88.0(port:15386/tcp)
+Host:120.88.207.93(port:18193/tcp)
+Host:40.209.40.99(port:18395/tcp)
+Host:76.96.122.8(port:23675/tcp)
+Host:76.72.133.143(port:24787/tcp)
+Host:50.70.75.71(port:33318/tcp)
+Host:96.56.120.190(port:25555/tcp)
+Host:111.17.135.149(port:5828/tcp)
+Host:74.16.179.12(port:12772/tcp)
+Host:3.159.200.117(port:22147/tcp)
+Host:5.3.161.221(port:36167/tcp)
+Host:37.140.75.236(port:6121/tcp)
+Host:106.104.12.137(port:16324/tcp)
+Host:0.175.44.129(port:32805/tcp)
+Host:78.114.221.56(port:37725/tcp)
+Potential attackers: 202.77.162.213, 172.16.112.10,
+172.16.112.50, 172.16.115.20,
+Potential
+victims:172.16.113.50,
+131.84.1.31,
+172.16.112.10, 172.16.112.50, 172.16.115.20,
+Risky ports:32774/udp, 32773/udp,
+
+A.2 Log entries for Scenario Two of Experiment
+One:
+(1) An triggering event ﬁred by event pm getport, source
+IP: 202.77.162.213, destination IP: 172.16.115.20, dst port:
+111/udp, start time: 16/04/00 15:17:44
+(2) Event Update: The host 202.77.162.213 has
+sent portmapper requests (pm getport) to the following
+hosts(ports), start time:16/04/00 15:17:44:
+Host:172.16.115.20(port:111/udp), target service & result of portmap: sadmind – 32773/udp(result:succeed);
+
+(3) Event Update: The host 202.77.162.213 has tried
+to access the following hosts(ports), start time:16/04/00
+15:17:44 Counter:2
+Host:172.16.115.20(port:32773/udp).
+(4) An triggering event ﬁred by event pm getport, source
+IP: 172.16.115.20, destination IP: 172.16.112.50, dst port:
+111/udp, start time: 16/04/00 15:42:51
+(5) Event Update: The host 172.16.115.20 has
+sent portmapper requests (pm getport) to the following
+hosts(ports), start time:16/04/00 15:42:51:
+Host:172.16.112.50(port:111/udp), target service & result of portmap: sadmind – 32773/udp(result:succeed);
+(6) Event Update: The host 172.16.115.20 has tried
+to access the following hosts(ports), start time:16/04/00
+15:42:51 Counter:2
+Host:172.16.112.50(port:32773/udp).
+(7) Event Update: The host 172.16.115.20 attempted
+(failed) to access the following hosts/ports (total 6 times),
+start time: 16/04/00 15:42:53:
+Host:172.16.112.207(port:111/udp).
+(8) Event Update: The host 172.16.115.20 has tried to ftp
+to the following hosts(ports), start time:16/04/00 15:44:53
+Counter:5
+Host:172.16.112.50(port:21/tcp).
+(9) An triggering event ﬁred by event udp request,
+source IP: 172.16.112.50, destination IP: 172.16.115.20, dst
+port: 9325/udp, start time: 16/04/00 15:44:55
+(10) An triggering event ﬁred by event spoofed address,
+source IP: 6.189.48.119, destination IP: 131.84.1.31, dst
+port: 111/tcp, start time: 16/04/00 16:06:15
+(11) Event Update: The host 172.16.112.50 has tried
+to access the following hosts(ports), start time:16/04/00
+15:44:55 Counter:2
+Host:172.16.115.20(port:9325/udp).
+(12) An triggering event ﬁred by event ftp request,
+source IP: 172.16.114.50, destination IP: 172.16.115.20, dst
+port: 21/tcp, start time: 16/04/00 16:25:32
+(13) The host 131.84.1.31 has been ﬂooded by the following spoofed hosts(ports), start time:16/04/00 16:06:15:
+Host:6.189.48.119(port:29677/tcp)
+Host:118.209.137.188(port:64479/tcp)
+Host:57.83.135.166(port:64636/tcp)
+Host:74.125.233.169(port:5978/tcp)
+Host:126.245.222.107(port:36109/tcp)
+Host:20.127.81.28(port:42033/tcp)
+Host:3.38.177.61(port:42752/tcp)
+Host:124.149.119.42(port:30158/tcp)
+Host:81.248.152.41(port:40173/tcp)
+Host:38.111.174.223(port:24016/tcp)
+Host:7.27.1.157(port:29631/tcp)
+Host:15.187.12.170(port:30717/tcp)
+Host:32.129.78.4(port:32007/tcp)
+Host:105.156.13.243(port:32563/tcp)
+
+Proceedings of the Fourth IEEE International Workshop on Information Assurance (IWIA’06)
+0-7695-2564-4/06 $20.00 © 2006
+
+IEEE
+
+Host:110.61.193.234(port:37480/tcp)
+Host:31.151.118.44(port: 36506/tcp; )
+Host:48.214.180.174(port:53931/tcp)
+Host:94.91.96.212(port:34598/tcp)
+Host:122.61.138.39(port:36498/tcp)
+Host:36.146.42.88(port:33793/tcp)
+Host:65.242.113.247(port:44726/tcp)
+Host:45.177.162.9(port:27204/tcp)
+Host:65.214.73.178(port:49558/tcp)
+Host:126.219.228.220(port:52046/tcp)
+Host:109.255.245.246(port:1715/tcp)
+Host:95.168.12.42(port:8982/tcp)
+Host:116.135.243.100(port:37591/tcp)
+Host:35.185.150.177(port:40577/tcp)
+Host:115.190.141.229(port:57273/tcp)
+Host:111.65.90.123(port:7302/tcp)
+Host:52.197.44.3(port:39711/tcp)
+(15) The host 202.77.162.213 has sent portmapper requests (pm getport) to the following hosts(ports), start
+time:16/04/00 15:17:44:
+Host:172.16.115.20(port:111/udp), target service & result of portmap: sadmind – 32773/udp(result:succeed);
+(16) The host 202.77.162.213 has tried to access the following hosts(ports), start time:16/04/00 15:17:44 Counter:2
+Host:172.16.115.20(port:32773/udp).
+(17) The host 202.77.162.213 has tried to ftp to the following hosts(ports), start time:16/04/00 15:29:48 Counter:5
+Host:172.16.115.20(port:21/tcp).
+(18) The host 172.16.112.50 has tried to access the following hosts(ports), start time:16/04/00 15:44:55 Counter:2
+Host:172.16.115.20(port:9325/udp).
+(19) The host 172.16.112.50 has tried to ftp to the following hosts(ports), start time:16/04/00 16:10:48 Counter:21
+Host:197.218.177.69(port:21/tcp).
+(20) The host 172.16.114.50 has tried to ftp to the following hosts(ports), start time:16/04/00 16:25:32 Counter:4
+Host:172.16.115.20(port:21/tcp).
+(21) The host 172.16.115.20 has sent portmapper requests (pm getport) to the following hosts(ports),
+start time:16/04/00 15:42:51: Host:172.16.112.207(port:
+111/udp; ), target service & result of portmap: sadmind(result:failed);
+Host:172.16.112.50(port:111/udp), target service & result of portmap: sadmind – 32773/udp(result:succeed);
+(22) The host 172.16.115.20 has tried to access the following hosts(ports), start time:16/04/00 15:42:51 Counter:3
+Host:172.16.112.50(port:7983/udp;32773/udp;).
+(23) The host 172.16.115.20 attempted (failed) to access the following hosts/ports (total 7 times), start time:
+16/04/00 15:42:53:Host:172.16.112.207(port: 111/udp; ).
+Host:172.16.112.50(port: 7983/udp; ).
+(24) The host 172.16.115.20 has tried to ftp to the following hosts(ports), start time:16/04/00 15:44:53 Counter:8
+
+Host:172.16.112.207(port:21/tcp;).
+Host:172.16.112.50(port:21/tcp;).
+(25) The host 172.16.115.20 has logged in the following
+hosts(ports), start time:16/04/00 15:44:53 Counter:2
+Host:172.16.112.50(port:23/tcp;).
+Potential attackers: 172.16.115.20, 202.77.162.213,
+172.16.114.50, 172.16.112.50,
+Potential
+victims:172.16.115.20,
+131.84.1.31,
+172.16.112.50,
+Risky ports:32773/udp,
+
+A.3
+
+Log entries for Experiment Two:
+
+(1) An triggering event was ﬁred by event connection rejected, source IP: 192.168.1.2, destination IP:
+172.16.112.5, dst port: 2432/tcp, start time: 17/08/05
+23:05:25
+(2) Event Update: The host 192.168.1.2 has rejected
+by the following hosts(ports), start time:17/08/05 23:05:25
+Counter:68 Host:172.16.112.5(port: 153/tcp; 733/tcp;
+821/tcp; 1350/tcp; 2105/tcp; 7010/tcp; 892/tcp; 1522/tcp;
+538/tcp; 560/tcp; 5300/tcp; 838/tcp; 920/tcp; 14/tcp;
+125/tcp; 1014/tcp; 1023/tcp; 16/tcp; 5010/tcp; 1500/tcp;
+18/tcp; 32771/tcp; 6003/tcp; 6002/tcp; 170/tcp; 595/tcp;
+1997/tcp; 140/tcp; 269/tcp; 2430/tcp; 2603/tcp; 59/tcp;
+138/tcp; 776/tcp; 802/tcp; 1428/tcp; 1521/tcp; 817/tcp;
+745/tcp; 75/tcp; 602/tcp; 1068/tcp; 1347/tcp; 121/tcp;
+1474/tcp; 726/tcp; 1475/tcp; 494/tcp; 952/tcp; 5190/tcp;
+316/tcp; 243/tcp; 2432/tcp; 957/tcp; 986/tcp; 251/tcp;
+762/tcp; 940/tcp; 7003/tcp; 780/tcp; 826/tcp; 119/tcp;
+250/tcp; 984/tcp; 1514/tcp; 919/tcp; 911/tcp; 5011/tcp; ).
+(3) Event Update: The host 192.168.1.2 attempted
+(failed) to access the following hosts/ports (total 130 times),
+start time: 17/08/05 23:05:26: Host:172.16.112.6(port:
+331/tcp; 823/tcp; 875/tcp; 18/tcp; 612/tcp; 86/tcp; 893/tcp;
+698/tcp; 302/tcp; 336/tcp; 565/tcp; 71/tcp; 761/tcp; 293/tcp;
+6/tcp; 362/tcp; 260/tcp; 766/tcp; 357/tcp; 591/tcp; 837/tcp;
+474/tcp; 503/tcp; 817/tcp; 598/tcp; 552/tcp; 324/tcp;
+841/tcp; 457/tcp; 952/tcp; 720/tcp; 436/tcp; 671/tcp;
+278/tcp; 345/tcp; 404/tcp; 588/tcp; 480/tcp; 427/tcp;
+700/tcp; 20/tcp; 193/tcp; 785/tcp; 673/tcp; 59/tcp; 538/tcp;
+562/tcp; 1014/tcp; 812/tcp; 802/tcp; 861/tcp; 141/tcp;
+359/tcp; 1003/tcp; 62/tcp; 725/tcp; 80/tcp; 736/tcp;
+679/tcp; 670/tcp; 991/tcp; 853/tcp; 742/tcp; 455/tcp;
+461/tcp; 737/tcp; 144/tcp; 229/tcp; 711/tcp; 825/tcp;
+989/tcp; 230/tcp; 770/tcp; 1/tcp; 460/tcp; 384/tcp; 512/tcp;
+768/tcp; 680/tcp; 67/tcp; 927/tcp; 297/tcp; 343/tcp; 468/tcp;
+1022/tcp; 466/tcp; 589/tcp; 511/tcp; 8/tcp; 618/tcp; 116/tcp;
+17/tcp; 397/tcp; 944/tcp; 358/tcp; 36/tcp; 250/tcp; 786/tcp;
+684/tcp; 301/tcp; 382/tcp; 4/tcp; 780/tcp; 790/tcp; 704/tcp;
+560/tcp; 377/tcp; 888/tcp; 988/tcp; 597/tcp; 1002/tcp;
+846/tcp; 313/tcp; 892/tcp; 818/tcp; 14/tcp; 363/tcp; 274/tcp;
+488/tcp; 980/tcp; 732/tcp; 613/tcp; 730/tcp; 102/tcp; 60/tcp;
+
+Proceedings of the Fourth IEEE International Workshop on Information Assurance (IWIA’06)
+0-7695-2564-4/06 $20.00 © 2006
+
+IEEE
+
+964/tcp; 687/tcp; 115/tcp; 622/tcp; 961/tcp; ).
+(4) An triggering event was ﬁred by event ftp request,
+source IP: 172.16.112.5, destination IP: 192.168.1.2, dst
+port: 21/tcp, start time: 17/08/05 23:12:22
+(5) Event Update: The host 172.16.112.5 has tried to ftp
+to the following hosts(ports), start time:17/08/05 23:12:22
+Counter:1
+Host:192.168.1.2(port:21/tcp).
+(6) Event Update: The host 172.16.112.5 has tried
+to access the following hosts(ports), start time:17/08/05
+23:14:05 Counter:2
+Host:172.16.112.8(port:9325/udp).
+Host:3.3.3.3(port:9325/udp).
+(7) An triggering event was ﬁred by event ftp request,
+source IP: 172.16.112.8, destination IP: 192.168.1.2, dst
+port: 21/tcp, start time: 17/08/05 23:17:28
+(8) Event Update: The host 172.16.112.8 has tried to ftp
+to the following hosts(ports), start time:17/08/05 23:17:28
+Counter:1
+Host:192.168.1.2(port:21/tcp).
+(9) Event Update: The host 172.16.112.8 has tried
+to access the following hosts(ports), start time:17/08/05
+23:18:09 Counter:2
+Host:172.16.112.5(port:9325/udp).
+Host:3.3.3.3(port:9325/udp).
+(10) An triggering event was ﬁred by event
+spoofed address, source IP: 142.120.12.39, destination
+IP: 200.200.200.3, dst port: 21/tcp, start time: 17/08/05
+23:23:21
+(11) The host 200.200.200.3 has been ﬂooded by the
+following spoofed addresses, start time:17/08/05 23:23:21:
+Flooded by 1412 different addresses
+(12) The host 172.16.112.5 has tried to ftp to the following hosts(ports), start time:17/08/05 23:12:22 Counter:11
+Host:192.168.1.2(port:21/tcp).
+(13) The host 172.16.112.5 has tried to access the following hosts(ports), start time:17/08/05 23:14:05 Counter:4
+Host:172.16.112.8(port: 7983/udp; 9325/udp; ),
+Host:3.3.3.3(port:9325/udp).
+(14) The host 172.16.112.5 attempted (failed) to access the following hosts/ports (total 2 times), start time:
+17/08/05 23:14:05:
+Host:3.3.3.3(port:9325/udp),
+Host:172.16.112.8(port:9325/udp).
+(15) The host 192.168.1.2 has rejected by the following
+hosts(ports), start time:17/08/05 23:05:25 Counter:1387
+Host:172.16.112.5(port: # of different ports: 327),
+Host:172.16.112.8(port: # of different ports: 573),
+Host:172.16.112.6(port: # of different ports: 487).
+(16) The host 192.168.1.2 attempted (failed) to access the following hosts/ports (total 130 times), start time:
+17/08/05 23:05:26:Host:172.16.112.6(port: # of different
+ports: 130).
+
+(17) The host 172.16.112.8 has tried to ftp to the following hosts(ports), start time:17/08/05 23:17:28 Counter:12
+Host:192.168.1.2(port:21/tcp).
+(18) The host 172.16.112.8 has tried to access the following hosts(ports), start time:17/08/05 23:18:09 Counter:2
+Host:172.16.112.5(port:9325/udp),
+Host:3.3.3.3(port:9325/udp).
+(19) The host 172.16.112.8 attempted (failed) to access the following hosts/ports (total 1 times), start time:
+17/08/05 23:18:09:
+Host:3.3.3.3(port:9325/udp).
+Potential attackers:
+172.16.112.5, 192.168.1.2,
+172.16.112.8,
+Potential victims:200.200.200.3, Risky ports:
+The host provides the following services:
+172.16.112.5(port: 21/tcp; 22/tcp; 8080/tcp; 80/tcp;
+111/tcp; 513/tcp; 443/tcp; 514/tcp; 23/tcp; 1024/tcp; )
+The host provides the following services:
+172.16.112.8(port: 21/tcp; 22/tcp; 80/tcp; 111/tcp;
+513/tcp; 443/tcp; 23/udp; 514/tcp; 23/tcp; 1024/tcp; )
+
+Proceedings of the Fourth IEEE International Workshop on Information Assurance (IWIA’06)
+0-7695-2564-4/06 $20.00 © 2006
+
+IEEE
+
+

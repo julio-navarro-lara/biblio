@@ -1,0 +1,878 @@
+An Intrusion Alert Correlator Based on Prerequisites of Intrusions
+Peng Ning Yun Cui
+Department of Computer Science
+North Carolina State University
+Raleigh, NC 27695-7534
+Email: ning@csc.ncsu.edu, ycui4@eos.ncsu.edu
+
+Abstract
+Current intrusion detection systems (IDSs) usually focus on detecting low-level attacks and/or
+anomalies; none of them can capture the logical steps or attack strategies behind these attacks. Consequently, the IDSs usually generate a large amount of alerts. In situations where there are intensive
+intrusive actions, not only will actual alerts be mixed with false alerts, but the amount of alerts will
+also become unmanageable. As a result, it is difficult for human users or intrusion response systems to
+understand the intrusions behind the alerts and take appropriate actions. This paper presents the development of an off-line intrusion alert correlator based on prerequisites of intrusions, which is our first
+step to address the aforementioned problem. Intuitively, the prerequisite of an intrusion is the necessary
+condition for the intrusion to be successful. For example, the existence of a vulnerable service is the
+prerequisite of a remote buffer overflow attack against the service. Based on the prerequisite and the
+consequence of each type of attacks, our intrusion alert correlator correlates the alerts by matching the
+consequence of some previous alerts and the prerequisite of some later ones. As a result, our intrusion
+alert correlator is able to correlate related alerts and uncover the attack strategies behind sequences of
+attacks. As an application based on relational database management system (RDBMS), the intrusion
+alert correlator takes advantage of the functionalities of RDBMS and can be easily integrated with other
+RDBMS-based intrusion analysis tools (e.g., ISS’s RealSecure). Our experiments with the DARPA
+2000 intrusion detection evaluation datasets have demonstrated the great potential of our approach in
+reducing false alerts and discovering high-level attack strategies.
+
+1 Introduction
+Intrusion detection has been considered the second line of defense for computer and network systems
+along with the prevention-based techniques such as authentication and access control. Intrusion detection
+techniques can be roughly classified as anomaly detection and misuse detection. Anomaly detection (e.g.,
+NIDES/STAT [6]) is based on the normal behavior of a subject (e.g., a user or a system); any action that
+significantly deviates from the normal behavior is considered intrusive. Misuse detection (e.g., NetSTAT
+[14]) detects intrusions based on the characteristics of known attacks or system vulnerabilities; any action
+that conforms to the pattern of a known attack or vulnerability is considered intrusive.
+Intrusion detection techniques are still far from perfect. In particular, all the current intrusion detection
+systems (IDSs) focus on low-level attacks or anomalies; none of them can capture the logical steps or
+1
+
+attacking strategies behind these attacks. Consequently, the IDSs usually generate a large amount of alerts,
+and the alerts are raised independently though there may be logical connections between them. In situations
+where there are intensive intrusive activities, not only will actual alerts be mixed with false alerts, but the
+amount of alerts will also become unmanageable. As a result, it is difficult for human users or intrusion
+response systems to understand the intrusion behind the alerts and take appropriate actions.
+Several alert correlation techniques have been proposed recently to address the aforementioned problem. A
+probabilistic method was used to correlate alerts using similarity between the alert features [13]. Experience
+with this method has shown successful cases [13]; however, this method depends on certain subjective
+parameters decided by human experts (e.g., similarity between classes of alerts), and cannot discover the
+causal relationships between related alerts that do not share similar features. A similar approach along with
+several heuristics was used to evaluate the strength of connections between alerts (events) to detect stealthy
+portscans [12]. Though the heuristics can be potentially extended to general alert correlation problems, it
+cannot fully discover the causal relationships between related alerts, either.
+Another approach was proposed to “learn” alert correlation models by applying machine learning techniques to training data sets with known intrusion scenarios [2]. This approach can build models for alert
+correlation automatically; however, it requires training in every deployment, and the resulting models may
+overfit the training data and cannot correlate attack scenarios not seen in the training data sets.
+An alert aggregation and correlation component was proposed to aggregate and correlate alerts [3]. In
+particular, the correlation method in [3] uses a consequence mechanism to specify what types of alerts
+may follow a given alert type. This is similar to the specification of misuse signatures. However, the
+consequence mechanism only uses the alert types, the probes that generate the alerts, the severity level,
+and the time interval between the two alerts involved in a consequence definition, which do not provide
+sufficient information to correlate all possibly related alerts. Moreover, it is not easy to predict how the
+attacker may arrange a sequence of attacks. In other words, developing a sufficient set of consequence
+definitions for alert correlation is not a trivial task.
+We believe that an important fact has been overlooked by the current approaches. That is, most intrusions
+are not isolated, but related as different stages of series of attacks, with the early stages preparing for the
+later ones. For example, hackers need to understand what vulnerable service a host is running before they
+can take advantage of these services. Thus, they typically scan for vulnerable services before they break
+into the system. As another example, in the Distributed Denial of Service (DDOS) attacks, the attacker
+has to install the DDOS daemon programs in vulnerable hosts before he instructs the daemons to launch
+an attack against another system. Therefore, in a series of attacks, one or more previous attacks usually
+prepare for the following attacks, and the success of the previous steps affects the success of the following
+ones. In other words, there are often logical steps or strategies behind series of attacks.
+We propose to correlate intrusion alerts using prerequisites of intrusions based on this observation. Intuitively, the prerequisite of an intrusion is the necessary condition for the intrusion to be successful. For
+example, the existence of a vulnerable service is the prerequisite of a remote buffer overflow attack against
+the service. We assume that an attacker needs to launch some attacks to prepare for the prerequisites of
+some later attacks. For example, he may perform a UDP port scan to discover the vulnerable services to be
+attacked. Our basic idea is to identify the prerequisites (e.g., existence of vulnerable services) and the consequences (e.g., discovery of vulnerable services) of each type of attacks and correlate the attacks (alerts)
+by matching the consequences of some previous attacks and the prerequisites of some later ones. (Some
+types of attacks are variations of each other, and thus should be treated as the same type.) For example,
+
+if we find a UDP port scan followed by a buffer overflow attack against one of the scanned ports, we can
+correlate them to be parts of the same series of attacks.
+In this paper, we present the development of an off-line intrusion alert correlator using the above approach.
+We assume that all the alerts reported by IDSs are stored in a relational database. The intrusion alert
+correlator interacts with the relational database management system (RDBMS) to correlate the alerts and
+store the correlated alerts back to the database. As a result, it takes advantage of the functionalities of an
+RDBMS, and can also be easily integrated with other RDBMS-based intrusion analysis tools such as ISS’s
+RealSecure [5]. We have performed a series of experiments with the two DARPA 2000 intrusion detection
+evaluation datasets [7]. In these experiments, we only keep the alerts correlated by the intrusion alert
+correlator and discard the isolated ones. Our experimental results show that the intrusion alert correlator
+not only reduces the false alert rate without hurting the detection rate, but also uncovers the high-level
+attack strategies behind the attacks.
+The remainder of this paper is organized as follows. The next section presents the formal framework
+for alert correlation using prerequisites of intrusions. Section 3 describes the development of the off-line
+intrusion alert correlator which implements the formal framework. Section 4 presents the experiments that
+we have performed with the alert correlator. Section 5 discusses the related work. Section 6 concludes this
+paper and points out the future research directions.
+
+2 Alert Correlation Using Prerequisites Of Intrusions
+The intrusion alert correlator described in this paper is based on a formal framework presented in [9]. We
+briefly introduce this framework in this section. Please read [9] for details.
+2.1
+
+Prerequisite and Consequence of Attacks
+
+The essential idea of the proposed approach is to correlate alerts by matching the consequences of earlier
+alerts and the prerequisites of later ones. In order to make the approach computable, we use predicates
+as basic constructs to represent the prerequisites and (possible) consequences of attacks. For example,
+a scanning attack may discover services vulnerable to a certain buffer overflow attack. We can use the
+predicate VulnerableToBufferOverflow (IP, port) to represent the attacker’s discovery (i.e. the consequence
+of the attack) that the host having the IP address IP runs a service (e.g., sadmind) at UDP port port and
+that the service is vulnerable to certain buffer overflow attack. Similarly, if an attack requires a service
+vulnerable to certain buffer overflow attack, we can use the same predicate to represent the prerequisite.
+Some attacks may require several conditions be satisfied at the same time in order to be successful. To
+represent such complex conditions, we use a logical formula, i.e., logical combination of predicates, to
+describe the prerequisite of an attack. For example, a certain network born buffer overflow attack may
+require that the target host have a vulnerable service that is accessible to the attacker through the firewall,
+and this prerequisite can be represented by VulnerableToBOF (IP, port) AND AccessibleViaFirewall (IP,
+port). To simplify the discussion, we require that negation only appear directly before a predicate. For
+example, we allow logical formula in the form of (NOT A (x, y)) OR (NOT B (z)), but not in the form of
+NOT (A (x, y) AND B (z)), though they are logically equivalent.
+
+We use a set of logical formulas to represent the (possible) consequence of an attack. For example, an
+attack may result in compromise of the root privilege as well as modification of the .rhost file. Thus, we
+may use the following set of logical formulas to represent the consequence of the attack: {GainRootAccess
+(IP), rhostModified (IP)}. This example says that as a result of the attack, the attacker may gain root access
+to the system and the .rhost file may be modified.
+The consequence of an attack is indeed the possible result of the attack. In other words, the attack may or
+may not generate the stated consequence. For example, after an attacker launches a buffer overflow attack
+against a service, he may or may not gain the root access, depending on whether the service is vulnerable
+to the attack or not.
+We propose to use possible consequence instead of actual consequence due to the following two reasons.
+First, an IDS may not have enough information to decide whether an attack is effective or not. For example,
+a network based IDS can detect certain buffer overflow attacks by matching the patterns of the attacks;
+however, it cannot decide whether the attempt succeeds or not without some specific information from
+the related host. Thus, it may not be feasible to correlate alerts using the actual consequence of attacks.
+In contrast, the possible consequence of a type of attack can be analyzed and made available for IDSs.
+Second, even if an attack fails to prepare for the follow-up attacks, the follow-up attacks may still occur
+simply because, for example, the attacker wants to test the successfulness of the previous attack or the
+attacker uses a script to launch a series of attacks. Thus, using possible consequences of attacks will lead
+to better opportunity to correlate such attacks. For the sake of brevity, we refer to possible consequence
+simply as consequence throughout this paper.
+
+2.2
+
+Hyper-alert and Hyper-alert Correlation Graph
+
+Having predicate as the basic construct, we introduce the notion of hyper-alert type to represent the prerequisite and the consequence of each type of alerts.
+Definition 1 A hyper-alert type T is a triple (fact, prerequisite, consequence) where (1) fact is a set of
+attribute names, each with an associated domain of values, (2) prerequisite is a logical formula whose free
+variables are all in fact, and (3) consequence is a set of logical formulas such that all the free variables in
+consequence are in fact.
+Intuitively, the component fact of a hyper-alert type tells what kind of information is reported along with
+the alert, prerequisite specifies what must be true in order for the attack to be successful, and consequence
+describes what could be true if the attack indeed succeeds. For the sake of brevity, we omit the domains
+associated with the attribute names when they are clear from the context.
+Example 1 An attacker may perform an IP Sweep to discover the existing hosts in a certain network. We
+may have a hyper-alert type IPSweep = (fact, prerequisite, consequence) for such attacks, where (1) fact
+= {IP}, (2) prerequisite = ∅, and (3) consequence = {ExistHost(IP)}. This hyper-alert type says that IP
+Sweep is to discover if there is a host running at IP address IP. As a result of this attack, the attacker may
+learn the existing host(s) at the IP address(es) identified by the value(s) of attribute IP.
+2
+Example 2 Consider the buffer overflow attack against the sadmind remote administration tool. We may
+have a hyper-alert type SadmindBufferOverflow = (fact, prerequisite, consequence) for such attacks, where
+
+(1) fact = {IP, port}, (2) prerequisite = ExistHost (IP) AND VulnerableSadmind (IP), and (3) consequence
+= {GainRootAccess(IP)}. Intuitively, this hyper-alert type says that such an attack is against the server
+running at IP address IP, the prerequisite of a successful attack is that there exists a host at address IP and
+the corresponding sadmind service is vulnerable to buffer overflow attacks, and the attacker may gain root
+privilege as a result of the attack.
+2
+Given the hyper-alert types, hyper-alerts can be generated from the alerts reported by IDSs directly. For
+example, we can generate a hyper-alert of type SadmindBufferOverflow from an alert reported by an IDS
+that detected the corresponding attack. The notion of hyper-alert is formally defined as follows.
+Definition 2 Given a hyper-alert type T = (fact, prerequisite, consequence), a hyper-alert h of type T is
+a finite set of tuples on fact, where each tuple is associated with an interval-based timestamp [begin time,
+end time]. The hyper-alert h implies that prerequisite must evaluate to True, and all the logical formulas in
+consequence might evaluate to True for each of the tuples.
+In the following, we treat timestamps implicitly and omit them if they are not necessary for our discussion.
+Example 3 Consider the hyper-alert type IPSweep defined in example 1. We may have a hyper-alert
+hIP Sweep of type IPSweep that includes the following tuples: {(IP = 152.141.129.1), (IP = 152.141.129.2),
+..., (IP = 152.141.129.254)}. As possible consequences of the attack, the following predicates might be
+True: ExistHost (152.141.129.1), ExistHost (152.141.129.2), ..., ExistHost (152.141.129.254). This hyperalert says there is an IP Sweep attack, and as a result, the attacker may learn the existence of hosts.
+2
+Example 4 Consider the hyper-alert type SadmindBufferOverflow defined in example 2. We may have
+a hyper-alert hSadmindBOF that includes the following tuples: {(IP = 152.141.129.5, port = 1235), (IP =
+152.141.129.37, port = 1235)}. This implies that if the attack is successful, the following two logical formulas must be True as the prerequisites of the attack: ExistHost (152.141.129.5) AND VulnerableSadmind
+(152.141.129.5), ExistHost (152.141.129.37) AND VulnerableSadmind (152.141.129.37), and the following two predicates might be True as possible consequences of the attack: GainRootAccess (152.141.129.5),
+GainRootAccess (152.141.129.37). This hyper-alert says that there are buffer overflow attacks against sadmind at IP addresses 152.141.129.5 and 152.141.129.37, and the attacker may gain root access as a result
+of the attacks.
+2
+A hyper-alert may correspond to one or several related alerts. If an IDS reports one alert for a certain attack
+and the alert has all the information needed to instantiate a hyper-alert, a hyper-alert can be generated from
+the alert. However, some IDSs may report a series of alerts for a single attack. For example, EMERALD
+may reports several alerts (within the same thread) related to an attack that spreads over a period of time. In
+this case, a hyper-alert may correspond to the aggregation of all the related alerts. Moreover, several alerts
+may be reported for the same type of attack in a short period of time. Our definition of hyper-alert allows
+them to be treated as one hyper-alert, and thus provides flexibility in reasoning about the alerts. Certain
+constraints may be used to make sure the hyper-alerts are reasonable. Please see [9] for details.
+To correlate hyper-alerts, we check if an earlier hyper-alert contributes to the prerequisite of a later one.
+Specifically, we decompose the prerequisite of a hyper-alert into pieces of predicates and test whether the
+consequence of an earlier hyper-alert makes some pieces of the prerequisite True (i.e., make the prerequisite
+easier to satisfy). If the result is positive, then we correlate the hyper-alerts together.
+
+Definition 3 Given a hyper-alert h of type T = (fact, prerequisite, consequence), the prerequisite set of h,
+denoted as P (h), is the set of all such predicates (with the preceding negation if there is one) that appear in
+prerequisite and whose arguments are replaced with the corresponding attribute values of a tuple in h. Each
+element in P (h) is associated with the timestamp of the corresponding tuple in h. The consequence set of h,
+denoted as C(h), is the set of all such logical formulas in consequence whose arguments are replaced with
+the corresponding attribute values of a tuple in h. Each element in C(h) is associated with the timestamp
+of the corresponding tuple in h.
+Example 5 Consider the Sadmind Ping attack with which an attacker discovers possibly vulnerable sadmind services. The corresponding alerts can be represented by a hyper-alert type SadmindPing = (fact,
+prerequisite, consequence), where (1) fact = {IP, port}, (2) prerequisite = ExistHost (IP), and (3) consequence = {VulnerableSadmind (IP)}.
+Suppose a hyper-alert hSadmindP ing of type SadmindPing has the following tuples: {(IP = 152.141.129.5,
+port = 1235), (IP = 152.141.129.37, port = 1235), (IP = 152.141.129.39, port = 1235)}. The prerequisite set
+of hSadmindP ing is P (hSadmindP ing ) = {ExistHost (152.141.129.5), ExistHost (152.141.129.37), ExistHost
+(152.141.129.39)}, and the consequence set of h SadmindP ing is C(hSadmindP ing ) = {VulnerableSadmind
+(152.141.129.5), VulnerableSadmind (152.141.129.37), VulnerableSadmind (152.141.129.39)}.
+2
+Example 6 Consider the hyper-alert h SadmindBOF discussed in example 4. The corresponding prerequisite set is P (hSadmindBOF ) = {ExistHost (152.141.129.5), ExistHost (152.141.129.37), VulnerableSadmind (152.141.129.5), VulnerableSadmind (152.141.129.37)}, and the corresponding consequence set is
+C(hSadmindBOF ) = {GainRootAccess (152.141.129.5), GainRootAccess (152.141.129.37)}.
+2
+Definition 4 Hyper-alert h1 prepares for hyper-alert h2 if there exist p ∈ P (h2 ) and C ⊆ C(h1 ) such that
+for all c ∈ C, c.end time < p.begin time and the conjunction of all the logical formulas in C implies p.
+Given a sequence S of hyper-alerts, a hyper-alert h in S is a correlated hyper-alert if there exists another
+hyper-alert h0 such that either h prepares for h0 or h0 prepares for h. Otherwise, h is called an isolated
+hyper-alert.
+Example 7 Let us continue examples 5 and 6. Assume that all tuples in h SadmindP ing have timestamps earlier than every tuple in hSadmindBOF . By comparing the contents of C(hSadmindP ing ) and
+P (hSadmindBOF ), it is clear that the element VulnerableSadmind (152.141.129.5) in P (h SadmindBOF )
+(among others) is also in C(hSadmindP ing ). Thus, hSadmindP ing prepares for, and should be correlated
+with hSadmindBOF .
+2
+The prepare-for relation between hyper-alerts provides a natural way to represent the causal relationship
+between correlated hyper-alerts. In the following, we introduce the notion of hyper-alert correlation graph
+to represent a set of correlated hyper-alerts.
+Definition 5 A hyper-alert correlation graph CG = (N , E) is a connected graph, where the set N of nodes
+is a set of hyper-alerts and for each pair of nodes n 1 , n2 ∈ N , there is an edge from n1 to n2 in E if and
+only if n1 prepares for n2 .
+Example 8 First consider the detection of a certain DDOS daemon which tries to contact its master program
+about its existence. This can be captured by the hyper-alert type DDOSDaemon = (fact, prerequisite,
+
+h IPSweep
+
+h SadmindBOF hDDOSDaemon
+
+h SadmindPing
+
+Figure 1: The hyper-alert correlation graph for example 8
+consequence), where fact = {IP}, prerequisite = GainRootAccess (IP), and consequence = ∅. Assume that
+there is a hyper-alert hDDOSDaemon which consists of the following tuple: (IP = 152.141.129.5).
+Suppose in a sequence of hyper-alerts we have the following ones: h IP Sweep, hSadmindP ing , hSadmindBOF ,
+and hDDOSDaemon . (The first three hyper-alerts have been explained in examples 3, 5, and 6, respectively.)
+Assume that all tuples in a later hyper-alert have timestamps later than every tuple in a previous hyperalert. By comparing the prerequisite sets and the consequence sets of these hyper-alerts, we can easily
+get the following conclusion: hIP Sweep prepares for hSadmindP ing , hIP Sweep prepares for hSadmindBOF ,
+hSadmindP ing prepares for hSadmindBOF , and finally hSadmindBOF prepares for hDDOSDaemon . Thus,
+all of the four hyper-alerts should be correlated together. Figure 1 shows the corresponding hyper-alert
+correlation graph.
+2
+Hyper-alert correlation graph provides an intuitive representation of correlated hyper-alerts. The goal of
+hyper-alert correlation can be considered to discover the maximum hyper-alert correlation graphs from a
+sequence of hyper-alerts. Hyper-alert correlation graph reveals opportunities to improve intrusion detection.
+First, the hyper-alert correlation graph can potentially reveal the intrusion strategies behind the attacks, and
+thus lead to better understanding of the attacker’s intention. Second, we can profile known attack strategies
+on the basis of hyper-alert correlation graphs. Partial matches of hyper-alert correlation graph to existing
+profiles may trigger human users to investigate attacks possibly missed by the IDS. Similarly, we may use
+the attack strategy profiles to predict the next move of on-going attacks, and then take appropriate actions
+to prevent it from happening.
+
+3 The Off-line Intrusion Alert Correlator
+An off-line intrusion alert correlator based on the approach discussed in section 2 is under development.
+We have finished all the components except for the Graphical User Interface (GUI). We present the design
+and development of this tool in this section, and discuss the experiments we have performed in section 4.
+We assume that all the alerts generated by IDSs are stored in a relational database. The intrusion alert
+correlator interacts with the RDBMS to access the alerts generated by IDSs and store the correlated alerts
+back into the database. As discussed in the introduction, such a method not only takes advantage of the
+RDBMS’s functionalities, but also allows easy integration with other RDBMS-based intrusion analysis
+tools.
+Figure 2 shows the architecture of the alert correlator. The alert correlator consists of a knowledge base, an
+alert preprocessor, a correlation engine, and a GUI component. The knowledge base contains the necessary
+information about hyper-alert types as well as relationships between predicates. Using the information
+
+Knowledge
+Base
+
+Hyper−Alerts
+&
+Auxiliary Data
+
+Alert
+Preprocessor
+
+Correlation
+Engine
+
+GUI
+Correlated Hyper−Alerts
+
+Alerts
+
+Database
+Management System
+
+Figure 2: The architecture of the intrusion alert correlator
+Predicate
+ExistHost
+ExistService
+ExistService
+VulnerableSadmind
+
+ArgNum
+1
+1
+2
+1
+
+ArgType
+varchar (15)
+varchar (15)
+int
+varchar (15)
+
+HyperAlertType
+SadmindPing
+SadmindPing
+SadmindPing
+SadmindPing
+
+(a) Table Predicate
+
+Predicate
+ExistService
+
+Implied
+ExistHost
+
+P Arg
+1
+
+AttrType
+varchar (15)
+int
+varchar (15)
+int
+
+(b) Table HATFact
+
+I Arg
+1
+
+HyperAlertType
+SadmindPing
+
+(c) Table Implication
+
+HyperAlertType
+SadmindPing
+
+AttrName
+SrcIP
+SrcPort
+DestIP
+DestPort
+
+P ID
+1
+
+Predicate
+ExistHost
+
+ArgPos
+1
+
+ArgName
+DestIP
+
+(d) Table HATPrereq
+
+P ID
+1
+
+Predicate
+VulnerableSadmind
+
+ArgPos
+1
+
+ArgName
+DestIP
+
+(e) Table HATConseq
+
+Figure 3: Example tables for predicates and hyper-alert types in the knowledge base
+from the knowledge base, the alert preprocessor generates hyper-alerts as well as auxiliary data from the
+alerts stored in the database. The correlation engine performs the actual correlation task using the hyperalerts and the auxiliary data. The GUI component is responsible for displaying the correlated hyper-alerts
+according to the users’ requests. All the above components interact with the RDBMS, which provides
+persistent storage for the intermediate data as well as the correlated alerts.
+Knowledge base The knowledge base is also stored in the relational database. To simplify the implementation, we assume that each hyper-alert type is uniquely identified by its name, and there is no negation in the
+prerequisite nor the consequence of any hyper-alert type. Several tables are used to store the information
+about predicates, implication relationships between related predicates, and hyper-alert types.
+Figure 3 shows the tables for an example knowledge base. Table Predicate (Figure 3(a)) consists of the
+predicates possibly used to represent the prerequisites and consequences. The attributes Predicate, ArgNum,
+and ArgType represent the predicate name, the position of an argument, and the type of the argument,
+respectively. For example, the first tuple in Figure 3(a) indicates that ExistHost is a predicate that takes one
+argument of type varchar (15) (IP address). (Since all the information is stored in a relational database, all
+the types are SQL types.) The second and the third tuples indicate that ExistService is a predicate that has
+two arguments, which are of types varchar (15) (IP address) and int (port number), respectively.
+
+Table Implication (Figure 3(c)) keeps the implication relationship between predicates. To simplify the
+implementation, we assume that for all implication of the form p 1 (x1 , x2 , ..., xn ) → p2 (y1 , y2 , ..., ym ),
+{y1 , y2 , ..., ym } ⊆ {x1 , x2 , ..., xn }. As a result, in order to keep the implication from p 1 to p2 , we only
+need to record what arguments of p1 are mapped to the arguments of p2 . For example, ExistService (IP, port)
+→ ExistHost (IP) can be represented as the first tuple in Figure 3(c), which states that the first argument of
+ExistHost is the first argument of ExistService.
+The hyper-alert types are stored in tables HATFact, HATPrereq, and HATConseq. The table HATFact
+keeps the attribute names and types in the fact component of each hyper-alert type. For example, Figure
+3(b) says that the hyper-alert type SadmindPing has four attributes in the fact component, which are SrcIP,
+SrcPort, DestIP, and DestPort. These attributes are of types varchar (15) and int, as shown in Figure 3(b).
+The tables HATPrereq and HATConseq have the same structure, but are used to keep the prerequisite and
+the consequence of known hyper-alert types, respectively. Since we assume there is no negation and the
+hyper-alerts are reasoned using prerequisite and consequence sets (see section 2), we only need to keep the
+predicates appearing in the prerequisite and the consequence in these two tables. For example, Figure 3(d)
+says the hyper-alert type SadmindPing has one predicate ExistHost in its prerequisite, and this predicate
+takes the fact attribute DestIP as its first (and only) argument. Similarly, Figure 3(e) says SadmindPing has
+one predicate VulnerableSadmind in its consequence, and it takes the fact attribute DestIP as its first (and
+only) argument.
+Preprocessing of Alerts We assume that the alerts generated by IDSs are stored in the database along with
+the necessary information to instantiate the hyper-alerts. The alerts may be generated by a single or multiple
+IDSs. In the latter case, we assume that the clocks used by different IDSs are properly synchronized. Our
+current implementation of the alert preprocessor works on the alert database generated by ISS’s RealSecure
+Network Sensor 6.0. However, it can be easily modified to work on any other alert databases, including
+alerts stored in plain files.
+The alert preprocessor processes the alerts to generate hyper-alerts and instantiate the prerequisite and
+consequence sets of each hyper-alert. The current implementation generates one hyper-alert from each
+alert, though our approach allows to aggregate multiple alerts into one hyper-alert (see section 2). The
+aggregation of multiple alerts remains one of our future works.
+There are at least two choices in reasoning about the instantiated predicates during the correlation phase.
+The first is to allow the correlation engine to reason about the related predicates (e.g., GainRootAccess
+(IP A) → GainAccess (IP A)) using the information stored in the knowledge base directly. Such an approach is probably necessary for real-time correlation of hyper-alerts. However, it requires more development effort and do not take full advantage of the RDBMS’s query processing capability. The second
+approach is to instantiate the predicates specified in the consequence set as well as those implied by these
+predicates, and then correlation of the hyper-alerts becomes simple matching of the instantiated predicates.
+This method requires more storage than the previous one; however, it is suitable for batch processing of
+the alerts and is able to use the RDBMS’s query processing capability. Since we are developing an off-line
+alert correlation tool, we choose the second method to reduce the development cost.
+The alert preprocessor expands the consequence set of each hyper-alert type by adding the implied predicates into the table HATConseq. For example, if a hyper-alert type has only predicate GainRootAccess
+(DestIP) in its consequence set, and according to the table Implication, GainRootAccess (DestIP) implies
+GainAccess (DestIP), then the preprocessor will add GainAccess (DestIP) into the hyper-alert type’s consequence set. To take into account indirect implications, this process should be repeated iteratively until no
+
+consequence set can be modified.
+The alert preprocessing phase generates the hyper-alert data as well as two auxiliary tables. Each hyperalert is uniquely identified by a hyper-alert ID. Two tables are used to store the hyper-alerts: The table
+HyperAlert has attributes HyperAlertID, HyperAlertType, begin time and end time, which represent the ID,
+the type, and the interval-based timestamps of the hyper-alerts. The table HyperAlertFact has attributes
+HyperAlertID and the union of the fact attributes of all known hyper-alert types; it keeps the fact attribute
+values for all hyper-alerts, with unapplicable attributes set to NULL.
+The two auxiliary tables, PrereqSet and ConseqSet, are generated to facilitate hyper-alert correlation. Both
+tables have the same set of attributes: HyperAlertID, EncodedPredicate, begin time, and end time; however, PrereqSet saves the elements in the prerequisite sets, while ConseqSet keeps the elements in the
+consequence sets of hyper-alerts. Note that begin time and end time are redundant, since this information
+can be derived from the table HyperAlert. However, we replicate them in both PrereqSet and ConseqSet
+for performance reasons.
+The two auxiliary tables PrereqSet and ConseqSet are used to keep instantiated prerequisite and consequence sets of the hyper-alerts, respectively. To simplify the correlation process, we encode instantiated
+predicates as strings. Specifically, each instantiated predicate is encoded as the predicate name followed
+by the character “(”, followed by the sequence of arguments separated with the character “,”, and finally
+followed by the character “)”. It is assumed that predicates are uniquely identified by their names and
+the characters “(”, “)”, and “,” do not appear in predicate names and arguments. Thus, comparing instantiated predicates is equivalent to comparing the encoded strings. For example, if a hyper-alert has two
+instantiated predicates, VulnerableSadmind (152.142.1.19) and VulnerableSadmind (152.142.1.52), in its
+prerequisite set, then it will have two tuples in the table PrereqSet with encoded predicates “VulnerableSadmind(152.142.1.19)” and “VulnerableSadmind(152.142.1.52)”, respectively.
+Correlation Engine The basic task of the correlation engine is to find out all the prepare-for relationships
+between hyper-alerts instantiated by the alert preprocessor. The correlated hyper-alert information is stored
+in the table CorrelatedAlerts, which has only two attributes, PreparingHyperAlertID and PreparedHyperAlertID. As suggested by the attribute names, each tuple in CorrelatedAlerts indicates the hyper-alert with
+the ID PreparingHyperAlertID prepares for the one with the ID PreparedHyperAlertID.
+With the two auxiliary tables PrereqSet and ConseqSet, it is trivial to discover the aforementioned preparefor relations. We use the following SQL query to perform this task. The result of the SQL query is inserted
+into the CorrelatedAlerts table. It is not difficult to verify that the SQL statement discovers all and only the
+hyper-alert pairs such that the first one of the pair prepares for the second one.
+SELECT DISTINCT c.HyperAlertID, p.HyperAlertID
+FROM PrereqSet p, ConseqSet c
+WHERE p.EncodedPredicate = c.EncodedPredicate
+AND c.end time < p.begin time
+
+GUI The GUI component is responsible for displaying hyper-alert correlation graphs and facilitating the
+human users to investigate the correlated hyper-alerts. Currently, the GUI component is still under development. (All the other components have been completed.) After completion, the GUI component should help
+a user traverse the hyper-alert correlation graph and look into detailed information about the hyper-alerts
+
+identified by the user.
+A limitation of our alert correlator is that it depends on the underlying IDS to generate alerts. The alert
+correlator has shown the potential to reduce false alerts and discover the high-level strategies used in a
+sequence of attacks (see Section 4); however, it is unable to correlate attacks missed by the underlying
+IDSs. We are currently investigating methods to address this limitation.
+
+4 Experimental Results
+We have performed a series of experiments using the two DARPA 2000 intrusion detection evaluation
+(IDEVAL) datasets [7]. The first dataset contains a series of attacks with which a novel attacker probes,
+breaks-in, installs the components necessary to launch a Distributed Denial of Service (DDOS) attack, and
+launches a DDOS attack against an off-site server. The second dataset includes a similar sequence of attacks
+run by an attacker who is a bit more sophisticated than the first one.
+We used the network traffic data in the two datasets in our experiments. Each dataset includes the network
+traffic data collected from both the DMZ and the inside part of the evaluation network. We have performed
+four sets of experiments, each with either the DMZ or the inside network traffic of one dataset. Due to the
+constraints of our testing network, we have not performed experiments with both the DMZ and the inside
+network traffic at the same time. Nevertheless, such experiments are interesting and may lead to further
+insight into the alert correlation problem. We consider it as one of our future works.
+In each experiment, we replayed the selected network traffic in an isolated network monitored by a RealSecure Network Sensor 6.0 [5]. We chose RealSecure because it has an extensive set of well documented
+attack signatures. In all the experiments, the Network Sensor was configured to use the Maximum Coverage
+policy with a slight change, which forced the Network Sensor to save all the reported alerts. Our alert correlator was then used to process the alerts generated by RealSecure. In all the experiments, the alert correlator
+only kept the correlated alerts, and discarded all the isolated ones.
+Figure 4 shows the hyper-alert types involved in the experiments. We mapped each alert type reported by the
+RealSecure Network Sensor to a hyper-alert type (with the same name). The prerequisite and consequence
+of each hyper-alert type were specified according to the descriptions of the attack signatures provided with
+the RealSecure Network Sensor 6.0. Note that the alert correlator uses the implication relationship between
+predicates to further refine the prerequisite and consequence sets of the hyper-alerts (see section 3).
+Figure 5 shows the experimental results, including the detection and false alert rates for both RealSecure
+Network Sensor 6.0 and the intrusion alert correlator. We counted the number of actual attacks and false
+alerts according to the description included in the datasets. False alerts can be identified easily. However,
+counting the number of attacks is a subjective process, since the number of attacks depends on how one
+views the attacks. Having different views of the attacks may result in different numbers.
+We adopted the following way to count the number of attacks in our experiments. The initial phase of the
+attacks involved an IP Sweep attack. Though many packets were involved, we counted them as a single
+attack. Similarly, the final phase had a DDOS attack, which generated many packets but was also counted
+as one attack. For the rest of the attacks, we counted each action (e.g., telnet, Sadmind Ping) initiated by
+
+Hyper-alert Type
+Admind
+Email Almail Overflow
+Email Debug
+Email Ehlo
+Email Turn
+FTP Pass
+FTP Put
+FTP Syst
+FTP User
+HTTP ActiveX
+HTTP Cisco Catalyst Exec
+HTTP Java
+HTTP Shells
+
+Mstream Zombie
+
+Consequence
+
+ExistService(DestIP, DestPort)
+∧ VulnerableMailServer(DestIP)
+ExistService(DestIP, DestPort)
+∧ SendmailInDebugMode(DestIP)
+ExistService(DestIP, DestPort)
+∧ SMTPSupportEhlo(DestIP)
+ExistService(DestIP, DestPort)
+∧ SMTPSupportTurn(SrcIP, DestIP)
+ExistService(DestIP,DestPort)
+ExistService(DestIP,DestPort)
+∧ GainAccess(DestIP)
+ExistService(DestIP,DestPort)
+ExistService(DestIP,DestPort)
+ExistActiveXControl(SrcIP)
+ExistService (DestIP, DestPort)
+∧CiscoCatalyst3500XL(DestIP)
+JavaEnabledBrowser(SrcIP)
+ExistService(DestIP, DestPort)
+∧ VulnerableCGIBin(DestIP)
+∧ OSUNIX(DestIP)
+SystemCompromised(SrcIP)
+∧ SystemCompromised(DestIP)
+
+{GainAccess(DestIP)}
+{GainAccess(DestIP)}
+{GainSMTPInfo(SrcIP,DestIP)}
+{MailLeakage(DestIP)}
+
+{SystemCompromised (DestIP)}
+{GainOSInfo(DestIP)}
+{SystemCompromised(SrcIP)}
+{GainAccess(DestIP)}
+{SystemCompromised(SrcIP)}
+{GainAccess(DestIP)}
+
+{ReadyToLaunchDOSAttack}
+{ExistService(DestIP,DestPort)}
+
+Port Scan
+RIPAdd
+RIPExpire
+Rsh
+Sadmind Amslverify Overflow
+Sadmind Ping
+SSH Detected
+Stream DoS
+TCP Urgent Data
+TelnetEnvAll
+TelnetTerminaltype
+TelnetXdisplay
+UDP Port Scan
+
+Prerequisite
+
+GainAccess(SrcIP)
+∧ GainAccess(DestIP)
+VulnerableSadmind(DestIP)
+∧ OSSolaris(DestIP)
+OSSolaris(DestIP)
+
+{SystemCompromised(SrcIP),
+SystemCompromised(DestIP)}
+{GainAccess (DestIP)}
+
+ReadyToLaunchDOSAttack
+
+{DOSAttackLaunched}
+{SystemAttacked(DestIP)}
+{SystemAttacked(DestIP)}
+{GainTerminalType(DestIP)}
+{SystemAttacked(DestIP)}
+{ExistService(DestIP,DestPort)}
+
+ExistService(DestIP, DestPort)
+ExistService(DestIP, DestPort)
+ExistService(DestIP, DestPort)
+
+{VulnerableSadmind(DestIP)}
+
+* The fact component of all these hyper-alert types is {SrcIP, SrcPort, DestIP, DestPort}.
+
+Figure 4: Hyper-alert types used in the experiments
+the attacker as one attack. The numbers of attacks observable in these datasets are shown in Figure 5. Note
+that some activities such as telnet are not usually considered as attacks; however, we counted them here if
+the attacker used them as parts of the attacks.
+RealSecure Network Sensor 6.0 generated duplicated alerts for certain attacks. For example, the same rsh
+connection that the attacker used to access the compromised host triggered two alerts. As a result, the
+number of real alerts (i.e., the alerts corresponding to actual attacks) is greater than the number of detected
+attacks. Figure 5 shows both kinds of numbers. The detection rates were calculated using the number of
+
+Dataset
+
+LLDOS
+1.0
+
+LLDOS
+2.0.2
+
+DMZ
+
+# observable
+attacks
+89
+
+Inside
+
+60
+
+DMZ
+
+7
+
+Inside
+
+15
+
+Tool
+
+# alerts
+
+RealSecure
+Our method
+RealSecure
+Our method
+RealSecure
+Our method
+RealSecure
+Our method
+
+891
+57
+922
+44
+425
+5
+489
+13
+
+# detected
+attacks
+51
+50
+37
+36
+4
+3
+12
+10
+
+Detection
+rate
+57.30%
+56.18%
+61.67%
+60%
+57.14%
+42.86%
+80.00%
+66.67%
+
+# true
+alerts
+57
+54
+44
+41
+6
+3
+16
+10
+
+False alert
+rate
+93.60%
+5.26%
+95.23%
+6.82%
+98.59%
+40%
+96.73%
+23.08%
+
+Figure 5: The experimental results
+Attacking Host: 202.77.162.213
+Victim Host: 172.16.112.50
+67432
+67559
+
+67434
+67343
+
+67558
+67436
+
+Sadmind_Ping
+
+67553
+67560
+
+67440
+Sadmind_Amslverify_Overflow
+
+67554
+67773
+67776
+
+Stream_DOS
+
+MStream_Zombie
+Rsh
+
+Figure 6: A hyper-alert correlation graph discovered in the inside network traffic of dataset one
+
+detected attacks, while the false alert rates were computed with the number of real alerts.
+For the DMZ network traffic in dataset one, the RealSecure Network Sensor generated 891 alerts. According to the description of the data set, 57 out of the 891 alerts were real alerts, 51 attacks were detected,
+and 38 attacks were not detected. Thus, the detection rate of RealSecure Network Sensor was 57.30%, and
+the false alert rate 93.60%.1 Our intrusion alert correlator processed the alerts generated by the RealSecure
+Network Sensor. As shown in Figure 5, 57 alerts remained after correlation, 54 of them were real alerts,
+and 50 attacks were covered by these alerts. Thus, the detection rate and the false alert rate after alert correlation were 56.18% and 5.26%, respectively. The results for the other datasets are also shown in Figure
+5.
+The experimental results in Figure 5 show that the intrusion alert correlator greatly reduced the false alert
+rates. However, the detection rate was not affected very much. In the worst cases (the DMZ network traffic
+in datasets one and two), only one attack was missed during the correlation process.
+The intrusion alert correlator also reveals the high-level attack strategies via hyper-alert correlation graphs.
+Figure 6 shows one of the hyper-alert correlation graphs discovered from the inside network traffic in
+dataset one. Each node in Figure 6 represents a hyper-alert. The numbers inside the nodes are the alert IDs
+generated by the RealSecure Network Sensor. There are totally 12 hyper-alerts in figure 6, which can be
+divided into five stages. (Note that these five stages are not exactly the five phases stated in the description
+of the datasets [7].) The first stage has one Sadmind Ping hyper-alert, with which the attacker discovered
+1
+
+Please note that choosing less aggressive policies than Maximum Coverage may result in less false alert rates.
+
+the possibly vulnerable Sadmind service running at 172.16.112.50. The second stage consists of four Sadmind Amslverify Overflow hyper-alerts, which correspond to four different variations of buffer overflow
+attacks against the Sadmind service at 172.16.112.50. The third stage consists of four Rsh hyper-alerts,
+with which the attacker copied a program and a .rhosts file and started the program on the victim system.
+(Hyper-alerts 67559 and 67560 correspond to the same Rsh event. They were here because RealSecure generated duplicated alerts for the this Rsh event.) The fourth stage consists of two Mstream Zombie, which
+correspond to the communication between the DDOS daemon and master. Finally, the fifth stage consists
+of one Stream DoS hyper-alert. This is the actual DDOS attack launched by the DDOS daemon programs.
+Figure 6 only shows the direct edges between these hyper-alerts for the sake of readability. For example,
+the hyper-alert 67432 also prepares for 67554, but the correspond edge is not included in Figure 6.
+Our intrusion alert correlator depends on the underlying IDS for alert information. As shown in Figure 5, it
+reduced the false alert rate, but did not improve the detection rate. Indeed, the detection rate of the intrusion
+alert correlator cannot be better than the underlying IDS. This implies that if the underlying IDS is very
+poor in detecting attacks, the intrusion alert correlator cannot perform well, either. (This is why we decided
+to use the Maximum Coverage policy in the RealSecure Network Sensor.) However, if the underlying IDS
+can detect the attacks but with a large amount of false alerts, our method can help identify the real alerts
+from the false ones.
+Note that all of the hyper-alert types in Figure 4 require that the hosts involved in the attacks exist, which
+can be represented by a predicate ExistHost in the prerequisites of the hyper-alert types. Suppose the
+IDS detected an IP Sweep attack that involved all IP addresses in the network, and the IP Sweep hyperalert was before all the other hyper-alerts. Then the IP Sweep alert would be correlated with all of the
+other alerts. As a result, the alert correlation method cannot reduce false alerts effectively. We refer to
+the predicates like ExistHost as promiscuous predicates. The use of promiscuous predicates should be
+carefully considered. On the one hand, using promiscuous predicates may lead to too many false alerts;
+on the other hand, we may lose the opportunity to correlate some related alerts, if we completely exclude
+promiscuous predicates. Further research is necessary to clarify this issue. In our experiments, we did not
+use promiscuous predicates.
+The data sets in the above experiments include attacks with strong connections. In reality, the intrusion alert
+correlator may have worse false alert rate and detection rate. Nevertheless, the significant improvement over
+the RealSecure Network Sensor shown in our experiments has demonstrated the potential of the proposed
+approach.
+
+5 Related Work
+Intrusion detection has been studied for about twenty years. A survey of the early work on intrusion
+detection is given in [8], and an excellent overview of the current intrusion detection techniques and related
+issues can be found in a recent book [1].
+Intrusion detection techniques can be classified as anomaly detection and misuse detection. Anomaly detection is based on the normal behavior of a subject (e.g., a user or a system); any action that significantly
+deviates from the normal behavior is considered intrusive. Misuse detection catches intrusions in terms of
+the characteristics of known attacks or system vulnerabilities; any action that conforms to the pattern of
+
+a known attack or vulnerability is considered intrusive. Numerous research as well as commercial IDSs
+have been developed using anomaly and/or misuse detection techniques. These systems are generally classified into host-based IDSs (e.g., USTAT [4]), network based IDSs (e.g., NetSTAT [14], NFR [11]), and
+distributed IDSs (e.g., EMERALD [10]).
+As discussed earlier, all the current IDSs detect low-level attacks or anomalies; none of them can capture
+the logical steps or attack strategies behind these attacks. It is usually up to the human users to discover
+the connections between alerts. However, in the intrusion intensive situations, the IDSs may generate large
+amount of alerts, making manual correlation of alerts a very difficult task.
+We have discussed the previous alert correlation techniques [2, 3, 12, 13] in the introduction. Our alert
+correlation approach is complementary to these methods; using the specific knowledge about various types
+of intrusions (i.e., the prerequisites and consequences of intrusions), our approach is able to discover the
+causal relationships between related alerts and correlate them accordingly. As demonstrated by our experiments, our alert correlation approach is able to greatly reduce the false alerts without sacrificing the
+detection rate very much and discover the high-level strategies behind the attacks.
+
+6 Conclusion and Future Work
+This paper presented the development of an off-line intrusion alert correlator using prerequisites of intrusions. Our method is based on the observation that most intrusions are not isolated, but related as different
+stages of series of attacks, with the early stages preparing for the later ones. We represented our domain
+knowledge about different types of attacks as the prerequisites and consequences of the corresponding
+alerts. The intrusion alert correlator thus reasons about the prerequisites and consequences of the alerts reported by the IDSs and correlate them together. Our experiments with the DARPA 2000 intrusion detection
+evaluation datasets [7] have demonstrated that the intrusion alert correlator not only reduced the false alerts
+without hurting the detection rate too much, but also uncovered the high-level attack strategies behind the
+attacks.
+Our future research includes the following. First, we will continue to refine the alert correlation method as
+well as the implementation of the intrusion alert correlator. Second, we plan to extend our alert correlation
+method to identify attacks possibly missed by the underlying IDSs, and apply visualization as well as
+human computer interaction techniques to help human users analyze the possibly missed attacks. The
+resulting techniques have the potential to improve IDSs incrementally via the interaction between human
+users, the IDSs, and the correlation tool. Third, we plan to extend the alert correlation method to predict
+attacks in progress. If the next move of an attacker can be narrowed down to a few possibilities, effective
+counter actions can be taken to prevent or reduce the damage caused by attacks.
+Acknowledgement The first author would like to thank Robert Cunningham and David Fried for providing
+the NetPoke program.
+
+References
+[1] R.G. Bace. Intrusion Detection. Macmillan Technology Publishing, 2000.
+[2] O. Dain and R.K. Cunningham. Fusing a heterogeneous alert stream into scenarios. In Proceedings
+of the 2001 ACM Workshop on Data Mining for Security Applications, pages 1–13, November 2001.
+[3] H. Debar and A. Wespi. Aggregation and correlation of intrusion-detection alerts. In Recent Advances
+in Intrusion Detection, number 2212 in Lecture Notes in Computer Science, pages 85 – 103, 2001.
+[4] K. Ilgun, R. A. Kemmerer, and P. A. Porras. State transition analysis: A rule-based intrusion detection
+approach. IEEE Transaction on Software Engineering, 21(3):181–199, 1995.
+[5] Inc. ISS. RealSecure intrusion detection system. http://www.iss.net.
+[6] H.S. Javits and A. Valdes. The NIDES statistical component: Description and justification. Technical
+report, SRI International, Computer Science Laboratory, 1993.
+[7] Lincoln Lab MIT.
+DARPA 2000
+http://ideval.ll.mit.edu/2000 index.html, 2000.
+
+intrusion
+
+detection
+
+evaluation
+
+datasets.
+
+[8] B. Mukherjee, L. T. Heberlein, and K. N. Levitt. Network intrusion detection. IEEE Network, 8(3):26–
+41, May 1994.
+[9] P. Ning, D. Reeves, and Yun Cui. Correlating alerts using prerequisites of intrusions. Technical Report
+TR-2001-13, North Carolina State University, Department of Computer Science, Dec. 2001.
+[10] P. A. Porras and P. G. Neumann. EMERALD: Event monitoring enabling response to anomalous live
+disturbances. In Proceedings of the 20th National Information Systems Security Conference, National
+Institute of Standards and Technology, 1997.
+[11] M. J. Ranum, K. Landfield, M. Stolarchuk, M. Sienkiewicz, A. Lambeth, and E. Wall. Implementing a
+generalized tool for network monitoring. In Eleventh Systems Administration Conference (LISA ’97),
+October 1997.
+[12] S. Staniford, J.A. Hoagland, and J.M. McAlerney. Practical automated detection of stealthy portscans.
+To appear in Journal of Computer Security.
+[13] A. Valdes and K. Skinner. Probabilistic alert correlation. In Proceedings of the 4th International
+Symposium on Recent Advances in Intrusion Detection (RAID 2001), pages 54–68, 2001.
+[14] G. Vigna and R. A. Kemmerer. NetSTAT: A network-based intrusion detection system. Journal of
+Computer Security, 7(1):37–71, 1999.
+
+

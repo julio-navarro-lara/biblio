@@ -1,0 +1,1367 @@
+Situational awareness of a coordinated cyber attack11
+
+Moises Sudit a, Adam Stotz b, Michael Holender a
+a
+Center for Multisource Information Fusion, SUNY at Buffalo, Buffalo, NY USA 14260-2357
+b
+Calspan-UB Research Center, 4455 Genesee Street, Buffalo, NY, USA 14225
+
+ABSTRACT
+As technology continues to advance, services and capabilities become computerized, and an ever increasing amount
+of business is conducted electronically the threat of cyber attacks gets compounded by the complexity of such attacks
+and the criticality of the information which must be secured. A new age of virtual warfare has dawned in which seconds
+can differentiate between the protection of vital information and/or services and a malicious attacker attaining their goal.
+In this paper we present a novel approach in the real-time detection of multistage coordinated cyber attacks and the
+promising initial testing results we have obtained. We introduce INFERD (INformation Fusion Engine for Real-time
+Decision-making), an adaptable information fusion engine which performs fusion at levels zero, one, and two to provide
+real-time situational assessment and its application to the cyber domain in the ECCARS (Event Correlation for Cyber
+Attack Recognition System) system. The advantages to our approach are fourfold: (1) The complexity of the attacks
+which we consider, (2) the level of abstraction in which the analyst interacts with the attack scenarios, (3) the speed at
+which the information fusion is presented and performed, and (4) our disregard for ad-hoc rules or a priori parameters.
+Keywords: INFERD, ECCARS, fusion, information fusion, situational assessment, situational awareness, cyber attack,
+cyber warfare, attack detection, intrusion detection
+
+1. INTRODUCTION
+1.1 Problem Statement
+Network security analysts currently have no tools available which detect evolving or eminent cyber attacks in a
+timely enough fashion to mitigate the threat before the hacker attains their goal. Various network and host based
+intrusion detection sensors (IDS) exist such as SNORT (see www.securityfocus.com) and DAIWATCH (see
+www.daiwatch.com) which can report on different levels of specificity, but none of these sensors can detect attacks of
+the complexity in which we are considering. Network security analysts wade through volumes of IDS alerts on a daily
+basis and attempt to draw inferences from the data indicating the severity of the alerts and/or the intent of the attacker.
+Recent research efforts in providing better cyber attack detection and coordinated cyber attack recognition (e.g. TIAA
+[7], MIRADOR [8], and JIGSAW [9]) have not fully solved the problem mentioned above. To detect multistage
+coordinated cyber attacks, these systems feed from the output of the intrusion detection sensors and attempt to draw
+inferences from their alerts. The methods used to inference can be classified into one of three categories: (1) Parametric
+[5], [6], [8]-[10], (2) Rules based [7] or (3) Graph Matching [11], [18] and mostly focus on post facto analysis of IDS
+alerts. Each class of methodology has its advantages and disadvantages listed in Table 1.1.1.
+Parametric approaches are typically generalized enough to be applied to a variety of environments. Deploying a
+parametric system to networks of varying topologies, vulnerabilities, and threats usually consists of retraining the system
+on test data obtained for that environment. The problem of parameterizing systems based on training data sets is a
+sensitive one which can often lead to large numbers of false positives or inaccuracies when working on data not in the
+training set. The two classical cases of overfitting and overtraining can arise when a parameter vector v is obtained
+which configures the system to be very accurate on the training data but generalizes poorly to non-training data. The
+accuracy / generality tradeoff problem is a well studied one in many academic areas such as statistics (known as the biasvariance tradeoff [12]), Bayesian inference (known as penalized likelihood [13], [14]), and in pattern recognition /
+machine learning (known as minimum message length [15]).
+1
+
+114
+
+This work is funded by ARDA and AFRL through a subcontract from Alion Science and Technology
+
+Data Mining, Intrusion Detection, Information Assurance, and Data Networks
+Security 2005, edited by Belur V. Dasarathy, Proceedings of SPIE Vol. 5812
+(SPIE, Bellingham, WA, 2005) · 0277-786X/05/$15 · doi: 10.1117/12.606980
+
+Downloaded From: http://proceedings.spiedigitallibrary.org/ on 02/18/2016 Terms of Use: http://spiedigitallibrary.org/ss/TermsOfUse.aspx
+
+Rules based approaches are expressive in the way that the security analyst provides system configuration. Rules are
+created or modified in accordance with the environment in which the system is running. Using this methodology,
+however, has arguable deficiencies in that every possible condition for the environment in which the system is running
+must be accounted for in its rule set. The realm of cyber warfare is very dynamic; on any given day there may be
+topology changes in the network which is attempting to be secured, patches applied making certain vulnerabilities
+dissipate or even materialize as a side effect, discovery of new exploits, realization of new attacking strategies, the list
+goes on and on. With such frequent changes in the environment, the rules set can quickly become too complex and
+unwieldy to keep synchronized with the latest changes. As rules are left out and changed the chances of system accuracy
+being maintained diminish and the system becomes legacy providing no benefit to the present.
+Graph Matching approaches are thorough and accurate (assuming the graphs accurately reflect the attack), but the
+computational time required restricts their use to post facto or forensic type attack analysis. This type of analysis is
+useful for hardening weak points in a network to prevent attacks of a similar type occurring again, but only learning from
+ones mistakes and not doing anything preemptive would be bad practice.
+In summary, we wish to solve the problem of performing real-time detection of complex, multistage, coordinated
+cyber attacks in such a fashion that minimizes a priori settings and is sustainable across the breadth and frequency of
+changes which can occur within the deployment environment.
+Methodology
+Parametric
+Rules Based
+Graph Matching
+
+Advantages
+- Portability
+- Generality
+- Expressiveness
+- Robust
+- Accurate
+
+-
+
+Disadvantages
+Need for a priori training process
+Accuracy variance
+Accuracy variance
+Rules sets become unwieldy
+Computational performance
+Suitable only for post facto analysis
+
+Table 2.1.1 - Methodology Comparison
+
+2. METHODOLOGY
+2.1 ECCARS Framework
+Event Correlation for Cyber Attack Recognition System (ECCARS) is a system in its first year of development
+designed to address each of the deficiencies in the methodologies mentioned in section 1.1 and solve the ultimate
+problem of attaining real-time detection of complex, multistage, coordinated cyber attacks in a method which is
+adaptable to the changes in the environment. ECCARS provides a network security analyst with a real-time assessment
+of the state of his/her network including any direct or eminent threats and areas of his network which have abnormally
+high amounts of malicious or abnormal activity. This work is jointly funded by Air Force Research Labs in Rome, NY
+(AFRL-Rome) and the Advanced Research Defense Agency (ARDA).
+
+Proc. of SPIE Vol. 5812
+
+Downloaded From: http://proceedings.spiedigitallibrary.org/ on 02/18/2016 Terms of Use: http://spiedigitallibrary.org/ss/TermsOfUse.aspx
+
+115
+
+The ECCARS system is an aggregate of 5
+integrated functional modules as shown by the
+bubbles in Figure 2.1.1 and will be referred to as
+follows: (1 - Input Manager) will be discussed in
+section 2.1.1, (2 - Attack Template Input) in
+section 2.1.2, (3 - Forensic Analysis Capability and
+Integration) in section 2.1.3, (4 – Visualization) in
+section 2.1.4, and (5 – INFERD) in section 2.2.
+Each of the main functional modules has been
+developed in the Java programming language
+allowing for cross-platform capability and ease of
+prototype development. Being able to support any
+operating system with a Java runtime engine is a
+key feature when the configuration of the
+deployment environment is not known.
+The main idea of the system is to fuse a stream
+of incoming heterogeneous IDS alerts to a database
+of Attack Templates and rank them according to how likely they are taking place. These Attack Templates discussed in
+section 2.1.2 are developed a priori and represent the possible complex multistage attacks which may take place within
+the environment. This ranking of Attack Templates is presented to the user in a method which gives them a situational
+awareness of their network and aids them in their decision process of how to mitigate the threat, refer to section 2.1.4.
+The decoupled architecture along with the standardized XML interfaces allows for facilitated plug-and-play integration
+with external applications and allows us to leverage research being performed by other teams. We show one such
+example of 3rd party integration when we discuss the input manager in section 2.1.1 and another when we discuss
+forensics in section 2.1.3.
+Figure 2.1.1 - ECCARS System Overview
+
+2.1.1
+
+Input Manager
+
+The Input Manager is responsible for collecting the new alerts triggered in the environment and performing some
+“data massaging” before the alerts are processed by the fusion engine (INFERD). The sheer volume of dubious data
+from sensors is a major hindrance to making important decisions concerning maintenance and management of the
+network. These sensors are diverse in nature with different forms of outputs. Thus, making sense of the outputs
+generated by the sensor messages in real-time becomes a highly complex problem. Moreover, detection of an
+abnormality by any of these sensors results in a large quantity of alarms. To make this volume of alarms manageable by
+the fusion process, they are first filtered. This filtering accounts for bugs in the deployed IDS sensors and removes alerts
+which are know-ably ignorable by the system such as duplicate alerts which are generated for the same malicious event.
+Once an alert passes filtering, it is then homogenized into a common format with all other IDS alerts being fused by the
+system. This XML-based common format called Intrusion Detection Message Exchange Format (IDMEF) [17] is a
+standard currently in development by the Internet Engineering Task Force (IETF) and the Intrusion Detection Working
+Group (IDWG). This homogenized alert is then simultaneously sent to INFERD for processing and stored in the
+ECCARS database. This simultaneous fork of the data removes any performance bottleneck of the DBMS store – our
+initial testing has shown our fusion engine to outperform the transforming of the IDMEF alert to an SQL query and the
+storing of that data in the ECCARS DB. ECCARS currently supports the MySQL™ and Oracle™ database management
+systems, but is easily extendible to any relational database system which supports a Structured Query Language (SQL)
+interface.
+To ensure all alerts reported from IDS sensors are received and that all IDS sensors are on-line, a tool developed by
+AFRL-Rome called Tap & Bridge is integrated into the Input Manager. Tap & Bridge can be configured to access any
+IDS sensor type and provides reliable transmission of an IDS alert from the network node on which the sensor is
+installed to a central collection location. Through heartbeat messages, Tap & Bridge can monitor for IDS sensors which
+have gone off-line and give appropriate warning.
+
+116
+
+Proc. of SPIE Vol. 5812
+
+Downloaded From: http://proceedings.spiedigitallibrary.org/ on 02/18/2016 Terms of Use: http://spiedigitallibrary.org/ss/TermsOfUse.aspx
+
+2.1.2
+
+Attack Templates
+Attack Templates are the entities which define the cyber
+attacks monitored for in the alert stream. These structures
+are created a priori in a hierarchical top-down fashion
+manually by a subject matter expert (SME), but a plan to
+automate this process has been proposed for a future phase
+of the program and will be discussed briefly in section 4.
+These attack graphs are specified in and loaded from an
+XML file when the system is started. It is implausible to
+expect a human operator to generate all possible cyber
+attacks manually which necessitates the future work in
+phase 2 to make the system realistically deployable.
+
+Figure 2.1.2.1 – Hierarchical Cyber Attack Definition
+
+Figure 2.1.2.2 - Sample Attack Template
+
+Figure 2.1.2.3 - Sample Feature Tree
+
+The cyber attack definition is hierarchical among three
+tiers – Attack Template, Template Node, and Feature Node.
+The Attack Template is a directed graph of Template Nodes
+and represents the totality of the multistage cyber attack.
+Template Nodes pointing into other Template Nodes can be
+thought of as precursor attacks or initial stages to the node it
+is pointing at. Consider the example in Figure 2.1.2.2, in
+which “IP Sweep” is a precursor node to “Probe on DNS”
+and “Probe on IIS”. In this trivial attack scenario we would
+expect a hacker to perform the IP Sweep before the Probes.
+Also note that the arrows represent possible attack paths
+that one may use to attain the ultimate goal of “Access to
+shell on File Server”.
+Template Nodes represent singleton attacks in the
+overall strategy to attain the goal and are classified into one
+of three classes in our system. Extrinsic Nodes are those
+which have no precursor Template Nodes. These nodes are
+typically in the reconnaissance phase and are entry points
+into the attack scheme. Their credibility value or likelihood
+of occurrence is based solely on the Feature Nodes
+contained within its Feature Tree. These Feature Trees will
+be discussed shortly. Intrinsic Nodes are those which have
+one or more precursor nodes, and also are not reported on at
+any level by any IDS in the network. The likelihood of
+these attacks taking place can best be induced by the
+credibilities of its precursor exploits. Bi-trinsic Nodes are
+those which are reported on at some level by sensors in the
+network and also have precursor attack phases. The
+credibility value of nodes of this class can leverage data
+
+from its Feature Trees along with its precursor attacks.
+Some Template Nodes may be reported on directly by an IDS, but to account for those which cannot we must define
+these Template Nodes by a composition of more specific entities. We call this more specific composition a Feature Tree
+
+Proc. of SPIE Vol. 5812
+
+Downloaded From: http://proceedings.spiedigitallibrary.org/ on 02/18/2016 Terms of Use: http://spiedigitallibrary.org/ss/TermsOfUse.aspx
+
+117
+
+Figure 2.1.2.4 - Sample Feature Node and Alert
+
+as shown in Figure 2.1.2.3. In this example, we have no
+IDS which can report directly that there was unauthorized
+access to the user shell on the Web Server, but we can be
+alerted if there was cmd.exe or count.cgi access. The
+Feature Trees consist of Feature Nodes and Relation
+Nodes, shown if Figure 2.1.2.1. Relation Nodes define the
+relationship between its child nodes and how the
+credibility value is calculated (discussed in section 2.2.3).
+Note that a Template Node may appear in multiple Attack
+Templates.
+
+Feature Nodes correspond to the alerts which can be generated by the IDS sensors deployed in the network and
+represent low level exploits. Alerts are correlated to the Feature Nodes based on a set of Critical Atoms specified by
+each Feature Node and whose values are contained within the alert being correlated. Critical Atoms are representative of
+key data items present in an IDS alert which would indicate that the low level exploit has taken place in the environment.
+Figure 2.1.2.4 shows an example Feature Node and a corresponding alert which would get correlated to it. Critical
+Atoms are specified in the Feature Nodes by an array of strings each consisting of ‘.’ separated tokens or words. Each
+successive token of the string specifies a child element of the previous token in the IDMEF compliant XML alert
+document. Since all data is contained within the IDMEF-Message/Alert element, these two tokens are omitted from the
+Critical Atom definition. An example of the Critical Atom definitions corresponding to elements in the alert document is
+shown by the color coding scheme in Figure 2.1.2.4.
+2.1.3
+
+Forensics
+
+Figure 2.1.3.1 - TMODS Screenshot
+
+One of the advantages of ECCARS is the duality
+of the detection methodologies that were implemented.
+INFERD provides a real-time detection process, but we
+have also implemented a batched, post facto detection
+and analysis process to predict behavior primarily for
+the purposes of forensics and learning. The system
+allows leveraging mathematical programming and
+graphing theory to implement Graph Matching
+algorithms [18]. Either classical graph matching such
+as subgraph isomorphism or
+inexact matching
+techniques, the interface permits a configurable
+number of results that are returned in a user friendly
+GUI shown in Figure 2.1.3.1. The Data Graph shown
+in the figure is only an example to illustrate the visual
+properties of the GUI. In the ECCARS deployment,
+these Data Graphs are generated from the ECCARS
+database which contains the history of alerts
+encountered in the network and obviously consists of a
+much larger number of nodes (hundreds of thousands)
+and the pattern being matched is a complex one
+consisting of multiple levels of sub-patterns.
+
+Detecting sub-graph isomorphisms in Data Graphs consisting of IDS alerts over an extended period of time can
+require a lengthy amount of computation time – these data graphs can become both very large and dense. An air traffic
+control network can see an average of 32,000 alerts over an eight hour period. Running a simple pattern in one
+consisting of 100,000 – 200,000 nodes takes approximately 20 minutes on a modern desktop computer. This makes a
+graph matching tools useful for off-line analysis, but not for real-time decision-making.
+2.1.4 Visualization
+ECCARS is designed to give a cyber security analyst a real-time situational assessment of their network including
+any eminent or evolving threats associated with it. As such, the visualization plays a vital role in conveying this picture
+
+118
+
+Proc. of SPIE Vol. 5812
+
+Downloaded From: http://proceedings.spiedigitallibrary.org/ on 02/18/2016 Terms of Use: http://spiedigitallibrary.org/ss/TermsOfUse.aspx
+
+to the analyst to aid in their decision process. The value of the
+theory underlying the fusion process in ECCARS cannot be
+fully realized unless its results can be portrayed in a fashion
+which is easily understood by the analyst and grants them
+capabilities above and beyond tools they previously
+possessed. A combination of the prototype visualization
+system already developed along with the proposed
+enhancements discussed briefly in section 4 will supply the
+analyst with just the real-time and forensic tools they need to
+make the time critical decisions needed to alter the impact of
+an evolving threat and perform the posterior analysis to
+analyze and identify the attack behavior. Visualization
+functionality is split into these two main processes.
+
+Figure 2.1.4.1 - Prototype Vis - Attack Template View
+
+Figure 2.1.4.2 - Prototype Vis - Template Node View
+
+Figure 2.1.4.3 - Prototype Vis - Correlated IDS Alert View
+
+The real-time situational assessment presents an analyst
+with a ranking of the most likely Attack Templates taking
+place given the state of the alert stream and allows the user to
+drill down through the templates to the low level alerts
+actually being correlated with them. The list shown on the left
+of the window in Figure 2.1.4.1 displays these top ranked
+templates and the credibility values (discussed in section
+2.2.4) associated with them. The window just to the right of
+this list is populated with the selected Attack Template from
+the list. The nodes are colored in real-time according to their
+credibility value (discussed in section 2.2.3). This gives the
+analyst an indication of which attacks have been performed
+and what stage the aggregate multistage attack is in. By
+clicking on the nodes in the Attack Template graph a view of
+the Feature Tree of that Template Node is depicted as shown
+in Figure 2.1.4.2. This view shows the Feature Nodes which
+constitute that attack and their assertion state. By clicking on
+the asserted Feature Node, the most recent IDS alert causing
+that assertion is shown in its raw IDMEF-XML form. This
+drill down capability gives an analyst the capability to
+compare the multistage attacks at a very high level relieving
+the need for him/her to sift through piles of alert data while
+still giving him/her access to the specifics.
+The graph on the bottom is a representation of the
+network ECCARS is monitoring and the locations of the
+intrusion detection sensors. As the system is monitoring the
+alert stream, nodes in this network will turn from white to
+various shades of red according to the amount of alert traffic
+targeting that particular machine in the network. This
+provides a good indication of which services or computers can
+be shut down to prevent the ultimate attack goal or which
+machines in the network are most vulnerable.
+The real-time capability discussed above gives the analyst
+a clear picture of the current state of their network and the
+attacks occurring within it, but what happens after an attack
+has been contained? There is tremendous value in an analyst
+having the ability to study the attack over its lifespan and
+understand how it was able to progress to the stage in which it
+did. This ability provides the analyst with the insight needed
+to harden the weak points in the network to ensure that a
+
+Proc. of SPIE Vol. 5812
+
+Downloaded From: http://proceedings.spiedigitallibrary.org/ on 02/18/2016 Terms of Use: http://spiedigitallibrary.org/ss/TermsOfUse.aspx
+
+119
+
+similar type of attack would not be successful in the future. These are the reasons for and benefits to be realized through
+the incorporation of a posterior forensic analysis capability in ECCARS.
+2.2 INFERD Framework
+INformation Fusion Engine for Real-time Decision-making (INFERD) runs at the core of the ECCARS system and
+performs fusion at levels 0, 1, and 2 (according to the JDL model discussed in section 2.2.1) to provide real-time
+situational assessment of the deployment environment based on a continuous stream of sensor data. INFERD is an
+adaptable information fusion engine, meaning that it was designed in a fashion which makes it deployable to information
+environments other than the cyber. The engine was developed in the Java programming language in a modular and
+threaded architecture not restricting it to any particular computing platform. The threaded architecture allows research in
+the field of distributed processing to be taken advantage of in the future, not eliminating the engine from the ever
+expanding data sets of the information realm.
+The theoretical foundation on which INFERD is based is a new and innovative approach to situational assessment
+and cyber attack recognition. In section 2.2.4 we will discuss how this novel application of entropy theory overcomes
+the problems of the common methodologies given in table 1.1.1.
+2.2.1
+
+General Fusion Methodology
+Great care has been taken into the processing structure
+of the engine to minimize necessary computation time. In
+cyber defense with up to a thousand alerts being reported per
+second, there is not much overhead to spare. The fusion
+being performed in INFERD is bottom-up in a hierarchical
+fashion at levels 0, 1, and 2 according to the Joint Directors
+of Laboratories (JDL) model for information fusion [1].
+Figure 2.2.1.1 shows the various components involved in
+information fusion, their interactions, and their roles in the
+archetypical military radar application. Figure 2.2.1.2 shows
+the general terminology and how our system and terminology
+maps.
+Figure 2.2.1.1 - JDL Model for Fusion
+
+In the INFERD fusion framework, each subsequent level
+of fusion feeds off of the previous levels output. This is not a
+requirement of the JDL model, but suited our system and its
+network and sensor environment well.
+2.2.2 Level 0 Fusion – Alert Correlation
+Level 0 fusion is the first processing that occurs once an
+already filtered and homogenized IDS alert is input to the
+engine. Input to the L0 process or the raw data are IDS
+alerts, the Element Model is the Critical Atomic Values
+specified by the Feature Nodes, and the Fused Element Level
+is the possible assertions of Feature Nodes which subscribed
+for alerts of that classification. Every IDS alert in IDMEF
+format has a Classification.name element corresponding to
+the exploit or abnormal activity which triggered that alert and
+whose value is unique for that exploit or activity. When
+Feature Nodes are instantiated in the system, they subscribe
+to a publisher for alerts with this classification. When alerts
+are input to the engine, this value is checked and published to
+any Feature Nodes subscribing for this value.
+
+Figure 2.2.1.2 - General Fusion Framework
+
+120
+
+Once an alert is published to a Feature Node, the Critical
+Atomic Values in the alert are checked against those
+
+Proc. of SPIE Vol. 5812
+
+Downloaded From: http://proceedings.spiedigitallibrary.org/ on 02/18/2016 Terms of Use: http://spiedigitallibrary.org/ss/TermsOfUse.aspx
+
+specified in the Feature Node. If there is a complete match, the alert is correlated to that Feature Node and it becomes
+asserted. The credibility values of Feature Nodes are binary (0, 1) with respect to their assertion state.
+In addition to specifying Critical Atoms and Critical Atomic Values, each Feature Node has a specified lifetime
+associated with it. These lifetimes indicate the maximum amount of time the Feature Node should stay in the asserted
+state since the time of the last alert correlated to it. If Feature Nodes did not de-assert themselves in some fashion, the
+credibility values of the Attack Templates containing them would never decrease and there would be no temporal aspect
+of the cyber attack definitions.
+Whenever a Feature Node changes state, the parent nodes in the Feature Tree containing that node and subsequently
+the Template Node specified by that Feature Tree re-calculate their credibility values. This credibility calculation will be
+discussed in section 2.2.3 as the L1 fusion process, but it is important to note the bottom up processing which occurs in
+INFERD. The publish-subscribe service for IDS alerts being input to the system saves a great deal of computation time
+by not performing the Critical Atomic Value comparisons for the possibly thousands of Feature Nodes which can ignore
+the alert.
+2.2.3
+
+Level 1 Fusion – Template Node Credibility Calculation
+Level 1 fusion processing or Template Node credibility
+1
+1 n p p
+calculation takes over once a Feature Node changes
+p
+M j ( ck : k = 1, 2,..., n ) = 
+ck 
+(2.2.3.1)
+assertion state. The input to the L1 fusion process or Fused
+ n k =1 
+Element Level is the Feature Node which has changed
+p
+Function
+Description
+assertion state, the Vertex Model is the Feature Tree
+containing that Feature Node, and the output or Fused
+n
+Vertex Level of L1 fusion processing is the credibility value
+n 1
+-1
+Harmonic Mean
+or estimated likelihood of occurrence of the Template Nodes
+∑
+k =1 c
+who’s Feature Tree contains that Feature Node which has
+k
+changed assertion state. The calculation of L1 credibility
+1
+n
+n
+values is inherent in the structure of the Feature Tree and the
+
+
+Geometric Mean
+0
+ ck 
+p -values of the Relation Nodes within that tree.
+
+∑
+
+∏
+
+ k =1
+
+
+
+1
+
+1 n
+∑ c
+n k =1 k
+
+2
+
+1 n 2
+∑ c
+n k =1 k
+
+Arithmetic Mean
+
+Root Mean Square
+
+−∞
+
+min c
+k =1,...,n k
+
+Minimum
+
+∞
+
+max c
+k =1,...,n k
+
+Maximum
+
+Table 2.2.3.1 – Generalized Mean
+
+Figure 2.2.3.1 - Sample L1 calculation
+
+Every Relation Node specifies a p -value which
+defines the relationship between its child nodes, be them
+Relation or Feature. The credibility value of a Relation
+Node is taken as the Generalized Mean (Equation 2.2.3.1) of
+the credibility values of its n child nodes ( ck ). As shown
+in Table 2.2.3.1, there is a number of different relationships
+the p -values can specify giving the function great
+generality, but in our testing we have seen the need for only
+the maximum ( p = ∞ ) and Arithmetic Mean ( p = 1 ) when
+creating the Attack Templates.
+We will now bonify the L1 fusion process with an
+example depicted in Figure 2.2.3.1. In this example we
+have defined the ‘Probe for sadmind’ reconnaissance phase
+attack with a two level Feature Tree consisting of four
+Feature Nodes and two Relation Nodes. The numbers in the
+white circles correspond to the credibility values of the
+various nodes. Recall that the credibility values of the
+Feature Nodes are 0 if they are de-asserted and 1 if they are
+asserted.
+The “MAX” Relation Node takes on the
+maximum credibility value of its three immediate children
+( max (1.0, 0.0, 0.0 ) = 1.0 ).
+The “Arithmetic Mean”
+
+Proc. of SPIE Vol. 5812
+
+Downloaded From: http://proceedings.spiedigitallibrary.org/ on 02/18/2016 Terms of Use: http://spiedigitallibrary.org/ss/TermsOfUse.aspx
+
+121
+
+1.0 + 0.0
+
+= 0.5 ). As shown in
+2
+Figures 2.1.2.1 and 2.1.2.3, every Feature Tree has a Relation Node at its root. The credibility value of the Template
+Node is taken as the credibility value of this root Relation Node.
+Relation Node takes the average of the credibility values of its 2 immediate children (
+
+To illustrate how the bottom-up processing of credibility values can save computational time, refer to Figure 2.2.3.1
+again where we have represented changed credibility values within red circles. After the “SYN Packet Source” Feature
+Node becomes asserted, only one credibility calculation needs to be reperformed. Since no credibilities have changed in
+the “MAX” Relation Node branch of the tree, we do not need to recompute the Relation Node’s credibility value. In this
+simplistic tree this saves only a minor computation, but when considering larger trees with Feature Nodes having a high
+frequency of assertion state changing, the savings can become noticeable.
+2.2.4 Level 2 Fusion – Attack Template Credibility Calculation
+Level 2 fusion or Situation Refinement is currently the highest level being implemented in the INFERD engine. The
+input or Fused Vertex Level to L2 are the credibility values of the Template Nodes, the model is the Attack Template
+and the output or Fused Graph Level is an overall credibility value for that Attack Template. It is these credibility values
+coupled with the ranking of the Attack Templates that provides the security analyst with a situational estimation of their
+network environment.
+
+To liberate our system from the parametric and rules-based deficiencies listed in Table 1.1.1, we have implemented
+a novel approach of using Entropy or a measure of randomness to calculate the credibility values for our Attack
+Templates. By determining the inherent level of randomness in an Attack Template, and relating it to the maximum
+amount of randomness possible, we can derive meaning about how likely (credible) that Attack Template is taking place.
+Entropy is defined as a state variable that can be used to find the amount of information that can be extracted from a
+system when in a certain state [3]. It was first used as a measure within the study of thermodynamics, but has since been
+shown to be valuable to the area of information theory as well. In 1948, Claude Shannon studied the discovery of
+statistical knowledge about a source by use of proper encoding of the information and defines entropy in cooperation
+n
+with Boltzmann’s famous H-Theorem as H = − K ∑ pi log 2 pi (2.2.4.2) where H is entropy, pi is the probability of
+i =1
+being in state i and K is a constant (Boltzmann’s constant in thermodynamics) [19].
+Shannon’s application of entropy to information theory allows one to find the total amount of randomness embedded
+in a state-system process. In doing so, there must be an existing alphabet with known probabilities of symbols. Consider
+the example where we have an alphabet consisting of four symbols with the following probabilities
+1
+1
+1
+1 .
+Using equation 2.2.4.2 we get H = 12 log 2 2 + 14 log 2 4 + 18 log 2 8 + 18 log 2 8
+2
+4
+8
+8
+
+(
+
+)
+
+(
+
+= 1.75bits/symbol . Next consider the case where the probabilities of each symbol are at equality 1
+Using equation 2.2.4.2 we get H = 2.0bits/symbol .
+
+)
+
+1
+1
+1 .
+4
+4
+4
+4
+Next consider the case where we have the following
+
+probabilities ( 0 0 0 1) . Equation 2.2.4.2 gives H = 0.0bits/symbol . Note that as the probabilities of each symbol
+move to equality, the entropy moves to maximum. This makes sense intuitively with the idea of randomness in a system
+– as each symbol in the alphabet becomes equally likely to occur, the symbols in the words constructed from that
+alphabet become less predictable. Also note that as the number of symbols in the alphabet increases, so does the
+randomness.
+Our system does not use alphabets and alphanumeric symbols as discussed in Shannon’s paper, but our application
+in INFERD is in line with the requirements of entropy as defined by Shannon. Here, the “system” is our Attack
+Template, and the “symbols” are the Template Nodes within the Attack Template. We measure the entropy of the
+Attack Template by growing or shrinking the Universal State Space defined below according to the credibilities of the
+Template Nodes and keeping the probabilities of each state within each sub-space at equality. By altering the size of the
+Universal State Space to determine entropy as opposed to altering probabilities of states within the space, we develop a
+monotonic increasing H function with respect to the credibilities of the Template Nodes ( c j ). If our function was to
+
+122
+
+Proc. of SPIE Vol. 5812
+
+Downloaded From: http://proceedings.spiedigitallibrary.org/ on 02/18/2016 Terms of Use: http://spiedigitallibrary.org/ss/TermsOfUse.aspx
+
+follow a normal distribution whose mean was obtained when all c j ’s were equal, our entropy would peak according to
+the variance between the c j ’s as opposed to the sum of the c j ’s which is our intended result.
+Instead of an alphabet we define a Universal State Space (USS) for each Attack Template. This Universal State
+Space consists of a Weighted Potential State Space (WPSS) whose size varies with the credibilities of the Template
+Nodes in the Template Graph and a Constant State Space (CSS) whose size is invariant and is proportional to the
+number of Template Nodes in the Template Graph. The WPSS and CSS are mutually exclusive sets – refer to Figure
+2.2.4.1.
+USS = WPSS ∪ CSS
+
+USS = WPSS + CSS
+
+(2.2.4.3)
+
+(2.2.4.4)
+
+Figure 2.2.4.1 - State Space Venn Diagram
+Figure 2.2.4.2 - State Space Line Diagram
+
+The CSS is defined as:
+CSS
+
+= ∪ S ^j
+j∈N
+
+CSS = N
+
+(2.2.4.5)
+
+(2.2.4.6)
+
+Where
+
+S ^j = CSS ∩ C ^j
+
+c ^j =
+
+(2.2.4.7)
+
+S ^j = c ^j = 1
+We define our Attack Template to be G
+
+1
+CSS =1 (2.2.4.8)
+N
+
+(2.2.4.9)
+
+= ( N , A ) where G is the Attack Template, N is the set of Template
+
+Nodes within the Attack Template and A is the set of arcs between the nodes in set N .
+
+S ^j is the Constant State Sub-
+
+Space and is the partitioning of the CSS among the nodes in N .
+
+S ^j = S k^ , ∀j , k ∈ CSS . Each S ^j is mutually
+
+exclusive as shown in Figures 2.2.4.1 and 2.2.4.2. As the c j ’s vary in
+
+[0,1] the CSS and S ^j ’s remain constant ensuring
+
+(
+
+that each Template Node is represented by at least one state. Note that min USS
+
+) = CSS .
+
+The WPSS is defined as:
+
+WPSS = ∪ S *j
+j∈N
+
+(2.2.4.10)
+
+
+
+WPSS = N  N − ∑ c j 
+j∈N
+
+
+
+(2.2.4.11)
+
+Where
+
+Proc. of SPIE Vol. 5812
+
+Downloaded From: http://proceedings.spiedigitallibrary.org/ on 02/18/2016 Terms of Use: http://spiedigitallibrary.org/ss/TermsOfUse.aspx
+
+123
+
+S *j =WPSS ∩C *j (2.2.4.12)
+
+c *j =
+
+1− c j
+
+(
+j∈N
+
+)
+
+∑ 1− c j +ε
+
+WPSS , ε <<1− c j
+
+(2.2.4.13)
+
+S *j = c *j (2.2.4.14)
+
+S *j is the Weighted Potential State Sub-Space and is the partitioning of the WPSS among the nodes in N and is
+based on the proportion of c j to
+
+∑c
+j∈N
+
+j
+
+ε is included for the special case of c j = 0, ∀j ∈ N and is miniscule enough
+
+.
+
+*
+
+to not affect the value of c j . Figure 2.2.4.2 is given to help illustrate the relationship between the CSS, WPSS, and
+USS and how the values of c j can effect USS .
+*
+
+^
+
+Now that we have defined S j and S j , the Universal State Space for each node is then given by:
+S j = S *j ∪ S ^j
+
+S j = S *j + S ^j = S *j +1
+
+(2.2.4.15)
+
+(2.2.4.16)
+
+S j is the Universal State Sub-Space and is the partitioning of the USS among the nodes in N .
+Now that we defined the partitioning of the USS into N sub-spaces for each node in N , we must define the
+probabilities for each state within the N sub-spaces. As mentioned before, we distribute the probability among each
+state within sub-space j uniformly to ensure that the entropy of our Attack Template is solely dependent on USS . For
+each Universal State Sub-Space j, we have S j independent states i each occurring with probability pij .
+pij =
+Note that
+
+∑
+
+i , j∈USS
+
+As
+
+∑c
+j∈N
+
+j
+
+1
+N Sj
+
+(2.2.4.17)
+
+pij = 1 and pij = pkj , ∀i, k ∈ S j .
+
+varies in  0,
+
+N  , WPSS and USS vary and the entropy of the Attack Template varies according to
+
+(recall equation 2.2.4.2):
+
+H =−
+
+∑
+
+∀k∈USS
+
+pk log 2 pk = − ∑ ∑ pij log 2 pij = − ∑ S j pij log 2 pij =
+j∈N i∈S j
+
+j∈N
+
+1
+N
+
+∑ log ( N
+j∈N
+
+2
+
+Sj
+
+)
+
+(2.2.4.18)
+
+So now that we have a measure of entropy for each Attack Template in system, how can we relate among these
+entropy values – note that they are dependent on the number of nodes in the Attack Template (
+
+∑c
+j∈N
+
+j
+
+increases so does
+
+N ). Also note that as
+
+H or the randomness of the system. This is actually the inverse of what one would intuitively
+
+expect when using ECCARS in the network environment. As the credibilities increase, the Attack Template should
+become less random indicating that it is actually occurring. Also, just because a cyber attack is represented by fewer
+Template Nodes does not mean it is more considerable than another consisting of more.
+To overcome this problem we leverage a concept of relative entropy introduced by Pierce [20], in which we relate
+the entropy of the Template Graph to the minimum and maximum possible entropies for that template. We define this
+relative entropy as the credibility factor for the Template Graph ( CF ):
+
+124
+
+Proc. of SPIE Vol. 5812
+
+Downloaded From: http://proceedings.spiedigitallibrary.org/ on 02/18/2016 Terms of Use: http://spiedigitallibrary.org/ss/TermsOfUse.aspx
+
+CF =1−
+
+H − H min
+H max − H min
+
+H max :
+
+H =
+=
+
+H min :
+w j = 0, ∀j
+
+w j = 1, ∀j
+
+S j = S k , ∀j , k
+
+S j = S k , ∀j , k
+
+1
+∑ log 2  N S j 
+N j∈N
+
+(
+
+H =
+
+)
+
+1
+*
+∑ log 2  N S j +1 
+
+
+N j∈N
+
+=
+
+
+
+= log 2  N
+
+
+
+
+ 
+1− c j
+ 
+
+   
+c j    +1 
+
+ N  N − j∑
+∈N
+   
+  ∑ 1− c j + ε  
+  c
+  j∈N
+
+
+= log 2  N
+
+
+ 1
+ 
+ N
+
+
+(
+
+j =0
+
+= log 2  N (1) 
+
+
+
+
+
+= log 2  N 
+
+∑c
+
+j
+
+1.2
+1 Node
+2 Nodes
+
+0.8
+
+3 Nodes
+
+0.6
+
+4 Nodes
+
+0.4
+
+5 Nodes
+
+0.2
+
+10 Nodes
+
+% Maximum Cj
+
+10
+0
+
+80
+
+60
+
+40
+
+0
+
+(
+
+)
+
+j =1
+
+as shown in Figure 2.2.4.3.
+
+CF Trend
+
+1
+
+)
+
+
+ 
+1− c j
+ 
+
+   
+c j    +1 
+
+ N  N − j∑
+∈N
+   
+  ∑ 1− c j + ε  
+  c
+  j∈N
+
+
+
+j∈N
+
+20
+
+(
+
+1
+*
+∑ log 2  N S j +1 
+
+
+N j∈N
+
+
+
+( N ( N )) +1
+
+This is a monotonic increasing function with
+
+0
+
+1
+∑ log 2  N S j 
+N j∈N
+
+
+
+= log 2  N
+
+
+
+)
+
+= log 2  N ( N +1) 
+
+CF
+
+(2.2.4.19)
+
+As mentioned before CF is the credibility
+value of the Template Graph and represents the
+likelihood that the attack scenario is taking place
+given the past and present state of the alert stream.
+This value is used to rank the Attack Templates and
+is a simple indicator to the security analyst helping
+them in their decision process of which alerts and
+attacks to look into further.
+A question can be raised to why a ten node
+Attack Template is not ranked as credible as a 1
+node Attack Template when the sum of the
+credibilities of the nodes contained within them are
+at the same percentage level with respect to the
+maximum
+
+∑c
+j∈N
+
+j
+
+(refer to Figure 2.2.4.3). Recall
+
+that as this value increases and decreases we
+determine the entropy for the graph by decreasing
+Figure 2.2.4.3 - CF Trends as Node Count Increases
+and increasing the size of the Universal State Space,
+respectively. Each state in this state space represents a piece of knowledge defining the attack scenario which has not
+been detected in the alert stream. Attack Templates with more nodes have more of these states when at the same
+
+∑c
+j∈N
+
+j
+
+level which makes intuitive sense because we must detect many more alerts in the alert stream to be of definite certainty
+that it has taken place.
+
+Proc. of SPIE Vol. 5812
+
+Downloaded From: http://proceedings.spiedigitallibrary.org/ on 02/18/2016 Terms of Use: http://spiedigitallibrary.org/ss/TermsOfUse.aspx
+
+125
+
+2.2.5 Messaging Interface
+In the Information Fusion community there is a distinction between visualizing the data associated with a system
+versus visualizing the current situation. Current systems which strive to present a situation visually are actually just
+visualizing its data. Research in the field of visualization for high level data fusion (L2+), and also in the domain of
+cyber security is nearly non-existent. This is now being realized as a lacking capability which will most likely spawn
+research in the near future.
+INFERD is not limited to the visualization tools shipped
+Request - Response
+with the ECCARS system and is designed in such a way that it
+Interface
+can take full advantage of any upcoming research or third party
+visualization tools with only minor code adjustment. Figure
+2.2.5.1 shows the messaging subsystem built into INFERD. The
+n ...
+1
+messaging architecture provides two interfaces for external
+applications to receive data without allowing them to disrupt or
+n…………………… 1
+alter the fusion process.
+INFERD Modules
+
+Unfiltered
+messages
+
+Data Request
+
+Data Response
+
+Filter Bitmask
+
+Subscription Interface
+
+The Request – Response Interface is intended to provide
+specific instances of data which do not need to be continuously
+updated. These types of data are typically responses to user
+events on the visualization GUI. To receive data through this
+interface, the application sends a request to the fusion engine
+with a unique code specifying the type of data they would like to
+receive in return.
+
+Message
+Processing
+
+Filtered
+messages
+setMessageMask(int)
+Message Poller
+
+postResponse(Message Code, Data)
+
+Message Queue
+
+Messaging Subsystem
+
+3rd Party Visualization
+
+The Subscription Interface is intended to provide the
+Figure 2.2.5.1 - INFERD Messaging Subsystem
+external visualization with a continuous stream of messages
+typically used to monitor certain types of relevant data or to alert the visualization when a certain event has occurred
+within the engine. Every functional module in INFERD sends messages to the Messaging Subsystem throughout its
+processing cycle. These messages are triggered for various reasons and contain various types of data. Once they reach
+the Messaging Subsystem they are filtered, queued, and sent to the external application through the Subscription
+Interface. By allowing the application to set the mask which filters the messages, both bandwidth and processing can be
+saved by throwing out messages in which the application is not concerned with.
+The input interfaces to INFERD are designed in a similar modular fashion. Alerts in the alert stream and the Attack
+Templates in which they are correlated to are all represented in XML. This does not restrict INFERD to proprietary
+input mechanisms but opens the interfaces up to a worldwide common format. As systems evolve and new research is
+conducted, INFERD can adapt and take advantage of new developments through its “plug and play” architecture.
+
+3. TESTING
+
+Figure 3.0.1 - ECCARS Testing Setup
+
+Currently ECCARS is deployed and
+running in the Defensive Information
+Warfare (DIW) Lab at AFRL-Rome.
+ECCARS is being tested in a couple different
+ways consisting of live real attack data and
+batched real attack data which will each be
+explained. Testing of a cyber security
+system is challenging in that there is not
+much data on historical attacks to work with.
+Moreover, the attack scenarios we are
+considering have been recognized by ARDA
+as the most complex scenarios to date which
+makes data availability even that much more
+difficult to come by.
+
+To test live attack data, a subset of the DIW Lab’s network has been modeled in the system consisting of critical
+servers, services, and data stores and Attack Templates have been defined according to the vulnerabilities inherent in
+these servers. The lab has a SNORT and DAIWATCH IDS sensor deployed collecting both network and host based
+126
+
+Proc. of SPIE Vol. 5812
+
+Downloaded From: http://proceedings.spiedigitallibrary.org/ on 02/18/2016 Terms of Use: http://spiedigitallibrary.org/ss/TermsOfUse.aspx
+
+attack traffic data. While this is testing live performance of the system, the method is not robust enough to fully verify
+that ECCARS is working as intended. Since we have no control over the attacks which are occurring on the network, we
+are not guaranteed that complex multistage attacks would ever take place. We also currently have no automated method
+of generating the Attack Templates (discussed further in section 4), so only a small portion of the possible attacks could
+be defined manually. When ECCARS is configured for this live testing we typically see only a small amount of trivial
+reconnaissance type attack traffic which does not stress the system or vary the Attack Template credibilities in a major
+way.
+To perform stress testing more robust analysis of system performance we have developed an Attack Injector
+depicted in Figure 3.1. When ECCARS is configured for testing in this scenario, we have the ability to replay attack
+traffic or variations of that attack traffic. The Attack Injector is loaded with a script containing information on which
+alerts from the alerts database to inject into the system, at what frequency, and in what order. This presents a great
+testing capability – we can interweave multiple attacks at once ensuring that all the scenarios are still given the
+appropriate credibilities, we can alter the time sequence of the alerts to ensure that the “low and slow” attacks are still
+detected, and we can replay pieces of attacks.
+In a real deployment network there will be noise among the attack traffic which must be filtered out to detect the
+true attack signal. We can test varying levels of this signal-to-noise ratio by injecting either live internet traffic seen by
+the lab’s network or injecting real batched background network traffic which has been collected over 3 years. This gives
+us the capability of replaying attacks over unpredictable noise (the live internet traffic), or alterations of known and
+predictable background traffic (the collected and batched internet traffic).
+In May of 2004, AFRL hosted a multi-day cyber
+warfare competition. The competition consisted of
+two teams which were divided into two groups, a red
+team and blue team, and the goal was defend a
+protected file within your network while modifying
+the protected file on the opposing team’s protected file
+server. The blue team’s purpose was to monitor
+system logs and defend the file, while the red team’s
+purpose was to attack the opposing team’s network.
+AFRL placed a snort sensor on the network
+connecting the team’s two protected networks and
+collected a huge volume of alert traffic throughout the
+Figure 3.0.2 - Hackfest 2004 (hosted by Symantec)
+multi day event which has proven to be a rich source
+of testing scenarios. This experiment was conducted on a real network modeled after the DIW lab’s configuration, by
+real hackers, in real time, so every major phase of multistage attacks were recorded – reconnaissance, intrusion, privilege
+escalation, and target. The attacks were also coordinated among members of each red team which consisted of hackers
+with varying expertise.
+Using this batched testing mode with our scenario injector, two types of testing were conducted – performance
+testing and correctness testing. Typical alert volumes seen in a Federal air traffic control network average 32,000 over
+an eight hour period. We have tested INFERD at rate of 1000 alerts per second which is equivalent to 28,000,000 alerts
+over an eight hour period. The input queue which contains each alert input to the system waiting processing by INFERD
+remained steady at a size of approximately 32 alerts. The amount of time that an alert remained in the queue before
+being processed varied with the number of Attack Templates in the system, but was insignificant in our testing. This
+indicates that our fusion engine can process alert volumes which far exceed those seen in realistic network environments.
+To test correctness, four Attack Templates were generated consisting of various overlapping exploits. Alerts
+corresponding to one scenario were pumped into the system, with various concentrations of the other scenarios mixed in.
+As expected, the credibilities of all Attack Templates were calculated correctly and the scenario whose alerts were in the
+greatest concentration was ranked with the highest credibility.
+
+4. CONCLUSIONS AND FUTURE WORK
+In this paper we have presented a system to detect complex, coordinated, multistage cyber attacks in real-time and
+presented our initial testing results. We have discussed some of the analysis and visualization tools the analyst can
+
+Proc. of SPIE Vol. 5812
+
+Downloaded From: http://proceedings.spiedigitallibrary.org/ on 02/18/2016 Terms of Use: http://spiedigitallibrary.org/ss/TermsOfUse.aspx
+
+127
+
+utilize to aid in his decision process and have shown how these tools can do just that. We have explained how our
+adaptable information fusion engine, INFERD, has been applied to the cyber security domain as the core integrated
+processing module of ECCARS. We have shown how INFERD overcomes deficiencies of other classes of cyber attack
+detection methodologies using an innovative approach rooted in entropy and stochastic theory. Although we have more
+testing to do, we are confident in the promising initial results we have seen of our approach.
+A major challenge in making ECCARS a deployable product is the generation and maintenance of the Attack
+Templates. The system will only perform as well as these templates are defined and up to date with current network
+vulnerabilities and knowledge of new attack methodologies. A major portion of the work proposed for HSARPA BAA
+04-017 is to address this exact issue. Using off-the-shelf host based vulnerability assessment tools like System Scanner
+[21], one can determine a list of network wide vulnerabilities. A combination of this along with data mining of open
+source literature on known exploits and current attack strategies, knowledge of current network topology, and a set of
+high level rules we have come up with a notional Attack Template Generation Engine which would manage the
+automatic generation and maintenance of the possible thousands of cyber attack scenarios. Figure 4.1 is representational
+of how this engine might function.
+Other advancements in the fusion process itself has
+also been considered and proposed as research for a future
+phase of the project. Being able to detect cyber attacks is
+just a first step in the process of being able to successfully
+defend against them. A soldier in a battle field would be
+able to tell you that knowing your getting shot at isn’t
+enough; something must be done about it.
+Implementing an L3 and L4 fusion process as defined
+by the JDL model discussed in section 2.2.1 can take the
+next step in defending against the attacks. The L3 process
+would predict the next stages of the attack and feed an L4
+process which would modify the IDS sensors to more
+accurately detect it. IDS sensors are notoriously bad for
+4.1 - Attack Template Generation Engine
+false alarms, and reporting false credibilities. The L4
+process would improve on these deficiencies of the IDS sensors which would increase accuracy of our system. This is a
+machine learning loop which would continuously feed off of and improve itself. The L3 fusion process could also drive
+another stage of research in defending the services or hosts which contain the vulnerabilities needed for the next stage of
+the attack to occur and either patch them or shut them down temporarily preventing the attacker from attaining their goal.
+
+ACKNOWLEDGEMENTS
+This work has been performed under joint funding from the Air Force Research Lab in Rome, NY (AFRL-Rome)
+and the Advanced Research Defense Agency (ARDA). We have collaborated with 21st Century Technologies based in
+Austin, Texas on the integration of their TMODS graph matching engine and also with the DIW group of AFRL-Rome
+for the deployment of ECCARS into their lab for testing.
+
+REFERENCES
+1.
+2.
+3.
+4.
+5.
+6.
+7.
+
+128
+
+D. Hall, J. Llinas, Handbook of Multisensor Data Fusion, CRC Press, 2001.
+S. Mathew, C. Shah, S. Upadhyaya, M. Sudit, V. Garach, A. Stotz, M. Holender, A Thermodynamic Approach
+to Intrusion Alert Fusion, (submitted to IEEE)
+M. Sudit, M. Holender, A. Stotz, INFERD and Entropy for Situational Awareness, (under preparation)
+S. Mathew, C. Shah, S. Upadhyaya, An Alert Fusion Framework for Situation Awareness of Coordinated
+Multistage Attacks, Technical Report 2004-18, CSE Department, SUNY at Buffalo, 2004.
+O. Dain, R. Cunningham, Fusing a Heterogeneous Alert Stream into Scenarios, ACM Computer and
+Communications Security, 2001.
+O. Dain, R. Cunningham, Building Scenarios from a Heterogeneous Alert Stream, Proceedings of the 2001
+IEEE Workshop on Information Assurance and Security, West Point, New York, 2001.
+P. Ning, Y. Cui, D. Reeves, D. Xu, Techniques and Tools for Analyzing Intrusion Alerts, ACM Transactions on
+Information and System Security, 2004.
+
+Proc. of SPIE Vol. 5812
+
+Downloaded From: http://proceedings.spiedigitallibrary.org/ on 02/18/2016 Terms of Use: http://spiedigitallibrary.org/ss/TermsOfUse.aspx
+
+8.
+9.
+10.
+11.
+12.
+13.
+14.
+15.
+16.
+17.
+18.
+19.
+20.
+21.
+
+F. Cuppens, A. Miege, Alert correlation in a cooperative Intrusion Detection Framework, Proceedings of the
+2002 IEEE Symposium on Security and Privacy, 2002.
+S. Templeton, K. Levitt, A Requires/Provides Model for Computer Attacks, Proceedings of the 2000 Workshop
+on New Security Paradigms, 2000.
+A. Valdes, K. Skinner, Probabilistic Alert Correlation, Proceedings of the 4th International Symposium on
+Recent Advances in Intrusion Detection, 2001.
+A. Lockett, Graph-Matching Intrusion Detection System (GMIDS) Whitepaper, 21st Century Technologies,
+2003.
+J. Friedman, On bias, variance, 0/1 – loss, and the curse of dimensionality, Data Mining and Knowledge
+Discovery, 1997.
+C. Bishop, Neural Networks for Pattern Recognition, Oxford University Press, New York, 1995.
+D. Heckerman, Bayesian networks for data mining, Data Mining and Knowledge Discovery, 1997.
+C. Wallace, J. Patrick, Coding decision trees, Monash University, Melbourne, Australia, 1991.
+P. Bradley, U. Fayyad, O. Mangasarian, Mathematical Programming for Data Mining: Formulations and
+Challenges, INFORMS Journal on Computing, 1999.
+D. Curry, H. Debar, M. Huang, IDMEF Data Model and XML DTD, Proceedings of the 50th Internet
+Engineering Task Force (IETF), 2001.
+T. Coffman, A. Lockett, Terrorist Modus Operandi Discovery System (TMODS) Whitepaper, 21st Century
+Technologies, 2001.
+C. Shannon, A Mathematical Theory of Communication, The Bell System Technical Journal, volume 27, pages
+379-423, 1948.
+J. Pierce, R. John, An Introduction to Information Theory – Symbols, Signals, and Noise, Dover Publishers, Inc.,
+New York, NY, 1980.
+System Scanner,
+http://iss.net/products_services/enterprise_protection/vulnerability_assessment/scanner_system.php
+
+Proc. of SPIE Vol. 5812
+
+Downloaded From: http://proceedings.spiedigitallibrary.org/ on 02/18/2016 Terms of Use: http://spiedigitallibrary.org/ss/TermsOfUse.aspx
+
+129
+
+

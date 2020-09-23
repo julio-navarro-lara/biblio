@@ -1,0 +1,460 @@
+Proceedings of the Sixth International Conference on Machine Learning and Cybernetics, Hong Kong, 19-22 August 2007
+
+ATTACK SUBPLAN-BASED ATTACK SCENARIO CORRELATION
+SHENG-HUI CHIEN1, ERH-HSIEN CHANG2, CHIH-YUNG YU2, CHENG-SEEN HO3
+1
+
+Department of Electronic Engineering, National Taiwan University of Science and Technology, 43 Keelung Road, Sec. 4, Taipei 106, Taiwan 2 Department of Computer Science and Information Engineering, National Taiwan University of Science and Technology, 43 Keelung Road, Sec.4, Taipei 106, Taiwan 3 Department of Electronic Engineering, Hwa Hsia Institute of Technology, 111 Gong Jhuan Road, Chung Ho City, Taipei 235, Taiwan E-MAIL: chien@ailab2.et.ntust.edu.tw, Nick.C.Chang@BenQ.com, fish@ailab2.et.ntust.edu.tw, csho@cc.hwh.edu.tw
+
+Abstract:
+There are various security sensors deployed in the network to protect the information assets from destruction. These sensors produce a huge amount of alerts in different event granularities and semantics. Such a huge amount of alerts is hard to be comprehended; as a result, a timely response to the attacks is difficult. Thus, a better technique for alert analysis and management is imperative for promoting the network security. We have developed a two layered PA-based (primitive attack-based) correlation approach to tackle this problem. The first layer does PA construction by integrating related alerts into proper PAs. The second layer is the attack subplan-based correlation layer, which does attack scenario correlation from recognized PAs by employing attack subplan templates to guide the correlation process. This paper focuses on the second layer, by discussing how to automatically construct attack subplan templates, how to eliminate invalid attack subplan templates, how the attack subplan templates can direct the process of scenario correlation, and how a proper fusion process can reduce superfluous attack information. Our experiments show this correlation approach can effectively unearth the attack strategies of the attackers, reduce the cognitive loading of the network manager in comprehending alert reports, and also relieve him from the time consuming and skillful analysis task required in manually analyzing alerts to construct correlation knowledge.
+
+Keywords:
+Intrusion detection; Attack ontology; Primitive attacks; Attack subplan template; Attack scenario
+
+1.
+
+Introduction
+
+The security of networked hosts strongly affects network applications. Although we already have firewalls and encryption systems, intrusions still occur quite often. IDSs (Intrusion Detection Systems) with different techniques and characteristics have thus been developed to serve as the second
+
+layer protection. However, the deployment of IDSs encounters some problems. First, IDSs often generate too many low level or isolated alerts. Second, owing to the limits of detection capability and coverage, stand-alone IDSs tend to produce a lot of false alerts. Finally, although deploying a variety of IDSs, in general, can improve the detection performance, it's hard to seamlessly integrate heterogeneous IDSs. A lot of intrusion alert aggregation and correlation techniques [2], [3], [4], [12], [13], [18] with different pros and cons have been proposed in the literature but the problems have not yet been completely resolved. We have developed a two-layered PA- (Primitive Attack-) based alert correlation framework which can effectively uncover multi-stage attacks. The framework introduces PA as a vehicle to synthesize heterogeneous alerts into a primitive attack and uses it to facilitate correlation. The first layer of the framework does PA construction by recognizing PAs from heterogeneous IDS alerts using PA templates. The second layer does attack correlation directed by attack subplans based on the recognized PAs. The major techniques used in the first layer have been published elsewhere [1]. This paper thus only gives a very succinct description of the layer and focuses mainly on the second layer. Specifically, we will discuss how to decide the time window for correlation, how to automatically construct attack subplan templates, how to eliminate invalid attack subplan templates, how attack subplan templates direct the process of scenario correlation, and how a proper fusion process reduces superfluous attack information. In comparison to existent correlation approaches, this approach can automatically construct attack subplans for scenario correlation, getting rid of the tedious work of alert analysis, and provide machine understandable attack information to facilitate the linkage of intrusion detection to counter measure. The organization of the paper is as follows. Section 2 snapshots the overall architecture, including both layers. Sections 3 and 4 details the techniques used in the attack subplan-based correlation layer. Section 5 shows the evaluations of the layer. Section 6 discusses related works and
+
+1-4244-0973-X/07/$25.00 Š2007 IEEE 1881
+
+Proceedings of the Sixth International Conference on Machine Learning and Cybernetics, Hong Kong, 19-22 August 2007
+makes comparisons. Finally, Section 7 concludes the work and describes future extensions.
+
+2.
+
+PA -based alert correlation
+
+Primitive attacks (PA) are the basic building blocks of our PA-based alert correlation approach. They are defined based on attack ontology. It is proper that we give both PA and attack ontology a brief description before going into the details of our system. We have built a network attack ontology that is suitable for supporting heterogeneous intrusion alert correlation based on the survey of the related works from various resources, including attack ontology described in the literature [6], public vulnerability databases on the Web [7], and the attack classification of Lincoln Lab. of MIT [8]. Fig. 1 shows the attack ontology with partial abstract attack classes and PA classes. It is created by using Protégé2000 [14]. The taxonomy of the ontology is based on the perspectives of the attacker, i.e., higher class nodes representing abstracted goals or sub-goals of the attacker while the lowest leaf nodes representing true physical attacks, which are defined in our work as PAs, since they represent the basic attack activities exploited by the attacker to accomplish the goals of their respective parent attack classes. According to the ontology, a network attack can be categorized into the classes of Reconnaissance, Penetration, and Unauthorized Activity. The Reconnaissance class refers to the attack steps that the attacker uses to collect the information about the targets, for instance, information of network topology. The Penetration class refers to the attack steps at which the attacker exploits possible vulnerabilities of the targets to escalate his or her privilege illegally or to destroy the availability, confidentiality or integrity of the target systems. The Unauthorized Activity class refers to the activities enforced by the attacker who has penetrated into the targets, for example, revising the system files of the target hosts or installing malicious agents on the targets. This attack ontology serves as the fundamental semantics in our system and helps us to develop proper techniques for effectively integrating heterogeneous intrusion alerts and recognizing attack scenarios of the attackers.
+Network Attack Reconnaissance Penetration Unauthorized Activity Unauthorized Connection Alternation Agent Installation
+
+subplan-based correlation layer (Fig. 2). The PA construction layer uses PA templates to synthesize heterogeneous intrusion alerts into PAs. On the basis of the recognized PAs, the attack subplan-based correlation layer can then use attack subplan templates to uncover the attack scenarios of the attackers.
+Specifically, the operation of the PA construction layer is as follows. The Feature Extractor extracts the salient features from the input heterogeneous IDS alerts, adjusts their time information, and stores them as canonical syntax-represented intrusion alerts in the Heterogeneous IDS Alerts Database. The PA Evaluator then uses the relevant PA templates to subsume the alerts of the Heterogeneous IDS Alerts Database. The heterogeneous alerts caused by the same single attack will be anchored into the same PA. Fig. 3 illustrates the PA template for Sadmind_BOF (Sadmind_Buffer_Overflow). Thus, when Sadmind_Buffer_Overflow occurs, the PA Evaluator will use this template to integrate the alerts emitted by Snort, RealSecure Network Sensor and eXpertBSM. It also produces a confidence value for each PA with the help of the IDS Scope Table and the Confidence Calculation Rule Set [5], and filters out those PAs with insufficient confidence values. The constructed (also called recognized) PAs are then deposited into the Recognized Primitive Attacks base to support later scenario correlation. This PA construction process is in fact an alerts abstraction process, which not only can reduce the amount of alerts, but also can unify heterogeneous alerts of different granularities and semantics [1]. Note that we also equip the layer with an Episode Rule Miner, which can discover how the alerts from different IDSs are correlated to assist the expert to construct the PA templates.
+Scenario Compo
+PAs Primitive Attack Construction Layer Correlation Time Window Evaluator value IDS time IDS IDS Attack Subplan Template Generator
+
+Feature attack subplan Extractor templates
+Attack Subplan Template Filter
+
+recogn Correlation Layer attack scenarios atta Attack Attack Subplan Attack Subplan Template scena Scenarios Template Directed Attack Generator IDS Confidence Attack Scenario Composer similarity Scenario Scope Calculation attackdegree subplan Scenario Databases Table Rule Set templates recognized Integrator attack Secondary Attack Subplan scenarios attack Attack Template Filter Attributes Attack Scenarios Primitive Attack Scenario Attack Scenario Similarity Evaluator Correlation Module Evaluator Integrator Attack attack subplan Recognized templates Expert knowledge Security Security attack scenarios Primitive Administrator
+
+time valueAttack Subplan-based
+
+Primitive Attack Attack attackTemplates subplan knowledge templates Heterogeneous
+
+Attacks
+
+Administrator
+
+attack class
+Expert Expert Security Administrator
+
+Attack Ontology
+
+Attack
+attack subplan Ontology templates
+
+Alerts Database
+ass
+
+Attack Ontology
+
+Scan
+
+Enumeration
+
+Privilege Escalation
+
+Availability
+
+attack subplan Miner templates
+
+Episode Rule
+
+Attack Subplan Template Construction Module
+
+Mstream System RSH FTP Telnet Port Network Service Remote User Remote DoS DDoS Host Installation File Connection Connection Connection Identification Scan Enumeration to to to Alternation Root Root Local Network Portmapper Sadmind Sadmind BOF Request Enumeration Ping Swee p Portmap Request Sadmind Sadmind Ping TCP ACK Mstream FTP Login Stream DDoS Passwd Mstream Shadow Control File File Alternation Alternation isa
+
+Figure 2. Architecture of two-layered PA -based correlation system
+The main tasks of the attack subplan-based correlation layer include automatic construction of attack subplan template and attack scenario correlation based on the generated attack subplans. Its structure is shown in Fig. 4, containing two corresponding modules. The Attack Subplan Template Construction Module will be discussed in next section, while
+
+Figure 1. Attack Ontology (Partial) Our two-layered PA-based alert correlation system consists of a PA construction layer and an attack
+
+1882
+
+Proceedings of the Sixth International Conference on Machine Learning and Cybernetics, Hong Kong, 19-22 August 2007
+the Attack Scenario Correlation Module will be discussed in Section 4.
+P
+Node1.sourceIP=Node2. sourceIP Node1.targetIP,Port=Node2.targetIP,Port=Node3.targetIP Status User Name
+
+MI ( A, C , d ) =  p (a, c, d ) I (a, c, d )
+a A cC
+
+(1) (2)
+
+I (a, c, d ) = log
+LLDoS1.0 0.65
+
+p ( a , c, d ) p ( a ) p (c )
+LLDoS2.02
+
+S
+
+Node1.sourceIP=Node2. sourceIP Node1.targetIP=Node2.TargetIP Node1.targeIPt=Node2.targetIP
+
+S
+
+Node1.sourceIP,Port=Node2. sourceIP,Port Node1.targetIP,Port=Node2.targetIP,Port Status=failed
+
+P
+
+TTL=0
+
+Status=succeed
+
+0.6 0.55
+mutual information
+
+Node 1: Snort:585
+1 second
+
+Node 2: Snort:2256
+
+Node 1: Realsec:27
+
+Node 2: Realsec:3688 Real sec:3688
+1 second
+
+Node 1: ExpBsm:1
+
+Node 2: ExpBsm:2
+
+0.5 0.45 0.4 0.35 0.3 0.25 0.2 0 10 20 30 40 mins 50 60 60 70 80 90 100
+
+Figure 3. Primitive Sadmind_Buffer_Overflow 3.
+
+attack
+
+template
+
+for
+
+Attack subplan template construction
+
+The Attack Subplan Template Construction Module (Fig. 4) automatically constructs attack subplan templates by exercising the following three components: Correlation Time Window Evaluator, Attack Subplan Template Generator and Attack Subplan Template Filter. First, the Correlation Time Window Evaluator utilizes mutual information method to analyze the recognized PAs in order to decide a suitable correlation time window. Next, the Attack Subplan Template Generator calculates the correlation strength of the PA pairs within the correlation time window. Finally, the Attack Subplan Template Filter sifts out those attack subplan templates that have less correlation strength or whose attack sequences disagree with those enforced by the attack ontology. The generated attack subplan templates are deposited into the attack ontology for supporting subsequent attack scenario correlation.
+Attack Subplan Template Construction Module
+PAs
+
+Figure 5. Mutual information related to various time windows P(a) and P(c) in Equ. (2) stand for the occurring probabilities of PA a and c, respectively, while P(a, c, d) represents the joint occurring probability of PA a and c, i.e., the probability that both a and c occur within time window d. I(a, c, d) calculates the correlation strength between PA a and c during time window d. MI(A, C, d) of Equ. (1) thus calculates the expected correlation strength, i.e., mutual information, of attack classes A and C by summarizing the correlation strengths of the involved PA s. Fig. 5 shows the evaluated mutual information for the DOS attack implied in LLDOS 1.0 and LLDOS 2.02 [11]. We recognize that the mutual information becomes stable if the time window is set to be around 60 minutes; i.e., very few new correlation relations take place during a larger time window. This means a time window of 60 minutes can be chosen as a suitable time window for the attack subplan templates construction and the attack scenario correlation.
+
+Attack Scenario Correlation Module
+PAs Attack Scenarios Secondary Attack Scenarios
+
+Correlation Time Window Evaluator
+time value
+
+Recognized Primitive Attacks
+
+Attack Subplan Template Generator
+attack subplan templates
+
+Attack Subplan Template Directed Scenario Composer
+recognized attack scenarios
+
+Attack scenarios
+
+3.2. Attack subplan template generation
+The function of the Attack Subplan Template Generator is to automatically generate attack subplan templates so that the Attack Scenario Correlation Module can use them to correlate the recognized PAs. We define an attack subplan template to contain a sequence of high-level attack classes. Thus, we can construct a high-level attack plan by properly composing related attack subplan templates. This implies the same attack plan may contain different attack subplan templates. In other words, the attack subplan templates can be used to model different attack strategies of the same attack. The Attack Subplan Template Generator discovers attack subplan templates using the PAs described in the two LLDOS databases.
+
+adjacency degree
+
+Attack Subplan Template Filter
+attack knowledge attack class Attack Ontology attack subplan templates Attack subplan templates
+
+Attack Scenario Integrator
+
+Attribute Adjacency Evaluator
+
+attack scenarios
+Security Administrator
+
+Figure 4. System architecture of subplan-based attack scenario correlation layer 3.1. Correlation time window evaluation
+The time window for correlation is important because an inadequate time window may lose valid attack scenarios or generate too many invalid attack scenarios during the attack scenario correlation process. To properly cope with the issue, we introduce the mutual information method [10][19], as illustrated in Equ. (1) below, to calculate correlation strength in order to estimate a most proper time window.
+
+S ( a , c, d ) = p ( a , c, d ) I ( a , c, d )
+
+(3)
+
+First, we use Equ. (3) to calculate the correlation strength of any two PAs in LLDOS 1.0. Table 1 shows the calculated results. From this, we can derive all possible attack subplan templates involving any PA. Fig. 6 illustrates the attack
+
+1883
+
+Proceedings of the Sixth International Conference on Machine Learning and Cybernetics, Hong Kong, 19-22 August 2007
+subplan templates related to PA Network Ping Sweep, where each node in the template is the corresponding high-level class in the attack ontology of the low level PA. These generated attack subplan templates will be submitted to the Attack Subplan Template Filter for verification of validity before being stored for future use in correlation.
+
+We thus select 0.025 as the correlation strength threshold to sift templates.
+LLDoS1.0 LLDoS2.0
+
+Ratio of  the ligal attack subplan templates
+
+1 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 0 0 0.02 0.04 0.06 0.08 0.1 0.12 0.14 0.16 0.18 0.2 0.22 0.24 0.26 0.28
+
+Table 1. Correlation strengths of PAs in LLDOS 1.0
+Telnet Telnet FTP Login Network Ping Sweep Sadmind Ping Portmap Request Sadmind Sadmind BOF Password File Alternation Shadow File Alternation Rsh Mstream Control TCP ACK Stream FTP Login Network Ping Sweep Sadmind Ping Portmap Request Sadmind Sadmind BOF
+
+0.2126 0.0565 0.0043 0.0049 0.0016 0.0871 0.0037 0.0038 0.0186 0.0104 0.0016
+Password File Alternation
+
+0.393 0.1059 0.0028 0.0068 0.0025 0.1255 0.0054 0.0054 0.0287 0.0185 0.0033
+Shadow File Alternation
+
+0.8447 0.1069 0.017 0.0277 0.0092 0.4258 0.0185 0.0185 0.0925 0.0239 0
+Rsh
+
+0.8166 0.1869 0.0249 0.0153 0.0083 0.3832 0.0166 0.0166 0.0833 0.0215 0
+Mstream Control
+
+1 0.2536 0.0298 0.0298 0 0.4573 0.0198 0.0198 0.0994 0.0264 0
+TCP ACK Stream
+
+0.376 0.0888 0.0118 0.0118 0.0039 0.1753 0.0078 0.0078 0.0393 0.0236 0.0039
+
+Correlation  Strength
+
+Figure 7. Correlation strength of legal attack subplan templates
+The remained valid subplan templates will then be deposited into the attack ontology to support the correlation stage. In practice, introducing attack subplan templates has two advantages. First, all PAs belonging to the same attack class can be correlated by the same attack subplan template. Second, the attack subplan templates can subsume various attack steps with the same attack strategy and attack objective.
+
+Telnet FTP Login Network Ping Sweep Sadmind Ping Portmap Request Sadmind Sadmind BOF Password File Alternation Shadow File Alternation Rsh Mstream Control TCP ACK Stream
+
+0.8842 0.2166 0.0247 0.0247 0.0082 0.3796 0.0071 0.0165 0.0825 0.0495 0.0082
+Host Unauthorized Identification Connection
+
+0.8864 0.216 0.0246 0.0246 0.0082 0.3786 0.0164 0.0071 0.0823 0.0493 0.0082
+
+0.6018 0.1541 0.0176 0.0176 0.0058 0.2706 0.0117 0.0117 0.0514 0.0353 0.0058
+
+0.6809 0.1943 0.0085 0.0085 0.0028 0.315 0.0136 0.0136 0.0684 0.0327 0.0068
+
+0.9783 0.3077 0 0 0 0.4573 0.0198 0.0198 0.0994 0.0596 0
+Host Host Identification Identification Host Host Identification
+
+4.
+
+Attack scenario correlation
+
+Host Host Identification Identification
+
+Host Host Identification Identification
+
+Host Ftp Identification Connection
+
+Primitive Attack : Network Ping
+Sweep
+
+Telnet
+
+Network Ping Sweep
+
+Ftp Login
+
+Network Ping Sweep
+
+Network Ping Sweep
+
+correlation strength0.8447
+Host Host Identification Identification Host Sadmind Identification Enumeration
+
+correlation strength 0.1069
+Host Host Identification Identification Host Portmapper Identification Request
+
+correlation strength 0.017
+Host Host Identification Identification Remote Host to Root Identification Penetration
+
+Primitive Attack : Network Ping
+Sweep
+
+Sadmind Ping
+
+Network Ping Sweep
+
+Portmap Request Sadmind
+
+Network Ping Sweep
+
+Sadmind BOF
+
+correlation strength 0.0277
+
+correlation strength 0.0092
+
+correlation strength 0.4258
+
+Figure 6. Attack subplan templates related to Network Ping Sweep
+3.3. Attack subplan template filtering The Attack Subplan Template Filter takes advantage of the classification knowledge of the attack ontology and employs a correlation strength threshold to sift out invalid attack subplan templates. The reason of utilizing the classification knowledge to help filtering is that some PA pairs may violate the most generic sequence of an attack. Recall that the most generic attack sequence defined in the attack ontology is "Reconnaissance-> Penetration -> Unauthorized Activity". Thus, any template that violates this sequence can be treated as invalid, or illegal, and can be sifted out.
+
+Given the attack subplan templates, the Attack Scenario Correlation Module can use them to direct the identification of attack scenarios. The module works like this: The Attack Subplan Template Directed Scenario Composer instantiates the attack subplan templates to correlate related PAs into attack scenarios, the Attributes Adjacency Evaluator assists Attack Subplan Template Directed Scenario Composer by evaluating the adjacency degree between two PAs, and the Attack Scenario Integrator finally integrates the attack scenarios in such a way that a more succinct view can be provided for easy comprehension by the security administrator. 4.1. Attack subplan directed scenario composition In order to apply the attack subplan templates to correlate related PAs, the Attack Subplan Directed Scenario Composer will first instantiate each attack class in the related attack subplan template according to the input PAs. Fig. 8 shows how three attack subplans are instantiated from the three corresponding templates related to PA Network Ping Sweep. If the instantiated attack subplans for two different PAs involve the same attack classes, the Attributes Adjacency Evaluator will be asked to evaluate the adjacency degree of the two PAs. If the evaluated adjacency degree is larger than an adjacency threshold, the two attack plans will be brought together as illustrated in Fig. 9. We have included an attack scenario database in the system to store the past instantiated attack scenarios. This mechanism aims to improve the efficiency of correlation by using the attack scenario database for cache to reduce the amount of scenario matching: any newly produced attack
+
+Moreover, some templates may contain PAs that are only weakly correlated and can be sifted out for efficiency. Fig. 7 shows how strong a legal template is correlated in the two LLDOS databases. We find more than 60 percent of the legal templates has a correlation strength higher than 0.025.
+
+1884
+
+Proceedings of the Sixth International Conference on Machine Learning and Cybernetics, Hong Kong, 19-22 August 2007
+subplan will be matched against those inside the attack scenarios database first to retrieve possible scenarios. The outdated scenarios will then be moved to the secondary attack scenario base, whose matching can be done when system is not busy.
+Attack subplan :
+Host Host Identification Identification Host Ftp Connection Identification
+
+adjacency degree as the threshold, we can use the table to evaluate whether a given pair of PAs is acceptable to be recognized as two successive PAs. 4.3. Attack scenario integration The Attack Scenario Integrator employs two mechanisms to remove superfluous information contained in the recognized attack scenarios and thus can relieve the cognitive loading of the security administrator. The two mechanisms are attack scenarios fusion and repetitive primitive attacks replacement. The first mechanism first sifts out any attack scenarios that only contain standalone PAs. It then inspects all of the identified attack scenarios. If one attack scenario is completely contained in another attack scenario, the shorter attack scenario will be fused into the longer one. The second mechanism checks if any attack scenario contains repetitive PAs. If yes, the last repeating PA will be used to represent the whole repetitive PA sequence. As a result, the final attack scenario will become more succinct and contain only significant PAs, which facilitate the investigation of the security administrator.
+
+Network Ping Sweep
+
+Network Ping Sweep
+
+Searching
+
+Instantiating
+
+Host Host Identification Identification
+
+Host Remote to Root Identification Penetration
+
+Primitive Attack:
+
+Network Attack Ontology
+
+Network Ping Sweep
+
+Attack Scenarios
+
+Host Host Identification Identification
+
+Host Sadmind Identification Enumeration
+
+Network Ping Sweep
+
+Figure 8. Attack subplan instantiation related to Network Ping Sweep
+Host Host Identification Identification Host Sadmind Identification Enumeration
+
+5.
+Host Host Identification Identification Host Sadmind Identification Enumeration Remote Host to Root Identification Penetration
+
+Performance evaluation
+
+Network Ping Sweep Host Sadmind Identification Enumeration Remote Host to Identification Root Penetration
+
+Network Ping Sweep
+
+Sadmind Ping
+
+Sadmind Ping
+
+Figure 9. Attack subplans integration
+4.2. Attributes adjacency evaluation Table 2 Adjacency degrees between Pas
+Adjacency degree
+
+Attributes of the latter attacks Source IP SIP TIP SIP TIP SIP TIP SIP TIP Source Port SPort TPort * TPort SPort * * * Target IP TIP SIP TIP SIP TIP SIP TIP SIP Target Port TPort SPort TPort * * SPort * *
+
+1 2 3 4
+
+We base our experiments on the LLDOS 1.0 and LLDOS 2.02 datasets, i.e., the 2000 DARPA intrusion detection scenario specific data sets, which were developed mainly for the evaluation of intrusion correlation. Our experiment platform is a Pentium IV 2.4G personal computer with JDK 1.4.2 and MySQL Database Management Server. Network IDS SNORT 1.8 [17] and ISS RealSecure Network Sensor 6.0 [16] are used to detect attacks on the TCPDump dataset of the inside network and the DMZ, and eXpertBSM [9] is used to detect attacks by analyzing the BSM logs of the hosts. All detected alerts were sent to the PA construction layer for constructing potential PAs, and the recognized PAs were deposited in the Recognized Primitive Attack Base before the experiments. 5.1. True PA correlation rate Table 3. True PA correlation rate for LLDOS 1.0 and LLDOS 2.02
+Dataset P.A. Confidence Threshold Original P.A. True P.A. P.A. after Scenario Composing Process Correctly Correlated P.A. True P.A. Correlation Rate LLDOS 1.0 0.5 0.8 293 178 76 60 209 70 92.1% 125 LLDOS 2.02 0.5 0.8 118 75 25 23 47 32 22 95.65%
+
+The Attribute Adjacency Evaluator compares the attribute values of two PAs for the estimation of their adjacency. We stipulated by the security situation evaluation of the previous works [4] to define a progressive adjacency table (Table 2) to assists the scenario composer with the adjacency degree evaluation. For example, degree 1 means that the Source IP (SIP) and Source Port (SPort) of one PA are equal to the Target IP (TIP) and Target Port (TPort) of the other or vise versa. In general, a stronger adjacency degree represents a higher correlation possibility between two PAs. By selecting an
+
+56 24 93.33% 96%
+
+The true PA correlation rate (Equ. (4)) is the ratio of the number of correctly correlated PAs to the total number of true PAs, representing the capability of correlating true attacks in the result attack scenarios. Table 3 shows the experimental
+
+1885
+
+Proceedings of the Sixth International Conference on Machine Learning and Cybernetics, Hong Kong, 19-22 August 2007
+result: the attack subplan templates can effectively correlate over 90 percent of the PAs in LLDOS 1.0 and LLDOS 2.02.
+True P. A. Correlation Rate = # correctly correlated P.A. # true P. A.
+
+(4)
+
+5.2. False PA reduction rate Table 4. False primitive attack reduction rates
+Dataset P.A. Confidence Threshold Original P.A. True P.A. P.A. after Scenario Composing Process Correctly Correlated P.A. False P.A. Reduction Rate P.A. after Scenario Fusing Process Correctly Correlated P.A. False P.A. Reduction Rate LLDOS 1.0 0.5 293 76 209 0.8 178 60 125 0.5 118 25 47 LLDOS 2.02 0.8 75 23 32
+
+process. Equ. (7) is used to evaluate the manager cognitive loading reduction rate. Table 5 is the experiment results, which show the fusion process could dramatically reduce the number of PAs contained in a scenario, resulting in an attack scenario to only contain most significant attack steps.
+
+m (7) n  = Manager Cognitive Loading Re duction Rate m = # P. A. output from Scenario Composer n = # P. A. output from Scenario Integrator Table 5. Manager cognitive loading reduction rate of LLDOS 1.0 and LLDOS 2.02
+
+=
+
+70 56 24 22 35.94% 41.52% 75.26% 80.76% 43 25 91.7% 41 16 16 16 100% 25 16 86.44% 100%
+
+The false PA reduction rate denotes the capability of filtering false PAs (Equ. (5), Equ. (6)). Table 4 shows the experimental results of false PA reduction rate in LLDOS 1.0 and LLDOS 2.02. The table shows the experiment results from the scenario composer alone can't effectively reduce false PAs (row 5). This is because our attack subplan templates are automatically constructed from the analysis of the PA sequences, and if the training datasets contain false PAs, invalid attack subplan templates may be generated. If we can adopt expert knowledge to inspect the auto-generated attack subplan templates, this problem can be alleviated. Nevertheless, after the scenario fusion process, we do find most of the standalone false PAs could be sifted out. The results show 85 percent of false PA reduction rate for LLDOS 1.0 and 100 percent false PA reduction rate for LLDOS 2.02, which is because most of the false PAs in LLDOS 2.02 are isolated, and therefore the PA fusion process can eliminate them completely. Although Attack Subplan Template Filter may fail to completely eliminate false attack subplan templates or may accidentally kill true attack scenario templates, our experiment shows that the Attack Scenario Integrator can come to rescue to properly alleviate this issue.
+
+Dataset P.A. Confidence Threshold Original P.A P.A. after Scenario Composing Process P.A. after Scenario Fusing Process Manager Cognitive Loading Reduction Rate
+
+LLDOS 1.0 0.5 0.8 293 178 209 43 125 41
+
+LLDOS 2.02 0.5 0.8 118 75 47 16 32 16
+
+79.42% 67.2%
+
+65.95% 50%
+
+6.
+
+Related works
+
+There has been several intrusion alert correlation techniques proposed in the literature aiming to uncover attack scenarios. In the following, we briefly discuss those techniques that can uncover multi-stage attacks.
+Valdes et al. [18] proposed a probabilistic alert correlation method based on heuristic similarity calculation. The technique is different from ours in the correlation mechanism. Our correlation method is guided by attack subplan templates, while their approach relies on the heuristic incident class adjacency matrix to decide whether two security attacks can be brought together. Another important correlation approach is mainly based on expert knowledge. The Hyper-alerts [12] correlation approach is based on the causal relation of the attacks defined by the expert. Our correlation approach is based on attack subplan templates which are constructed automatically based on mutual information, generic attack sequences about the recognized primitive attacks. Cuppens et al. [2] and Deber et al. [4] use explicit correlation rules to correlate alerts. It is different from ours in the generation of the correlation knowledge. Our subplan templates are elicited from recognized PA database while their explicit correlation rules are defined by experts. Some proposed approaches learn the correlation knowledge from the alerts directly. Dain and Cunningham [3] fuse the IDS alerts into the scenarios by data mining technique. Ourston et al. [13] use the Hidden Morkov Model to uncover multi-stage attacks. Qin and Lee propose a statistical alert correlation approach [15] to correlate alerts. The difference of
+
+=
+
+# P.A. output - # correctly correlated P.A. # original P.A. - # true P.A.
+
+(5) (6)
+
+False P. A. Re duction Rate = 1 - 
+5.3. Manager cognitive loading reduction rate
+
+The comprehension of the security alerts is a big burden for the administrator. The Primitive Attack Integrator can remove repetitive PAs and fuse superfluous attack scenarios together. Therefore, it can reduce the number of PAs contained in a scenario, which in turn provides a more succinct view of scenarios for the administrator to exercise the cognitive
+
+1886
+
+Proceedings of the Sixth International Conference on Machine Learning and Cybernetics, Hong Kong, 19-22 August 2007
+our attack-subplan-based approach from them is that our attack subplan templates are based on recognized PAs while they use learning techniques to operate on the raw alerts. In comparison, in our approach, since most of the false alerts can be diminished during the PA construction process, the generated subplan templates have a better chance of becoming more accurate than those approaches that are based on raw alerts directly. [6] Gorodetski, V. and I. Kotenko, "Attacks against Computer Network: Formal Grammar-based Framework and Simulation Tool," Proc. of the fifth International Workshop on Recent Advances in Intrusion Detection, Zurish, Switzerland, October 16-18, 2002. ICAT database, http://icat.nist.gov/icat.cfm Kendall, K., "A Database of Computer Attacks for the Evaluation of Intrusion Detection Systems," Master's Thesis, Massachusetts Institute of Technology, 1998. Lindqvist, U. and P. Porras, "eXpert-BSM: A Host-based Intrusion Detection Solution for Sun Solaris," Proc. of 17th Annual Computer Security Applications Conference (ACSAC), pp. 240-251, New Orleans, Louisiana, 2001. Lucassen, J. M. and R. L. Mercer, "An InformationTheoretic Approach to the Automatic Determination of Phonemic Baseforms," Proc. of the IEEE International Conference on Acoustics, Speech and Signal, pp. 42.5.1-42.5.4, 1984. 2000 DARPA Intrusion Detection Scenario Specific Data Sets, available at http://www.ll.mit.edu/IST/ ideval/data/ 2000/2000_data_index.html Ning, P., Y. Cui, D. S. Reeves, and D. Xu, "Tools and Techniques for Analyzing Intrusion Alerts," ACM Transactions on Information and System Security, Vol. 7, No. 2, pp. 214-318, May 2004. Ourston, D., S. Matzner, W. Stump, B. Hopkins, "Applications of hidden Markov models to detecting multi-stage network attacks," Proc. of the 36th Annual Hawaii International Conference on System Sciences, pp. 10, 6-9 Jan 2003. Protégé, available at http://protege.stanford.edu/ download.html Qin, X. and W. Lee, "Statistical Causality Analysis of INFOSEC Alert Data," Proc. of the 6th International Symposium on Recent Advances in Intrusion Detection (RAID 2003), Pittsburgh, PA, September 2003. RealSecure Network Sensor, available at http://www.iss.net/support/documentation/docs.php?prod uct=12 Roesch, M., "Snort - lightweight intrusion detection for networks," Proc. of LISA'99: 13th Systems Administration Conference, pp. 229-238, Seattle, Washington, November 1999. Valdes, A. and K. Skinner, "Probabilistic alert correlation," Proc. of the 4th International Symposium on Recent Advances in Intrusion Detection (RAID 2001), LNCS (Lecture Notes In Computer Science), Vol. 2212, Springer-Verlag, pp. 54-68, Davis, CA, USA, 2001. Yan, W., E. Hou, N. Ansari, "Extracting attack scenario knowledge using pctcg and semantic networks," Proc. of the 29th Annual IEEE Conference on Local Computer Networks, pp. 110-117, Orlando, FL, USA.
+
+[7] [8] [9]
+
+7.
+
+Future work
+
+We have briefly described a two-layered correlation system that bases on PA as the basic building blocks to do alerts correlation. The system starts with the first layer, which constructs PAs from the alerts detected by heterogeneous IDSs. The second layer then correlates these recognized PAs into attack scenarios. We have detailed the techniques used in the second layer in this paper. In summary, our approach can auto-generate attack subplan templates, and successfully apply them to identify attack scenarios from the recognized PAs. Our experiment shows that this attack subplan-based scenario correlation approach can provide succinct attack scenarios for the network manager to reduce his cognitive loading, in addition to providing high true PA correlation rate and false PA reduction rate. There are two aspects about the system that we are planning to pursue further. First, we plan to submit our attack subplan-based correlation approach for verification by more comprehensive datasets. Second, we plan to employ the semantics of the PAs to enhance the quality of the recognized PAs and constructed attack suplan templates.
+
+[10]
+
+[11] [12]
+
+[13]
+
+[14] [15]
+
+References
+[1] Chien, S. H., C.Y. Yu, W.T. Liu, and C.S. Ho," A Primitive Attack Based New Correlation Techniques for Heterogeneous Intrusion Alerts- Primitive Attacks Construction and Detection," Proc. of Ninth Conference on Artificial Intelligence and Applications (TAAI2004), Taipei, Taiwan, November 5-6, 2004. Cuppens, F. and A. Miege, "Alert Correlation in a Cooperative Intrusion Detection Framework," Proc. of 2002 IEEE Symposium on Security and Privacy, pp. 202-215, Oakland, CA, 2002. Dain, O. M. and Cunningham, R. K., "Fusing a Heterogeneous Alert Stream into Scenarios," Proc. of ACM Computer and Communications Security 2001. Philadelphia, Pennsylvania, USA, Nov. 5-8, 2001. Debar, H. and A. Wespi, "Aggregation and Correlation of Intrusion Detection Alerts," Proc. of the 4th symposium on Recent Advances in Intrusion Detection (RAID 2001), Davis, CA, USA, October 2001. FuzzyJ ToolKit, available at http:// www.iit.nrc.ca/ IR_public/fuzzy/fuzzyJToolkit2.html
+
+[16] [17]
+
+[2]
+
+[3]
+
+[18]
+
+[4]
+
+[19]
+
+[5]
+
+1887
+
+

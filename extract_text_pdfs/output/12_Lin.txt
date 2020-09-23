@@ -1,0 +1,1258 @@
+Using Signaling Games to Model the Multi-step
+Attack-Defense Scenarios on Confidentiality
+Jingqiang Lin1 , Peng Liu2 , and Jiwu Jing1
+1
+
+State Key Lab of Information Security, Institute of Information Engineering,
+Chinese Academy of Sciences, Beijing 100195, China
+2
+College of Information Sciences and Technology,
+Pennsylvania State University, University Park, PA 16802, USA
+
+Abstract. In the multi-step attack-defense scenarios (MSADSs), each
+rational player (the attacker or the defender) tries to maximize his payoﬀ, but the uncertainty about his opponent prevents him from taking the
+suitable actions. The defender doesn’t know the attacker’s target list, and
+may deploy unnecessary but costly defenses to protect machines not in
+the target list. Similarly, the attacker doesn’t know the deployed protections, and may spend lots of time and eﬀort on a well-protected machine.
+We develop a repeated two-way signaling game to model the MSADSs on
+conﬁdentiality, and show how to ﬁnd the actions maximizing the expected
+payoﬀs through the equilibrium. In the proposed model, on receiving each
+intrusion detection system alert (i.e., a signal), the defender follows the
+equilibrium to gradually reduce the uncertainty about the attacker’s targets and calculate the defenses maximizing his expected payoﬀ.
+Keywords: Attack graph, game theory, multi-step attack-defense scenario, signaling game.
+
+1
+
+Introduction
+
+Game theory has been used to model the interactions of defenders and attackers in networked systems. Assumed to be rational, both the defender and the
+attacker try to maximize their payoﬀs in the attack-defense scenario (or game).
+Thus, they will follow an equilibrium of the game. In such a two-player game,
+an equilibrium is a pair of strategies (Sa , Sd ) [8]: if the attacker follows Sa , the
+defender has to follow Sd to maximize his payoﬀ; and vice versa. By applying a
+game to model the attack-defense scenarios and analyzing the equilibrium, we
+can infer the attacker’s intent, objectives and strategies [11], ﬁnd the suitable
+defenses [9, 14, 21, 31], and conﬁgure intrusion detection systems (IDSs) [13, 30].
+This paper focuses on the multi-step attack-defense scenarios (MSADSs) on
+confidentiality. In such scenarios, the attacked system consists of machines with
+vulnerabilities, which can be exploited to intrude them step by step. A vulnerable machine stores conﬁdential information or not, and diﬀerent attackers are
+interested in the conﬁdential information on diﬀerent machines. Some attackers
+stop once their targets are reached (even if there are uncompromised but vulnerable machines), while others try to compromise all machines for a diﬀerent
+J. Grossklags and J. Walrand (Eds.): GameSec 2012, LNCS 7638, pp. 118–137, 2012.
+c Springer-Verlag Berlin Heidelberg 2012
+
+
+Using Signaling Games to Model the MSADSs on Conﬁdentiality
+
+119
+
+target. The MSADSs on conﬁdentiality diﬀer from others on security properties such as availability and integrity. The eﬀective defenses for conﬁdentiality
+are limited to prevention that prevents attack actions, while recovery is useless
+(e.g., killing malicious processes or clearing infected ﬁles), because the attacker
+probably has stolen the conﬁdential information once he intrudes it. Moreover,
+if the attacker wants to compromise availability or integrity, his payoﬀ is usually
+related to how long the system is compromised. Therefore, such scenarios can
+play inﬁnitely: the attacker compromises the service and the defender recovers
+it again and again. However, an attack-defense scenario on conﬁdentiality will
+end after a ﬁnite number of actions, because the rational attacker doesn’t spend
+inﬁnite eﬀort to compromise conﬁdentiality.
+In the MSADSs, uncertainty about the attacker prevents the defender from
+deploying the suitable defenses. Because the defenses consume time and eﬀort,
+and often bring inconvenience to users, they are not deployed unconditionally
+and shall be done based on the comprehensive estimation of defense costs, attack
+targets and the current stage of the MSADS. However, the defender doesn’t know
+the precise attack target list, and may deploy costly defenses to protect machines
+not in the list. Similarly, the attacker may spend lots of time and eﬀort on a
+well-protected machine, because he doesn’t know which defenses are deployed.
+The signaling in MSADSs reduces the defender’s uncertainty and help him
+ﬁnd the suitable actions. The defender installs an IDS and receives alerts (i.e.,
+signals about the attacker’s actions), helping him to infer the attack targets.
+Similarly, the attacker also receives signals about the defenses; i.e., the attacker
+learns the result (success or failure) of each attack action and gradually obtains
+information about the defenses deployed during the scenarios.
+When game theory is applied to analyze an attack-defense scenario, the essential features shall be considered; otherwise, the analysis results do not match
+the results in the real world. In this paper, we propose a game model for the
+MSADSs on conﬁdentiality, and the following features are reﬂected: (a) irregular repetition, the model is composed of a ﬁnite number of basic signaling games
+and the players don’t take actions synchronously or by turns; (b) two-way signaling, both the defender and the attacker receive signals helping them to choose
+suitable actions, and they also trigger signals to their opponents during the scenario; and (c) uncertainty, each player has uncertainty about his opponent and
+the signaling mechanism introduces additional uncertainty.
+The proposed model helps to reduce the uncertainty about the attack targets
+and ﬁnd the suitable defenses in the MSADSs. To the best of our knowledge, it is
+the ﬁrst time to apply signaling games to analyze the procedure that the defender
+and the attacker collect information (i.e., receive signals) to gradually reduce the
+uncertainty and ﬁnd the suitable actions in multi-step attacks. In a basic signaling
+game, the defender receives a signal (i.e., IDS alert) and ﬁnds the action maximizing his expected payoﬀs in the whole scenario through the equilibrium of the basic
+game. As more signals are received by the defender, the uncertainty about the attacker is reduced step by step and the defenses are optimized gradually.
+
+120
+
+J. Lin, P. Liu, and J. Jing
+
+The rest of this paper is organized as follows. Section 2 describes the MSADSs
+on conﬁdentiality, and Section 3 presents the repeated two-way signaling game
+model. A case study is presented in Section 4. We discuss the related work and
+conclude the proposed game model in Sections 5 and 6, respectively.
+
+2
+
+Multi-step Attack-Defense Scenario on Confidentiality
+
+In this section, the MSADS on conﬁdentiality is described. We present the assumptions, the uncertainty and the signaling mechanism of these scenarios.
+2.1
+
+Attack Graph and Pruned Attack Graph
+
+A MSADS is performed by the attacker and the defender, based on an attack
+graph [2, 19, 20, 25]. An attack graph depicts the ways in which the attacker
+can exploit vulnerabilities to break into the system. Figure 1(a) is an example
+borrowed from [20], where webServer, fileServer and workStation store different information. Assume that the attacker aims at workStation. He ﬁrstly
+intrudes webServer by exploiting vulnerability CVE-2002-0392. Since webServer
+accesses fileServer through the NFS protocol, he can then modify data on
+fileServer. There are two ways to achieve this. If there are vulnerabilities in
+the NFS service, he can exploit them and get local access on the server; or if the
+NFS export table isn’t conﬁgured appropriately, he can modify ﬁles by programs
+like NFS Shell. Once he can modify ﬁles on fileServer, the attacker installs
+a Trojan-horse in the executable binaries on fileServer that are mounted by
+workStation. The attacker then waits for a user on workStation to execute it
+and obtains the control of this machine to steal the conﬁdential information.
+The ways to intrude the system are depicted by the attack graph (denoted as
+
+G) in Figure 1(b). It is composed of fact nodes (denoted as Ni , i = 1, 2, · · · , I)
+and causality relations (denoted as Rj , j = 1, 2, · · · , J). Each Ni is labeled with
+a logical statement about the system, and Ni is (a) reached by the attacker if
+the statement is true, or (b) unreached otherwise. Each Rj involves an action
+and represents the derivation of two fact nodes (Ni , Ni ): if Ni is reached and
+the action of Rj is performed successfully, the logical statement of Ni becomes
+,QWHUQHW
+
+N2
+R2
+
+([WHUQDO)LUHZDOO
+ZHE6HUYHU
+
+'0=5RXWHU
+
+,QWHUQDO)LUHZDOO
+ILOH6HUYHU
+
+,QWHUQDO5RXWHU
+ZRUN6WDWLRQ
+
+R1
+
+N1
+
+R3
+R4
+
+N3
+
+R5
+
+N4
+
+R6
+
+N1: execCode(attacker, webServer, apache)
+N2: execCode(attacker, fileServer, root)
+N3: accessFile(attacker, fileServer, /export)
+N4: accessFile(attacker, workStation, /share)
+N5: execCode(attacker, workStation, root)
+
+(a)
+
+N5
+R1: exploit CVE-2002-0392 of httpd on webServer
+R2: exploit CVE-2003-0252 of mountd on fileServer
+R3: accessFile due to execCode
+R4: NFS Shell attack
+R5: Mount(workStation/share, fileServer/export)
+
+(b)
+Fig. 1. Attack Graph
+
+Using Signaling Games to Model the MSADSs on Conﬁdentiality
+
+121
+
+true. For example, if the attacker can execute codes on webServer (i.e., reaches
+N1 ), he will access ﬁles on fileServer and reach N3 through NFS Shell attacks.
+In order to reach his interested fact nodes, the attacker needs to activate
+causality relations step by step. Some causality relations involve attack actions
+that are taken only by the attacker, while others involve actions that take eﬀect
+automatically under the system conﬁguration and setting. The attack action
+involved in Rj is denoted as Aj . In Figure 1(b), R1 , R2 , R4 and R6 involve
+attack actions. So, the attacker needs to successfully take {A1 , A2 , A6 } or {A1 ,
+A4 , A6 }, before he reaches N5 .
+An attack action by the attacker doesn’t succeed always (even when there
+is no defense), and failed actions don’t activate the related causality relation.
+An attack action usually exploits vulnerabilities; e.g., A1 exploits vulnerability
+CVE-2002-0392. For a certain attack action, two factors aﬀect its success rate:
+the attacker’s knowledge about the vulnerability and the complexity of exploiting
+the vulnerability [15, 23]. If the vulnerability is very complex or the attacker has
+little knowledge about it, it is almost impossible to take the action successfully.
+Defenses are deployed to reduce attack losses during the MSADSs, such as
+ﬁrewall rules, recovering and patching vulnerabilities. In general, these defenses
+can be classiﬁed as (a) prevention that disables or deletes a causality relation
+and (b) recovery that makes a (reached) fact node be unreached. For example,
+the defender can unmount the shared directory of workStation to disable R5 ,
+or recover webServer to the uncompromised state when it is suspected to be
+controlled by the attacker. As mentioned in Section 1, only prevention is eﬀective
+in the attack-defense scenarios on conﬁdentiality.
+Applying prevention to the initial attack graph, results in pruned attack
+graphs. In the example system, the available prevention defenses and the corresponding pruned attack graphs are presented in Figure 2. The prevention disabling Rj , is denoted as Dj . Additional, the defender can deploy a set of defenses
+simultaneously, not shown in the ﬁgure; e.g., conﬁgure a ﬁrewall rule to drop
+packets of RPC-100005 between webServer and fileServer and unmount the
+shared directories of workStation (i.e., deploy the defense-set {D2 , D5 }).
+Deﬁnition 1 (Multi-step Attack-Defense Scenario on Conﬁdentiality).
+ is a limited sequence
+A multi-step attack-defense scenario on confidentiality in G
+of actions taken from A by the attacker and from D by the defender.
+
+R2
+R1
+
+R1
+
+D1: Firewall-Drop(Internet, webServer, tcp, 80)
+D1: or Patch(webServer, CVE-2002-0392)
+
+N1
+
+R4
+
+N2
+R2
+R1
+
+N1
+
+R5
+
+N4
+
+R6
+
+N5
+
+N2
+R3
+
+R4
+
+N3
+
+D2: Firewall-Drop(webServer, fileServer, rpc, 100005)
+D2: or Patch(fileServer, CVE-2003-0252)
+
+R2
+N3
+
+R5
+
+N4
+
+R6
+
+N5
+
+D4: Firewall-Drop(webServer, fileServer, rpc, 100003)
+
+R1
+
+N1
+
+R3
+R4
+
+N3
+
+R5
+
+D5: Unmount(workStation/usr/local/share, fileServer/export)
+
+Fig. 2. Examples of defenses and pruned attack graphs
+
+122
+
+J. Lin, P. Liu, and J. Jing
+
+A MSADS on conﬁdentiality ends after a limited number of attack actions, when
+the attacker (a) obtains the conﬁdential information interested or (b) quits due to
+ = (N, R, A, D) =
+the prevention and the diﬃculties to attack. In this deﬁnition, G
+({Ni }, {Rj }, {Aj }, {Dj }), and A is the collection of attack actions involved in
+causality relations. Note that not every Rj involves an attack action. D is the
+collection of prevention defenses to disable causality relations, and not every Rj
+can be disabled by the defender (e.g., R3 ).
+ is known to the defender, and the attacker knows G
+ except
+Assumption 1. G
+the detailed vulnerabilities exploited by A.
+Firstly, it is reasonable to assume that the defender who is responsible for system management and security, knows the attack graph. Secondly, a real-world
+attacker often has some limited knowledge about the attacked system. For example, he can learns the network topology and the location of his interested
+conﬁdential information. Such information is usually consistent with common
+sense; e.g., in the example, webServer only accesses ﬁles for routine operations,
+sensitive data are stored on fileServer, and the most conﬁdential information
+is on workStation and protected by the internal ﬁrewall. Sometimes, attackers
+can even have the system conﬁgurations from betrayed operators. Finally, the
+attacker usually needs to try malicious packets for several times before a successful attack action, even if he knows the detailed vulnerabilities. To reﬂect this
+feature, we assume that the attacker knows the attack graph except the detailed
+vulnerabilities, so the success rate of attack actions is rather low in this model.
+This assumption allows the attacker to ﬁnd the attack paths but requires he to
+try several times before taking a successful attack action. It gives the defender
+chance and time to play a game with the attacker. However, this assumption
+does not tell the attacker which defenses are deployed after the attack-defense
+scenario starts, as in the real-world MSADSs.
+2.2
+
+Target List
+
+When a fact node is reached, attackers have the capability to compromise services
+of the system, but he needs to take some supplemental actions to compromise
+it. The supplemental actions are not included in the attack graph or involved in
+any causality relation, and the attacker doesn’t reach any more fact nodes by
+the supplemental actions. For example, the attacker can compromise the WWW
+service if N1 is reached. He may shut down the machine, modify ﬁles or search
+sensitive data to compromise availability, integrity or conﬁdentiality.
+In the real world, diﬀerent attackers usually have diﬀerent targets even when
+they are attacking a same system. Not all compromises can bring beneﬁts to a
+speciﬁc attackers. Therefore, an attacker may choose to keep the WWW service
+(and continue to intrude fileServer) after reaching N1 , because compromising
+it doesn’t bring any beneﬁts. Moreover, the supplemental actions make the attack
+be detected and responded more quickly.
+
+Using Signaling Games to Model the MSADSs on Conﬁdentiality
+
+123
+
+Deﬁnition 2 (Target List). A fact node is in the attacker’s target list, if and
+only if the attacker obtains benefits (by taking supplemental actions) after reaching this fact node and before reaching any other fact nodes.
+A rational and intended attacker has a limited number of target nodes, denoted
+as T ⊆ N. For the example system in Figure 1, the attack targets may include
+the conﬁdential information on webServer, fileServer and/or workStation.
+2.3
+
+Payoﬀ
+
+In the MSADS, each rational player tries to maximize his (expected) payoﬀ. The
+attacker’s payoﬀ is determined by (a) the beneﬁts from reached target fact nodes
+and (b) the cost of all attack actions. When Ni is reached, the attack beneﬁt is
+Bi if Ni ∈ T; otherwise, he obtains nothing. The attack cost is determined by the
+eﬀort and time of each action (denoted as Ej ) and the number of attack actions,
+either successful or failed. Assume the success rate of Aj is Sj , and the expected
+cost of a successful Aj after k − 1 failed attempts (provided that there is no
+∞
+E
+defense) is Ej k=1 k(1 − Sj )k−1 Sj = Sjj . And it costs nothing to activate the
+causality relations involving automatic actions; e.g., R3 and R5 in the example.
+Assumption 2. Bi , Ej and Sj are known to both the attacker and the defender.
+Bi can be roughly viewed as the price of the conﬁdential information on each
+machine, which is publicly known. Bi is a parameter about the fact node, whether
+Ni is in the target list or not. So, some attackers obtain Bi by reaching Ni
+while others obtain nothing. Additionally, the attacker usually has experience
+to estimate Ej and Sj , so can the defender based on statistics, experience and
+experiments.
+The defender’s payoﬀ is determined by (a) the defense costs to disable causality relations and (b) the losses due to the reached target fact nodes. The defender
+maximizes his payoﬀ by minimizing the defense costs and attack losses. The cost
+of Dj is denoted as Cj . When Ni is reached by the attacker, the defender suﬀers
+a loss (denoted as Li ) if and only if Ni ∈ T. Note that a reached fact node does
+not automatically cause a loss to the defender; if Ni ∈ T is reached, the defender
+does not suﬀer any loss.
+Assumption 3. Dj and Cj are known to both the attacker and the defender.
+The defender who is responsible for the system, knows the available prevention
+defenses and the costs. For the attacker, this assumption is consistent with Assumption 1. Without knowing the detailed vulnerability of Rj , the attacker still
+can judge whether a causality relation can be disabled by the defender or not.
+Since the prevention causes only unavailability for users, it is possible for the
+attacker to estimate Cj .
+2.4
+
+Uncertainty
+
+Uncertainty 1. T is only known to the attacker, and the defender maintains
+the probability distribution of T.
+
+124
+
+J. Lin, P. Liu, and J. Jing
+
+Attackers with diﬀerent target lists can take a same sequence of actions and the
+defender cannot understand their targets easily. To reach his targets, an attacker
+usually has to reach some fact nodes not in the target list. For example, when the
+attacker is only interested in the conﬁdential information on workStation (i.e.,
+T = {N5 }), he has to ﬁrstly reach N1 , N3 and N4 even if the attacker obtains
+nothing by compromising webServer and fileServer. For the defender, the
+uncertainty about the target list is represented asthe probability distribution of
+T ⊆ N, denoted as P (Tk ) (k = 1, 2, · · · , K) and k P (Tk ) = 1.
+Uncertainty 2. Li is only known to the defender, and the attacker maintains
+the probability function of Li .
+It is very diﬃculty for the attacker to estimate Li . Li is not equal to and usually
+much greater than Bi , because it includes indirect and direct losses. Typical
+indirect losses in the scenarios on conﬁdentiality are compensation to clients,
+market incompetitiveness, business discontinuity and the expense to rebuild the
+system, which are unknown to the attackers. We assume that, based on his
+knowledge and the public information about the attacked system, the attacker
+can estimate the range of Li : Li[M] ≥ Li ≥ Li[m] , and the probability function
+
+1
+if Li[M] ≥ Li ≥ Li[m]
+.
+of Li is F (Li ) = Li[M ] −Li[m]
+0
+otherwise
+2.5
+
+Signaling
+
+The uncertainty about the opponent prevents a player from taking the suitable
+actions; however, the defender and the attacker will receive signals to reduce
+the uncertainty with the progress of the MSADS. The defender receives IDS
+alerts and understands the target list gradually. Then, the defender chooses and
+deploys defenses based on P (T), Ci and Li . On the same time, the attacker
+learns the result (success or failure) of each attack action. The attack result is
+related to the deployed defenses, helping to deduce Li .
+Reducing the uncertainty helps to ﬁnd the suitable actions. If the defender
+knows more about the target list, he won’t deploy unnecessary defenses protecting a fact node not in the list. On the other hand, when Li is greater, the
+defender prefers to disable the causality relations to Ni . The knowledge about
+Li helps the attacker to judge whether a causality relation is disabled or not.
+So, he can avoid wasting time and eﬀort on a well-protected target, or quitting
+too early when the causality relations are not disabled.
+The defender calculates the initial P (T) based on statistics, experience and
+the price of the conﬁdential information. During the MSADS, P (T) is updated as
+the defender receives IDS alerts (i.e., signals). Similarly, the attacker will update
+F (Li ) after he learns the result of each attack action. Note that the initial P (T)
+is also known to the attacker, so is the initial F (Li ) to the defender.
+The signaling mechanism introduces additional uncertainty. Firstly, the IDS
+produces false positive and false negative alerts. Secondly, an attack action Aj
+succeeds only if there is no defense disabling the causality relation Rj . But when
+
+Using Signaling Games to Model the MSADSs on Conﬁdentiality
+
+125
+
+Aj fails, the attacker can not distinguish whether it fails due to the deployed
+defenses or the complexity of exploiting the vulnerability.
+
+3
+
+Signaling Game Model for the Multi-step
+Attack-Defense Scenarios on Confidentiality
+
+In this section, we ﬁrstly introduce the basic signaling game, and then extend
+it to handle the two-way signaling mechanism in the MSADSs on conﬁdentiality, focusing on how each player to gradually reduce the uncertainty about his
+opponent and ﬁnd the action maximizing his expected payoﬀ.
+3.1
+
+Basic Signaling Game
+
+A basic signaling game [8] is a two-step dynamic game with incomplete information between two players, called the sender and the receiver. The sender
+belongs to a type ts from the space {t1 , t2 , . . . , tT }. The sender knows its type,
+while the receiver onlyknows the probability P (ti ) that the sender belongs to ti
+(i = 1, 2, · · · , T ) and i P (ti ) = 1. The game is performed as follows:
+1. The sender chooses a signal m from the set of feasible signals.
+2. The receiver observes m and calculate a new belief about which
+ types could
+send m, denote as the conditional probability P (ti |m) and i P (ti |m) = 1.
+Then, the receiver chooses an action a from the set of feasible actions.
+The payoﬀs of the sender and the receiver are determined by ts , m and a, denoted as Us (ts , m, a) and Ur (ts , m, a), respectively. Diﬀerent types of senders
+have diﬀerent payoﬀ functions. Each player knows all information except that
+the receiver doesn’t know ts .
+A pure-strategy perfect Bayesian equilibrium of a signaling game is a pair of
+strategies (m∗ (ts ), a∗ (m)) and a probability distribution P (ti |m), satisfying:
+– Given P (ti |m) and m, the receiver’s action a∗ (m) maximizes its expected
+payoﬀ; i.e., a∗ (m) solves
+max
+ak
+
+
+
+P (ti |m)Ur (ti , m, ak )
+
+i
+
+– Given a∗ (m), the sender’s signal m∗ (ts ) maximizes its payoﬀ; i.e., m∗ (ts )
+solves
+max Us (ts , mj , a∗ (mj ))
+mj
+
+– For each m, if there exists ti such that m∗ (ti ) = m, P (ti |m) follows Bayes’
+rule and the sender’s strategy:
+
+P (ti )
+
+if m∗ (ti ) = m
+j,m∗ (tj )=m P (tj )
+P (ti |m) =
+0
+otherwise
+
+126
+
+3.2
+
+J. Lin, P. Liu, and J. Jing
+
+Analogy of MSADSs and Basic Signaling Games
+
+In the the equilibrium of a basic signaling game, the receiver uses signal m to
+reduce his uncertainty about the sender (i.e., update P (ti ) to P (ti |m)), and then
+chooses the action maximizing his expected payoﬀ. From the defender point of
+view, the MSADS is composed of several phases, each of which can be viewed
+as a basic signaling game. In each phase or game, the defender receives an IDS
+alert and may deploy some defenses. Note that the defender doesn’t know the
+precise target list (i.e., the type of the sender in these games) and only has the
+probability distribution. At the same time, the attacker views the MSADS as
+another sequence of phases, each of which is also a basic signaling game. In these
+games, the attacker doesn’t know the attack loss Li (i.e., the type of the sender)
+and acts as another receiver: he learns the result of the last attack action (i.e.,
+a signal) and takes the next action.
+There are two notes on this analogy as below. Firstly, although the attacker
+or the defender doesn’t send signals intentionally, the IDS alerts are triggered by
+the attack actions and the result of attack actions are aﬀected by the deployed
+defenses1 . Then, the defender regards his opponent as the sender sending signals,
+so does the attacker. Secondly, the payoﬀs of the defender and the attacker
+are determined by the target list, the attack losses, the attack actions and the
+deployed defenses, which can be considered as the sender’s type, the signal and
+the receiver’s action in basic signaling games. Finally, both the defender and the
+attacker act as the receivers in diﬀerent basic signaling games, and each of them
+follows an equilibrium to reduce the uncertainty and maximize his payoﬀ.
+3.3
+
+Repeated Two-Way Signaling Game Model
+
+In the proposed game model, the MSADS on conﬁdentiality makes progress as
+follows, shown in Figure 3(a):
+– On receiving an IDS alert m[d] , the defender calculates the equilibrium of a
+basic signaling game as the receiver, i.e., updates P (Tk ) to P (Tk |m[d] ) and
+ﬁnds the defenses minimizing the expected defense costs and attack losses.
+– On learning the result of his last attack action m[a] , the attacker calculates
+the equilibrium of another basic signaling game as the receiver, i.e., updates
+F (Li ) to F (Li |m[a] ), estimates the deployed defenses and takes the action
+maximizing the expected beneﬁts and minimizing the expected attack costs.
+As the attacker and the defender do in the real world, in the proposed game
+model, each player takes actions in his own way and there is no synchronization. Therefore, in the attacker’s and the defender’s views, the game model has
+diﬀerent elements. We deﬁne attack phases and defense phases as follows.
+Deﬁnition 3 (Attack Phase). An attack phase is composed of three sequential
+steps by the attacker: learn the last attack result, find the next attack action, and
+take the action.
+1
+
+As mentioned in Section 2.5, the IDS cannot accurately detect every attack action,
+and the results of attack actions are also related to the complexity of exploiting
+vulnerabilities. They are considered as the uncertainty of the signaling mechanism.
+
+Using Signaling Games to Model the MSADSs on Conﬁdentiality
+
+D.1 Receive an IDS alert
+
+A.1 Learn the last result
+System
+
+D.2 Find the suitable defenses
+
+127
+
+A.2 Find the next attack action
+
+D.3 Deploy the defenses
+
+A.3 Take the action
+
+The Defender
+
+The Attacker
+
+(a)
+......
+Time
+
+D.1
+
+Defense Phase y
+D.2
+D.3
+
+......
+
+A.2
+A.3 A.1
+A.2
+A.3 A.1
+Attack Phase x
+Attack Phase x+1
+
+D.1
+
+Defense Phase y+1
+D.2
+
+A.2
+Attack Phase x+2
+
+D.3
+
+A.3
+
+......
+
+......
+
+(b)
+Fig. 3. Progress of the game
+
+Deﬁnition 4 (Defense Phase). A defense phase is composed of three sequential steps by the defender: receive an IDS alert, find the suitable defenses, and
+deploy the defenses.
+As shown in Figure 3(b), the MSADS is composed of a ﬁnite number of attack
+phases in the attacker’s view or defense phases in the defender’s view. Due to
+IDS false positive or negative alerts, the amount of attack phases may be unequal
+to that of defense phases; and attack phases and defense phases don’t start by
+turns due to IDS alert delays.
+3.4
+
+Features of the Repeated Two-Way Signaling Game
+
+In the proposed game model, the following essential features of the MSADSs on
+conﬁdentiality are emphasized:
+Two-Way Signaling. Each player plays the roles of both the sender and the
+receiver of basic signaling games. In the MSADSs, the attacker receives signals
+(i.e., attack results) and triggers signals to the defender (i.e., IDS alerts), while
+the defender receives IDS alerts and deploys defenses aﬀecting attack results.
+Uncertainty. Two types of uncertainty are reﬂected. The uncertainty about
+opponents is handled as the belief about the sender’s type, and the uncertainty
+of signals is considered when a player updates the belief about his opponent.
+Irregular Repetition. The basic signaling game is irregularly repeated with
+changing parameters. Either the attacker or the defender acts as the sender in his
+own way, and they don’t take actions cooperatively or by turns. As the scenario
+goes on, the parameters of the basic signaling games change. For example, when
+the attacker reaches a fact node, his action space and the set of feasible signals
+change; the set of available preventions also changes after the defender deploys
+some defenses. Moreover, P (Tk ) and F (Li ) are updated in each phase.
+
+128
+
+J. Lin, P. Liu, and J. Jing
+
+3.5
+
+Equilibrium of Basic Signaling Games
+
+In each phase, a player follows the equilibrium of the basic signaling game to
+reduce the uncertainty about his opponent. The initial probability distribution
+of the target list, denoted as P0 (T), is updated to Py (T) = Py−1 (T|my [d]) step
+by step after the defender receives my [d] in the y th defense phase. Similarly, the
+attacker calculates Fx (Li ) = Fx−1 (Li |mx [a]) in the xth attack phase.
+Attack Phase. The attacker’s next attack action depends on the chosen attack
+path. An attack path is a part of the attack graph, in which the attacker wants
+to activate all causality relations and reach all fact nodes. The attacker doesn’t
+change his targets, but may change his attack graph in the scenario.
+To ﬁnd the attack path maximizing his expected payoﬀ, the attacker uses the
+received signals to estimate whether each causality relation is disabled or not.
+In the xth attack phase, the attacker updates the probability that Rj is disabled
+(i.e., Dj is deployed) from Px−1 (Rj ) to Px (Rj ) as follows:
+– The attacker knows the current stage (denoted as Gx−1 ), representing the
+causality relations activated and the fact nodes reached. The signal received
+in the xth phase is the result of the last attack action Ajx−1 .
+– If Ajx−1 fails, the stage keeps unchanged (i.e., Gx = Gx−1 ) and Px (Rjx−1 ) =
+Px−1 (Rjx−1 |Âjx−1 ) =
+=
+
+P (Âjx−1 |Rjx−1 )Px−1 (Rjx−1 )
+
+P (Âjx−1 |R̂jx−1 )Px−1 (R̂jx−1 )+P (Âjx−1 |Rjx−1 )Px−1 (Rjx−1 )
+Px−1 (Rjx−1 )
+(1−Sjx−1 )(1−Px−1 (Rjx−1 ))+Px−1 (Rjx−1 ) . Here, P (Ω̂) represents the probabil-
+
+ity that Ω is false. For other j = jx−1 , Px (Rj ) = Px−1 (Rj ).
+– If Ajx−1 succeeds, Rjx−1 is not disabled and Px (Rjx−1 ) = 0. The attacker
+activates Rjx−1 on Gx−1 to obtain Gx , and updates Fx−1 (Li ) to Fx (Li ):
+• Based on P0 (T), Fx−1 (Li ) and Gx−1 , the attacker analyzes the possible
+defense-sets, denoted
+ as
+ D̄u ⊆ D(u = 1, 2, · · · , U ). The probability of
+D̄u is Px−1 (D̄u ) = · · · Maxu (L) i Fx−1 (Li )dL1· · · dLI ; here, M axu (L)
+represents the space of Li where D̄u maximizes the defender’s expected
+payoﬀ (i.e., minimizes the defense costs and attack losses; the detailed
+calculation of the defender’s payoﬀ is described in the remainder).
+• If any D̄u violates Gx (i.e., D̄u disables a causality relation that has
+been activated), the space M axu (L) is asserted to be impossible and
+Then, the attacker
+the attacker follows Bayes’ rule to update F (Li ). 
+re-analyzes Px (D̄u ) based on Fx (Li ), and Px (Rj ) = Dj ∈D̄u Px (D̄u ).
+• If there is not any violation, Fx (Li ) = Fx−1 (Li ) and Px (Rj ) = Px−1 (Rj )
+for j = jx−1 .
+Additional, in the 1st attack phase, a virtual successful action is assumed, thus
+G1 = G0 = ∅ and F1 (Li ) = F0 (Li ). And P1 (Rj ) is calculated based on P0 (T),
+F1 (Li ) and G1 .
+The attacker compares his expected payoﬀ for each path, and chooses the
+best one. For example, if the target is N3 , there are two alternative paths:
+R1 →R2 →R3 and R1 →R4 . Then, the expected beneﬁts 
+of the two paths in the
+whole scenario (not only in the xth attack phase) are B3 1,2,3 (1 − Px (Rj )) and
+
+Using Signaling Games to Model the MSADSs on Conﬁdentiality
+
+129
+
+
+
+
+E
+(1 − Px (Rj )), respectively. The attack costs are ACx + j∈{1,2},Rj ∈Gx Sjj
+
+E
+and ACx + j∈{1,4},j∈Gx Sjj . Here, ACx is the total attack costs before the xth
+phase, Ej and Sj are the cost and the success rate of Aj , respectively; and note
+that R3 is an automatic causality relations not involving any attack action.
+B3
+
+1,4
+
+Defense Phase. On receiving an IDS alert of Ajy in the y th defense phase, the
+defender ﬁrstly calculates the probability P (G∗v ) of each possible stage (denoted
+as G∗v , v = 1, 2, · · · , V ) based on the IDS alert history, and then updates Py−1 (T)
+to Py (T) as follows:
+– For each Py−1 (Tk ) > 0, ﬁnd the attack path maximizing the expected payoﬀ
+for the attacker with Tk , denoted as Hk .
+– If any Hk violates the alert history (i.e., Hk doesn’t cover any G∗v ), it is
+impossible for an attacker with Tk to trigger these IDS alerts and Py (Tk ) = 0.
+Py−1 (Tk )
+– Follow Bayes’ rule to update Py (Tk ) = 
+Py−1 (Tk ) for other Tk .
+Py (Tk )=0
+
+The defender knows the deployed defense-set Dy−1 ⊆ D. From the available
+defense-sets Dw ⊆ D \ Dy−1 (w = 1, · · · , W ), the defender ﬁnds the best one
+(denoted as DΔ
+y ) in the whole scenario as follows:
+
+– Let Dy be Dw ∪Dy−1 , and the total costs are the sum of every defense cost
+Cj ; i.e., T C = Dj ∈D Cj .
+y
+
+– The expected
+ losses consist of two parts: the fact nodes not protected by Dy ,
+i.e., LN = Ni ∈Tk ,Ni ∈GD P (Tk )Li , and the ones that will be protected but
+y
+
+might have been reached, i.e., LR = Ni ∈Tk ,Ni ∈GD ,Ni ∈G∗ P (G∗v )P (Tk )Li .
+y
+
+v
+
+D is the pruned attack graph after Dy is deployed.
+Here, G
+y
+
+
+Δ
+DΔ
+y is the defense-set Dw with the minimal sum of T C + LN + LR. If Dy = ∅,
+then Dy = Dy−1 and this defense phase ends; otherwise, the defender deploys
+DΔ
+y when it is imperative enough.
+
+3.6
+
+Opportunity to Deploy Defenses
+
+Δ
+Even when DΔ
+y = ∅, the defender may not deploy Dy for the following reasons.
+Firstly, diﬀerent from the receiver in a basic signaling game, the defender still
+has the chance to take actions if he deploys nothing in the current defense phase,
+because there are still games (or phases) in the future. Secondly, DΔ
+y is the best
+action, only relative to the signals received in the past y defense phases. As
+more signals are received and the uncertainty about the target list is gradually
+reduced, DΔ
+y might be found to contain unnecessary defenses.
+However, if the defender waits for more signals to calculate a more suitable
+defense-set, the risk increases that the attacker will reach more targets before
+he deploys defenses. Therefore, the defender shall balance (a) the costs of DΔ
+y
+and (b) the addition possible losses if these defenses are put oﬀ to be deployed
+th
+in the future. In addition, whether to deploy DΔ
+defense phase or not,
+y in the y
+also depends on the IDS alert delays and the time for deploying them. How to
+ﬁnd the suitable opportunity to deploy the defenses is beyond the scope of this
+paper. In the case study in Section 4, a simple and intuitive method is used.
+
+130
+
+J. Lin, P. Liu, and J. Jing
+Table 1. Parameters in the case study
+
+Related to
+i
+1
+Li
+10
+Bi
+50
+Li[m] , Li[M ] 0, 50
+
+4
+
+Fact Node
+2
+3
+70
+150
+- 30, 80
+
+Ni
+4
+5
+100
+200
+- 50, 100
+
+Related to Causality Relation Rj
+j
+1
+2
+3
+4
+5
+6
+Cj
+70
+5
+60
+40
+Sj 0.05 0.05 - 0.25 - 0.25
+Ej
+1
+1
+1
+1
+
+Case Study
+
+In this section, we show a MSADS performed on the system in Figure 1. In this
+case study, the defender’s uncertainty about the attack target list is reduced
+gradually as the scenario goes on, and the suitable defense-set is ﬁnally deployed.
+4.1
+
+Parameter
+
+Table 1 give the estimated parameters. In the scenario, webServer provides
+WWW services for clients, fileServer stores some sensitive data and the most
+ﬁles of the WWW services, and the most conﬁdential information is only on
+workStation. If the attacker reaches N1 , N3 and N5 , he can steal the conﬁdential information on webServer, fileServer and workStation, respectively.
+Accordingly, 0 < L1 < L3 < L5 and 0 < B1 < B3 < B5 . The upper and lower
+limits of Li known to the attacker, are also shown. For other fact nodes, Li = 0
+and Bi = 0, because the attacker doesn’t obtain any extra conﬁdential information and the defender doesn’t suﬀer any extra loss when the attacker reaches
+these fact nodes. For example, when the attacker has reached N1 , he doesn’t
+ﬁnd any other conﬁdential information by reaching N2 .
+Table 1 also shows the cost Cj of defense Dj that disables causality relation
+Rj , the success rate Sj and cost Ej of attack action Aj involved in Rj . D1 ﬁlters
+all packets from the Internet to webServer and stops the WWW services, so C1 is
+the greatest. D2 prevents the communications from webServer to fileServer
+via RPC-100005 and causes unavailability only when webServer is mounting
+directories, while D4 causes unavailability when webServer accesses the ﬁles on
+fileServer. If D5 is deployed, workStation cannot conveniently share ﬁles with
+other users but the WWW services are not aﬀected. Therefore, C2 < C5 < C4 <
+C1 and the example values are listed in Table 1. These values are estimated,
+assuming that D1 and D2 are implemented on the ﬁrewalls. The results are
+similar if they are implemented by patching vulnerabilities.
+Sj is estimated based on the complexity to take attack actions. Considering
+that the attacker doesn’t know the detailed vulnerabilities, Sj is 1%, 2% and
+5% when the complexity is high, medium and low, respectively. According to
+the national vulnerability database [16], the complexity of CVE-2002-0392 and
+CVE-2003-0252 is low; so, S1 and S2 are 5%. A4 and A6 are rather simple
+and several vulnerabilities can be exploited; then, S4 and S6 are much greater.
+To simplify this case study, we assume that the eﬀort and time of each attack
+
+Using Signaling Games to Model the MSADSs on Conﬁdentiality
+
+131
+
+action is uniform; i.e., Ej = 1. Note that Li and Cj are used to calculate only
+the defender’s payoﬀ, so are Bi and Ej to calculate the attacker’s. Thus, it is
+meaningless and unreasonable to compare Li and Bi (or Cj and Ei ), because
+they are never used in one equation and have diﬀerent units.
+Assume that the IDS doesn’t produce false negative alerts, because the game
+plays based on an attack graph known to the defender and a signature-based
+IDS can detect all attack packets. Besides, the false positive rate (denoted as
+Pp ) is assumed to be 0.03 and it is impossible to produce two consecutive false
+positive alerts for a certain attack action.
+In the y th defense phase, the defender uses the following method to decide
+whether to deploy DΔ
+y or not: he ﬁrstly calculates the expected additional losses
+supposing that the defenses are deployed in the next phase, and deploys them
+only if the additional losses are large enough; in particular, the ratio of the
+additional losses to the defense costs of DΔ
+y , is greater than 0.1500.
+4.2
+
+Progress
+
+In this case study, assume that each attacker has only one target and P0 (T =
+{Ni }) = BiBk . The MSADS makes progress with the attacker interested in
+k
+the conﬁdential information on workStation (i.e., T = {N5 }). Then, we will
+show that, P ({N5 }) is 0.5000 in the beginning and updated to 0.5714 in the
+17th defense phase. The defender ﬁnds the suitable defense-set {D5 } in the 16th
+defense phase and deploys it in the 17th phase.
+Attack Phase 1. Based on P0 (T), the defender’s expected defense costs and
+attack losses (denoted as EDa ) of each rational defense-set is listed as follows.
+Not all defense-sets are rational; e.g., {D1 , D2 } is irrational, because D2 is useless
+when D1 has been deployed to prevent attackers from intruding webServer.
+– ∅D (i.e., no defense): ED∅a = P0 ({N1 })L1 + P0 ({N3 })L3 + P0 ({N5 })L5
+a
+– {D1 }: ED{1}
+= C1
+a
+– {D5 }: ED{5}
+= P0 ({N1 })L1 + P0 ({N3 })L3 + C5
+a
+– {D2 , D4 }: ED{2,4}
+= P0 ({N1 })L1 + C2 + C4
+The defender deploys nothing if and only if ED∅a is the minimum. So,
+Li[M ]
+
+P1 (∅D ) =
+
+F0 (L1 )F0 (L3 )F0 (L5 )dL1 dL3 dL5
+Li[m] ,ED∅a =min(·)
+
+= 0.5719
+
+Similarly, it can be calculated that P1 ({D1 }) = 0.0308, P1 ({D5 }) = 0.2907
+and P1 ({D2 , D4 }) = 0.1067. The probabilities that Rj are disabled: P1 (R1 ) =
+P1 ({D1 }) = 0.0308, P1 (R2 ) = P1 (R4 ) = 0.1067, and P1 (R5 ) = 0.2907. Note
+that P (R3 ) = P (R6 ) = 0, because R3 and R6 cannot be disabled.
+There are two alternative attack paths to reach N5 : R1 →R2 →R3 →R5 →R6
+and R1→R4→R5→R6 . The attacker’s expected payoﬀs are listed:
+
+
+E
+– EA{1,2,3,5,6} = B5 1,2,5 (1 − P1 (Rj )) − 1,2,6 Sjj = 78.8336
+
+
+E
+– EA{1,4,5,6} = B5 1,4,5 (1 − P1 (Rj )) − 1,4,6 Sjj = 94.8336
+
+132
+
+J. Lin, P. Liu, and J. Jing
+
+So, the attacker chooses R1→R4→R5→R6 and takes A1 .
+Defense Phase 1. The defender receives an alert of A1 , and analyzes the
+possible stages: (a) no fact node is reached if the alert is false positive or the
+attack action fails, and (b) N1 is reached if the attack action succeeds. Then,
+– P (G∗1 = ∅) = Pp + (1 − Pp )(1 − S1 ) = 0.9515
+– P (G∗2 = {R1 N1 }) = (1 − Pp )S1 = 0.0485
+Given the current pruned attack graph (i.e., no defense is deployed), the best
+attack path for each type of attacker is:
+– T = {N1 }: R1
+– T = {N3 }: R1→R4
+– T = {N5 }: R1→R4→R5→R6
+None of them violates the current possible stages, so P1 (T) = P0 (T). Based on
+P1 (T) and P (G∗v ), the expected defense costs and attack losses of each rational
+defense-set is calculated:
+– ED∅d = P1 ({N1 })L1 + P1 ({N3 })L3 + P1 ({N5 })L5 = 77.5000
+d
+= P (G∗2 )P1 ({N1 })L1 + C1 = 70.0606
+– ED{1}
+d
+– ED{5} = P1 ({N1 })L1 + P1 ({N3 })L3 + C5 = 67.5000
+d
+– ED{2,4}
+= P1 ({N1 })L1 + C2 + C4 = 66.2500
+The best defense-set is {D2 , D4 }. Note that EDd calculated based on Li , Py (Tk )
+and P (G∗v ) by the defender, diﬀers from EDa based on Fx (Li ), P0 (Tk ) and Gx
+by the attacker. The defender analyzes the expected additional losses, supposing
+that {D2 , D4 } is deployed in the next phase:
+– If T is {N1 } or {N5 }, there is no additional loss. It makes no diﬀerence to
+deploy {D2 , D4 } in this phase or the next one.
+– If T is {N3 }, there is an additional loss when (a) the current stage is G∗2 and
+(b) A4 in the next attack phase succeeds. The loss is P1 ({N3 })P (G∗2 )S4 L3 .
+P ({N })P (G∗ )S L
+Finally, no defense is deployed, because 1 3C2 +C42 4 3 = 0.0049 < 0.1500.
+Attack Phase 2. A1 fails and the attacker learns it. Then, P2 (R1 ) is updated to
+P1 (R1 )
+(1−S1 )(1−P1 (R1 ))+P1 (R1 ) = 0.0323, and P2 (Rj ) = P1 (Rj ) for other Rj . The stage
+Gx and the probability function Fx (Li ) are kept unchanged; i.e., G2 = G1 = ∅
+and F2 (Li ) = F1 (Li ).
+The best attack path is still R1 →R4 →R5 →R6 , and A1 is taken again. If A1
+fails always, Px (R1 ) will increase gradually and the attacker will quit in the 56th
+attack phase. After 55 times of failure, P56 (R1 ) = 0.3478 and the expected payoﬀ
+
+
+E
+of the best path is B5 1,4,5 (1−P56 (Rj ))− 1,4,6 Sjj −(56−1)E1 = −0.3484 < 0.
+Defense Phase 2. On receiving the second alert of A1 , the defender doesn’t
+consider it as a false positive one. The possible stages are listed as follows:
+– P (G∗1 = ∅) = (1 − S1 )2 = 0.9025
+– P (G∗2 = {R1 N1 }) = 1 − (1 − S1 )2 = 0.0975
+
+Using Signaling Games to Model the MSADSs on Conﬁdentiality
+
+133
+
+There is no violation between the possible target lists and the IDS alert history,
+and then P2 (Tk ) = P1 (Tk ). Again, the best defense-set is {D2 , D4 } and the
+defender doesn’t deploy them in this phase, either.
+However, if the attacker always takes A1 (and doesn’t quit after 55 times of
+failures) when it fails always, more alerts of A1 are received and ﬁnally P (G∗2 =
+{R1 N1 }) ≈ 1. The best defense-set is {D2 , D4 }, and the defender never deploys
+3 })S4 L3
+= 0.1010 < 0.1500. It can be explained that the
+them because P ({N
+C2+C4
+defender doesn’t deploy anything if the attack threatens no important machines.
+Attack Phase 16. A1 fails always from the 2nd attack phase to the 15th , so
+the stage and the probability function of Li are kept unchanged. In the past
+15 phases, based on P0 (Tk ), Gx and Fx (Li ), the attacker analyzes the possible
+defense-sets, which turn to be the same as those in the 1st attack phase.
+After the attacker tries it for 15 times, A1 succeeds. The attacker receives a
+signal that R1 is not disabled. Thus, D1 is not deployed and P16 (D{1} ) = 0.
+a
+a
+a
+a
+It is asserted that ED{1}
+= min(ED∅a , ED{1}
+, ED{5}
+, ED{2,4}
+). The probability
+function F16 (Li ) of L1 , L3 and L5 are uniformly distributed with the constraints:
+a
+= min(·). And P16 (Du ) is calculated based on
+Li[m] ≤ Li ≤ Li[M] and ED{1}
+the updated F16 (Li ): P16 (D∅ ) = 0.5900, P16 (D{5} ) = 0.2999, and P1 (D{2,4} ) =
+0.1101. The attacker chooses R1 →R4 →R5 →R6 and takes A4 , after comparing
+the expected payoﬀs of the two attack paths.
+Defense Phase 16. The defender receives an alert of A4 . This alert of A4 may
+be false positive. The possible stages are listed:
+– P (G∗1 = ∅) = Pp (1 − S1 )15 = 0.0139, if the alert of A4 is false positive, and
+A1 fails for 15 times.
+– P (G∗2 = {R1 N1 }) = Pp (1 − (1 − S1 )15 ) + (1 − Pp )(1 − S4 ) = 0.7436, if the
+alert of A4 is false positive and one of A1 succeeds, or A4 fails.
+– P (G∗3 = {R1 N1 , R4 N 3}) = (1 − Pp )S4 = 0.2425, if A4 succeeds and one of
+A1 succeeds.
+There is no violation because the alert of A4 may be false positive. Thus,
+P16 (Tk ) = P0 (Tk ). After comparing the expected payoﬀs, the defender ﬁnds
+the best defense-set {D5 }:
+– ED∅d = P16 ({N1 })L1 + P16 ({N3 })L3 + P16 ({N5 })L5 = 77.5000
+d
+– ED{1}
+= P (G∗2 )P16 ({N1 })L1 + P (G∗3 )P16 ({N3 })L3 + C1 = 77.2951
+d
+– ED{5} = P16 ({N1 })L1 + P16 ({N3 })L3 + C5 = 67.5000
+d
+– ED{2,4}
+= P16 ({N1 })L1 + P (G∗3 )P16 ({N3 })L3 + C2 + C4 = 72.6156
+The additional loss is P16 ({N5 })P (G∗3 )S6 L5 if the defender deploys {D5 } in the
+P ({N })P (G∗ )S L
+next defense phase. And {D5 } is not deployed because 16 5 C5 3 6 5 =
+0.0758 < 0.1500.
+Attack Phase 17. The attacker learns that A4 fails, and P17 (R4 ) is updated
+P16 (R4 )
+to (1−S4 )(1−P
+= 0.1415. For other Rj , P17 (Rj ) = P16 (Rj ). The
+16 (R4 ))+P16 (R4 )
+attacker calculates the expected payoﬀs of two attack paths, chooses R1→R4→
+R5→R6 and takes A4 . In fact, if A4 fails for 2 more times, then P (R4 ) = 0.2267
+
+134
+
+J. Lin, P. Liu, and J. Jing
+
+and EA{1,2,3,5,6} > EA{1,4,5,6} . Thus, the attacker would choose R1→R2→R3→
+R5→R6 and take A2 instead.
+Defense Phase 17. The defender receives another alert of A4 . So, it is not a
+false positive alert. The defender calculates P (G∗v ) as follows:
+– P (G∗1 = {R1 N1 }) = (1 − S4 )2 = 0.5625, if A4 fails for 2 times; otherwise,
+– P (G∗2 = {R1 N1 , R4 N 3}) = 1 − (1 − S4 )2 = 0.4375
+Because the alert of A4 is not false positive, there is violation: an attacker with
+T = {N1 } never takes A4 . Thus, P17 ({N1 }) = 0. The defender updates P (T):
+({N3 })
+= 0.4286 and P17 ({N5 }) = 0.5714. The deP17 ({N3 }) = P16 ({NP316})+P
+16 ({N5 })
+d
+fender calculates ED of each defense-set, and the best one is {D5 }:
+– ED∅d = P17 ({N3 })L3 + P17 ({N5 })L5 = 87.1429
+d
+– ED{1}
+= P (G∗2 )P17 ({N3 })L3 + C1 = 83.1250
+d
+– ED{5}
+= P17 ({N3 })L3 + C5 = 70.0000
+d
+– ED{2,4}
+= P (G∗2 )P17 ({N3 })L3 + C2 + C4 = 78.1250
+When the attack target is {N1 } or {N3 }, there is no additional possible loss
+(if that {D5 } is deployed in the next defense phase). If T = {N5 }, there is an
+additional loss when (a) the current stage is G∗2 and (b) the next A6 succeeds.
+P ({N })P (G∗ )S L
+The additional loss is P17 ({N5 })P (G∗2 )S6 L5 and 17 5 C5 2 6 5 = 0.1563 >
+0.1500. The defender deploys D5 , and the attacker will quit eventually.
+
+5
+
+Related Work
+
+The attacker and the distributed IDS are modeled as two players of a ﬁnite
+game with dynamic information [1], and the equilibrium helps to analyze the
+relationship between the players’ expected payoﬀs and the false alert rate. Game
+theory is applied to analyze the network with independent defenders, each of
+which invests in self-insurances and protections [7]. The defender’s attack loss is
+related to both his self-insurance and the overall protections. The Nash equilibria
+of this attack-defense game are discussed in [7], for loosely and tightly coupled
+networks with diﬀerent attack targets. Diﬀerent games are designed to model the
+attackers and the defender of virtual coordinate systems [3], worm propagation
+[9] and distributed denial-of-service attacks [11], respectively. Signaling games
+are used in wireless networks to detect and prevent attacks [6, 10, 12, 21, 27],
+where the defender acts as the receiver that receives alerts and updates the
+belief about the sender’s type (i.e., an attacker or a regular node). In an iterated
+attack-defense game [4], the defender’s uncertainty about the attack costs is
+reduced as the attacker targets the weakest link. Therefore, an adaptive defense
+strategy is proposed, and the defenses are optimized repeatedly. The ﬁctitious
+game model of attackers and IDSs [17], focuses on the uncertainty about the
+opponent’s payoﬀ function and action history. Compared with the work above,
+ﬁrstly, we consider attackers with diﬀerent targets (or payoﬀ functions), while
+the existing approaches assume only one type of attackers. Secondly, our model
+focuses on multi-step attacks but not one-step attacks in the above models, which
+
+Using Signaling Games to Model the MSADSs on Conﬁdentiality
+
+135
+
+is completed by one successful attack action. Finally, our model supports the twoway signaling mechanism (i.e., both the defender and the attacker receive signals
+to reduce the uncertainty about his opponent), while some of them capture only
+the defender’s uncertain [4, 6, 10–12, 21, 27].
+Stochastic games are used to model the interactions of the attacker and the
+defender [14, 22, 24, 30, 31], where the players’ actions result in state transitions
+of the system. Although the multi-step scenarios can be depicted as multiple
+state transitions in such stochastic games, they assume attackers with a uniform
+payoﬀ function, while attackers with diﬀerent targets are emphasized in our
+paper. A game tree is proposed to model the MSADSs, where the attacker and
+the defender take actions by turns [13]. Therefore, our irregularly-repeated model
+is closer to the real-world scenarios, because the players are not assumed to take
+actions by turns or synchronously. The analytical model of multi-step attacks
+[29] tries to ﬁnd the state transitions connecting vulnerabilities and the costsaving defenses. It does not consider the dynamic eﬀect from the defenses on the
+attack actions, which is modeled as the signals to the attacker in our work.
+A Bayesian-network (BN) tool [28] is proposed to analyze the uncertainty
+whether a fact node is reached by attackers, based on the attack graph and
+IDS alerts. In our case study, a straightforward deduction is applied to analyze
+the possible stages, and this BN tool can be extended to analyze the stages of
+the MSADS with our work. The correlated attack modeling language (CAML)
+speciﬁes a multi-step attack as an attack pattern composed of reusable modules,
+each of which corresponds to an attack action [5]; then, these patterns are used
+to identity multi-step attacks from IDS alerts. Based on the prerequisites and
+consequences of multi-step attacks, IDS alerts are correlated to construct the
+attack scenarios [18]; and a comprehensive alert correlation framework is proposed [26]. These correlation approaches can be integrated in our game model
+to analyze the current stages of the MSADS and handle simultaneous attacks
+by independent attackers, which is a part of our future work.
+
+6
+
+Conclusion and Future Work
+
+A repeated two-way signaling game is proposed to model the MSADSs on conﬁdentiality. It describes the procedure that each player receives signals to gradually reduce the uncertainty about his opponent in the attack-defense scenarios.
+On receiving an IDS alert, the defender analyzes the attack targets through the
+equilibrium of basic signaling games. Then, the defender understands the attack
+list step by step as the scenario goes on and more IDS alerts are received, helping
+him deploy the suitable defense-set minimizing the attack losses and the defense
+costs. It is conﬁrmed by the case study, where the optimal defenses are deployed
+ﬁnally. At the same time, the attacker also receives signals and his uncertainty
+about the defender is gradually reduced.
+This work is the ﬁrst attempt to apply signaling games to model the multi-step
+attacks, and some simpliﬁcations are assumed. We will improve it to handle the
+MSADSs on other properties such as availability and integrity, and the scenarios
+
+136
+
+J. Lin, P. Liu, and J. Jing
+
+with simultaneous non-cooperative attackers. In the future, we will also discuss
+the game model when the attack graph becomes large.
+Acknowledgement. Jingqiang Lin and Jiwu Jing were partially supported
+by National Natural Science Foundation of China grant 70890084/G021102,
+61003273 and 61003274, and Strategy Pilot Project of Chinese Academy
+of Sciences sub-project XDA06010702. Peng Liu was partially supported by
+AFOSR FA9550-07-1-0527 (MURI), ARO W911NF-09-1-0525 (MURI), ARO
+W911NF1210055, NSF CNS-0905131, NSF CNS- 0916469, and AFRL FA875008-C-0137.
+
+References
+1. Alpcan, T., Basar, T.: A game theoretic approach to decision and analysis in
+network intrusion detection. In: IEEE Conference on Decision and Control (CDC),
+pp. 2595–2600 (2003)
+2. Ammann, P., Wijesekera, D., Kaushik, S.: Scalable, graph-based network vulnerability analysis. In: ACM Conference on Computer Communications Security
+(CCS), pp. 217–224 (2002)
+3. Beckery, S., Seibert, J., et al.: Applying game theory to analyze attacks and defenses in virtual coordinate systems. In: IEEE/IFIP Conference on Dependable
+Systems and Networks (DSN), pp. 133–144 (2011)
+4. Bohme, R., Moore, T.: The iterated weakest link: A model of adaptive security
+investment. In: Workshop on Economics of Information Security (WEIS) (2009)
+5. Cheung, S., Lindqvist, U., Fong, M.: Modeling multistep cyber attacks for scenario recognition. In: DARPA Information Survivability Conference and Exposition (DISCEX), pp. 284–292 (2003)
+6. Estiri, M., Khademzadeh, A.: A theoretical signaling game model for intrusion detection in wireless sensor networks. In: International Telecommunications Network
+Strategy and Planning Symposium (Networks), pp. 1–6 (2010)
+7. Fultz, N., Grossklags, J.: Blue versus Red: Towards a Model of Distributed Security
+Attacks. In: Dingledine, R., Golle, P. (eds.) FC 2009. LNCS, vol. 5628, pp. 167–183.
+Springer, Heidelberg (2009)
+8. Gibbons, R.: Game Theory for Applied Economists. Princeton Press (1992)
+9. Khouzani, M., Sarkar, S., Altman, E.: A dynamic game solution to malware attack.
+In: IEEE INFOCOM, pp. 2138–2146 (2011)
+10. Li, F., Yang, Y., Wu, J.: Attack and ﬂee: Game-theory-based analysis on interactions among nodes in MANETs. IEEE Transactions on Systems, Man and Cybernetics - Part B: Cybernetics 40(3), 612–622 (2010)
+11. Liu, P., Zang, W.: Incentive-based modeling and inference of attacker intent, objectives, and strategies. In: ACM Conference on Computer Communications Security
+(CCS), pp. 179–189 (2003)
+12. Liu, Y., Comaniciu, C., Man, H.: A Bayesian game approach for intrusion detection in wireless ad hoc networks. In: International Workshop on Game Theory for
+Communications and Networks (GameNets), pp. 3–14 (2006)
+13. Luo, Y., Szidarovszky, F., et al.: Game theory based network security. Journal of
+Information Security 1(1), 41–44 (2010)
+14. Lye, K., Wing, J.: Game strategies in network security (extended abstract). In:
+IEEE Computer Security Foundations Workshop (CSFW), pp. 2–11 (2002)
+
+Using Signaling Games to Model the MSADSs on Conﬁdentiality
+
+137
+
+15. Mell, P., Scarfone, K., Romanosky, S.: A complete guide to the common vulnerability scoring system (version 2.0). Forum of Incident Response and Security Teams
+(2007)
+16. National Institute of Standards and Technology, USA. National vulnerability
+database (2010), http://nvd.nist.gov/home.cfm
+17. Nguyen, K., Alpcan, T., Basar, T.: Security games with incomplete information.
+In: IEEE International Conference on Communications (ICC), pp. 714–719 (2009)
+18. Ning, P., Cui, Y., Reeves, D.: Constructing attack scenarios through correlation
+of intrusion alerts. In: ACM Conference on Computer Communications Security
+(CCS), pp. 245–254 (2002)
+19. Noel, S., Jajodia, S., et al: Eﬃcient minimum-cost network hardening via exploit dependency graphs. In: Annual Computer Security Applications Conference
+(ACSAC), pp. 86–95 (2003)
+20. Ou, X., Boyer, W., McQueen, M.: A scalable approach to attack graph generation.
+In: ACM Conference on Computer Communications Security (CCS), pp. 336–345
+(2006)
+21. Patcha, A., Park, J.-M.: A game theoretic approach to modeling intrusion detection
+in mobile ad hoc networks. In: IEEE Workshop on Information Assurance and
+Security, pp. 1555–1559 (2004)
+22. Sallhammar, K., Helvik, B., Knapskog, S.: On stochastic modeling for integrated
+security and dependability evaluation. Journal of Networks 1(5), 31–42 (2006)
+23. Schiﬀman, M., Eschelbeck, G., et al.: CVSS: A common vulnerability scoring system. National Infrastructure Advisory Council (2004)
+24. Shen, D., Chen, G., et al.: Adaptive Markov game theoretic data fusion approach for cyber network defense. In: IEEE Military Communications Conference
+(MILCOM), pp. 1–7 (2007)
+25. Sheyner, O., Haines, J., et al.: Automated generation and analysis of attack graphs.
+In: IEEE Symposium on Security and Privacy (S&P), pp. 254–265 (2002)
+26. Valeur, F., Vigna, G., et al.: A comprehensive approach to intrusion detection
+alert correlation. IEEE Transactions on Dependable and Secure Computing 1(3),
+146–169 (2004)
+27. Wang, W., Chatterjee, M., Kwiat, K.: Coexistence with malicious nodes: A game
+theoretic approach. In: ICST International Conference on Game Theory for Networks (GameNets), pp. 277–286 (2009)
+28. Xie, P., Li, J., et al.: Using Bayesian networks for cyber security analysis. In:
+IEEE/IFIP Conference on Dependable Systems and Networks (DSN), pp. 211–220
+(2010)
+29. Zhang, Z., Ho, P.-H.: Janus: A dual-purpose analytical model for understanding,
+characterizing and countermining multi-stage collusive attacks in enterprise networks. Journal of Network and Computer Applications 32(3), 710–720 (2009)
+30. Zhu, Q., Basar, T.: Dynamic policy-based IDS conﬁguration. In: IEEE Conference
+on Decision and Control (CDC), pp. 8600–8605 (2009)
+31. Zonouz, S., Khurana, H., et al.: RRE: A game-theoretic intrusion response and
+recovery engine. In: IEEE/IFIP Conference on Dependable Systems and Networks
+(DSN), pp. 439–448 (2009)
+
+The author has requested enhancement of the downloaded file. All in-text references underlined in blue are link
+
+

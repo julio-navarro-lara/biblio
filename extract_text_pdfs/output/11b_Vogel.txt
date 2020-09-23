@@ -1,0 +1,2427 @@
+Efficient Distributed Signature Analysis
+Michael Vogel, Sebastian Schmerl, Hartmut König
+Brandenburg University of Technology, Cottbus
+Computer Science Department
+{mv, sbs, koenig}@informatik.tu-cottbus.de
+
+Abstract. Intrusion Detection Systems (IDS) have proven as valuable measure to
+cope reactively with attacks in the Internet. The growing complexity of ITsystems, however, increases rapidly the audit data volumes and the size of the
+signature bases. This forces IDS to drop audit data in high load situations thus offering attackers chances to act undetected. To tackle this issue we propose an efficient and adaptive analysis approach for multi-step signatures that is based on a
+dynamic distribution of analyses. We propose different optimization strategies for
+an efficient analysis distribution. The strengths and weaknesses of each strategy
+are evaluated based on a prototype implementation.
+
+1 Introduction
+Intrusion detection systems (IDS) have been proven as an important instrument for the
+protection of computer systems and networks. Nowadays, most IDS use a centralized
+approach and apply misuse detection (signature analysis). They mainly use single-step
+signatures to identify harmful behavior in a stream of audit data or network packets,
+respectively. This will change in next years, since multi-step signatures, in contrast to
+single step signatures, allow it to model attacks much more precisely, in particular the
+specific characteristics of the attack traces, existing dependencies, and the chronological order of the attack steps. This will reduce significantly the false alarm rate. Multistep signatures can store state information to track the attack through its different stages. This supports in particular the attack detection in application layer protocols as well
+as in Web 2.0 applications which are of increasing importance. Many semantic aspects
+of today’s attacks cannot be modeled by single-step signatures at all or only insufficiently. Therefore, we focus our work on multi-step signatures.
+A challenge that all intrusion detection systems are facing is the increasing performance of networks and end systems. This leads to a rapid growth of audit data volumes
+to be analyzed. On the other hand, the growing complexity of IT systems creates novel
+vulnerabilities and offers new possibilities for running attacks so that the number of
+signatures to be analyzed increases as well. Already now intrusion detection systems
+are forced to reject audit data in high load situations or to delay the analysis of security
+violations significantly. Thus, counter-measures become impossible or lose their impact. As consequence, systems become unprotected, when they are intensively used.
+To cope with this situation several approaches have been proposed, e.g. the detection
+of intrusions based on an analysis of more compact, less detailed audit data [2, 3] and
+network flows [1] as well as various optimizing analysis methods for signature and
+network based single-step intrusion detection systems. For example, [6] describes an
+
+approach for the IDS SNORT that transforms signatures into a decision tree to reduce
+the number of redundant comparisons during analysis. Optimized string matching algorithms are proposed in [5]. These approaches aim at optimizing the non-distributed,
+single threaded signature analyses. A distributed approach like GNORT [8] utilizes the
+massive parallel computing capabilities of graphic processors (GPUs), but it only doubles the analysis throughput compared to the sequential Snort. So far, network-based
+IDS only apply primitive means to parallelize analyses by load balancing [10, 11].
+There are also almost no approaches to parallelize host-based IDS analyses [9].
+On the other hand, free computing resources are available in any network. CPU
+technology will provide only slightly more computation power per core in the future. In
+this paper we present a distributed signature analysis approach to use free resources in
+networks to overcome this issue. In Section 2 we introduce a generic model for multistep signatures to discuss distribution strategies. Next, in Section 3 we introduce several distribution strategies and outline their benefits and constraints for multi-step IDS. In
+Section 4 we evaluate the strategies based on measurements of a prototype implementation and discuss their applicability. Some final remarks conclude the paper.
+
+2 Modeling Multi-Step Signatures
+We first introduce a generic model for multi-step signatures which covers all existing
+multi-step-signature languages and related intrusion detection systems. The model
+confines to typical characteristics of multi-step signatures and their analysis. The core
+concept of a multi-step signature language is its ability to store information about attacks, system states, and related changes. Accordingly, a multi-step signature can be
+defined as a directed, labeled graph MS = {V, E, EvT, SI, f, state, sens, cond, mark,
+trans} with:
+ V – set of state nodes, representing the stages of an attack,
+ E  V  V – set of edges representing valid state transitions,
+ EvT – finite set of types of security relevant events (audit events), e.g. different
+types of system calls or network events,
+ SI – set of state information representing the state and the stage of a certain attack,
+ state: V  (SI) – a function which labels state nodes with a set si  SI of state
+information,
+ f  V – a final node indicating a detected attack as soon as labeled by state(f),
+ sens: E  EvT – a function which labels each graph edge with an event type,
+whereby the occurrence of an event of the specified type can trigger a state transition represented by the edge,
+ cond: E  B – a function labeling each edge (a, b)  E with a Boolean condition
+B: SI  Ev  {0, 1} which specifies arbitrary expressions (arithmetic, string matching, …) between features of state information si  state(a) of node a and the occurring event ev  Ev, whereby a state transition requires a fulfilled condition,
+ mark: V  SI  V – a labeling function which adds state information si to node v,
+whereby mark(v, si) = v’, with state(v’) = state(v)  si,
+ trans: E  Ev  V – transition function that evaluates for each occurring event ev
+of type evType  EvT whether edge e = (a, b)  E is sensitive to this event type
+(sens(e) = evType) and whether its condition cond(e) is fulfilled. In this case, the
+
+transition (a, b) is executed by reading state information si of node a by state(a),
+modifying si (its features) to si’, and moving si’ to node b by applying mark(b, si’).
+The detection of a multi-step attack can be outlined as follows. For each occurring
+audit event ev and for each edge e = (a, b)  E of the signature, the function
+trans(e, ev) is executed. This function evaluates by sens(e) whether edge e is sensitive
+to the type of event ev which may triggers a state transition. In this case, the edge condition cond(e) is evaluated by correlating features of event ev with state information
+si  state(a) of node a which represents the stage of the attack and contains aggregated
+information of former state transitions. If the edge condition cond(e) is fulfilled the
+state transition (a, b) is executed in two steps: (1) State information si  state(a) is read
+and updated or modified with information from the current event ev. (2) Next, the successor node b is labeled with the modified state information si’ by mark(b, si’). This
+evaluation process is executed for each edge of the signature and all signatures. It must
+be repeated for each occurring audit event. An attack is detected if the final node f of a
+signature is reached and labeled with state information.
+Now we extend the model for the needs of a distributed analysis by defining functions for statistical data collection to derive optimal distribution decisions.
+ C – a cluster representing a virtual analysis unit with limited computation capacities to assign signature fragments (state nodes) to,
+ cl: V  C – a function which assigns each state node to a cluster, whereby initially
+each node is assigned to a unique cluster,
+ compC: E  N – a function labeling each edge e  E with the value of the computation effort (e.g. #cpu cycles), which was consumed in the previous time frame to
+evaluate the edge condition of e.
+ commC: E  N – a function labeling each edge (a, b)  E with the value of the
+communication effort (e.g. #bytes) which was consumed in the previous time
+frame to transmit state information from a to b.
+ evC: E  N – a function labeling each edge (a, b)  E with the value of the communication effort which was consumed in the previous time frame to transmit audit
+events of type sens(a, b) from a sensor to node a.
+
+3 Distributed Audit Data Analysis Strategies
+In signature based intrusion detection systems the analysis of audit data requires considerable computation efforts. Signature bases that cover all currently known vulnerabilities of the protected systems may easily consist of thousands of signatures. In high
+load situations, when large amounts of audit data are recorded, the resource consumption of the analysis system grows rapidly and exceeds frequently the available resources. For very short time periods (seconds), buffering can be an appropriate measure, but as soon as the buffer capacities are exhausted the analysis system has to drop
+audit data and becomes useless and blind for attacks.
+In order to reliably prevent such overload situations the analysis efforts of a signature based IDS should be kept continuously on a reasonable low level. This can be
+achieved by distributing and balancing the required analysis efforts among free resources in the protected domain. So it is more appropriate to utilize five analysis units
+with a load of 20 % each, instead of only two systems with 50 % load each. This allows
+
+it to keep sufficient, free resources needed for analysis efforts in high load situations.
+As known, analysis distribution causes additional communication overhead which
+burdens the network and may lead to transmission delays. To ensure that the transmission of audit data in high load situations does not delay the analysis, sufficient bandwidth has to be provided. These demands, however, are conflictive and cannot be
+achieved at the same time.
+sensor
+filter
+
+network
+
+host 2
+
+host 1
+AU1
+
+frgm1,n
+
+frgm1,2
+frgm1,1
+
+audit data
+stream
+
+state
+information
+(si)
+
+AU2
+
+host m
+AUm
+
+frgm2,n
+
+frgm2,2
+frgm2,1
+
+state
+information
+(si)
+
+analysis results
+(detected attacks)
+
+frgmm,n
+
+frgmm,2
+frgmm,1
+
+security
+administrator
+
+Fig. 1. Elements of a distributed signature analysis
+
+Fig. 1 shows the elements of a distributed audit data analysis. A sensor logs audit
+events which are forwarded to analysis units, in our example AU1 to AU3. Each analysis
+unit AUi evaluates a subset of the signatures. The audit events are classified into different event types EvT. To reduce the network utilization a configurable filter discards
+non-relevant audit events of types which are not needed by the respective analysis unit.
+For example, only events of type EvT in ∪a,b  V1 sens(a, b) are forwarded to AU1, where
+V1 is the set of state nodes assigned to AU1. The analysis units transmit state information si  SI between each other if needed. Analysis results are reported to a central
+component. Based on this concept we present below five distribution strategies.
+A) Distributing Complete Signatures
+The first approach simply distributes complete signatures to different analysis units
+AUi. Hereby, a simple optimization can be performed balancing the number of assigned
+signatures to each analysis unit. Additionally, a finer-grained optimization can be
+achieved if statistics on resource consumption are gathered continuously for each signature. So CPU hardware counters can be used [7] to determine the number of clock
+cycles utilized to evaluate audit events and edge conditions for each signature. For this,
+the signatures’ edges e are labeled with these values by function compC(e) to estimate
+the resource consumption of each signature. An example for a respective signature
+distribution is depicted in Fig. 2. Edges are labeled with required computation effort
+and examined event types as defined by compC(e) and sens(e), respectively.
+This simple strategy causes, however, two major problems. (1) If an overload situation is mainly caused by a certain signature the performance problem will be solely
+moved to another analysis unit (another CPU or host) and the strategy to distribute
+whole signatures fails. (2) A typical signature MS usually correlates different types of
+audit events. Particularly, MS analyzes all audit events of types in ∪a,b  V sens(a, b),
+
+where V is the set of state nodes of MS. If whole signatures are distributed nearly all
+audit events captured by a sensor have to be sent to the related analysis units. This
+multiplies the communication effort by n (number of used analysis units). This is unacceptable for most IT-infrastructures. Fig. 2 depicts these problems exemplarily.
+Sensor
+A
+
+A
+
+B
+
+C
+
+B
+
+C
+A
+
+AU1
+
+AU1
+A
+71
+
+host 1
+
+AU2
+B
+
+41
+
+35
+CPU load: 5 %
+
+host 2
+
+AU3
+
+A
+
+C
+
+C
+
+9
+4
+
+C
+
+B
+351
+
+17
+CPU load: 5 %
+
+B
+
+A
+
+host 3
+
+91
+18
+
+C
+24
+CPU load: 90 %
+
+Fig. 2. Example of a simple, non-fragmented signature distribution
+
+First, the three signatures MS1 to MS3 are assigned to AU1 to AU3. An optimal distribution would strive for a balanced load on all three systems of 33 % each. But, the
+analysis of signature MS3 utilizes 90 % of the available resources of the respective
+analysis unit, while the analyses of MS1 and MS2 require only 5 % each. Secondly,
+additional communication is caused through event duplication. So the sensor has to
+triplicate type A events because they are analyzed by all three signatures. Analogously,
+type B and C events have to be duplicated for two analysis units. Therefore, further
+distribution options are required to balance the computation load finer-grained and to
+reduce the communication overhead.
+B) Fragmenting Signatures
+A more fine-grained signature distribution can be achieved by distributing signature
+fragments. This allows it to minimize audit event duplication. One or many state nodes
+(fragments) of a signature can be assigned to various analysis units, as depicted in Fig.
+1. Now the distribution strategy can pool nodes having outgoing state transition edges
+which are sensitive to the same audit event types (label sens(a, b)) onto the same analysis units. So, audit events only have to be duplicated for few analysis units. Fragmentation also supports a better balance of the analysis efforts among the units. Signatures
+that require the majority of available computation resources of an analysis unit, as
+discussed above, can be split up now. An optimization strategy though which only aims
+at pooling signature fragments that analyze the same audit event types on the same
+analysis unit is not desirable. If two state nodes a, b  V are connected by an edge
+(a, b) and a and b have been assigned to different analysis units AU1 and AU2 (cl(a) ≠
+cl(b)), then state information si  SI must be transferred from AU1 to AU2, whenever
+transition condition cond(a, b) is fulfilled. The transfer of state information has to be
+minimized as well. To sum up, signature fragmentation allows a better balance of the
+computation load among analysis units and reduces audit event duplication. Fragmentation though may cause additional communication to transfer state information between
+analysis units.
+C) Additional Reduction of the Communication Costs
+Our next optimization does not primarily aim for an optimal balance of the computation efforts among the analysis units. Instead it takes the required communication effort
+
+to transmit audit events from the sensor to the analysis units into account as well as the
+transfer of state information between the distributed units.
+To achieve this, the sensor has to gather a statistics that logs how often audit events
+of different types occur. The average data amount of an audit event is almost the same
+(evSize = 100 … 1000 bytes). The communication costs to transmit events of different
+types from the sensor to each analysis unit are labeled to the event types by function
+evC(evType) = #events * evSize. Additionally, each analysis unit continuously maintains a statistics that logs the number and size of transferred state information separately for each edge of the multi-step signature. The statistical values are labeled at each
+edge (a, b) of the signature by function commC(a, b). They allow determining the
+communication effort for audit event duplication and state information transfers for
+arbitrary signature distributions as an optimization criteria. For a given signature distribution, the event duplication effort can be determined according to equation (1).
+# AU
+
+
+
+i 1 evT S i
+
+evC (evT ), where S i 
+
+ sens(a, b)
+
+aVi , bV
+
+(1)
+
+ commC (a, b)
+
+(2)
+
+( a , b )E , cl ( a )  cl ( b )
+
+Here, Si is the set of event types examined by the subset Vi of signature fragments
+(Vi  V) that is assigned to AUi. Similarly, the statistics permits to calculate the communication costs for state information transfers among different AUs by eq. (2). We
+apply the cluster component of our signature model (cf. Sect. 2). Each state node a is
+mapped onto a cluster by function cl(a), virtually representing an analysis unit. Only
+state information transfers between nodes a and b assigned to different AUs (clusters)
+cause real communication costs. Transfers between nodes on the same AU use shared
+memory.
+Based on the statistical data, we can determine a communication efficient distribution of signature fragments by using a Greedy clustering algorithm. For this, we initially assign each state node of the signatures to an exclusive cluster. This initial state
+represents a virtual signature distribution for a maximum number of analysis units. In
+this case, all communication costs labeled to clusters and the signature edges are relevant because the audit events have to be duplicated for various analysis units and all
+state information has to be transferred between nodes assigned to different analysis
+units. Therefore, the initial stage represents the worst case communication scenario.
+The communication overhead, as defined in equations (1) and (2), can now be minimized by an iterative merging of clusters. We merge stepwise two clusters Ci and Cj
+that possess the maximum cumulated communication costs ((a, b)E commC(a, b), with
+cl(a) = Ci, cl(b) = Cj) on edges leading from nodes of Ci to nodes of Cj or vice versa.
+This merging process is repeated until the desired number of analysis units (e.g. 3) is
+reached. Since the clustering algorithm only optimizes the communication costs, it is
+necessary to limit the number of assigned state nodes and thus the computation effort
+required to evaluate the transition conditions for each cluster. As a result, our clustering
+algorithm creates signature distributions with a minimal communication overhead and
+an acceptable balance of analysis effort.
+D) Detection of Repeated Dependencies between Audit Events
+A fine-grained signature distribution, as described above, induces new challenges.
+When fragmentation is applied and the nodes of a signature are assigned to different
+
+analysis units, state information may arrive delayed at the successor nodes due to network latencies. An attack, however, can be only detected in the audit event stream if all
+preceding attack steps, described by the state information, have been recognized before.
+This is not possible, when the state information arrives too late. There is a simple solution for this problem. Since audit events from the same sensor can be ordered chronologically, state information can be related to the audit events. This can be achieved by
+enumerating all emitted audit events consecutively with a unique ID in the sensor. Each
+state information si is labeled with the ID of the related audit event. Thus, the analysis
+units can easily identify delayed state information by comparing their IDs. Fig. 3 illustrates the problem.
+sensor
+
+t
+
+.
+
+evT: ..., A,A,B,A,A,B,B,B,B,B,B,C, A,B,A,D, A,B,A,…
+ID: ... 7, 8, 9, 10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25, ...
+network delay: t
+
+AU1
+
+w
+
+v
+
+A
+
+host 1
+
+si.id = 11
+
+B
+assign w to
+AU1 or AU2 ?
+
+AU2
+x
+
+C
+
+Event type sequence Absolute
+within Δt
+frequency
+AB
+
+18
+
+BC
+
+6
+
+y
+
+host 2
+
+Fig. 3. Unfavorable sequence of audit events
+
+Table 1. Event type sequences
+
+It shows a fragmented signature consisting of four nodes. The nodes v, x and y are
+assigned to the analysis units AU1 and AU2, respectively. Which is the optimal assignment of node w? The assumed sequence of audit events emitted by the sensor is indicated above the AUs. Since type B events often occur after type A, while type C events
+rarely occur after B, node w should be assigned together with v to AU1 to prevent delayed state information arrivals at node w. If delayed state information arrives the related audit event has to be re-evaluated. This requires that the audit events are buffered in
+the analysis units for a short time. When new state information arrives all audit events
+that are older than the received one can be removed from the buffer. Therefore, the
+required buffer memory is assumed to be constant and is not discussed further here.
+The repeated evaluation of audit events though may lead to a significant additional
+computation effort. We demonstrate this with the example above and assume now that
+node w has been assigned to AU2. If a type A event triggers a transition the respective
+state information has to be placed on node w. We assume that the information is delayed by Δt due to network latencies. The absolute frequency of type B and C events
+occurring after type A and B events within Δt is listed in Table 1. When events of type
+B occur after A within a time window of Δt, they have to be buffered in AU2 for repeated evaluation. An event sequence in the audit data stream containing events of type i
+and j within Δt is called critical if it may cause repeated evaluations. This is the case, if
+an applied signature contains edges which are sensitive to i and j, respectively, and a
+type j event is expected after analyzing a type i event. Now, the sensor and the analysis
+units can dynamically update the statistics how often such critical sequences occur in
+the audit event stream. Each analysis unit also continuously logs number and types of
+repeatedly evaluated audit events. Based on this statistics, the responsible transition
+edges of a signature can be assigned to the same unit to avoid repeated analyses.
+
+E) Iterative Adaptation of Signature Distributions
+The characteristics of the audit data stream can change frequently. Therefore, the statistics on critical event sequences has to be updated continuously and the signature distribution has to be adapted accordingly. All optimization strategies described above determine an entirely new signature distribution. This requires high reorganization efforts
+because usually many state nodes have to be moved to other analysis units. Therefore,
+these strategies should only be applied to get an optimal initial signature distribution.
+They may be repeated perhaps 2–6 times per day. For the normal analysis process, an
+iterative adaptation strategy should be preferred which adapts the signature distribution
+with minimal reorganization continuously. If the resource consumption of the distributed analysis systems runs out of balance signature fragments from high loaded analysis
+units should be reassigned to less occupied ones. The fragments to be moved can be
+selected accordingly to one of the following procedures. (a) A fragment from the most
+occupied analysis unit is reassigned to the least occupied unit. (b) Like (a), but the most
+suitable fragment is selected whose reassignment rebalances the computation load best.
+This can be achieved by evaluating the computational loads of the analysis units using
+the analysis statistics based on equation (2). (c) That fragment is chosen from the highest loaded unit which mostly requires repeated event analysis due to delayed state information. Again, the analysis statistics have to be evaluated to select the responsible
+signature fragment. We consider again nodes v and w of the above example. Let node v
+be the source of the delayed information and (v, w)  E, then node w is reassigned to
+the same analysis unit as node v. No additional effort for repeated event analysis will
+be induced by state information transfers between v and w during further analysis.
+After finishing a reorganization step the efficiency gain has to be evaluated. If the
+adapted analysis distribution is not better than the previous one the reorganization step
+can be easily taken back due to the low reorganization effort required for single fragments. Thereafter an alternative fragment can be chosen for reassignment.
+
+4. Evaluation
+The distribution strategies described in the last section have been implemented and
+evaluated using the distributed intrusion detection system DSAM (distributed signature
+analysis module) that utilizes EDL multi-step signatures [4]. DSAM sensors are configurable and forward audit events only to analysis units where they are required. The
+DSAM analysis units are configurable as well. A set of signature fragments (state
+nodes) is assigned to each of them. The analysis units transfer automatically state information via the network if needed. For the performance measurements, we applied
+three typical signatures and examined all possible partitions (assignments) of the contained signature fragments to three analysis units. We evaluated each of the 965 possible partitions. These partitions include very efficient distributions as well as completely
+inefficient ones which cause an unfavorable computation or network load or both. Because of limited space we only give a brief overview about two of the applied signature
+examples (see Fig. 4).
+The first example (Fig. 4 (a)) describes a link shell attack which exploits a vulnerability of a specific shell function and the SUID (set user ID) mechanism of the Solaris
+OS. If a link refers to a shell script and the scripts file name starts with a hyphen “-” an
+
+attacker can get an interactive shell with the access rights of the script owner (e.g. root)
+by executing the link. The second signature – the SUID script attack (Fig. 4 (b)) – describes how to gain administrative privileges in Solaris by exploiting a vulnerability of
+the extended file access rights.
+rename
+link
+delete link
+
+link w/o "-"
+create link
+w/o "-"
+rename
+initial
+link
+create link
+with "-"
+link w. "-"
+rename
+link
+
+delete
+link
+
+execute
+link
+
+no
+attack
+
+initial
+
+link
+attack
+
+execute shell cmd. w/o path
+script
+running
+ex. shell
+start child
+start script
+cmd.
+script
+w. critical
+w/o path SUID
+path env.
+terminate
+attack
+script
+
+(a)
+
+(b)
+
+no attack
+
+Fig. 4. (a) Shell link and (b) SUID script attack
+
+To evaluate the analysis efficiency of DSAM in a high load situation we used a generic set of audit data. This set was created by capturing system calls of a host, while
+the described attacks were executed. All logged system calls that did not belong to the
+attacks were discarded manually. Thus, the audit data set only contains relevant attack
+traces of the applied signatures. Concerning the required analysis effort, this represents
+a stress test and a worst scenario. Additionally, the captured attack traces have been
+duplicated to create a sufficiently large audit data file of 6,000 events (system calls).
+The experiments were conducted on four machines (Intel Xeon “Prestonia”, 2.66 GHz,
+512 KB L2 cache, 2 GB RAM) connected by 1 GE links. One machine executed the
+sensor; the others run an analysis unit. First we applied the generic audit data set and
+evaluated the strategy A of Section 3 by assigning the three example signatures to different AUs without fragmenting them. Then we applied the strategy B to fragment and
+to assign fine-grained signature parts to the analysis units. We evaluated all 965 possible distributions of the signature fragments on the three AUs and measured the runtime
+separately for each unit. Table 2 contains the values for some selected distributions.
+0
+
+sensor real [s]
+
+47.95 29.63 110.64
+
+19.72
+
+AU1
+
+47.63 37.72 110.66
+
+19.75
+
+AU2
+
+real [s]
+
+302
+
+626
+
+user [s] 46.89 28.67 108.47
+
+17.95
+
+real [s]
+
+25.44
+
+user [s]
+AU3
+
+96
+
+real [s]
+user [s]
+
+29.33 116.34
+9.83
+
+33.89
+
+32.39 113.72
+7.84
+
+17.97
+
+18.08
+23.45
+
+957
+814
+817
+795 792 91956
+81
+6
+794
+885
+882
+863
+742842
+744
+741
+739
+42
+44
+844
+0815793
+911
+860
+944 771772
+81
+789
+790
+833
+791
+81
+831
+81
+3 2 947 785
+807734
+879
+901
+880
+898
+733
+731
+736
+22
+24
+857
+858
+958
+951
+451
+47
+781
+782
+912
+905
+763
+761
+945
+946
+899
+900
+778 768
+780
+21
+19
+759
+770
+757
+
+1,E+06
+
+955
+952
+883
+884861
+841
+839
+909 906
+38
+40
+948
+949
+836
+875
+903834
+881 26
+853 902
+85928
+953
+954
+907
+908
+37
+35
+936
+950
+890 31
+904
+29
+
+862
+
+360
+292 260282
+283
+293
+258
+284306
+261
+263
+288
+278
+338 294
+86
+84335
+324
+314
+315 304
+325 357
+358
+359
+270
+275
+277
+268
+271
+273
+33683
+337
+81
+
+9,E+05
+communication effort (byte)
+
+distribution ID
+
+661
+663
+664
+666
+682
+677
+683
+672
+673
+671
+681
+596730
+598
+600
+602
+571
+568
+565
+566
+692
+695
+697
+696
+387
+385
+376
+374
+51
+467
+515
+469
+51
+3
+471
+7465
+535
+511
+474
+505
+502
+536
+504
+499
+503
+549
+472
+500
+495
+526
+532
+525
+493
+492
+494
+489
+490
+546
+522
+464463
+543
+524
+501
+544
+871
+962
+931
+959
+717
+719
+71688
+4
+71
+8876
+55
+53 751
+837
+803
+797
+81
+818
+9
+796
+798
+820
+804
+784
+806
+887
+886
+865
+864
+737
+743
+738
+740
+748
+749
+43
+843
+848
+846
+91
+6534
+91
+3 491746
+657656
+659
+655
+680
+669
+679
+668
+670
+678
+689
+686
+690
+583
+587
+581
+585
+941
+942
+870
+71
+708
+1
+71
+712
+0379
+802
+830
+800
+829
+808
+786
+832
+81
+827
+0
+788
+809
+787
+925
+878
+895
+896
+729
+735
+732
+727
+726
+725
+23
+141
+7
+1
+3667
+1
+1
+854
+856
+684
+593
+603
+595
+605
+569
+570
+567
+561
+698
+693
+694
+384
+382
+377
+706
+479
+481
+486
+477
+548
+478
+488
+547
+545
+539
+487
+482
+484
+483
+928
+961
+960
+716
+720
+71
+5
+46
+50
+783
+773
+776
+777
+91
+5722
+914 52
+32
+760
+762
+767
+764
+766
+361
+362
+307
+90
+88
+339
+340
+320
+309
+326
+31
+31
+0709
+6926
+685
+691
+590
+580
+588
+579
+937
+943
+707
+71
+3779 769
+891
+897
+1
+8687
+1
+6758
+14
+20
+753
+775
+756
+755
+91
+34993327
+341 363
+
+651
+650
+639
+640
+649
+641
+645
+572
+564
+573
+562
+372
+370
+615
+61825
+61
+7
+620
+391
+389
+635
+51
+520
+8
+537
+51
+509
+531
+521
+0550
+551
+542
+540
+533
+527
+929
+963
+964
+872
+874
+59
+838
+840
+888
+866
+39
+849
+852
+917
+91
+8851
+33
+646
+647
+636
+637
+638
+648
+61
+3
+61826
+0
+61
+609
+938
+940
+822
+835
+825
+868
+892
+894
+877
+27
+9
+7
+560
+574563 538
+369
+368
+935
+394
+392
+634
+632
+627
+630
+628
+552541
+930625
+965
+60
+621 855
+889
+91
+9 927
+34
+36
+939 30
+633 624
+629
+623 6
+893
+921
+5
+1
+
+8,E+05
+
+52357
+
+354
+355
+257 243
+246
+287
+303
+247
+245
+259
+262
+285
+305
+279
+289
+249
+280
+290
+235
+233
+237
+236
+222
+221
+220
+224
+225
+227
+229
+226256
+1195
+91
+1
+189
+93
+346
+332
+33379
+85
+75
+73 230 231
+319
+311
+321 253
+105
+138
+181 150
+152151
+137
+46
+148
+36
+147
+182
+1140
+57
+159
+64
+166171 1160
+1162
+172 276
+264350
+244
+248
+274
+272103
+198
+232
+238
+234
+1
+188
+96 356
+187
+347
+334
+80242
+78 269
+76
+82
+328
+1108
+06 177
+1142
+83143 145
+144
+167
+173
+660
+665
+662
+674
+676
+597
+601
+652
+591
+557
+556446
+386
+373
+375448
+51
+4516
+468
+466
+473
+51
+460
+461
+470
+2
+507
+457
+456
+498
+496
+462
+497
+458
+932
+380
+402
+400
+406
+404
+703
+705
+54
+805
+799
+530
+444
+529
+447
+432
+435
+433
+431
+873
+745
+747
+750
+48
+847
+845
+675
+658
+654
+653
+577
+584
+582
+586
+701
+702
+823575599
+869
+828
+801
+924
+723
+728
+724
+1454
+0
+12
+594
+604
+592
+558
+365
+699
+459
+453
+554
+455
+933
+381
+383
+378
+409
+407
+398
+399
+704
+475
+480
+476
+443
+449
+485
+51
+49
+774
+752
+765
+351
+353
+295
+308
+87
+89
+348
+205
+202
+215
+21
+6922
+217
+203
+201
+21
+213
+212
+1 589
+329
+331
+71
+69
+31
+7
+312
+322 445
+576
+578
+700
+15 168
+2
+101754
+180
+178 165
+155
+156
+170161
+352
+207
+21
+0 99
+209
+342
+33092
+63 208
+68
+67
+98
+97
+179
+169
+
+252
+
+254
+300
+281
+31323
+3
+267
+266
+
+291
+
+442 438
+437
+436
+440
+721441
+298299
+
+642
+644
+606934
+559
+366
+371
+616619
+614
+506
+519414
+508428
+58
+56
+821
+41
+41
+426
+6555
+2
+528
+427
+413
+422424
+423
+867388390
+850
+643
+607 608
+612364
+8
+3923824 0
+367
+393
+626 61
+553
+419 41
+421
+8
+420
+920
+622 621 631
+4
+
+7,E+05
+
+240
+241158
+250286
+296
+185
+219
+223
+218
+192
+1190
+94
+345163
+72
+31874251
+139
+134
+1113
+53
+15 135131
+133
+176
+149
+1127
+29 104
+123
+124
+265
+18464 186
+77102
+343 197 239
+107 1111
+94
+12141 132
+128
+174
+
+395
+21
+4 1541118
+199
+200
+65 344 204 95
+70
+1
+00
+17
+206
+66
+96
+119
+
+6,E+05
+
+121
+175
+
+396
+403 401
+408 397
+450
+120
+
+228
+126
+
+451
+405452430429
+434
+297
+
+255125
+
+301
+
+439
+
+410 411 415 425
+417
+
+17.97
+
+09
+1114
+110
+
+130
+
+122
+
+5,E+05
+15
+
+Table 2. Runtimes of selected distributions
+
+25
+
+35
+
+45
+
+55
+
+65
+75
+real runtime (sec)
+
+85
+
+95
+
+Fig. 5. Runtime and communication costs for
+different signature distributions
+
+The sensor runtime is related to the slowest AU, as the sensor terminates after
+transmitting the last audit event to the slowest AU. The third column (ID 0) represents
+
+the non-distributed case, where only one AU is used that receives all signatures. This is
+the benchmark for any optimizations of the described strategies. The fourth column
+(ID 96) represents the simple, non-fragmented distribution for three AUs. The runtime
+shows a relevant improvement for the distributed case. The other columns represent the
+least and most efficient distribution. The diagram in Fig. 5 shows for each of the 965
+signature distributions the sensor runtime and the required communication effort
+(bytes) for transmitting state information and audit events. Each point in the diagram
+represents a signature distribution and is enumerated with a unique ID. The diagram
+shows many analysis distributions (at the bottom) that require a low computation effort.
+Furthermore, the step-wise increase of the communication effort for audit event duplication can be seen. The figure indicates that there are many distributions with reasonable computation and communication effort (lower left corner) that should be selected
+for efficient analyses.
+In order to select a suitable analysis distribution for a given network and CPU utilization a metrics based approach can be used. The metrics shall determine a suitability
+degree for each signature distribution and resource utilization. We defined a metrics
+that maps features of the audit event characteristics monitored by the sensor as well as
+the statistics maintained by the analysis units for a specific signature distribution onto a
+metrics value M. Simplified, M is defined by equation (3).
+# AU
+
+M 
+
+ evC(evT )    commC(a, b)    compC(e)    bal(c)
+
+i 1 evTSi
+
+( a ,b )E ,
+
+eE
+
+cC
+
+(3)
+
+cl ( a )  cl ( b )
+
+The metrics combines and weights four features of a signature distribution by weight
+factors (, , …): (a) the communication cost for audit event duplication from equation (1), (b) the state information transfers between analysis units from equation (2), (c)
+the computation effort for transition condition evaluation (IDS core functionality), and
+(d) a load balance function bal(c) which determines for each analysis unit (cluster c)
+the deviation of the actual load from the average load of all units. Nevertheless, our
+experimental evaluation shows that the applied worst case scenario (the events contain
+a large number of attack traces) is misleading, as we were not able to find a reasonable
+metrics. The problem results from the additional computation effort for repeated event
+analysis for delayed state information. This effort changes significantly if the distances
+between critical event sequences change only slightly. Therefore, the computation
+overhead for repeated event evaluations dominates the overall runtime of unfavorable
+signature distributions and cannot be predicted by metrics M. Fig. 6 depicts the logged
+runtime (sec) together with the metrics prognosis (normalized to range [0,1]) for all
+965 distributions. We tried different weight factors as well as additional distribution
+features to find a reasonable metrics, but we could not identify a common relation between metrics prediction and real runtime (see Fig. 6).
+Hence, this kind of metrics cannot be used to predict optimal analysis distributions
+for the worst case, since they do not take all important computation dependencies between the signature fragments into account. Moreover, a further enhancement by additional statistical information is not desirable because CPU and network consumption
+change continuously and even minor changes would lead to entirely different distributions. Such a metrics can only discover an initial distribution with a satisfying analysis
+
+performance that must be adapted periodically. So, we applied next the iterative optimization strategy E for the worst case. When the dynamically updated sensor statistics
+and the analysis units suddenly indicate significant changes in the audit data characteristics the current distribution has to be iteratively adapted. In typical IT infrastructures
+this happens inevitable by changing user and system activities (e.g. daily schedules).
+0,9
+9 58
+45
+912
+
+0,8
+
+2 885
+74284817
+860
+79 5
+761
+844
+878
+822
+814 744
+951
+47
+
+79 2
+
+816 957
+42 739
+794
+863
+793
+771772 44911
+910
+956
+741
+815
+
+83 9
+884
+954
+35
+763 781
+
+862
+43740
+672
+667
+671
+861
+282
+283314
+284 315
+278 673
+909
+4
+0
+2273
+71 74384 3
+9 08
+288
+831
+2526
+2804
+880
+812
+1 9 47871
+906692
+374
+525
+52455
+463
+695952
+697
+696
+495
+493
+492
+494
+4490
+89522959
+566 49 1 806 751
+803 73
+338
+335
+196 776
+841
+482
+484 483 544
+24
+502
+944
+785
+534
+789
+790 857
+79 1858 94
+807
+736
+263
+357
+86
+3 7324
+768
+770
+682
+499
+677546 543 748
+784
+29290 7 46
+293
+325
+762
+8 13
+465
+931
+511734
+848
+549
+883
+88
+6 41
+737 837
+818
+275
+9 01 30 6 304
+698
+684
+69
+694
+3 258
+833 360
+32
+89
+8 7
+879
+811
+733
+38
+474
+568
+797 865
+796
+79
+8864
+2 60
+336
+337
+84
+717
+71971481
+718
+681 913
+504
+503
+5536
+53
+294
+359
+773767 53
+738 683
+900
+21
+716 928
+53598706
+486
+477
+66
+1777
+666
+757780602377
+567
+548
+547
+54539
+766
+52 746
+38
+596 0
+962
+469
+471
+596 9277
+600
+515
+517
+571
+887
+846
+819
+261
+916
+778
+89 9 605
+945
+270
+749
+382
+961 570 505488
+593
+50
+358 83
+840
+39759
+376
+500
+663
+532
+664
+76
+0
+36
+635
+639
+640
+64 1
+310
+472
+316
+82
+0
+225
+227 226
+26 863
+628
+0
+38 4 569
+915 481 565
+914
+467
+513
+715
+720
+464
+72 5
+561509
+379
+11
+501
+949
+942
+26
+3 20
+370
+963
+52 1
+523
+564
+851
+59
+527
+872
+874
+437 438
+436
+674
+6
+76
+233
+235
+237
+236
+287
+285
+339
+3
+40
+319
+479
+487
+783
+368
+948
+83
+628
+853
+62
+54 2
+875
+859
+595
+66
+668
+9670
+764
+309
+361
+274 935
+9 0 603
+936
+31 645
+852
+531
+650
+727
+834
+23
+827
+8 81 832
+732878
+810
+721
+929
+349
+550
+551
+540
+93
+446
+444
+44737544 8 48
+703
+70533
+498
+496
+497
+529
+346
+20
+722 530
+902
+903
+17
+327
+391
+520
+485
+572
+686
+689
+688
+69
+0 870 710
+80
+2 362
+800
+232
+238
+2
+34
+341
+86
+6
+311
+2
+49
+252
+3
+55
+279
+280
+79
+73
+88
+478
+712
+680
+8
+96
+856
+788
+91773 5 39560
+651
+9247
+775364
+57 231
+4
+245 950
+26838
+333
+466
+512 272
+557787
+745845
+538
+889
+632
+93 0615
+14
+943
+755
+541556
+634
+655
+630
+207 29
+443
+449
+44 5 229
+22 0
+9 25
+704
+699
+830
+581
+585
+552
+3305
+89
+918
+96
+4 873
+57346
+347
+0730
+79 0
+9 380
+257 89
+32
+8 5 805
+90
+4 87259
+6869
+5303
+6
+1
+579
+84
+9854
+456
+458
+4 42
+537 895
+786
+774
+82
+6 0 193
+13230
+6747
+57
+769
+431
+372
+44 0
+662
+758
+618 34
+617
+6 52
+189
+243
+378518
+222
+752
+4558
+9932
+468
+470
+597625
+601
+599888 514
+516
+591
+8386
+47
+54554
+262
+211
+213
+212
+9 753
+1246
+9
+627
+187
+242
+926
+18
+91
+383
+264
+594 80
+562
+63
+224 726678
+356
+76575
+33 43248
+328
+713209 51
+8829
+97
+729
+457
+454
+433
+4 41
+400
+404
+7940
+6665
+60
+510 750
+533
+825
+473
+422
+424
+423
+642
+6
+44
+2
+28
+16
+3
+1
+7
+39
+453 941
+36 2
+9
+398221
+965195
+5 461
+475
+708
+1 631 588 381
+435
+2
+69
+420
+574
+75 679
+671
+637
+36
+638
+933
+289
+507
+321
+70719 1891
+659
+459 373
+629
+198
+583
+587808
+876
+12 256
+27 365
+371
+439
+56 480
+52 8
+821
+348
+354
+240
+241 0 765
+809
+937
+590
+196
+2
+44
+253
+432
+402
+406
+25
+592
+675
+868
+822
+350
+290
+604
+78
+146
+160
+162
+148
+147
+2987
+5
+462
+353
+69894
+312
+409
+1
+6835
+48
+656
+144555
+728 563
+217
+63
+67 855
+33
+1
+451276
+452
+559 455
+756
+609828
+4 07
+92702
+770
+701
+20
+1 867
+215
+506
+171
+172
+580388
+342
+89
+286
+9239
+329
+476 31874
+188
+428
+3 64
+96 11779582
+892
+426
+15
+606 30
+412
+166
+152
+586
+553
+616
+203
+450
+216308
+58 3 45 182
+623 390
+255
+646
+3 99
+921
+20789 3934
+210
+700
+330
+167
+173 13 6
+205
+826 8 01 869
+924 223
+658
+614850
+619
+190
+103427
+51
+9414416
+938194
+214157
+647
+418
+4 21
+920
+62 6
+621
+138 6 164
+150
+20271
+218
+343
+92
+633
+142 366
+613 77
+4 34
+401 425 4 05
+8
+3 51208
+877
+183
+181
+151 508 21910413
+429
+589
+32 2
+643 939
+192
+18561
+12 5
+177 393 145 161
+419
+653
+159
+922
+6882610
+184
+723
+577
+58
+4624
+3 140
+250724
+296
+72
+396
+403
+168
+170 163
+149
+127
+129
+105 430
+64 576 2197 106
+70
+395
+367
+654
+137
+108
+2 51
+3 52
+408
+18014 3 176
+344
+155
+186
+169
+128
+923
+612
+265
+5789 9 754
+204
+397
+97
+199
+174
+415 104
+178 165
+158
+139
+131
+133 410
+126
+200 607 3
+12 0
+123
+65 206
+82101
+4
+411
+4 17
+608 4
+134
+153
+156
+124 297
+113
+115
+622
+107
+102111179
+175
+130
+135 132
+94
+141
+66
+98
+100 112
+121
+117
+
+0,7
+0,6
+metrics
+
+905
+955
+38
+
+0,5
+0,4
+0,3
+
+95
+
+0,2
+
+96
+
+118
+119
+
+154
+114
+10 9
+
+3 13
+323
+
+254
+
+281
+3 00
+
+266
+298
+2 67
+
+299
+
+122
+
+110
+116
+
+0,1
+15
+
+35
+
+55
+
+real
+75
+runtime (sec)
+
+Fig. 6. Metrics prognosis and real runtime
+
+Fig. 7. Iterative optimization of distributions
+
+Our iterative optimization strategy minimizes first the effort for repeated event evaluations by reassigning the responsible signature fragments. For this, fragments are
+iteratively selected and moved according to selection procedure (c) of strategy E until
+no computation effort is spent for repeated event evaluations. Then, as a second objective, the load balance of the analysis units is improved iteratively by selecting signature
+fragments according to procedure (b). For this, a suitable fragment is chosen from the
+most loaded analysis unit and reassigned to the least loaded unit. If the subsequent
+performance evaluation turns out that the new distribution performs worse than the
+previous one the previous distribution is restored. This causes only minor reorganization effort, as only a single signature fragment is reassigned. Fig. 7 depicts the iterative
+adaptation of the signature distributions by an annotated fragment of Fig. 5.
+Starting from the simple non-fragmented distribution (ID 96), where each of the
+three signatures is assigned to a different analysis unit, the distribution was adapted by
+consecutively reassigning single signature fragments generating the distributions with
+the IDs 92, 66, 80, 77, 80, 87, and 63. Distribution 77 was found to perform worse
+compared to the previous one after some analysis time. Therefore, it was reverted to ID
+80 and another suitable fragment was reassigned (ID 87). The iterative adaptation of
+the signature distribution stops with distribution 63, when no suitable fragment for a
+further reassignment step can be found. This happens, when a pretty good balanced
+(and efficient) signature distribution is reached, such that also the “lightest” fragment
+from the most loaded analysis unit that requires least computation resources will impair
+the overall load balance, even if it will be reassigned.
+To sum up, in worst case situations we always can apply the iterative optimization
+strategy starting with a sufficiently efficient non-fragmented signature distribution.
+Minor changes in the distribution can be easily taken back if they turn out to be misleading. The communication overhead can be estimated in advance. Thus, we can prevent high network utilizations. This strategy may only find semi-optimal distributions,
+but even these perform better than the distributed analysis of complete signatures.
+
+5. Summary
+The increasing performance of IT systems leads to a rapid growth of audit data volumes. This represents a major challenge for signature based intrusion detection systems, which already have to cope with growing signature databases. In this paper we
+presented various optimization strategies which aim at balancing the analysis load of
+complex signature based IDS over distributed analysis units. We focused on the analysis of multi-step signatures because complex attacks, i.e. on application level protocols
+(Web 2.0), will be much more important in the future, while simply structured attacks
+can be successfully prevented by today’s proactive measures (e.g. address space layout
+randomization, stack protection). A prototype implementation was used to evaluate the
+achievable performance improvements by the various proposed optimization strategies.
+Our results indicate that relevant improvements in the efficiency of audit event analyses
+can be only obtained by a fine-grained assignment of fragmented signatures. But, the
+results also indicate that poorly chosen distributions require much more computation
+effort than the non-distributed baseline. Our results also show that a dynamic approach
+which iteratively adapts the signature distribution to the current analysis situation during runtime should be favored over a statically determined optimal signature distribution. As future work, we plan to integrate our prototype into a multi-agent platform to
+build up a distributed intrusion detection system responsible for securing an IT infrastructure (e.g. a company network). The system will analyze audit events from many
+widely distributed sensors and adapt dynamically to changes of the audit stream characteristics, analysis load, available free computation resources, and network bandwidth.
+
+References
+1.
+
+Cisco Systems Inc.: NetFlow Services and Applications. White Paper. (2002)
+http://www.cisco.com/warp/public/cc/pd/iosw/ioft/neflct/tech/napps_wp.htm
+2. McHugh, J.: Set, Bags and Rock and Roll – Analyzing Large Datasets of Network Data. In: 9th European
+Symposium on Research in Computer Security (ESORICS), LNCS 3193, pp. 407–422, Springer, (2004)
+3. Sommer, R. and Feldmann, A.: NetFlow: Information Loss or Win? In: 2nd ACM SIGCOMM and USENIX Internet Measurement Workshop (IMW 2002), Marseille, France, 2002
+4. Meier, M.: A Model for the Semantics of Attack Signatures in Misuse Detection Systems. In: 7th Information Security Conference (ISC), LNCS 3225, pp. 158–169, Springer, (2004)
+5. Anagnostakis, K.G., Markatos, E.P., Antonatos, S., Polychronakis, M.: E2xB: A Domain Specific String
+Matching Algorithm for Intrusion Detection. In 18th IFIP International Information Security Conference
+(SEC 2003), pp. 217–228, Kluwer Academic Publishing, (2003)
+6. Yang, L., Karim, R., Ganapathy, V., Smith, R.: Improving NFA-based Signature Matching Using Ordered Binary Decision Diagrams. In: 13th International Symposium on Recent Advances in Intrusion Detection (RAID'10), Ottawa, Canada, Sept. 2010. LNCS 6307, pp. 58–78, Springer (2010)
+7. Shemitz, J.: Using RDTSC for Pentium Benchmarking. Visual Developer Magazine. Jun./Jul. (1996),
+Coriolis Group, Scottsdale, AZ, USA. http://www.midnightbeach.com/jon/pubs/rdtsc.htm
+8. Vasiliadis, G., Antonatos, S., Polychronakis, M., Markatos, E.P., Ioannidis, S.: Gnort: High Performance
+Network Intrusion Detection Using Graphics Processors. In: 11th International Symposium on Recent
+Advances in Intrusion Detection (RAID’08), LNCS 5230, pp. 116–134, Springer, (2008)
+9. Kruegel, C., Toth, T., Kerer, C.: Decentralized Event Correlation for Intrusion Detection. In: Intl. Conference on Information Security and Cryptology (ICISC), LNCS 2288, pp. 114–131, Springer (2001)
+10. Colajanni, M., Marchetti, M.: A Parallel Architecture for Stateful Intrusion Detection in High Trac
+Networks. In: IEEE/IST Workshop on Monitoring, Attack Detection and Mitigation, IEEE Press, (2006)
+11. Schaelicke, L., Wheeler, K., Freeland, C.: SPANIDS: A Scalable Network Intrusion Detection Loadbalancer. In: 2nd Conference on Computing Frontiers (CCF 2005), pp. 315–322, ACM, (2005)
+
+

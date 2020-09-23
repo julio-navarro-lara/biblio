@@ -1,0 +1,165 @@
+2014 IEEE 12th International Conference on Dependable, Autonomic and Secure Computing
+
+A Finite State Hidden Markov Model for Predicting Multistage Attacks in Cloud Systems
+Hisham A. Kholidy 1
+hkholidy@qu.edu.qa
+1
+
+Abdelkarim Erradi 1
+erradi@qu.edu.qa
+
+Sherif Abdelwahed 2 Abdulrahman Azab 3
+sherif@ece.msstate.edu abdulrahman.azab@ux.uis.no
+
+Department of Computer Science and Engineering, College of Engineering, Qatar University, Qatar 2 Electrical and Computer Engineering, Mississippi State University, Starkville, MS, USA 3 Faculty of Science and Technology, University of Stavanger, Norway
+
+Abstract -- Cloud computing significantly increased the security threats because intruders can exploit the large amount of cloud resources for their attacks. However, most of the current security technologies do not provide early warnings about such attacks. This paper presents a Finite State Hidden Markov prediction model that uses an adaptive risk approach to predict multi-staged cloud attacks. The risk model measures the potential impact of a threat on assets given its occurrence probability. The attacks prediction model was integrated with our autonomous cloud intrusion detection framework (ACIDF) to raise early warnings about attacks to the controller so it can take proactive corrective actions before the attacks pose a serious security risk to the system. According to our experiments on DARPA 2000 dataset, the proposed prediction model has successfully fired the early warning alerts 39.6 minutes before the launching of the LLDDoS1.0 attack. This gives the auto response controller ample time to take preventive measures.
+
+Keywords -- Cloud computing; intrusion prevention; risk assessment; prediction of multi-staged attacks; HMM
+
+I. INTRODUCTION
+Cloud computing is a paradigm that builds on several technologies such as parallel and distributed computing, high speed networks and virtualization to enable faster and cost-effective provisioning of IT resources and services. There is a consensus that one of the factors which hinder the wider adoption of this model is security. In fact, securing data and services in a cloud system is more challenging than in a traditional platform due to the loss of control on data location and the shared resources with unknown and potentially malicious users. Conventional Intrusion Detection System, IDS, are not able to meet all these challenges and need to be extended with further capabilities such as risk assessment and prediction models [1]. This paper outlines the approaches we advocate to extend current IDS with risk modeling and attacks prediction capabilities to fully meet the cloud IDS requirements stated by NIST [1]. We implemented these capabilities in an IDS framework named ACIDF, Autonomous Cloud Intrusion Detection Framework. ACIDF extends our previous Hierarchical Cloud based IDS, H-CIDS, [2] which has experimentally proved its ability of detecting Distributed Denial of service
+978-1-4799-5079-9/14 $31.00 Š 2014 IEEE DOI 10.1109/DASC.2014.12 14
+
+attacks (DDoS), host based, network based, and masquerade attacks [10]. ACIDF supports the evaluation of vulnerabilities and risks in the system through a mechanism that builds a security measure based on the assessment of the risks and the criticality of security events. Furthermore, it provides a controller component that automatically selects the most appropriate response and protection method to protect the system against detected and potential attacks. ACIDF offers attacks prediction capabilities based on a finite state Hidden Markov Model [3] that represents sequence of events matching attacks signature as series of state transitions with a certain probability. The model uses a training algorithm to deduce the transition, output probabilities, and other prediction parameters for the attacks of interest. Based on the received alerts, the prediction model predicts any possible multi step attacks before they compromise the system. It is also able to predict the noncompleted multistage attacks that repeat their attempts. Our experiments of the risk and prediction models proved promising and accurate results. This paper is organized as follows. Section 2 highlights the background and literature review about cloud IDSs, and prediction approaches. Section 3 presents the main processes of ACIDF and its security measure. Section 4 introduces the prediction and early warning features of ACIDF and discusses the experiment results that evaluate the accuracy of the prediction models. Finally, Section 5 draws some conclusion remarks and outlines future work.
+
+II. BACKGROUND AND LITERATURE REVIEW
+The potential impact of intrusions in cloud systems steadily increases because of the huge amount of resources that an intruder may control and use to implement further attacks. Furthermore, the deficiencies of the current intrusion detection technology hinder its adoption in clouds. None of the current Cloud IDSs solutions use an integrated risk metric with prediction capability. A number of different schemes that predict multi-step attacks have been proposed. Some researchers have inserted the prediction step in the detection component. There are two main models can be used for the prediction target [5] namely, (1) Finite-context models, that are applied using
+
+Markov Models, MM, and Variable Order Markov Model, VMM. These models assign a probability to a symbol based on the context in which it appears and, (2) Finite-state models. These models are applied using Hidden Markov Models, HMM, which are composed of an observable part called "events," and a hidden part called "states." A state stores information about the past since it reflects changes in the system from the start to the present moment. A transition indicates a state change and is described by a condition that needs to be fulfilled in order to enable the transition. Events are observed with different probability distribution depending on the state of the system. These models provide flexible structure that can model complex sources of sequential data. There are some proposals for the intrusion prediction issue such as the Hidden Colored PetriNet proposed by Yu and Frincke [6] to predict intruder's next goal. They proposed a method to improve the quality of alerts for prediction. Their approach is not accurate enough to be applied in real applications. Haslum et al [7] proposed a model based on HMM to predict the next step of an anomaly. They simulated the distributed system attacks in four steps. The state of the system changes according to the observations from the IDSs in the network. Thus, the prediction of the next goal can be estimated by the probability of each state. However, this model needs to be tested in a real network.
+
+(c) Correlation process correlates a large number of normalized events from different detectors to highlight the few critical ones to reduce false positives alerts. It compares each event against set of attacks rules to discover if it signals a true attack and then it correlates the related events. (d) Risk Assessment process assesses the risk in the cloud system based on alert level. Section 3.2 details this process. (e) Prediction process works in parallel with the rule matching process run by the correlation engine. Section 4 describes how the prediction process runs. (f) Auto response process is carried out by the controller which uses a fuzzy logic approach to select the most appropriate response and protection method to protect the hosts and the network against potential attacks [11].
+
+B. Security Metric and Risk Assessment
+The risk metric is a measure of the potential impact of a threat on assets given the probability that it will occur and it provides useful information to evaluate the cloud's overall security state. The estimated risk of each event is not assigned statically. It has an initial value that can be modified dynamically as the event is correlated to other ones. The correlation engine [2] uses a tree of logical conditions, i.e. rules, or AND/OR tree and it is implemented by OSSIM, an open source system [12]. The engine uses Equation 1 to define the risk value for each group of alerts and whenever the risk becomes larger than or equal to one, an alarm will be fired:
+RISK= (AssetValue * AlertPriority * DetectionReliability)/ NF (1)
+
+III. ACIDF SECURITY PROCESSES AND RISK METRIC
+This section briefly describes the framework processes and the security metric which is used to assess the risks in the system.
+
+A. ACIDF Processes
+ACIDF has six processes are described below, see Fig. 1:
+
+Where:  AssetValue denotes the value of the attacked resource.  AlertPriority it denotes how dangerous the alert is. This value is set by the firing IDS and is adapted in the normalization step.  DetectionReliability is the probability that the attack defined in a correlation level is real.  NF is a fixed normalized factor defined by the administrator in the IDS configuration phase
+
+IV. PREDICTION AND EARLY-WARNING OF ACIDF
+The output of the IDS usually includes a large number of alerts as stream data which usually unordered and changes frequently. Using traditional techniques with such data is a big challenge. The HMM algorithm is one of the best ways to tackle this weakness. HMM works well dealing with streaming inputs. It is fast and can be adapted to predict future attacks in IDSs [11, 12]. We adapt the HMM to provide the predictability and early-warning feature to ACIDF. In this model, the sequence of events that match attacks signature rules in the correlation tree represents a series of state transitions with a certain probability where each event is not directly visible but output dependent on the event is visible, the output in this case is the attack name or attack state. In the following, we describe the implementation and evaluation of the proposed model.
+
+Fig. 1. ACIDF detection processes
+
+(a) Collection process collects events and logs from several sensors and sends them to the integration process. The collection sensors perform three core functions through various means: collecting logs, monitoring network packets, and scanning hosts. (b) Integration process integrates the events collected from distinct sensors and normalizes them into the IDMEF protocol [4] to simplify their correlation in the next layer.
+
+15
+
+A. The Implementation of the Prediction Model
+The basic idea underlying our proposed prediction model is to employee a HMM to track the evolution of the attack in the system. That way, while an attack is in progress, the state changes and we can trigger appropriate responses based on a confidence level threshold, which would result in a lower false positive rate. The prediction component has all the detailed information about the malicious activity such as severity, confidence level, and the cost of asset targeted. The following sections describe the prediction components.
+
+A.1. The Prediction Components
+The elements of the prediction model are described below: 1) States: the system is assumed to be in one of the following 4 states: Hale (H): indicates that system is working well and there is no malicious activity or any attempt to break into the system, Investigate (I): indicates that malicious activities are attempted against the system, Attack (A): indicates that intrusion has been started and is now progressing, and Penetrate (P): indicates that intrusion successfully compromised the system. The graph shown in Fig. 3 defines the relationship among these states.
+
+algorithm to find, given an output sequence or a set of such sequences, the best set of state transition and output probabilities. The idea is to derive the maximum likelihood estimate of the HMM parameters given the set of output sequences. 4) Observation Transition Probability Matrix (Q): the observation transition probability matrix describes the probability of moving among observations. 5) Initial State Distribution Vector (): it describes the probability of states when our framework starts. 6) Alert Observation Probability Matrix (Ĺ): describes the probability of having a specific alert in a specific state. This matrix helps in computing the alert severity function as we will explain later. Ĺ is built based on the training data in the attack dataset. 7) Assets Cost Matrix (C): Each of the states of the system is associated with a cost vector, indicating the potential consequences of the state in question. 8) The Output or emission probability Matrix (Y): It represents how likely the output result is for each sequence of attack states. 9) Alert Severity Function: It describes the severity of each alert at specific state s. We model this severity function based on Eq.1 as shown in Eq.2 and 3. The computed severity is mapped to one of the four priorities (L, M, H, V) to reflect the state of the system, see algorithm 1.
+  = (  * AP *   )/   (2) = (  * (CSeverity * NOccurance / AFrequency) *   ) /   Where,     Alert Risk at a specific state s,        (3)
+
+Fig. 3. The relation between the proposed HMM states
+
+The graph is fully connected, which indicates that it is possible to have a transition from any security state to any other security state. That helps in detecting single stage attacks and predicting the non-completed multistage attacks that repeat their attempts. 2) Observations: O = o1, . . . , oK , are alerts from the detection sensors. Observations cause the system model to move among states. We consider the severity of these alerts as observation and each alert has four priorities reflects the state of the system: Low, Medium, High, and Very high or (L, M, H, V). The alert severity function is described later on in this section. 3) State Transition Probability Matrix (P): the state transition probability matrix describes the probability of moving among states. The following steps describe how to build the HMM states and to calculate the transition possibilities. a) Construct a signature sequence vector to contain the sequences of signatures that define each attack. b) List all possible combinations of the signatures that may be shared by more than one attack in the signature sequence vector. At the same time let every possible instance represents a state in HMM, then refine these states to construct a minimal state set, see Fig. 4. c) Calculate the transition possibility between states using the Forward-Back Propagation [13] training
+
+  : Asset Cost at a specific state s. AC is computed using the C vector and it represents the potential consequences of the state s on the asset in question, AP: Alert Priority. It is computed based on CSeverity, NOccurance, and AFrequency as shown in Eq.3, CSeverity: Current alert severity defined by the firing IDS. NOccurance: Number of occurrences of current alert in a specified correlation time slot defined in the correlation process, AFrequency: Acceptable frequency of this alert per day based on the training data computed from the attack dataset.   : Detection Reliability at a specific state s. It is computed according to the alert position corresponding to s in Matrix Ĺ.   : A fixed Normalization Factor that is computed according to the maximum values appeared during training phase for   , AP,   , and Maximum Alert Risk (MR) where   belongs to the range (0-  ). All these values are computed for each state independently. Thus,   = (Max(  )* Max(AP)* Max(  )) /   .
+
+10) HMM Prediction Algorithm The Pseudo Code for the prediction algorithm and the alert risk modulation approach is given in Algorithm 1. The algorithm starts by computing the alert risk and then mapping this risk to one of the 4 defined risk levels. If the observation status variable, Cur_Obs, is equal to one, the algorithm uses vector  otherwise it uses matrix P. Finally,
+
+16
+
+it fires an alert if the final prediction probability is higher than a defined prediction threshold.
+Algorithm1: The HMM Prediction and Alert Risk Modulation
+  %
+
+
+
+
+    
+   
+
+download a certain executable file of the network, save it to disk and execute it. The attacks have similar steps but the latter downloads and executes some form of malware on the target system and is implemented through four steps: (1) Localizing and getting the version of FTP and WWW, (2) FTP breaks-in to gain unprivileged access, (3) Backdoor installation, and (4) Backdoor activation. i. Attack phases: For each step of the considered scenario, the appropriate IDS, i.e., OSSEC or Snort, fires an alert. While an analysis of each individual alert may be useless, their correlation conveys useful information. The correlation engine applies both the normalization and prioritization processes mentioned before. The final correlation tree consists of the following four levels which represent the hidden states of the HMM: x Level 1 root rule: This rule is matched by scanning and fingerprinting alerts of Snort. Then, the engine updates the reliability and risk values before passing to level 2. x Level 2: This rule is matched by suspicious ftp logins alerts from OSSEC. Then, the engine updates the reliability and risk values then it jumps to level 3. x Level 3: This rule is matched by a file uploading alert from OSSEC. Then, the correlation engine updates the reliability and risk values, then jumps to level 4. x Level 4: This rule is matched by a Snort alert that denotes the activation and access shell using reverse TCP. Then, the correlation engine updates the reliability value, computes the risk, and fires an alarm. ii. Observation Messages: Based on the previous alert data, we use the following observations in the implementation: (a) Scanning and fingerprinting alerts, (b) Suspicious ftp logins alerts, (c) A file uploading alert (Backdoor Installation), and (d) Activation and access shell using reverse TCP (Backdoor Activation).
+
+           
+
+AcceptableAlert   %                                                 
+
+     
+
+
+ 
+
+               
+
+             
+             
+
+A.2. An Example for the HMM Prediction Model
+
+In this section, we give an example for a complete HMM of iii. The Prediction Parameters (P, Q, , Ĺ, and C) two multistage attacks to explain how HMM vectors are The estimation of the appropriate values for the model filled and how the HMM prediction model looks like. parameters P, Q, , Ĺ, and C can be determined using either training algorithms or expert knowledge supported by an Example: The correlation engine detects the Remote appropriate methodology. Notably, a uniform initial shellcode attack by correlating the alerts from both OSSEC distribution of the P and  parameters is adequate as a basis [8] and Snort [9]. Remote shellcode is multi-stages attack for training the parameters [3]. There is, however, no that is used when an attacker wants to target a vulnerable analytical solution to the re-estimation problem. In our process running on another machine on a local network or implementation, we use a standard approach for learning intranet. If successfully executed, the shellcode can provide HMM parameters using the Likelihood function and the the attacker access to the target machine across the network. FBP algorithm [13] to find the best set of state transition Remote shellcodes normally use standard TCP/IP socket and output probabilities by deriving the maximum connections to allow the attacker access to the shell on the likelihood estimate of the parameters of the HMM given the target machine. Such shellcode can be categorized based on set of output sequences. how this connection is set up. If the shellcode can establish this connection, it is called a Reverse Shell. Instead, another type of the shellcode is the Download and Execute that does not spawn a shell, but rather instructs the machine to
+17
+
+x State Transition Probability Matrix (P): Matrix P is updated through the training phase. A uniform initial distribution of the P is given below:
+
+    P=    
+
+       
+
+       
+
+      =      
+
+   
+
+   
+
+    
+
+P describes the probability of moving among HMM states. E.g.,   represents the probability of moving from "Hale" state to "Investigate" state. Surely, there are high false positives and negatives rates related to the initial distribution probabilities. These rates will gradually decrease through the training and the prediction phases. x Observation Transition Probability Matrix (Q): is updated in the training phase using the training data of the attack dataset. This matrix is given below:
+    Q=                           =                   
+
+how likely the output result is for each sequence of attack states. E.g., If attack state is H, the most probable case is a 86% chance that no attack found. If attack state is I, the most probable case is a 38% chance that the attack is "Reverse Shell" and the same chance percentage to be "Download and Execute". If attack state is A, the most probable case is a 52% chance that the attack is "Reverse Shell". If attack state is P, the most probable case is a 61% chance that the attack is "Reverse Shell".
+
+x Initial State Distribution Vector (): It is a uniform vector set as: = {  x The Alert Observation Probability Matrix (Ĺ): Ĺ is computed according to the training data of the attack dataset. This matrix can be also computed by an expert using an appropriate methodology. Ĺ is given below:
+Ĺ=                               =                   
+
+Fig. 4. The HMM model for two Remote shellcode attacks
+
+For example,   represents a probability of receiving an observation d indicating a backdoor activation alert when the system is actually in a hale state. This probability is small because it represents a malicious activity while the system is in a hale state. x Assets Cost Matrix (C): The underlying cloud network consists of number of VMs and servers, including employer VMs (EVM), the hypervisor machine (HV), central database (DB), and the management IDS Server VM (MVM). For the purpose of the security and management of the cloud network, the management IDS VM is the most valuable asset, and a compromise of central database VM or hypervisor machine could have very negative consequences. Cost vector is denoted as C(Asset) = {c1,c2,.....cN}, where c is the cost value associated with state si  S. Example cost vectors could be: C(EVM)={0, 2, 4, 10}, C(HV)={0, 5, 15, 30}, C(DB)={0, 4, 12, 25}, and C(MVM)={0, 7, 20, 55}. The complete C Matrix is:
+C=                                       =                    
+
+A. Evaluation
+In this section we evaluate the proposed prediction and risk models using DARPA Dataset.
+
+B.1. Attack Dataset (LDDOS1.0 Attacks Scenario)
+We have used the DARPA 2000 dataset [14] to test our proposed prediction model and alert severity modulation approach. The dataset consists of two multistep DDoS attack scenarios. We have used the first scenario, LLDDOS1.0, that tries to install DDoS software in three computers in the target network namely, the hosts Mill, Pascal, and Locke. Then, it uses these hosts to launch a DDoS attack against an external host using spoofed IP addresses. The dataset has been processed with three IDS analyzers, two Snort network IDS sensors (an outside sensor and a DMZ sensor), and a RealSecure Network Sensor [15]. We integrate the alerts of the two sensors together and produce the IDMEF [4] alerts to detect all steps of the LLDDOS1.0. The Dataset has a total duration of 11836 sec. Snort does not detect the installation phase of the DDoS attack (i.e. phase 4). On the other hand, RealSecure outputs 924 raw alerts, however, it does not output any alerts related to ICMP pings (i.e. phase 1). Consequently, the combination of Snort and RealSecure can detect all phases of the attack. Nonetheless, using a combination of both IDS alerts with a simple OR rule, as described in Section 3.2, results in a significant number of redundant alerts and false positives.
+
+Fig. 4 shows the HMM of the Remote Shell attack example in Section 4.2.2 at approximate time periods of the attack stages. The initial state probabilities  = {1.0, 0, 0, 0}. The transition probability vector, P, represents the change of the attack states in the underlying HMM. E.g., there is 48% chance that next attack state will be I if current state is H, and 53% chance that next attack state will be A if current state is I, and 71% chance that next attack state will be P if current state is A. The output or emission probability Matrix, Y, represents
+
+B.2. Experimental Result LLDDOS1.0 has 5 steps and takes about three hours. These steps are: 1- IPsweep from a remote site (1500-1920 sec), 2Probe of live IP's (2880-3480 sec), 3- Break in to Mill, Pascal,
+18
+
+and Locke (4380-4420 sec), 4-Install the DDoS tools on the three hosts (5400 sec), 5-launch the DDoS with spoofed source IP addresses (7620 sec). The total assessed risk for DARPA 2000 dataset in LLDDOS 1.0 scenario is shown in Fig. 5 where we can notice the sum of the risk corresponding to each step of LLDDOS 1.0 scenario for all hosts in the four subnets.
+
+V.CONCLUSION AND FUTURE WORK
+In this paper, we have presented a cloud based IDS, ACIDF, that provides autonomic and prediction capacities that enable it to work efficiently with cloud environments. We presented ACIDF architecture and we discussed the auto-response technique used as well as the prediction model using the HMM to predict attacks before they are obvious. Furthermore, we have introduced a new modulation approach for the alert severity. The proposed prediction model has successfully fired the early warning alerts before the launching of the LLDDoS1.0 attack by 39 minutes plus 37 seconds and 64 minutes plus 42 seconds before the detection phase starts. For future work, we plan to modify the HMM to build a Variable Order Markov Model, VMM, with a probabilistic suffix tree. The new approach is based on learning Variable order Markov Models over a finite alphabet . Such algorithms attempt to learn probabilistic finite state automata, which can model sequential data of considerable complexity that can be computed for each attack independently. The approach will be able not only to predict the progress of the attack but also to define the category of the predicted multistage attack.
+
+VI. ACKNOWLEDGMENT
+This work was made possible by NPRP grant # 09-778-2-299 from the Qatar National Research Fund (a member of Qatar Foundation). The statements made herein are solely the responsibility of the authors.
+
+Fig. 5. The top chart: Actual total assessed risk for LLDDOS 1.0. The bottom chart: The predicted risk using the proposed model. Fig. 5 describes the accuracy of the proposed prediction model. We can notice that, the break-ins step performed against Mill, Pascal, and Locke are clearly visible as peak of risk activity. The installation and launching of the DDoS tools also introduce a peak in the data, but the IP sweep and the Probe of live IP's are not distinguishable clearly from the remaining activity. The prediction model fire some alerts when the probability of being in the penetration state becomes higher than a threshold of 80%. In the beginning of the experiments, the system is in the healthy state (H) with 100% probability and other states are zero. If the probability of the Penetration state (P) is over 80%, an intrusion is expected to happen in the near future. As we mentioned before, the LLDDOS1.0 has 5 steps and takes about three hours. The first prediction is calculated at 1252 seconds, 248 seconds before the first IPsweep step, and the probability of P is 65.74%, higher than the normal case, but P is still under the threshold 80%. This means that there are not any fired alerts. Similarly, the same case happens with the second prediction that is calculated at 2858 seconds, 22 seconds before the second Probing step, and the probability of P is 68.13%, and it is still under the threshold 80%. The third prediction is calculated at 4278 seconds, 102 seconds before the attacker breaks in to Mill, Pascal, and Locke machines in third step, P is 81.96%. The fourth prediction was calculated at 5223 seconds. It happened 177 seconds before the fourth step with P equals to 80.04% and it happened 39 minutes plus 37 seconds before the fifth step. Thus, our controller component can automatically build the suitable response to mitigate the attack, even the administrator can manually apply a set of responses to deal with the attack. The green dash line in Fig. 5 (last line from the right side) refers to the 8160 seconds, the time when the IDSs installed in the Network start their detection process. The prediction model has successfully fired the early warning alerts before step three of the attack life time and 64 minutes plus 42 seconds before the detection phase.
+
+VII. REFERENCES
+[1] [2] Rebecca Bace and Peter Mell, "NIST Special Publication on Intrusion Detection Systems", NIST, 16 August 2001. Hisham A. Kholidy, Fabrizio Baiardi, Salim Hariri, et al., "A Hierarchical Cloud Intrusion Detection System: Design and Evaluation", in International Journal on Cloud Computing: Services and Architecture (IJCCSA), Vol.2, No.6, December 2012. Lawrence R. Rabiner (February 1989). "A tutorial on Hidden Markov Models and selected applications in speech recognition". Proceedings of the IEEE 77 (2): 257-286. doi:10.1109/5.18626. H. Debar, D. Curry, "The Intrusion Detection Message Exchange Format (IDMEF)", rfc4765, March 2007. Alireza Shameli-Sendi, Naser Ezzati-jivan, Masoume Jabbarifar, and Michel Dagenais, "Intrusion Response Systems: Survey and Taxonomy", IJCSNS International Journal of Computer Science and Network Security, VOL.12 No.1, January 2012. D. Yu, and D. A. Frincke, "Improving the quality of alerts and predicting intruder's next goal with Hidden Colored Petri -Net," Computer Networks, vol. 51, 2007, pp. 632-654. K. Haslum, M. E. G. Moe, and S. J. Knapskog, "Real time intrusion prevention and security analysis of networks using HMMs," 33rd IEEE Conf. on Local Computer Networks, Montreal, Canada, 2008. http://www.ossec.net/main/ Weir, J.; "Building a Debian\Snort based IDS", URL: http://www.snort.org/docs, 2011. Accessed November 28, 2011 Hisham A. Kholidy, Fabrizio Baiardi, Salim Hariri, "DDSGA: A Data-Driven Semi-Global Alignment Approach for Detecting Masquerade Attacks", in IEEE Transactions on Dependable and Secure Computing, accepted and in printing in May 2014. Chen, Q., Abdelwahed, S. and Erradi A., `An Autono mic Detection and Protection System for Denial of Service Attack', in Parallel and Distributed Computing and Systems 2012, Las Vegas, USA. http://www.alienvault.com/documentation/index.html Fei Gao; Jizhou Sun; Zunce Wei, "The prediction role of hidden Markov model in intrusion detection", in IEEE Canadian Conference on Electrical and Computer Engineering,pp.893,896 vol.2, May 2003. DARPA 2000 Intrusion Detection Scenario Specific Dataset. http://www.ll.mit.edu/mission/communications/cyber/CSTcorpora/ide val/data/2000data.html RealSecure intrusion detection system. http://www.iss.net
+
+[3] [4] [5]
+
+[6] [7] [8] [9] [10]
+
+[11] [12] [13] [14] [15]
+
+19
+
+

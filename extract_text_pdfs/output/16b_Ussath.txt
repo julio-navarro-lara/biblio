@@ -1,0 +1,795 @@
+Event Attribute Tainting: A New Approach for
+Attack Tracing and Event Correlation
+Martin Ussath, Feng Cheng, Christoph Meinel
+Hasso Plattner Institute (HPI)
+University of Potsdam, 14482, Potsdam, Germany
+Email: {martin.ussath, feng.cheng, christoph.meinel}@hpi.de
+Abstract—The number of revealed and analyzed attacks that
+use sophisticated and complex methods increased lately. Through
+the usage of such methods the attackers are able to evade existing
+security systems and prevent a comprehensive detection of the
+malicious activities. Therefore, it is often necessary to perform a
+manual investigation of complex attacks, to identify all steps and
+malicious activities that belong to an attack. One main objective
+of an investigation is to correlate existing events and reveal
+relations between different activities, to get a comprehensive
+overview of the attack. Due to the fact that the correlation is
+often done manually, this process is complex and time consuming.
+In this paper, we propose a new automated correlation
+approach that uses the tainting concept to identify related log
+events. The approach uses meaningful attributes as taint sources
+and a taint policy to propagate the taint to related events. For
+the identiﬁcation of the correlations, it is also possible to use
+meta-information sources to support the correlation process.
+Furthermore, the tainting based approach allows to visualize
+the correlation results in a taint graph, which simpliﬁes the
+traceability. We successfully evaluated the proposed approach
+with log events from a simulated attack where real world
+attack methods and tools were used. With the new approach
+it was possible to identify all events that recorded the malicious
+activities of the attacker and the created taint graph allowed
+a comprehensive retracing of the attack. Thus, the correlation
+approach can support investigations in an effective way, because
+it reduces the complexity of event correlation and the needed
+time.
+Index Terms—Event Attribute Tainting, Event Tainting, Attack
+Tracing, Event Correlation
+
+I. I NTRODUCTION
+The number of revealed and analyzed attacks that use
+sophisticated and complex methods increased lately. In most
+cases such attacks cannot be detected in a comprehensive way
+with the currently deployed security systems. One reason for
+this is that most detection systems are optimized for processing
+large amount of data and are therefore highly automated.
+This makes the detection of constantly changing and evolving
+attacks difﬁcult. Although these systems are able to identify
+individual characteristics of an attack, it is often necessary
+to perform an additional investigation of complex attacks to
+reveal all malicious activities. Such an investigation should
+reveal important details like the initial infection vector and all
+compromised accounts and systems.
+The investigation of an attack normally starts with single
+indicators or with accounts or systems that behave suspicious.
+c 2016 IEEE
+978-1-5090-0223-8/16/$31.00 
+
+Based on the available information various investigation steps
+are initiated to identify all malicious activities that belong to
+an attack. Log events are one fundamental information source
+during such investigations, because they record the activities
+of users and systems. Therefore, these events are used together
+with the initial indicators (e.g., IP address or user name) to
+trace malicious activities and to identify the different steps of
+an attack. It needs be considered that the analysis of events is
+an iterative process, therefore the analysis of log events can
+be very complex and time consuming.
+Although, different automated correlation approaches are
+available, in most cases different iterative investigations and
+search steps are performed in a manual fashion. The reason
+for this is that the existing approaches do not allow a comprehensive tracing of malicious activities and therefore they
+cannot support investigations in a comprehensive way.
+In this paper, we propose a new correlation approach that
+allows the tracing of malicious activities based on recorded
+log events. Our approach uses the general concept of tainting
+and applies it to event correlation. More precisely we taint
+different attributes of an event, which allows us to trace
+malicious activities, without requiring predeﬁned correlation
+rules. Through this approach it is possible to identify related events and provide relevant contextual information. The
+general shortcomings of the tainting concept also affect our
+approach of event attribute tainting. Therefore, different concepts need to be applied to the tainting algorithm to allow
+meaningful results. With a tainting based correlation approach
+the investigation of complex attacks can be improved, because
+the complexity of event analyses and the needed time can
+be reduced. This correlation approach is focused on attack
+investigation and tracing, whereby different characteristics and
+factors of the correlation algorithm are relevant.
+The remainder of the paper is structured as follows. In
+Section II we describe the work that is related to the proposed
+correlation approach. In the following section, we explain the
+general idea of the tainting based correlation approach and
+how it can support security investigations. Furthermore, we
+deﬁne a simpliﬁed tainting algorithm to illustrate the approach
+and an improved variant of the algorithm is also described in
+Section III. Afterwards, in Section IV we use the log events
+of a simulated attack to evaluate the proposed correlation
+approach. Finally, Section V concludes our work.
+
+2016 IEEE/IFIP Network Operations and Management Symposium (NOMS 2016): Mini-Conference
+
+509
+
+II. R ELATED W ORK
+A. Correlation
+With the help of correlation algorithms, it is possible to
+identify relations between different entities or objects. Such
+approaches are also used in the domain of event analysis. In
+the following we want to discuss different approaches that use
+correlation to aggregate general events or to identify related
+Intrusion Detection System (IDS) events.
+An increasing amount of log events, which are generated
+from various systems, make it necessary to correlate events
+to reduce the overall number of events and to improve the
+general overview. JECTOR [1] is a system that uses timing
+relationships of events to perform correlation. The approach
+tries to aggregate similar events that do not provide additional
+information for the analysis. Therewith the diagnosis and
+management of an environment can be improved with the
+help of the correlated events. For the tracing of attacks and
+the support of investigation activities it is not sufﬁcient to
+correlate only similar events. The reason for this is that
+attackers might use different IP addresses or wait a few hours
+to perform further malicious activities. This kind of behavior
+could probably not be correlated with the described approach
+and lead to an incomplete result.
+Furthermore, different correlation approaches were proposed [2], [3], [4], [5] to identify relations between IDS events.
+The main purpose of the used correlation algorithms is to
+reveal attacks that consist of multiple malicious activities. The
+overall objective and procedure of an attacker is most often
+only visible if many or all performed actions are correlated.
+A major requirement for these systems is that an IDS is
+able to detect most of the performed malicious activities and
+provide the corresponding events to the correlation system.
+If a signature-based or anomaly-based IDS is not able to
+detect a meaningful number of the malicious activities, the
+appropriate alerts are not created and the different correlation
+approaches cannot work. Especially for unknown or stealthy
+attacks it is not unlikely that they bypass existing IDS detection approaches. Another relevant prerequisite for these
+correlation systems is that different patterns or rules describe
+the possible correlation scenarios, for example with the help
+of the LAMBDA language [6].
+Due to the described characteristics of the correlation approaches they cannot be effectively used for the analysis of
+general log events to support the investigation and tracing of
+attacks. The main reason for this is that a substantial amount
+of information is required to deﬁne the IDS signatures and also
+the correlation rules. This detailed information is in most cases
+not available for attacks or malicious activities that require a
+more comprehensive investigation.
+B. Tainting
+The general approach of tainting is to propagate taint,
+according to a policy, from taint sources to taint sinks. With
+this concept it is possible to identify sinks that can be affected
+by taint sources. Tainting has different areas of application [7],
+
+510
+
+[8] and in this section we want to focus on the ﬁeld of code
+tainting. The purpose of analyzing code with the tainting approach is to identify potential security issues. Such issues may
+arise when it is possible to alter relevant memory locations,
+parameters or the control ﬂow with user deﬁned input. In [8]
+the Simple Intermediate Language (SIMPIL) is proposed to
+formalize the taint propagation and the authors state that their
+language is capable to express common languages like Java or
+assembly code. One main challenge is to deﬁne an appropriate
+taint policy that propagates the taint in a precise and correct
+way. A propagation of taint is called overtainting, if a value
+gets tainted although it is not related to a taint source. On
+the other hand, it is called undertainting, if a value is related
+to a taint source, but the policy does not lead to a tainting
+of this value. Different conditions require the adjustment of
+the taint propagation behavior of a policy, because also input
+sanitization and other facts should have an impact on the taint
+propagation.
+The TaintCheck [9] application tries to identify vulnerabilities within applications that allow the outbreak and spread
+of worms. The proposed concept uses tainting to analyze
+applications and check if a vulnerability can be used to
+perform an overwrite attack. The taint sources for this use case
+are all network packets that are processed by the application.
+If the taint propagation leads to a tainting of a relevant value
+(e.g., return addresses or function pointers) the application
+is considered as vulnerable. TaintCheck can reliably detect
+applications that allow the overwriting of relevant values with
+crafted network packets, which is required for the automatic
+spreading of worms. This approach does not rely on any static
+signature or something similar.
+Although the described research activities do not deal with
+the analysis and correlation of events, these works show
+possible use cases of tainting and inspired us to apply the
+tainting approach to log event analysis. To the best of our
+knowledge our approach is the ﬁrst that uses tainting of event
+attributes to correlate events and use them to trace attacks.
+III. E VENT ATTRIBUTE TAINTING
+A. Challenges for Investigations
+If an attacker is able to bypass existing security solutions
+and successfully compromise systems and accounts, it is necessary to initiate investigation activities. For a comprehensive
+investigation of an attack it is relevant to correlate log events
+and to trace malicious actions. Investigations most often start
+with single indicators and further details of the attack are
+normally not known. Currently, these single indicators are used
+by investigators to perform searches, for example in central
+Security Information and Event Management (SIEM) systems,
+to identify related events. Due to the fact that the results of
+the initial search will not reveal all malicious activities in a
+comprehensive way, further search requests will be performed.
+For these further searches not only the initial indicator is
+used, but also additional facts that could be extracted from
+the identiﬁed events of the ﬁrst search. This process will
+be repeated until all related events are identiﬁed. With this
+
+2016 IEEE/IFIP Network Operations and Management Symposium (NOMS 2016): Mini-Conference
+
+approach it is possible to trace the activities of an attacker,
+if they were recorded within log events and are related to
+the initial indicator. This mainly manually performed tracing
+of attacks is not only very costly but also leads to the loss of
+relevant details, because the search queries get more and more
+complex and the details of the relations between the different
+events are no longer visible. Therefore, we believe a tainting
+based correlation and tracing approach could support security
+investigations.
+B. Tainting Approach
+The proposed event attribute tainting approach correlates
+related events and traces the malicious activities of attackers
+to support investigation processes. Even if an attacker uses
+various IP addresses or user accounts to perform an attack, it
+is still possible to trace this if the corresponding log events
+are related through common characteristics. Therefore, this
+approach is able to provide a comprehensive overview of the
+malicious activities of an attacker.
+For the correlation and tracing of malicious activities it is
+important that all relevant actions are recorded and stored
+within events. The structure of the events as well as the
+semantic of the attributes need to be known by the correlation
+system. Furthermore, the events need to contain meaningful
+attributes that allow the reconstruction of the corresponding
+activity. Nevertheless, the events can only provide a relatively
+abstract view of the performed activity and do not provide all
+details. Therefore, only a limit amount of information can be
+used for the correlation, which leads to a certain inaccuracy.
+The tracing of malicious activities relies on the fact that
+a sufﬁcient number of events recorded the activities of an
+attacker and the relation between these events is traceable.
+If this is not the case, certain actions of an attacker cannot be
+revealed and this leads to an incomplete correlation result.
+The tainting approach uses the initial indicators of an
+investigation as taint sources. With the help of the initial taint
+sources it is possible to identify events that are directly related
+to the initial indicators. The identiﬁed events are then analyzed
+and according to the taint policy meaningful attributes are
+extracted and added to the set of taint sources. Afterwards,
+the updated set of taint sources is used again to identify
+related events. These events will be analyzed again to extract
+further event attributes that can be used as taint sources. These
+steps will be repeated until no additional taint sources can
+be identiﬁed. The taint propagation is mainly inﬂuenced by
+the used taint policies and therefore they need to be speciﬁed
+according to the analyzed events and the available attributes.
+With conditions the policies control the taint propagation and
+prevent the tainting of unrelated events. The taint policies
+describe the potential attribute relations in an abstract way
+and therefore they can be used for different scenarios.
+In contrast to tainting approaches for code analysis, the
+proposed event tainting approach does not utilize taint sinks
+for the analysis. It is most often not possible to deﬁne an
+event as taint sink that automatically indicates a malicious
+action. If such generic malicious events are known, they are
+
+probably already used within signatures of IDSs or other
+security systems. Therefore, the event tainting approach is used
+to correlate events that are related to the malicious indicators
+and only within the context of the related events it is possible
+to identify further malicious activities of an attacker. If the
+context of the other events is not considered during an analysis,
+the single events that recorded the malicious action might look
+benign.
+Furthermore, it is also relevant to consider overtainting and
+undertainting as relevant impact factors for the results of the
+event attribute tainting approach. In an overtainting scenario
+the taint policy adds imprecise attributes to the taint sources,
+which leads to a tainting of unrelated events. This behavior
+is comparable with an inaccurate signature that is used by a
+detection system and leads to false positives. On the other hand
+if the connection between related events is not clear enough or
+the tainting policy enforces too strict conditions, the taint based
+correlation will not work and will lead to an undertainting of
+events. As already mentioned, the taint policy is very important
+for the correct propagation of the taint. Nevertheless, it is an
+optimization issue to deﬁne the policies in such a way that
+the overtainting and undertainting rate can be minimized. In
+cases with a high overtainting or undertainting rate it might be
+reasonable to adjust the taint policies and restart the tainting
+process.
+In the following we will present a simpliﬁed tainting algorithm to explain the general idea of the event attribute tainting.
+Due to the simpliﬁcation, the algorithm has several shortcomings that we address in the improved tainting approach.
+C. Simpliﬁed Tainting Approach
+Algorithm 1 describes a simpliﬁed variant of the proposed event attribute tainting approach. This variant requires
+a list of events (event list) and a list of initial indicators
+(initial indicators) as input parameters. The single events
+of the event list need to have meaningful event attributes to
+allow a precise taint propagation.
+Algorithm 1 Simpliﬁed Tainting Algorithm
+1:
+2:
+3:
+4:
+5:
+6:
+7:
+8:
+9:
+10:
+11:
+12:
+13:
+14:
+15:
+16:
+17:
+18:
+19:
+20:
+21:
+22:
+
+taint sources = initial indicators
+old taint sources = initial indicators
+while taint sources not ∅ do
+clear tmp event list
+for all attribute in taint sources do
+tmp event list.add(ﬁnd all events in event list with attribute)
+end for
+clear taint sources
+for all event in tmp event list do
+if event not in tainted events then
+tainted events.add(event)
+end if
+clear tmp sources
+tmp sources.add(extract attributes from event)
+for all attribute in tmp sources do
+if attribute not in old taint sources then
+taint sources.add(attribute)
+old taint sources.add(attribute)
+end if
+end for
+end for
+end while
+
+The algorithm runs as long as new taint sources
+(taint sources) can be extracted from the tainted events.
+
+2016 IEEE/IFIP Network Operations and Management Symposium (NOMS 2016): Mini-Conference
+
+511
+
+To initialize the taint sources variable, the initial indicators
+(initial indicators) are used as taint sources for the ﬁrst
+iteration of the tainting algorithm. Each attribute (attribute)
+of the taint sources is used to search through the list of events
+and matching events are added to the temporary event list
+(tmp event list). Afterwards, the algorithm veriﬁes if the
+events of the temporary event list are in the set of tainted events
+(tainted events) or not. Only if the event is not already in the
+list, the algorithm adds the event to the set of tainted events.
+This approach prevents that one event gets added multiple
+times to the list of tainted events. In the next step the algorithm
+extracts all attributes from the events in the temporary list that
+can be used as taint sources for the next iteration of the algorithm. The taint policy deﬁnes which attributes are extracted
+and added to the temporary taint sources list (tmp sources).
+Furthermore, the simpliﬁed algorithm only adds attributes to
+the taint sources list (taint sources) that were not already
+used as taint sources in a previous iteration of the algorithm.
+This avoids redundant searches for the same attribute that
+cannot provide new untainted events as result.
+The output of the described algorithm is a list of tainted
+events (tainted events). All these events are somehow related to the initially provided indicators or the extracted
+taint sources. Through the simpliﬁcation of the algorithm
+some shortcomings arise that need to be considered. First
+of all, the algorithm does not preserve the attribute or the
+“parent” event that leads to the tainting of the different events.
+Therefore, it is not possible to reconstruct the precise relations
+between the different events in the tainted event list. This
+has also a negative impact on the understandability of the
+output. Furthermore, the usage of a simpliﬁed tainting policy
+inﬂuences the precision of the tainting algorithm. Due to the
+fact that only single attributes are extracted from the events
+and used as taint source, the search for matching events is
+not very precise. Additionally, the proposed algorithm does
+not combine multiple attributes to a more precise tainting
+source. The usage of imprecise tainting sources can lead to
+overtainting or undertainting. Another shortcoming of this
+simpliﬁed tainting algorithm is that it is not taken into account
+when two events are related through multiple taint sources. In
+such a case the relation between these events can be considered
+as closer.
+D. Improved Tainting Approach
+Due to the mentioned shortcomings of the simpliﬁed event
+tainting algorithm, this approach is only suitable for the
+correlation of events that have a clear connection with each
+other. For a more precise and comprehensive correlation of
+events the tainting based approach need to be improved. The
+main objective is to adjust the correlation approach in such
+a way that it uses similar methods and procedures as an
+investigator that performs a manual correlation.
+The simpliﬁed algorithm uses a binary taint label. In most
+cases such a strict differentiation is not possible, due to the fact
+that not all details of an activity are known and recorded within
+an event. This strict labeling might also lead to imprecise
+
+512
+
+results, because it is not possible to describe a potential but
+uncertain relation between events. If the algorithm chooses the
+incorrect option this would result in overtainting or undertainting of events and an imprecise correlation result. To overcome
+this shortcoming the improved approach uses taint labels from
+1 to 100 percent to express the strength of a relation between
+two events. This more ﬁne granular tainting also requires
+that the taint policy is able to rate the relation level of two
+events. Therefore, the taint policy needs to be extended in
+a way that allows the deﬁnition of taint labels based on the
+tainted attributes, which are present in both events. For our
+approach we assign every attribute (e.g., IP address or user
+agent) a signiﬁcance value that indicates how strong a relation
+of two events is when an attribute is contained in both events.
+Depending on the number of matching attributes the overall
+taint label is calculated.
+The improved algorithm does not only correlate events that
+have same or similar attributes, but it also uses available
+meta-information of the different event attributes to support
+the correlation process. With this additional information it is
+possible to reveal further relations. For example, passive DNS
+information can be used to support the correlation of different
+IP addresses and domains. It is not uncommon that attackers
+adjust or change their infrastructure, if domains or IP addresses
+get seized or blocked. In such cases it would be very unlikely
+to precisely correlate events before and after the change of the
+infrastructure without additional information that is not stored
+within the events. Nevertheless, it needs to be considered
+that the gathering and the utilization of additional information
+during the correlation process might have a signiﬁcant impact
+on the performance of the correlation algorithm. Therefore,
+only meta-information sources with meaningful information
+and a rapid response time should be used to support the
+correlation.
+Additionally, the simpliﬁed algorithm does not trace the
+facts that led to the correlation of two events. Therefore, the
+algorithm can only identify events that are somehow related,
+but the concrete reasons are not known. Due to this, the results
+of this simpliﬁed approach might not be easily understandable
+and veriﬁable, because of the missing details. To provide the
+relevant correlation details, the improved correlation algorithm
+traces all concrete relations of the different events to enhance
+the traceability of the correlation results. To achieve this, the
+algorithm stores the taint sources and the “parent” event that
+led to the tainting of a new event. In the correlation context
+the parent event is the event from which the corresponding
+taint source was extracted. With the help of this information
+the whole taint propagation process is transparent and can
+be veriﬁed. The improved algorithm uses a directed graph
+data structure to store the correlation results and all relevant
+details. The different nodes of the graph represent the tainted
+events and the edges between the nodes are used to describe
+the relations between the events with the corresponding taint
+sources, which were used during the taint propagation. The
+used graph structure can also be used to easily visualize the
+correlation results within a taint graph.
+
+2016 IEEE/IFIP Network Operations and Management Symposium (NOMS 2016): Mini-Conference
+
+IV. E VALUATION
+A. Approach
+For the evaluation of the proposed event attribute tainting
+approach we implemented a prototypical correlation system
+that utilizes the tainting based concept and some methods of
+the described improved tainting approach to correlate events.
+The system is written in Python and the normalized events,
+which should be correlated, are stored within a database. For
+the evaluation of the correlation approach we simulated a
+successful attack on a vulnerable web application. To show
+that our approach is also applicable in the real world, we
+simulated the attack with an existing attack tool that exploits
+a known vulnerability in the Struts framework. Furthermore,
+we also used different source IP addresses for the simulated
+attacker, because this makes the correlation of the different
+events more complex.
+The correlation systems requires the log events, the initial
+indicators and a taint policy to identify relations and trace an
+attack.
+B. Simulated Attack
+For the simulation of the attack we installed a Tomcat server
+and deployed an application that uses the Struts framework
+in version 2.3.15. This version of Struts is vulnerable to
+remote command execution (CVE-2013-2251) [10]. To exploit
+the Struts vulnerability we utilized an existing exploitation
+tool that is capable to leverage different vulnerabilities of
+the framework [11]. In the ﬁrst step, the simulated attacker
+gathers meta-information (e.g., active user and web path) about
+the target environment to prepare further steps of the attack.
+Afterwards, the attacker uses the vulnerability to upload a
+script that allows the upload of larger ﬁles via POST to
+the target server. This is necessary due to the fact that the
+exploitation is done via a GET parameter and a web server
+normally limits the size of the request URI. To get access to the
+internal network of the target, the simulated attacker uploads
+the reDuh [12], [13] server component to the web server to be
+able to tunnel into the internal environment. In the next step,
+the attacker conﬁgures and uses the tunneling tool.
+Furthermore, we also simulated a few benign users that visit
+the web application, to verify if our approach leads to overtainting and includes unrelated requests into the correlation
+results. All these activities were recorded within the access
+logs of the web server, which the correlation system utilizes
+to correlate the malicious activities and trace the attack.
+
+these parameters can be used to generically identify potential
+attacks against vulnerable Struts applications.
+The second prerequisite for our approach is a suitable taint
+policy that can be used to propagate the taint. Listing 1
+shows the policy that we utilized for our evaluation. This
+policy can be applied on normalized web server log events
+and uses the ﬁelds of the combined log format. The proof
+of concept correlation system expects a policy in the JSON
+format and uses the provided information not only for the
+taint propagation, but also for the creation of the taint graph.
+The signiﬁcance values of the event attributes deﬁne how
+close the relation between different events is, if these attributes
+match. For example an identical source IP address indicates
+a stronger relation than a matching user agent, because the
+user agent can be changed very easily to a widely used user
+agent, which might lead to overtainting. Afterwards, the policy
+deﬁnes the unconditional taint attributes, these attributes will
+be extracted from every tainted event and are used as taint
+sources regardless of other conditions. During the evaluation
+we identiﬁed that only the source IP address of a request
+can be used as a reliable taint source for the described use
+case. The other available attributes could not be used as single
+taint sources, because they are not unique enough to identify
+relations and therefore the usage of such attributes would lead
+to overtainting. Due to the fact that is not possible to perform
+a comprehensive correlation of events and trace an attack only
+based on the source IP address, the taint policy also deﬁnes
+conditional taint attributes. These attributes are only extracted
+from tainted events when the taint label of an event is equal or
+higher than speciﬁed for this attribute. For example the request
+resource, without parameters, is only extracted from an event
+and used as taint source if the taint label of the corresponding
+event is 50 or higher. This should ensure that these event
+attributes are only used to propagate the taint if the relation to
+the previous event is above the deﬁned threshold and therefore
+it can be assumed that the attribute is more characteristic for
+the activity than the attribute of another event with a lower
+taint label. The last part of the taint policy is used for the
+creation of the taint graph and speciﬁes the event attributes
+that are shown within the graph.
+Listing 1
+TAINTING POLICY
+{
+
+C. Correlation
+The tainting based correlation system requires one or multiple initial taint sources as a starting point for the correlation
+process. Due to the fact that the mentioned Struts vulnerability can be exploited by passing a specially-crafted GET
+parameter to the web application, the initial taint sources
+for the evaluation are ?redirect: and ?action:. These two
+parameters can be used to trigger the vulnerability and perform
+a remote command execution. This is also the reason why
+
+}
+
+"significance_value":
+{ "src_ip": 80,
+"user_agent": 20,
+"request_resource": 40
+},
+"taint_attributes":
+[ "src_ip"
+],
+"conditional_taint_attributes":
+{ "request_resource": 50,
+"user_agent": 60
+},
+"node_labels":
+[ "time_stamp", "src_ip", "request_resource",
+"status_code", "user_agent" ]
+
+Figure 1 shows the taint graph that was created by the
+prototypical correlation system based on the provided log
+events, the initial taint sources and the taint policy. To improve
+the readability of the graph we truncated all strings with more
+
+2016 IEEE/IFIP Network Operations and Management Symposium (NOMS 2016): Mini-Conference
+
+513
+
+root
+Taint Level: 40
+Taint Level: 40
+'request_resource': {"$regex": u"\?redirect:|\?action:"} 'request_resource': {"$regex": u"\?redirect:|\?action:"}
+
+08/Jul/2015:17:05:12 +0200
+192.168.0.10
+/struts2-blank/example/?redire[...]
+200
+* Mozilla/5.0 (compatible; Goo[...]
+
+Taint Level: 80
+'src_ip': '192.168.0.10'
+
+08/Jul/2015:17:09:21 +0200
+192.168.0.10
+/struts2-blank/index2.jsp?f=in[...]
+200
+Mozilla/5.0 (Windows NT 6.1; W[...]
+
+Taint Level: 80
+'src_ip': '192.168.0.10'
+
+08/Jul/2015:17:05:59 +0200
+192.168.0.10
+/struts2-blank/example/?redire[...]
+200
+* Mozilla/5.0 (compatible; Goo[...]
+
+08/Jul/2015:17:05:12 +0200
+192.168.0.10
+/struts2-blank/example/?redire[...]
+200
+* Mozilla/5.0 (compatible; Goo[...]
+
+Taint Level: 80
+'src_ip': '192.168.0.10'
+
+08/Jul/2015:17:09:47 +0200
+192.168.0.10
+/struts2-blank/index_bak.jsp
+200
+Mozilla/5.0 (Windows NT 6.1; W[...]
+
+08/Jul/2015:17:06:23 +0200
+192.168.0.10
+/struts2-blank/index2.jsp
+200
+Mozilla/5.0 (Windows NT 6.1; W[...]
+
+Taint Level: 40
+Taint Level: 40
+'request_resource': {"$regex": u"/struts2-blank/index_bak.jsp"} 'request_resource': {"$regex": u"/struts2-blank/index_bak.jsp"}
+
+08/Jul/2015:17:12:04 +0200
+192.168.0.101
+/struts2-blank/index_bak.jsp?a[...]
+200
+Java/1.8.0_45
+
+Taint Level: 40
+'request_resource': {"$regex": u"\?redirect:|\?action:"}
+
+...
+...
+/struts2-blank/index_bak.jsp?a[...]
+...
+...
+
+Taint Level: 40
+'request_resource': {"$regex": u"/struts2-blank/index_bak.jsp"}
+
+08/Jul/2015:17:12:13 +0200
+192.168.0.101
+/struts2-blank/index_bak.jsp?a[...]
+200
+Java/1.8.0_45
+
+Fig. 1. Taint graph of the simulated attack
+
+than 30 characters. With the utilized correlation approach it
+was possible to identify all relevant relations between the
+events that recorded the activities of the simulated attacker.
+Furthermore, it is possible with the correlation result to trace
+the attack and clearly reveals the different steps of it.
+At the beginning, the correlation system utilizes the initial
+taint sources (?redirect: and ?action:) to identify requests
+that use these GET parameters. As already mentioned, both
+parameters can be used to exploit the Struts 2 vulnerability.
+The initially provided taint sources lead to the tainting of three
+events, two of them belong to the meta-information gathering
+of the exploit tool and the third event recorded the upload of
+the additional upload script. After the identiﬁcation of these
+three events the correlation system taints these events and
+extracts the source IP address (192.168.0.10) as new taint
+source. Through this new taint source the system is able to
+identify three additional events that have a matching source
+IP address. These events reveal that the simulated attacker
+uploaded additional ﬁles (index2.jsp and index bak.jsp) to the
+web server and also veriﬁed the successful upload. A deeper
+analysis of the identiﬁed ﬁles would show that the index2.jsp
+ﬁle is a small upload script and the index bak.jsp ﬁle contains
+the reDuh tunneling server. Due to the high taint label of the
+newly tainted events the correlation system also extracts the
+conditional taint attributes from these events. In the last taint
+propagation step the taint source /struts2-blank/index bak.jsp
+reveals the connection to additional events with a different
+source IP address. The events with the source IP address
+192.168.0.101 recorded the usage of the reDuh tunneling tool.
+Due to the utilization of the reDuh tool many events were
+recorded by the web server, to ensure the readability of the
+graph only two concrete events are shown.
+The taint graph shows that the tainting based correlation
+approach could successfully identify all malicious activities
+of the simulated attacker, although the attacker changed the
+IP address. With the correlation approach it is possible to
+
+514
+
+identify apparently benign activities as malicious, because of
+the identiﬁed relations to other malicious events and the provided context. Furthermore, no benign requests were tainted
+and connected with the malicious activities. Due to the fact that
+the simulated attacker used techniques and methods that are
+common for such type of attacks, we believe that the tainting
+based correlation approach can be used to trace attacks in
+general and support investigations.
+V. C ONCLUSION
+In this paper, we presented a new automated correlation
+approach that can be used to identify relations between events
+and trace attacks based on recorded log events. The proposed
+approach utilizes the general concept of tainting and applies
+it to event correlation. Our approach only requires one or
+multiple initial taint sources and a taint policy to correlate
+events. It does not rely on any predeﬁned correlation rules
+or signatures like other approaches. Through a suitable taint
+policy, it can be ensured that the taint is propagated in a correct
+way and the correlation result is complete. Furthermore, the
+proposed improved tainting approach uses several methods
+like meta-information or the combination of taint sources to
+propagate the taint in a very price way and to reduce the
+risk of overtainting and undertainting. Thus, this approach
+uses similar methods and procedures as an investigator that
+performs a manual correlation of log events and therefore the
+results should be comparable.
+For the evaluation of our tainting based correlation system
+we simulated an attack with real world methods and tools.
+The results of the correlation show that our approach was
+able to identify all related events and trace all malicious
+activities of the simulated attacker. The created taint graph
+provides a comprehensive overview of all attack steps and
+allows an investigator to reconstruct the event relations, due to
+the provided context information. This shows that the proposed
+tainting based correlation can be used to trace malicious
+activities and support investigations.
+
+2016 IEEE/IFIP Network Operations and Management Symposium (NOMS 2016): Mini-Conference
+
+R EFERENCES
+[1] G. Liu, A. K. Mok, and E. J. Yang, “Composite Events for Network
+Event Correlation,” in Proceedings of the IFIP/IEEE International
+Symposium on Integrated Network Management (IM’99). IEEE, 1999,
+pp. 247–260.
+[2] P. Ning, Y. Cui, and D. S. Reeves, “Constructing Attack Scenarios
+through Correlation of Intrusion Alerts,” in Proceedings of the ACM
+Conference on Computer and Communications Security (CCS’02).
+ACM, 2002, pp. 245–254.
+[3] F. Cuppens and A. Miege, “Alert Correlation in a Cooperative Intrusion
+Detection Framework,” in Proceedings of the IEEE Symposium on
+Security and Privacy (S&P’02). IEEE, 2002, pp. 202–215.
+[4] C. Krügel, T. Toth, and C. Kerer, “Decentralized Event Correlation for
+Intrusion Detection,” in Proceeding of the International Conference on
+Information Security and Cryptology (ICISC’01). Springer, 2002, pp.
+114–131.
+[5] W. Li and S. Tian, “An ontology-based intrusion alerts correlation
+system,” Expert Systems with Applications, vol. 37, no. 10, pp. 7138–
+7146, 2010, Elsevier.
+[6] F. Cuppens and R. Ortalo, “Lambda: A Language to Model a Database
+for Detection of Attacks,” in Proceeding of the International Symposium
+on Recent Advances in Intrusion Detection (RAID’00). Springer, 2000,
+pp. 197–216.
+[7] J. Clause, W. Li, and A. Orso, “Dytan: A Generic Dynamic Taint
+Analysis Framework,” in Proceedings of the International Symposium on
+Software Testing and Analysis (ISSTA’07). ACM, 2007, pp. 196–206.
+[8] E. J. Schwartz, T. Avgerinos, and D. Brumley, “All You Ever Wanted to
+Know About Dynamic Taint Analysis and Forward Symbolic Execution
+(but might have been afraid to ask),” in Proceedings of the IEEE
+Symposium on Security and Privacy (S&P’10). IEEE, 2010, pp. 317–
+331.
+[9] J. Newsome and D. Song, “Dynamic Taint Analysis for Atomatic Detection, Analysis, and Signature Generation of Exploits on Commodity
+Software,” in Proceedings of the Annual Network and Distributed System
+Security Symposium (NDSS’05). Internet Society, 2005.
+[10] Apache Struts, “Struts Security Bulletin S2-016,” https://struts.apache.
+org/docs/s2-016.html, 2013.
+[11] N. Hayashi, “Chinese Underground Creates Tool Exploiting Apache
+Struts Vulnerability,” http://blog.trendmicro.com/trendlabs-securityintelligence/chinese-underground-creates-tool-exploiting-apache-strutsvulnerability/, Aug. 2013.
+[12] SensePost, “Pushing the Camel through the Eye of a Needle,” Black Hat
+USA, 2008.
+[13] ——, “reDuh,” https://sensepost.com/discover/tools/web-applications/
+reDuh/, Jul. 2008.
+
+2016 IEEE/IFIP Network Operations and Management Symposium (NOMS 2016): Mini-Conference
+
+515
+
+

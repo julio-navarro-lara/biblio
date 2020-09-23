@@ -1,0 +1,193 @@
+computers & security 27 (2008) 188­196
+
+available at www.sciencedirect.com
+
+journal homepage: www.elsevier.com/locate/cose
+
+Building network attack graph for alert causal correlation
+Shaojun Zhang*, Jianhua Li, Xiuzhen Chen, Lei Fan
+School of Information Security Engineering, Shanghai Jiaotong University, Shanghai 200240, China
+
+article info
+Article history: Received 14 November 2007 Accepted 28 May 2008 Keywords: Network security Attack graph Alert causal correlation Vulnerability Exploit Network connectivity Object-oriented Monotonic assumption
+
+abstract
+Most network administrators have got unpleasant experience of being overwhelmed by tremendous unstructured network security alerts produced by heterogeneous devices. To date, various approaches have been proposed to correlate security alerts, including the adoption of attack graphs to clarify their causal relationship. However, there still lacks an efficient and operational method to generate attack graphs tailored to alert causal correlation. In this paper, we propose a kind of ``one-step worst'' attack graph which can be built in polynomial time using an intuitive object-oriented method. Based on the graph, a principle is given out to correlate security alerts into scenarios. To prove its feasibility, we implemented a prototype system which can efficiently divide real-time alert streams into plausible attack scenarios. Ş 2008 Elsevier Ltd. All rights reserved.
+
+1.
+
+Introduction
+
+Nowadays network systems are playing an unprecedented vital role for most organizations. Meanwhile, security management has also evolved into an extremely important issue for network system administrators. As is well known, one of the most excruciating parts of the job is to read and comprehend a tremendous amount of security alerts continuously being produced by heterogeneous devices. Just like what a sage says, absolute brightness and absolute darkness are essentially same to people ­ nothing can be seen. It's not strange that in an ocean of unstructured alerts, network administrators are nearly blind to see anything useful. Alert causal correlation aims at correlating causal related security alerts into comprehensible attack scenarios. Through studying the scenarios which it reveals, administrators can understand better what is going on in their networks and make proper decisions to mitigate when necessary.
+
+To date, various forms of knowledge have been used to decide whether two alerts have any causal relationship. In this paper, we try to adopt a kind of ``one-step worst'' attack graph to represent causal knowledge. Unlike former works, our attack graph can be built in polynomial time using an intuitive object-oriented method. Based on the ``one-step worst'' attack graph, we further propose a principle to correlate alerts into attack scenarios. The correlation is mainly based on two factors: (i) the graph distance between two candidate alerts, and (ii) the time gap between them. The rest of this paper is organized as follows. Section 2 reviews related work. Section 3 describes the underlying network attack model and Section 4 gives out our objectoriented attack graph building method. Section 5 proposes the causal correlation principle and Section 6 gives out a proof of concept case. Section 7 introduces our prototype implementation. Section 8 concludes the paper.
+
+* Corresponding author. Tel.: ţ86 021 3420 5415. E-mail addresses: zshaojun@sjtu.edu.cn (S. Zhang), lijh888@sjtu.edu.cn (J. Li), chenxz@sjtu.edu.cn (X. Chen), fanlei@sjtu.edu.cn (L. Fan). 0167-4048/$ ­ see front matter Ş 2008 Elsevier Ltd. All rights reserved. doi:10.1016/j.cose.2008.05.005
+
+computers & security 27 (2008) 188­196
+
+189
+
+2.
+
+Related work
+
+An attack graph is a collection of scenarios showing how a malicious agent can compromise the integrity of a target system. It represents prior knowledge about a given network in terms of vulnerabilities, exploits, connectivity, etc. To date, various models and methods have been proposed to represent multi-step network attacks and generate attack graphs automatically. These models and methods can be roughly divided into two categories: security state enumeration and vulnerability/exploit dependency. The former includes the Model Checking (Ritchey and Ammann, 2000; Sheyner et al., 2002) approach and the NetSPA (Artz, 2002) system. And they all suffer severely from the scalability problem due to their state enumeration essence. The latter includes the TVA (Ritchey et al., 2002; Noel et al., 2003; Jajodia et al., 2004) approach and novel approaches proposed in Ammann et al. (2002) and Cuppens and Miege (2002). Benefiting from their monotonic assumption and the essence that they only record causal dependency, these approaches scale better with base computation growing as N6. To efficiently generate attack graphs, this paper extends the preliminary results reported in Ammann et al. (2002). Since the approach in Ammann et al. (2002) is not designed for alert causal correlation, the graph it builds does not exhaustively contain possible attack paths needed for correlation. This characteristic makes it infeasible to be directly adopted in alert causal correlation. So we manage to develop it into a novel attack graph which implicitly contains every possible attack path. Moreover, our graph can be built in an object-oriented method which is more intuitive and operational to implement. Causal correlation, as an important component of network alert correlation, has been studied intensively. In Cuppens and Miege (2002) and Ning et al. (2002), the approach to causal correlation is to define prior logic knowledge about alert dependencies. However, it does not consider network vulnerability, so it is unable to narrow down hypothesized attacks to ones that are truly relevant. In Noel et al. (2004) and Wang et al. (2004), an alert causal correlation method based on the graph distance between IDS alerts is proposed. Since the network attack graph is explicitly included in the model, the scenarios it builds are more veracious. However, the method only evaluates the graph distance between candidate alerts but neglects the time gap between them. As a result, a prior port-scan alert will be identically correlated to two posterior buffer-overflow ones that happen a minute later and a year later. To avoid this overly obscure scenario boundary, we propose a dualfactor rule in this paper to correlate alerts more credibly and to achieve a higher scenario resolution.
+
+a direction favoring the attacker. After a series of state transitions, the attacker eventually achieves his/her goal, e.g. gaining root privilege on a database machine. To model network multi-step attacks, several core components must be included:  Network configuration. It comprises network topology, network devices (mainly refer to routers and firewalls) with their filtering rules, computer hosts with their services, etc. Network configuration implies network connectivity of each two entities.  Privilege profile. A network privilege profile comprises the privilege set of the attacker (i.e. the collection of the privileges the attacker has on network devices and hosts) along with the privilege sets of each device and host (i.e. the collection of the privileges each entity has on the rest of entities).  Trust. Trust is a transitive relationship between entities. For example, if A has root privilege on B and C trusts B in root privilege; we can cognize that A has root privilege on C.  Vulnerability. Vulnerability is an important prerequisite of exploit execution. We categorize vulnerabilities into the ones initially existing on network entities and the ones dynamically implanted for later infiltration by the attacker.  Exploit. Exploits are the most basic actions an attacker can employ to change network state. Prerequisites of an exploit include: (i) privileges of the attacker on the source and target host, (ii) existence of certain vulnerabilities on the target, and (iii) network connectivity between the source and the target. Consequences of an exploit include: (i) escalated privileges on the target, (ii) introduction of new vulnerabilities on the target, (iii) additional network connectivity, and (iv) augment of the attacker knowledge set. In this paper, we assume that an execution of exploit will always trigger a corresponding alert on a certain security device.  Attacker goal. An attacker goal implies a compromised state of the network. A typical attacker goal is to shutdown some key network services or gain root privilege of a database machine.  Attacker knowledge. The knowledge of the attacker can promote or restrain the execution of some exploit. In the simplest way, attacker knowledge can be represented by a finite set of predicates (Ning et al., 2002) such as ``ExistHost(IP)''. It's worthwhile to note that we regard network connectivity relation as dynamic, i.e. the network connectivity will expand when filtering devices (e.g. routers or firewalls) are compromised by the attacker. Another significant difference between our model and former ones is that we assume that the attacker can initiatively implant vulnerabilities before exploiting them. Consequently, four infiltration procedures are defined as follows. In the first procedure (illustrated in Fig. 1), privilege profile is expanded due to the existence of some trusting relationships. For example, it is widely observed that negligent users sometimes keep their login account of another host in the remote-login clients they use. Or irresponsible administrators who save device login accounts in excel files and store them in their computer hard disks.
+
+3.
+
+Underlying attack model
+
+As is well known, a network intrusion is generally a complicated multi-step process, comprises basic actions that happen in different parts of the network, however, with certain relation. These actions cause network security state shifts in
+
+190
+
+computers & security 27 (2008) 188­196
+
+Fig. 1 ­ Infiltration procedure I.
+
+In the second procedure (Fig. 2), the attacker exploits some initially existing vulnerabilities under the given privilege profile and network connectivity. The consequence of the exploit may be an expanded privilege profile, additional knowledge, or achievement of the attacker goal. In the third procedure (Fig. 3), the attacker first implants new vulnerabilities in the target host under the given privilege profile and then exploits them. The consequence of the exploit may be an expanded privilege profile, additional knowledge, or achievement of the attacker goal. This procedure is a dynamic version of procedure II. In the forth procedure (Fig. 4), the attacker may directly achieve his/her goal under the given privilege profile. Or, if the attacker has compromised filtering devices, he/she may expand network connectivity. In Section 4, an algorithm is proposed to simulate network infiltration based on above four infiltration procedures.
+
+Fig. 3 ­ Infiltration procedure III.
+
+In this section, we propose an object-oriented version of the approach, with expanded ability to model dynamic elements of an infiltration. Most important of all, it implicitly records all possible attack paths by pointers and marks. As a result, it can be reliably used to correlate all causal related security alerts. First, we define four primary classes to model core elements of network security state: Attacker, Device, VulImplant and Exploit.  Attacker ź {Cap, Ck}. Denotes the state of the attacker, where Cap is the attack privilege set and Ck is the attacker knowledge set.  Entity ź {Cep, Ctr, Csvcs, Cvul, Cfltr}. Denotes the state of a network entity (i.e. router, firewall or host), where Cep is the entity privilege (on other entities) set, Ctr is the trust relation set, Cvul is the vulnerability set, Csvcs is the service set and Cfltr is the filtering rule set.  VulImplant ź {Cpre, VulID}. Denotes the implantation of a certain kind of vulnerability, where Cpre is the set of the prerequisites of the implantation and VulID is the identifier of the implanted vulnerability. VulImplant can be applied to any pair of state objects (att, etarget), where att is an instance of Attacker and etarget is an instance of Entity. Cpre involves att's privilege on etarget and the network connectivity between them. Once Cpre is met, VulID should be added as a new item to the Cvul field of etarget.  Exploit ź {Cpre, Ccon}. Denotes the execution of a certain kind of exploit, where Cpre is the set of the prerequisites of the exploit and Ccon is the consequence. Exploit can be applied to any triple of state objects (att, esource, etarget), where att is an instance of Attacker and esource and etarget are instances of Entity. Cpre mainly involves att's privilege on esource and etarget, vulnerabilities on them, connectivity between esource and etarget and certain attacker knowledge. Ccon mainly involves att's added privilege on etarget, service disablement
+
+4.
+
+Attack Graph Generation algorithm
+
+In Ammann et al. (2002), a creative approach is proposed to rescue the former state enumeration-based attack graph building methods from scalability problems. The approach is based on a monotonic assumption which means the attacker never relinquishes resources already gained in order to further advance the attack. However, the approach is not oriented to resolve security alert correlation problems since it doesn't exhaustively contain all attack paths especially where prerequisites of an early applied action are re-satisfied in another attack direction (i.e. from another attack path). That makes some attack path information permanently lost and cannot be deduced later when doing correlation. Furthermore, it is not an intuitive and operational one as it only employs graph vertexes as representation of fragmentary network configuration properties. Finally, it doesn't model some indispensable dynamic elements of the infiltration, such as vulnerability implantation and connectivity expansion.
+
+Fig. 2 ­ Infiltration procedure II.
+
+Fig. 4 ­ Infiltration procedure IV.
+
+computers & security 27 (2008) 188­196
+
+191
+
+or additional attacker knowledge gained via the exploit. Specially, in our realization, one instance of Exploit is defined to represent the action of disabling a network device's filtering policies, whose appliance will induce the addition of an ``all-pass'' filtering rule item to the Cfltr field of etarget. ii. Briefly, Attacker and Entity are classes which can be used in combination to denote network security states, while VulImplant and Exploit are classes denoting actions which can be applied to state objects. Items in the field sets of Attacker and Device objects can be divided into two types. The first type is items representing the initial condition of the network. They are initialized before the state evolvement. The second one is items added during the system evolution, as a result of infiltration actions. To record attack paths, we associate every item in the field sets with a mark set Cm which comprises marks indicating the cause of the item. Initially, all Cms are set to be {x(null, null, null )fresh}, indicating that the items are all caused by a general initializing exploit x(null, null, null ) and are all newly added (indicated by the superscript fresh flag). Now we can define the state evolution process, which is illustrated in Fig. 5. In the process, state objects are recursively evolving until termination condition is satisfied. In each cycle all possible malicious actions will be applied (that's why we call the evolvement ``one-step worst''). Sub-modules of the process are as follows. i. Privilege propagation. In this sub-module, the privilege of the current network state is fully propagated. Propagation can be caused by account mapping, e.g. A has an root account on B which is mapped to another user account on C, as a result A has an user account on iii.
+
+iv.
+
+v.
+
+Fig. 5 ­ State evolvement process.
+
+C. Propagation can also be caused by trust, e.g. A has the root privilege on B and C trusts B in the root privilege, as a result A also has the root privilege on C. Propagation ceases when no more privilege item can be added to Cdp fields of any state objects. Exploits execution. In this sub-module, all exploit objects, i.e. instances of Exploit class, are checked out and tried to be applied to the state objects. For each x(att, dsource, dtarget) whose prerequisites are satisfied, we do next step according to three situations. (a) All of the prerequisite items have no marks bound with a fresh flag, indicating that all of them are not newly added or re-satisfied, so the exploit must have been employed in former cycles and should not be employed again. (b) At least one of the prerequisite items has a mark with a fresh flag, and the flagged mark is the only mark the item has. That indicates that the item has never been added until the very last cycle, so the prerequisites of the exploit have never been totally satisfied. So x's consequences should be applied. (c) At least one of the prerequisite items has a mark with a fresh flag, but all of the flagged marks are not the only mark of the item, indicating that the flag marked items have been added before but re-satisfied in the very last cycle (or say the action is being triggered in a different direction). In this case, x's consequence should not be applied again, however, a backward pointer should be assigned later between current state and the former executed exploit to record this additional path. In a more complicated situation, prerequisites of x(att, esource, etarget) may not be totally satisfied because some vulnerability doesn't exist on the etarget. In that case, corresponding vulnerability object v should be checked out to see if v(att, etarget) can be applied. Connectivity analysis. To support prerequisite evaluation, we place an independent sub-module to analyze the connectivity between esource and etarget, iff connectivity prerequisite is included in the x.Cpre. Briefly, this module reads in a network topology file and filtering policies. And its output is the connectivity between any two requested entities. Principium of connectivity analysis is detailed in Artz (2002) and Mayer et al. (2000). Backward marking. In this sub-module, first all the former fresh flags are removed. Then for all the consequences of actions applied in this cycle, latest added or re-satisfied items are all marked with their causal actions with a fresh flag. For example, after exploit execution, att has gain root privilege on c which is one of the consequences of exploit x(att, b, c). So, a mark x(att, b, c)fresh is added into the mark set of the c root privilege item in att.Cap. This sub-step essentially establishes clues via which we can find causal actions of any newly added or re-satisfied item in the later graph analysis. Graph building. In this sub-module, first an instance staten (assume that we have performed n cycles) of class StateVertex is generated to record all the current network state information. Second, if an action applied in this cycle is triggered in the aforementioned situation (b) (i.e. it has not been triggered before) then an instance ak (assume that k Ŕ 1 actions have been applied afore) of class
+
+192
+
+computers & security 27 (2008) 188­196
+
+ActionVertex is generated to represent it. Meanwhile, a forward pointer is assigned to stateNŔ1 pointing to ak while another forward pointer is assigned to ak pointing to staten. If an action is triggered in the situation (c) (i.e. it has already been triggered before but now is triggered in a new direction), then a backward pointer is assigned between stateNŔ1 and the already existing aold representing the former appliance of the action. vi. Goal check. This sub-module checks whether any attack goal (pre-defined in the Goal Def File) can be achieved under current security state. Once an attack goal is achieved, an instance of class GoalVertex denoting the achievement is generated and attached to staten. vii. Termination check. This sub-module checks if network states are fully evolved and no further evolvement could occur. Concisely, once no forward pointer is assigned to staten, the procedure should be terminated. The final attack graph is like the one in Fig. 6. In Fig. 6, real lines are used to illustrate forward pointers and dotted lines to backward pointers. Instances of StateVertex are illustrated in cycles while ActionVertex in squares and GoalVertex in triangles. Definition 1. An attack graph is a tuple AG ź (S, A, G, Ef, Eb), where S is a set of StateVertex objects, A is a set of ActionVertex objects, G is a set of GoalVertex objects, Ef is a set of forward pointers and Eb is a set of backward pointers.
+
+exponential in the size of the gateway­zone graph. However, in the most common case, gateway­zone graph topology is a tree and the algorithm is linear in the size of graph vertexes.  Exploit execution and vulnerability implantation. Let E and V be the number of Exploit and VulImplant objects, respectively. Besides, we assume that the appliance of an action object only costs constant computation (it's reasonable since the prerequisites and consequences of an action can't be infinite). Then the computation of all actions count up to be N2 Â E Â V Â N where the last multiplied N represents the connectivity computation that might occur.  Other sub-modules have constant computation complexity, so their infection can be neglected. We assume the number of knowledge predicates to be K and that all the predicates are unitary. Then items of privilege, knowledge, vulnerability and ``all-pass'' filtering policy are upper bounded to be A ź N2 Â P ţ N2 Â K ţ N Â V ţ N. Under the monotonic assumption, the algorithm converges within at most A steps, thus the base computation of the whole state evolvement is A Â (N2 Â P ţ N2 Â E Â V Â N ), which is proportional to N5.
+
+5.
+
+Attack graph based causal correlation
+
+4.1.
+
+Complexity analysis
+
+Although in an object-oriented style, our approach still benefits from the monotonic assumption. Its base computation grows as N5. Here N is the total number of the devices plus the attacker. Sub-module computation complexity in one cycle is as follows:  Privilege propagation. If we divide user privileges on an entity into P levels, then the total privilege items may occur in state objects count up to N2P. Under the monotonic assumption, the propagation is done in at most those times.  Connectivity analysis. According to Mayer et al. (2000), the computation complexity of connectivity analysis can be
+
+In this section we propose an alert causal correlation method based on the former ``one-step worst'' attack graph. Network alerts produced by security devices typically contain attributes such as the time stamp, the event type, the address of the source and destination host, and so on. Our discussion does not depend on specific format of alerts, so we simply regard each alert as a relational tuple with a given schema, for example, with the schema (time stamp, event type, source IP, source Port, destination IP and destination Port). First, we denote the matching between alerts and action vertexes as a function Act() from the set of alerts Alt to the set of action vertexes A. When a new network alert is received, we look for its corresponding action vertex Act(altnew) in A. In case AG does not contain such vertex, altnew will be simply ignored, since the absence hints that the exploit is helpless to further the attack. After that, each elderly received alert should be matched with the new one to determine their causal correlation relation. Elder alerts can be stored either in memory or in database. It is worthwhile to note that queue graph (Wang et al., 2004) technique can be adopted in storing alerts to avoid sliding window limitation of the correlation algorithm. For an elder alert altold, the causal relation metric between altnew and altold mainly depends on their graph relation metric and temporal relation metric. Let Cg be the graph relation sub function and Ct be the temporal relation sub function, whose values all lie in the range of [0, 1], with a larger value representing a tighter causal relationship. The overall causal relation of any two candidate alerts is defined as: Cđaltnew ; altold Ţ ź Cg đaltnew ; altold ŢCt đaltnew ; altold Ţ
+
+Fig. 6 ­ ``One-step worst'' attack graph.
+
+As a product, value of C(altnew, altold) also falls into [0, 1]. Then the value is compared with a threshold Cmin assigned
+
+computers & security 27 (2008) 188­196
+
+193
+
+beforehand. Iff C(altnew, altold) > Cmin, altnew and altold should be correlated to one scenario.
+
+Let graph distance between two candidate alerts still be d, according to the queuing theory, probability of their time gap obeys Erlang distribution: f đtŢ ź l đltŢdŔ1 Ŕlt e đd Ŕ 1Ţ!
+
+5.1.
+
+Cg ­ graph relation sub function
+
+Let d be the attack graph distance between a pair of action vertexes < Act(altnew), Act(altold) >. The graph relation of the alerts is defined as: Cg đaltnew ; altold Ţ ź 1=d To calculate d, we use the inverse attack graph of AG, denoted as AGR: Definition 2. Given attack graph AG ź (S, A, G, Ef, Eb), its inverse attack graph AGR ź (S, A, G, ERf, ERb), here ERf and ERb are sets of reversed pointers of Ef, Eb: Č É Č É ERf ź < a;s > ja A; s S;< s; a > Ef W < s;a > js S; a A;< a;s > Ef ERb źf< a;s > jaA; sS;< s; a >Eb g Based on AGR, we can perform a breath-first search (BFS) starting from the action vertex a0 ź Act(altnew). Searched layers follow: Č  Ŕ É Á L1 ź Ađa0 Ţ ź a;đsSŢ; < a0 ; s > ERf WERb ; aMarksđs; a0 Ţ LN ź
+ai LNŔ1 Ađai Ţ
+
+For normalization, the value should be divided by its maximum: fmax ź đd Ŕ 1Ţ le1Ŕd đd Ŕ 1Ţ!
+dŔ1
+
+Ultimately the temporal relation function is: Ct đaltnew ; altold Ţ ź đltŢdŔ1 đd Ŕ 1Ţ
+dŔ1
+
+edŔltŔ1
+
+It should be noted here that we use a general l only for simplicity. In reality, different exploits can have different l. For example, zombie computers can be compromised and used very long time later as in DDoS attack. And experienced attackers sometimes purposely delay their intrusion steps to defeat alert correlation. However, it's still feasible to expand the method to be practical by signing different l to them. Meanwhile, conservatively, we can also reduce the infection of Ct by revising former definition of C into: C ź Cg đa ţ đ1 Ŕ aŢCt Ţ where constant a lies in the range of [0, 1] and can be adjusted by the end-users according to their different angst of ``slow attack'' deception.
+
+W
+
+Above assistant function Marks(s, a0, fresh) returns all the action vertexes whose corresponding exploits are in at least one mark set of some certain prerequisite items of a0 in state s. To avoid infinite search, we may assign a constant dmax as the maximum search depth. If Act(altold) is found in dth layer (d < dmax), then the search is stopped and d is returned as the graph distance. Otherwise a very large number representing infinite distance is assigned as the return value. It's worthwhile to note that Cg(altnew, altold) only needs to be pre-computed once for each attack graph, and then applied directly to the real-time alert stream processing.
+
+6.
+
+A proof of concept example
+
+5.2.
+
+Ct ­ temporal relation sub function
+
+In Dacier and Deswarte (1994), an example is given out as shown in Fig. 7. In the figure, nodes represent sets of privileges owned by the attacker, with arcs labeled by vulnerability classes. To generate the attack graph for the example, we assume that ``insider'' is the attacker and ``A'' is his/her goal. To improve the clarity of the figure, Xadmin and insider are, respectively, referred to as X and I. The generated attack graph is shown in Fig. 8:
+
+Besides graph distance, we think time gaps between incoming alerts should also be evaluated in causal correlation. For example, alt1 is an alert triggered by a prior port-scan exploit, while alt2 and alt3 are triggered by two posterior buffer-overflow exploits. The time gap between alt1 and alt2 is one minute while the time gap between alt1 and alt3 is one year. With time gap neglected, the two pairs will be identically correlated. However, it's obvious that the correlation of alt1 and alt2 is more plausible than the other pair since the time gap between them is more reasonable. So we put forward a simple method of measuring the plausibility of alert time gaps. The time spent by a hacker has the nature of a negative exponential distribution with parameter l (Chen et al., 2005): f đtŢ ź leŔlt Fig. 7 ­ Example of a privilege graph.
+
+194
+
+computers & security 27 (2008) 188­196
+
+Then we assume an incoming alert sequence: đ1; 0Ţ/đ2; 1:1Ţ/đ4; 1:9Ţ/đ3; 2:1Ţ/đ5; 3:2Ţ /đ7; 3:6Ţ/đ6; 4:0Ţ/đ3; 4:2Ţ Here each alert is in a form (type and time stamp). Given l ź 1, Cmin ź 0.1 and a ź 0, the correlated scenarios are: The arcs in Fig. 9 are labeled by the overall causal relation function value of each pair of correlated alerts. Through the figure we can observe that the initial alert sequence is plausibly divided into two attack scenarios. In the left one, the attacker directly aimed at achieving privilege set A, while in the right one his/her malicious behavior was more circuitous. So we can further suspect that there might be two attackers whose intrusion behavior overlapped. Or there is a single attacker who simultaneously loaded two attack sessions to complete his/her intrusion.
+
+Fig. 9 ­ Correlated alerts ­ example.
+
+7.
+
+Implementation
+
+To testify the feasibility of our approach, we have implemented a prototype system CONIPA (Correlation Oriented Network Intrusion Path Analyzer). The framework of CONIPA is shown in Fig. 10. Components in the dashed rectangle region are to generate the ``one-step worst'' attack graphs. Within which AGGC (Attack Graph Generation Center) is the core component. Its output is the attack graph while its input is composed of three parts: (i) the initial network configuration, comprising
+
+network topology and device filtering rules, (ii) OVAL (2007) reports generated by host embedded OVAL scanners and collected by a unified report collecting center, and (iii) EVDB (Exploit/VulImplant Database) comprising 398 Exploit entries extracted from Snort (2007) 2.4 rule files along with 132 VulImplant entries extracted from a detailed open vulnerability database OSVDB (2007). Besides, AGGC consults NCA (Network Connectivity Analyzer) whenever a network connectivity evaluation is needed. Our current implementation of NCA follows the Fang (Mayer et al., 2000) approach. Once an attack graph is generated, it is fed to CCC (Causal Correlation Center) as an alert correlation template. And then alerts can be imported to CCC to produce attack scenarios. In one experiment, we arranged five graduate students with extensive computer experience to attack an experimental environment with topology shown in Fig. 11. The attacker goal was assigned to gain the root privilege of the inner Linux workstation. Since our EVDB was still at its nai ¨ve age, we confined their attack actions to our analytical capability range by giving out a carefully selected exploit/vulnerability set (only comprising actions in current EVDB).
+
+Fig. 8 ­ Attack graph ­ example.
+
+Fig. 10 ­ CONIPA framework.
+
+computers & security 27 (2008) 188­196
+
+195
+
+Acknowledgements
+This work was supported in part by the National High Technology Research and Development Program of China under Grant No. 2007AA01Z473; the National Natural Science Foundation of China under Grant No. 60605019 and No. 60672068; Program for New Century Excellent Talents in University under Grant NCET-06-0393. The authors would also like to thank all the members of CONIPA project: Lin Liang, Yueguo Zhang, Wei Cai, Han Li and Qiyun Chen.
+
+references
+Fig. 11 ­ Topology of the experimental environment.
+Ammann P, Wijesekera D, Kaushik S. Scalable, graph-based network vulnerability analysis. In: Proceedings of ninth ACM conference on computer and communications security, Washington, DC, Nov 2002. Artz M. NetSPA, a network security planning architecture. M.S. thesis, Cambridge: Massachusetts Institute of Technology; May 2002. Chen X, Zheng Q, Guan X, et al. Multiple behavior information fusion based quantitative threat evaluation. Computers and Security 2005;24:218­31. Cuppens F, Miege A. Alert correlation in a cooperative intrusion detection framework. In: Proceedings of the 2002 IEEE symposium on security and privacy, May 2002. Dacier M, Deswarte Y. The privilege graph: an extension to the typed access martrix model. In: European symposium in computer security, Nov 1994. Jajodia S, Noel S, O'Berry B. Topological analysis of network attack vulnerability. In: Kumar V, Srivastava J, Lazarevic A, editors. Managing Cyber Threats: Issues, Approaches and Challenges. Kluwer Academic Publisher; 2004. Mayer A, Wool A, Elisha Z. Fang: a firewall analysis engine. In: Proceedings of the IEEE symposium on security and privacy, May 2000. Ning P, Cui Y, Reeves DS. Constructing attack scenarios through correlation of intrusion alerts. In: Proceedings of the ninth ACM conference on computer and communications security, Washington, DC, Nov 2002. Noel S, Jajodia S, O'Berry B, Jacobs M. Efficient minimum-cost network hardening via exploit dependency graphs. In: Proceedings of 19th annual computer security applications conference, Las Vegas, Nevada, Dec 2003. Noel S, Robertson E, Jajodia S. Correlating intrusion events and building attack scenarios through attack graph distances. In: Proceedings of the 20th annual computer security applications conference, 2004. Ritchey R, Ammann P. Using model checking to analyze network vulnerabilities. In: Proceedings of 2000 IEEE symposium on security and privacy, Oakland, California, 2000. Ritchey R, O'Berry B, Noel S. Representing TCP/IP connectivity for topological analysis of network security. In: Proceedings of 18th annual computer security applications conference, Las Vegas, Nevada, Dec 2002. Sheyner O, Haines J, Jha S, Lippmann R, Wing J. Automated generation and analysis of attack graphs. In: Proceedings of 2002 IEEE symposium on security and privacy, Oakland, California, 2002. http://www.snort.org, web page [accessed 18.10.07]. http://osvdb.org, web page [accessed 18.10.07]. http://oval.mitre.org, web page [accessed 18.10.07]. Wang L, Liu A, Jajodia S. An efficient and unified approach to correlating, hypothesizing, and predicting intrusion alerts. In: Proceedings of the 10th European symposium on research in computer security application conference, 2004.
+
+Generated ``one-step worst'' attack graph for the illustrated environment is made up of 6 state vertexes and 95 action vertexes. During three days, the testers loaded 54 attack sessions (in further analysis, 21 of which has real impact on the network), triggering 871 Snort IDS alerts. Since only 152 of the alerts had a match with the generated attack graph, the rest 719 were all eliminated for further analysis. We initially set CCC with Cmin ź 0.1, a ź 0.5 and assigned each actions object with different experiential ls. The refined 152 alerts were correlated into 35 attack scenarios. In careful comparison, we found that the discrepancy between the number of the correlated scenarios (35) and the number of the impact-imposing sessions (21) is mainly induced by the testers' deviation from our estimation of ls. As some of the testers are highly experienced, their time gap between certain sequential actions is much smaller than we had expected. Accordingly, the involved attack sessions are split into parts when being correlated. To resolve this problem, we are planning to adopt a low-pass signal filter (Noel et al., 2004) to mitigate that impact. We measured the performance of CONIPA on a 512 MB RAM windows 2003 host whose CPU is a 1.40 GHz Pentium processor. The result is quite satisfying. Generation of the attack graph only costs 131 seconds, and the alert causal correlation time cost is nearly negligible. Since our graph building algorithm is proven to have the compute complexity of N5 and correlation algorithm is straightforward, we are confident of its performance even in a more large-scale network and with a much aggressive alert stream.
+
+8.
+
+Conclusion
+
+In this paper, we have studied the causal correlation of network alerts. To represent the causal relationship knowledge, we adopt a kind of ``one-step worst'' attack graph that can be built in polynomial time using an intuitive object-oriented method. Based on the graph, we further propose a method to correlate network alerts into scenarios. And the correlation is based jointly on graph distance and time gap between candidate alerts. To testify the feasibility, we implemented a prototype system CONIPA, on which experiments were carried out to evaluate the efficiency of the algorithm.
+
+196
+
+computers & security 27 (2008) 188­196
+
+Shaojun Zhang received his B.S. and M.S. degrees in Communication Engineering from Shanghai Jiaotong University, in 2000 and 2003, respectively. Currently he is pursuing his Ph.D. degree at School of Electronic and Electric Engineering of Shanghai Jiaotong University, Shanghai, China. His research interests currently focus on network security management, situation awareness and intrusion detection. Jianhua Li is a professor in electronic engineering at School of Electronic and Electric Engineering of Shanghai Jiaotong University. He is also the executive vice president of School of Information Security Engineering of Shanghai Jiaotong
+
+University. His research interests include computer supported cooperative work and information security. Xiuzhen Chen is a prelector at School of Information Security Engineering of Shanghai Jiaotong University. Her research interests focus on network security assessment and intrusion detection. Lei Fan is an associate professor at School of Information Security Engineering of Shanghai Jiaotong University. His research interests focus on cryptology and network security management.
+
+

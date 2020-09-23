@@ -1,0 +1,633 @@
+Discovering Novel Multistage Attack Strategies
+Zhitang Li, Aifang Zhang, Dong Li, and Li Wang
+Computer Science and Technology Department, Huazhong University of Science and
+Technology, Wuhan, Hubei, 430074, China
+{leeying, frost}@mail.hust.edu.cn
+
+Abstract. In monitoring anomalous network activities, intrusion detection
+systems tend to generate a large amount of alerts, which greatly increase the
+workload of post-detection analysis and decision-making. A system to detect
+the ongoing attacks and predict the upcoming next step of a multistage attack in
+alert streams by using known attack patterns can effectively solve this problem.
+The complete, correct and up to date pattern rule of various network attack
+activities plays an important role in such a system. An approach based on
+sequential pattern mining technique to discover multistage attack activity
+patterns is efficient to reduce the labor to construct pattern rules. But in a
+dynamic network environment where novel attack strategies appear
+continuously, the novel approach that we propose to use incremental mining
+algorithm shows better capability to detect recently appeared attack. In order
+to improve the correctness of results and shorten the running time of the mining
+algorithms, the directed graph is presented to restrict the scope of data queried
+in mining phase, which is especially useful in incremental mining. Finally, we
+remove the unexpected results from mining by computing probabilistic score
+between successive steps in a multistage attack pattern. A series of experiments
+show the validity of the methods in this paper.
+Keywords: alert correlation, sequential pattern, multistage attack, incremental
+mining.
+
+1 Introduction
+In order to discover potential security threats in protected network, more and more
+security devices such as firewall, IDS and vulnerability scanner are deployed. These
+various devices in different locations can reduce false positives and false negatives
+resulting from dependence on single device. They also can support and supplement
+each other so that complicated multistage can be disclosed.
+However, with the growing deployment of these devices, the large volume of alerts
+gathered from these devices often overwhelm the administrator, and make it almost
+impossible to discover complicated multistage attacks in time. It is necessary to
+develop a real-time system to detect the ongoing attacks and predict the upcoming
+next step of a multistage attack, using known attack patterns. Although such a
+detection system effectively reduces the need for operation staff, it requires
+constructing and maintaining rule base. So it is a key mission to make sure that the
+pattern rule is correct, complete and up to date.
+R. Alhajj et al. (Eds.): ADMA 2007, LNAI 4632, pp. 45–56, 2007.
+© Springer-Verlag Berlin Heidelberg 2007
+
+46
+
+Z. Li et al.
+
+In this paper, a classical data mining algorithm is used to help us discover attack
+activity pattern, construct and maintain composite attack activity pattern base. It
+can overcome the highly dependent on knowledge of experts, time-consuming and
+error-prone drawbacks in previous approaches using manual analysis.
+Unfortunately, for a dynamic network environment where novel attack strategies
+appear continuously, the method shows a limited capability to detect the newlyappeared attack patterns. We can address the problem by presenting a novel
+approach using incremental mining algorithm to discover new composite attack
+activity patterns that appear recently.
+To trim away any data that we knew to be irrelevant before starting the mining
+activities, the directed graph is used to restrict the scope of data queried. We remove
+the unexpected results by computing relativity score. The two methods can improve
+the correctness of results and shorten the running time of the algorithm.
+The remainder of this paper is organized as follows. Section 2 discusses the related
+work. We propose to use the sequential pattern mining algorithm to discovery
+multistage attack patterns in Section 3. In Section 4, we briefly discuss how to update
+patterns using incremental mining. We present the directed graph and probabilistic
+correlation approaches to improve the running speed of mining algorithms and the
+correctness of results in Section 5. Finally, the paper is summarized and future work
+is pointed out in Section 6.
+
+2 Related Work
+IDS can report single-step attack activities, but can not discover complicated
+multistage attacks. In order to discover composite multistage attacks, approaches for
+alert correlation are proposed in many papers. They dedicate to disclose the logical
+association between network attack activities by analyzing their corresponding alerts.
+They are classified as fellows: pre-/post-condition method, aggregation method,
+intention-based method and model-based method.
+Ning et al.[1][2][3], Cuppens and Mi`ege [4][5][6] build alert correlation systems
+based on matching the pre-/post-conditions of individual alerts. The idea of this
+approach is that prior attack steps prepare for later ones. The correlation engine
+searches alert pairs that have a consequence and prerequisite matching. One challenge
+to this approach is that a new attack cannot be paired with any other attacks because
+its prerequisites and consequences are not defined. This approach is highly dependent
+on the priori knowledge and expert experience. It is also difficult to enumerate all
+possible matching conditions between attacks.
+Valdes et al. [7] propose a probabilistic-based approach to correlate security alerts
+by measuring and evaluating the similarities of alert attributes. They use a similarity
+metric to fuse alerts into meta-alerts to provide a higher-level view of the security
+state of the system. Alert aggregation is conducted by enhancing or relaxing the
+similarity requirements in some attribute fields. This method relies too much on the
+expert knowledge.
+
+Discovering Novel Multistage Attack Strategies
+
+47
+
+Ming Yuh Huang [8] proposes the method based on intrusion intention and
+intrusion strategy to detect and predict the composite attacks by analyzing the
+potential intention instead of the inherent logic of attack activities.
+Sheyner and J. W. Wing et al. [9] propose a model checking based technique to
+automatically construct attack graphs. Although it helps facilitate the task of defining
+attack graphs, it has the limitation of scalability especially for larger network and
+systems.
+In addition, In [10][11],Wenke Lee and Xinzhou Qin proposed a GCT-based and
+Bayesian-based correlation approach without the dependence of the prior knowledge
+of attack transition patterns. However, these methods are only suitable for discovering
+causal or statistical relationship between alerts.
+James J. and Ramakrishna[12] used Association rule mining algorithm Apriori to
+discover the casual relationships between an attacker and the combination of alerts
+generated in IDS as a result of their behavior in a network.
+All these approaches overcome the drawback of high dependence on knowledge of
+experts, time-consuming and error-prone in previous approaches with manual
+definition.
+Algorithm to discover frequent episodes in a single long sequence and its
+generalization can be found in [13]. Several algorithms were developed for the mining
+of sequential patterns [14][15]. The incremental update of sequential pattern is
+presented in [16][17].
+So in this paper, as in [18], we also use a classical sequential pattern mining
+algorithm, to discover attack behavior patterns, and provide the foundation for
+definition of patterns.
+The approach show degraded detection capability in a dynamic network
+environment where novel attack strategies appear continuously. To keep patterns up
+to date, we presented an incremental mining algorithm based on the GSP that can
+discover novel sequential patterns by only focus on the recent data sequence. The
+directed graph and Bayesian network are used to improve running speed of the
+algorithm and correctness of the results.
+
+3 Generating Pattern Rules
+Our motivating application are rule construction in the multistage composite attack
+detection system used for monitoring the protected network, where thousands of alerts
+accumulate daily; there can be hundreds of different alert types. Rule construction
+requires experts to identify problem patterns, a process that is time-consuming and
+error-prone. In this paper, we use GSP, an algorithm for discovering sequential
+patterns in data mining field, to discover multistage attack behavior patterns. The idea
+of this method comes from the observation that among all these intrusion threat, most
+are intended attacks and are of multiple steps taken by attackers with specific attack
+intents. Multistage attack strategy taken by the attacker usually has relatively fixed
+attack pattern and occurs in a confined time span.
+
+48
+
+Z. Li et al.
+
+3.1 Problem Statement
+We collect alerts from the different devices deployed in the protected network for a
+long time. All the alerts stored in database can be viewed as a global sequence of
+alerts sorted by ascending DetectTime timestamp. Sequences of alerts describe the
+behavior and actions of attackers. We can find out multistage attack strategies by
+analyzing this alert sequence. A sequential pattern is a collection of alerts that occur
+relatively close to each other in a given order frequently. Once such patterns are
+known, the rules can be produced for describing or predicting the behavior of the
+sequence of network attack.
+In order to discover correct and interesting patterns, the alerts need to be reduced
+by filtering background noise, aggregation, clustering, verifying and so on. In this
+way, a data set comprised of rich multistage attack alerts but few false alerts are
+gained. Therefore, the problem of mining attack activity patterns becomes to find out
+the frequent alert subsequences among the global alert sequence that are not less than
+the user-specified minimum frequency and complete in user-specified time span.
+3.2 Preparation for GSP
+The GSP algorithm is initially used for mining frequent sequential patterns in
+transaction database to discovery the customer purchase patterns. All the transactions
+of a customer that are sorted in time order is a customer sequence. The problem of
+mining sequential patterns is to find the maximal sequences among all customer
+sequences that have a certain user-specified minimum support. Each such maximal
+sequence represents a sequential pattern.
+For our database, there is only a single global alert sequence. So we have to
+modify the algorithm slightly to meet our requirement. Here the concept of time
+window is introduced to represent the time span between the first step and the last
+step of a multistage attack. It is based on our observation that most attackers
+complete their attacks in a certain time span. In this paper, we postulate that all
+multistage attacks finish in the time window, which is not perfect but can account
+for most situations.
+We divide the global alert sequence according to time window size. It leads to
+multiple candidate subsequences generated, and a subsequence is a series of alerts in
+the same time window. Since attack behavior occurrence time span is stochastic, the
+number of alerts in subsequence is variable. Our algorithm only focuses on the attack
+class and timestamp attributes in the alerts. Here we use respective attack classes
+instead of the alerts in order to omit the other concrete attributes and discovery
+generalized patterns. Note that all the attack classes are normalized before the
+algorithm executes. In order to run quickly, we map the attack classes to integer
+number.
+Table 1 shows a part of the global alert sequence with its DetectTime timestamp
+ascending. Table 2 illustrates the multiple subsequences generated by dividing the
+global alert sequence according to sliding time window size. To simplify the problem,
+we only list four subsequences.
+
+Discovering Novel Multistage Attack Strategies
+
+49
+
+Table 1. Part of global alert sequence
+Attack Class
+…
+7
+4
+5
+2
+3
+5
+…
+
+DetectTime
+…
+06-08-09-11:12:14
+06-08-09-11:13:18
+06-08-09-11:34:46
+06-08-09-11:34:46
+06-08-10-00:06:53
+06-08-10-00:12:47
+…
+
+Other attributes
+…
+…
+…
+…
+…
+…
+…
+…
+
+Table 2. Alert subsequences
+Subsequence id
+1
+2
+3
+4
+
+Attack class sequence
+<(7,5),2,6,4>
+<7,6,4,(6,5)>
+<7,2,6,4>
+<7,6,5>
+
+3.3 Using GSP to Discover Sequential Patterns
+The problem of mining attack behavior patterns transforms to mine the frequent
+attack class sequences from these candidate alert subsequences in database. These
+subsequences are taken as customer sequences in GSP. Consequently, GSP can
+execute in the same way as it does on transaction database.
+Table 3 illustrates the complete course of generating maximal sequence with
+support 40%. The results of GSP is {<7,2,6,4>, <7,6,5>, <4,5>}. Other sequences are
+deleted because they are subsequences included in <7,2,6,4>.
+Table 3. Generation of Maximal Sequence with support 40%
+Subsequence id
+<(7,5),2,6,4>
+<7,6,4,(6,5)>
+<7,2,6,4>
+<7,6,5>
+
+1-sequence
+<7> <2>
+<6> <4>
+<5>
+
+2-sequence
+<7,2>,<7,6>,<7,4>,
+<7,5>,<2,6>,<2,4>,
+<6,4>,<6,5>,<4,5>
+
+3-sequence
+<7,2,6 >,<7,2,4>,
+<7,6,4>,<7,6,5>,
+<2,6,4>
+
+4-sequence
+<7,2,6,4>
+
+In fact, not all maximal sequences found out here are correct and interesting. We
+have to analyze the results carefully and remove the illogical patterns. We discuss
+these in a later section in this paper. The results after removed can be transformed into
+rules automatically. In contrast with other approaches, the mining algorithm provides
+a means of reducing the amount of labor required to discover relationships between
+attack behaviors and define rules.
+
+50
+
+Z. Li et al.
+
+4 Incremental Mining
+Unfortunately, the real-time detection system using known attack patterns often
+shows degraded detection capability in a dynamic network environment where novel
+attack strategies often appear. The reason is that the rules can not be updated in time.
+The aim of this section is to address the challenge of how to update correlation rules
+in time, overcoming the limitation in other methods that can not discover novel attack
+strategies.
+4.1 Problem Statement
+The delay of pattern update results from the fact that GSP can only discover
+sequential patterns in historical data. Whereas, update involving in new attack type or
+new attack sequences is made to the alert database continuously and frequent reexecutions of the algorithm on the updated database are infeasible when the data
+sequence increases to a huge order of magnitude. On the other hand, any delay in
+updating the rule base could result in potentially undetected attacks. So we presented
+a novel method using an incremental mining algorithm that can discover novel
+sequential patterns by only focus on the recent data sequence.
+4.2 Incremental Update
+The algorithm is based on the sequential nature of data, and only focus on the updated
+data sequence. Let |DB| be the number of data sequences in the original database DB
+and min_sup be the minimum support. After some update of the database, new alerts
+are appended to DB. These alerts are also sorted by timestamp in the increment
+database db. UD is the updated database combining the whole data sequence from DB
+and db, UD = DB ∪db. Let
+
+S k DB be the set of all frequent k-sequences in DB,
+
+S k UD be the set of all frequent k-sequences in UD, and the set of all sequential
+DB
+
+UD
+
+patterns in DB and UD be S
+and S
+respectively.
+Assume that for each sequential pattern s in DB, its support count, denoted by
+
+Scount DB , is available. The support count can get easily by record it into another
+database or file during the running process of mining sequential pattern algorithm. For
+db, we also divide the data into multiple subsequences by time window size used in
+the pattern discovery section. Let |db| be the number of data sequences in the
+increment database db. Without loss of generality, with respect to the same minimum
+support min_sup, a sequence s is a frequent sequence in the updated database UD, if
+its support count
+
+ScountUD is greater than min_sup (total subsequences in UD).
+
+We can observe the changes that a sequential pattern s in
+in S
+
+S
+
+UD
+
+DB
+
+S DB might not be
+
+because of database update. On the other hand, a sequence s’ that is not in
+
+might turn out to be in S
+
+UD
+
+. Consequently, the problem of incremental update
+
+on sequential patterns is to find the new set
+
+S UD of frequent sequences in UD.
+
+Discovering Novel Multistage Attack Strategies
+
+51
+
+Different from customer transaction database, merge data sequence from DB and
+db is not needed, because there are no new alert appended to the old alert sequences in
+DB thanks to the sequential feature of alert data division. This makes the problem
+simple, and we can only use the second part of FASTUP algorithm [17] to discover
+new attack patterns.
+4.3 Discussion
+In contrast to re-mining, the incremental update algorithm which effectively utilizes
+discovered knowledge is the key to improve mining performance. By counting over
+appended data sequences instead of entire updated database in most cases, fast
+filtering patterns found in last mining and successive candidate sequence reductions
+together make efficient update on sequential patterns possible.
+In fact, in order to update rule base in time, we can also focus on the min_support
+on the db rather than UD. A sequence whose support count exceeds min_support×|db|
+is taken as a frequent pattern, then is considered to be added into rule base. Our
+method provides a means of reducing the amount of labor required to keep the rules
+current, at the same time significantly reducing the amount of time which elapses
+from the appearance of a new attack pattern to transformation to the corresponding
+rule in the real-time detection system. If the alerts arriving at the detection system
+match a predefined rule, an alarm is triggered and displayed on the console for
+inspection. Accordingly, network administrator can be aware of the threat as soon as
+possible and take deliberate action to prevent the target host of an attack from further
+compromise.
+
+5 Improvement
+Using the mining algorithm directly is often less efficient and correct, owing to the
+large volumes of data that required analysis. Sometimes, certain alerts in the overall
+sequence even are not related to one another. It was beneficial to trim away any data
+that we knew to be irrelevant before starting the mining activities. So in this paper we
+present directed graph to restrict the scope of query in mining algorithm.
+Because the mining algorithm only focus on the sequence and frequency of attack
+class, the result transforming to rules directly often come into being redundancy even
+errors, so we have to analyze the result further using probabilistic correlation.
+5.1 Directed Graph
+In order to facilitate a novel technique for filtering the alerts which must be analyze
+during the mining process, we generated a directed graph which modeled the alerts to
+be analyzed. Each entry in the alert database included both the source IP address and
+destination IP address. We deduced the direction of each potential attack from this
+information. We then generated a directed graph G = (V, E) such that each IP address
+was represented as a vertex in the graph, and each edge was represented by a detected
+alarm. The edge was drawn from the source IP address toward the destination IP
+address, corresponding to the direction of the alert.
+
+52
+
+Z. Li et al.
+
+With the directed graph drawn, we can easily identify the connected components in
+the graph. Only the alerts involving in the same connected component are likely to
+have the same intent. So we limit our each mining activity solely to alerts in the same
+connected component, exploring only relationships between alerts which could
+legitimately exist.
+The method is useful to improve the running speed of mining algorithm and the
+correctness of the result by removing the irrelevant alerts from consideration. It is
+especially efficient to restrict the scope of data queried by incremental update
+algorithm because the number of newly appended alerts is limited and they occur in a
+relatively shorter time span. We also observe that most of alerts in a short time span
+are always involved in limited hosts.
+If we were unable to safely remove significant numbers of rows from consideration
+by filtering on connected component, the time required for the mining algorithm to
+generate results grew rapidly. A side effect produced by this complication was the
+generation of a very large number of rules by the algorithm. This number of rules on
+its own is of limited value, as it does not solve the problem of limiting the amount of
+data which must be examined manually by operational staff. However, the vast
+majority of the time, the count of rules for a single network on a single day was below
+100.
+5.2 Probabilistic Correlation
+The patterns discovered by mining algorithm are not absolutely correct and interesting
+because the algorithm focuses only on the temporal and attack class constraints. And
+the frequent occurrences of certain alerts that may not be completely removed by preanalysis can also lead to generating improper patterns, which will result in the false
+alarms of real-time detection system. So we have to analyze the results carefully and
+remove the illogical patterns. For example, it is more rational that an exploit follows a
+probe than the other way round. Therefore, we can remove the obviously illogical
+sequence. However, we can not remove all improper sequences so easily because no
+more precise information can be used in the results of sequential patterns mining
+algorithm.
+For a pattern which is not obviously false, we need to search the candidate
+subsequences in the alert database which support it for detailed information. Then the
+pattern probability score is computed. Because the alerts have the same format with
+multiple attributes, we can define the appropriate similarity function for each
+attribute. Then the alert similarity is defined as the weighted sum of the attribute
+similarity. The weight values can be set empirically and tuned in practice. The alert
+similarity reveals the logical relationship between the two successive attack steps in a
+multistage attack sequence. The higher the score is, the more likely that they belong
+to the same attack sequence. The pattern probability score is the average of alert
+similarity in each candidate subsequence supporting the pattern.
+Only those patterns whose pattern probability score between each two successive
+steps exceeds a certain threshold value can be considered as rule and added into rule
+base. At the same time, the score is also recorded as a reference for match in real-time
+detection system.
+
+Discovering Novel Multistage Attack Strategies
+
+53
+
+6 Experiment
+To evaluate the effectiveness and validity of our method, we performed a series of
+experiments using DARPA 2000 benchmark repository, scenario-specific datasets
+[19] and live data collected from our network center. We describe and report our
+experiment results in this section.
+6.1 DARPA 2000 Experiment
+DARPA 2000 datasets consist of two intrusion scenarios, LLDDOS1.0 and
+LLDDOS2.0.2. Each dataset includes the network traffic collected from both the
+DMZ and the inside part of the evaluation network. LLDOS 1.0 contains a series of
+attacks in which an attacker scans for victim target, exploits vulnerability, illegally
+breaks in, sets up Trojan Mstream DDos software and finally launches DDOS attack.
+LLDOS 2.0.2 includes a similar sequence of attacks run by an attacker which is a
+little more sophisticated than the former one. The DARPA 1999 dataset contains 20
+days’ different attack traffics. And the two dataset share the same network topology.
+We used playback technique [19] to replay each of the LLDDOS1.0 and
+LLDDOS2.0.2 dataset 10 times separately and each time we replayed one-day attack
+traffic of DARPA1999 dataset simultaneously as the background attack traffics. We
+chose Snort V2.4.5, which is configured according to the network settings of
+DARPA2000 Evaluation. Among many features of the alerts generated by snort, we
+only preserve several essential ones: DetectTime time stamp, source and destination
+address, source and destination port, alert type.
+Then we gathered the alerts and stored them in the database sorting by ascending
+time order, then preprocessed by the alert aggregation and verification. We give the
+parameters with the minimum support 0.05 and attack sequence time window size 2
+hours.
+Using the alerts in database, we first executed the sequential pattern mining
+algorithm on the earliest 10% alerts. Then we executed incremental update algorithm
+on the following 20%. We repeated the process 9 times. Finally we find out that the
+incremental update algorithm gained the same results with sequential pattern
+algorithm, both of them discovered 41 patterns from the total 40 attack scenarios. 38
+of them are correct and 3 are false. This shows that the two methods can obtain
+identical results from the same alert dataset. However, the further analysis shows that
+the incremental update shows better capability in rapid rule generation. The table
+shows the number of the attack activity patterns each time the incremental update
+algorithm gained. We can find that most patterns can be found in the earliest 10% of
+data, and less and less can be added in the following parts. This is feasible because
+the main multistage attack traffics is mostly similar. Only the patterns whose support
+are lower than min_support were found in the following re-execution of the
+incremental update we they satisfied the min_support.
+Table 4. Attack Activity Patterns Gained by Incremental Update Algorithm
+Alert data
+Patterns
+
+10%
+32
+
+10%
+35
+
+10%
+37
+
+10%
+38
+
+10%
+38
+
+10%
+40
+
+10%
+40
+
+10%
+41
+
+10%
+41
+
+10%
+41
+
+54
+
+Z. Li et al.
+
+After the directed graph is introduced, the running time of sequential pattern
+mining algorithm decreases to 20% while the number of attack patterns discovered
+decreases to 39. This is rational because the number of alerts queried is reduced and
+the irrelative alerts are removed. Then we use probabilistic correlation to remove
+another one improper pattern.
+6.2 Live Network Experiment
+In order to valid the validity of the methods in real network environment, we deploy a
+honey-net to attract various attacks. We deliberately make some hosts in our lab
+network run a considerable amount of services with known vulnerabilities. We also
+deploy many security devices, such as Snort, Cisco Router, iptables, Cisco firewall
+etc. The topology of experiment network is shown in Figure 1.
+We gathered the alerts generated by security devices in the honey-net continuously
+and restarted incremental mining algorithm every 8 hours. During two-week
+experiment, 49 multistage attacks were launched randomly and 45 frequent patterns
+were found. The first day we gained 17 sequential pattern, and 9 in the second day.
+The number of new patterns decreased with time going. The reason is that the
+discovered patterns become more and the number of newly-appeared patterns might
+reduce. This is in accord with our observation that for a given network, most attack
+actions are similar unless a new type of attack occurs. As time goes on, the database
+become larger, running time of mining algorithm in section 3 become longer and
+frequent re-executions become more difficult. However, the performance of
+incremental update did not decrease obviously because it mainly explores the newly
+added data. In fact in a network which generates large number of alerts, months of
+data will make GSP run for quite a long time. The incremental mining algorithm is
+significantly valuable in the dynamic network, because it can efficiently shorten the
+time gap between the appearance of a novel attack pattern and generation of
+corresponding rule.
+
+Fig. 1. The network topology of experiment
+
+Discovering Novel Multistage Attack Strategies
+
+55
+
+7 Conclusion and Future Work
+The real-time detection system using known multistage attack patterns can help
+network administrator realize the state of protected network correctly and quickly.
+However, it is critical to insure the patterns are complete, correct, and up to date.
+Sequential pattern mining is a classical algorithm in data mining field, which is
+initially used to discover customer purchase patterns. In this paper, we introduce time
+window to divide the single long alert sequence into multiple subsequences and then
+use sequential pattern mining algorithm to search for attack patterns in alert stream.
+To adapt the dynamic network environment, at the same time to avoid wasting time in
+re-execution of mining algorithm, incremental mining is presented to find out new
+patterns. Both of the above methods reduce the time for rule generation. In order to
+get the correct and interesting patterns, directed graph and probabilistic correlation are
+presented, the former can restrict the scope of query by sequential mining algorithm
+while the latter can remove the illogical results. We evaluate our approaches using
+DARPA 2000 benchmark repository datasets and real data collected from our test
+network. The experiments show that our approach can effectively discover new and
+interesting attack patterns in reality.
+We will continue our research on multistage attack pattern discovery, with focus
+on complementary approaches that can be incorporated with the methods in this
+paper. We can also make progress to improve the correctness of result from pattern
+discovery.
+Acknowledgments. We would like to thank the anonymous reviewers for their
+valuable comments and suggestion.
+
+References
+1. Ning, P., Cui, Y., Reeves, D.S.: Constructing attack scenarios through correlation of
+intrusion alerts. In: Proceedings of the 9th ACM Conference on Computer and
+Communications Security, Washington, DC, November 18-22, 2002, pp. 18–22 (2002)
+2. Ning, P., Cui, Y., Reeves, D.S., Xu, D.: Techniques and tools for analyzing intrusion
+alerts. ACM Transactions on Information and System Security 7, 274 (2004)
+3. Ning, P., Xu, D.: Alert correlation through triggering events and common resources,
+Tucson, AZ (2004)
+4. Cuppens, F.: Managing alerts in multi-intrusion detection environment. In: Proceedings
+17th annual computer security applications conference, New Orleans (2001)
+5. Cuppens, F., Miège, A.: Alert correlation in a cooperative intrusion detection framework.
+In: Proceedings of the 2002 IEEE symposium on security and privacy, IEEE Computer
+Society Press, Los Alamitos (2002)
+6. Cuppens, F., Autrel, F., Mie‘ge, A., Benferhat, S.: Correlation in an intrusion detection
+process. In: SECI02. Proceedings SÉcurité des communications sur internet (2002)
+7. Valdes, A., Skinner, K.: Probabilistic alert correlation. In: Lee, W., Mé, L., Wespi, A.
+(eds.) RAID 2001. LNCS, vol. 2212, Springer, Heidelberg (2001)
+8. Hang, M.Y, Wicks, T.M.: A large-scale distributed intrusion detection framework based
+on attack strategy analysis. Computer network, 2465–2475 (1999)
+
+56
+
+Z. Li et al.
+
+9. Sheyner, O., Haines, J., Jha, S., Lippmann, R., Wing, J.M.: Automated generation and
+analysis of attack graphs. In: Proceedings of the 2002 IEEE Symposium on Security and
+Privacy, Oakland, CA, May 2002 (2002)
+10. Lee, W., Qin, X.: Statistical Causality Analysis of INFOSEC Alert Data. In: Vigna, G.,
+Krügel, C., Jonsson, E. (eds.) RAID 2003. LNCS, vol. 2820, Springer, Heidelberg (2003)
+11. Qin, X., Lee, W.: Discovering novel attack strategies from INFOSEC alerts. In: Sophia
+Antipolis, France (2004)
+12. Treinen, J.J., Thurimella, R.: A Framework for the Application of Association Rule
+Mining in Large Intrusion Detection Infrastructures. In: Zamboni, D., Kruegel, C. (eds.)
+RAID 2006. LNCS, vol. 4219, pp. 1–18. Springer, Heidelberg (2006)
+13. Mannila, H., Toivonen, H., Verkamo, A.I.: Discovering Frequent Episodes in Sequences.
+In: KDD’95. Proceedings of the First International Conference on Knowledge Discovery
+and Data Mining, Montreal, Canada, pp. 210–215 (1995)
+14. Srikant, R., Agrawal, R.: Mining Sequential Patterns: Generalizations and Performance
+Improvements. In: KDD’95. Advances in Database Technology –5th International
+Conference on Knowledge Discovery and Data Mining, Montreal, Canada, pp. 269–274
+(1995)
+15. Agrawal, R., Srikant, R.: Mining sequential patterns. In: Research Report RJ 9910, IBM
+Almaden Research Center, San Jose, California (October 1994)
+16. Masseglia, F., Poncelet, P., Teisseire, M.: Incremental mining of sequential patterns in
+large databases. Data Knowledge 46(1), 97–121 (2003)
+17. Lin, M.-Y., Lee, S.-Y.: Incremental Update on Sequential Patterns in Large Databases. In:
+ICTAI98. Proceedings of the 10th IEEE International Conference on Tools with Artificial
+Intelligence, Taipei, Taiwan, R.O.C, pp. 24–31 (1998)
+18. Wang, L., Li, Z.-t., Fan, J.: Learning attack strategies through attack sequence mining
+method. International Conference on Communication Technology (2006)
+19. MIT Lincoln Lab: DARPA Intrusion Detection Scenario Specific Data Sets (2000),
+http://www.ll.mit.edu/IST/ideval/data/2000/2000_data_index.html
+20. MIT Lincoln Lab: Tcpdump File Replay Utility. http://ideval.ll.mit.edu/IST/ideval/
+tools/tools_index.html
+
+

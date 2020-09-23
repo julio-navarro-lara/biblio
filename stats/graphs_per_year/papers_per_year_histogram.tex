@@ -1,0 +1,24 @@
+\documentclass{article}
+\usepackage{pgfplots}
+\usepackage{filecontents}
+\tikzset{>=latex}
+\pgfrealjobname{papers_per_year}
+\begin{document}
+\beginpgfgraphicnamed{papers_per_year_histogram}
+\begin{tikzpicture}
+\begin{axis}[ybar stacked,xlabel={Year},ylabel={Number of Papers},grid=major,every axis plot/.append style={ultra thick},/pgf/number format/.cd,use comma,1000 sep={}]
+\addplot coordinates
+{(2001,4) (2002,1) (2003,2) (2004,0) (2005,1) (2006,5) (2007,0) (2008,1) (2009,1) (2010,2) (2011,0) (2012,0) (2013,0) (2014,1) (2015,2) (2016,1) };
+\addplot coordinates
+{(2001,1) (2002,5) (2003,5) (2004,4) (2005,3) (2006,2) (2007,5) (2008,4) (2009,2) (2010,4) (2011,3) (2012,4) (2013,2) (2014,2) (2015,0) (2016,1) };
+\addplot coordinates
+{(2001,0) (2002,0) (2003,0) (2004,1) (2005,0) (2006,1) (2007,1) (2008,0) (2009,0) (2010,1) (2011,0) (2012,1) (2013,1) (2014,1) (2015,0) (2016,1) };
+\addplot coordinates
+{(2001,0) (2002,2) (2003,1) (2004,0) (2005,1) (2006,0) (2007,4) (2008,0) (2009,0) (2010,1) (2011,1) (2012,3) (2013,1) (2014,0) (2015,0) (2016,0) };
+\addplot coordinates
+{(2001,0) (2002,0) (2003,0) (2004,3) (2005,0) (2006,1) (2007,0) (2008,0) (2009,1) (2010,0) (2011,0) (2012,0) (2013,0) (2014,1) (2015,2) (2016,0) };
+\legend{Similarity-based,Sequence-based,Structural-based,Case-based,Mixed}
+\end{axis}
+\end{tikzpicture}
+\endpgfgraphicnamed
+\end{document}

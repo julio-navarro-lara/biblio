@@ -1,0 +1,224 @@
+A Novel Threat Prediction Framework for Network Security
+Sheng-Hui Chien1 and Cheng-Seen Ho2
+Department of Electronics Engineering, National Taiwan University of Science and Technology, No. 43, Section 4, KeeLung Rd., Taipei 106, Taiwan sh.chien886@gmail.com 2 Department of Information Technology and Communication, Tungnan University, No. 152, Section 3, PeiShen Rd., ShenKeng, New Taipei City 222, Taiwan shawncs.ho@gmail.com
+1
+
+Abstract. This paper introduces a novel threat prediction framework for network security. It starts by creating a network-specific attack plan, represented by colored Petri Nets (CPN), from reusable network security knowledge of attack profiles. The CPN-represented plan then allows us to generate a coverability tree for security situation assessment and attack scenario prediction. Exploit certainty degrees are finally introduced to indicate the likelihood of exploits being executed and are used to support the evaluation of threat scores for potential goals in the predicted attack scenarios. Our experiment shows the framework can make correct threat prediction about a multistage attack. With this, the network defender can have a better chance to take mitigation actions before the attacker fulfills his malicious intentions. Keywords: Colored Petri net, coverability tree, attack pattern, attack plan, network security situation assessment, threat prediction.
+
+1
+
+Introduction
+
+To improve security over the information asset, most networks have deployed security sensors to help uncover malicious attacks. However, the alerts generated from the security sensors post several problems. Noteworthily, they are isolated, have no common semantics, and to a very high percentage are false alerts. In order to really stop the network attackers from completing their malicious intentions, we need the capability of predicting threats, which is very challenging because of lack of complete attackers' behavior models. This paper aims to elaborate the framework by including some novel ingredients to successfully tackle the issue. We have proposed to use PA(primitive attack-) as a unified mechanism to solve the problems related to isolated alerts and lacking common alert semantics during alert correlation [1]. The PAs are organized into an attack class hierarchy (Figure 1) and re-used here as the input to the proposed framework. The proposed framework works as follows. First, a network-specific attack plan is automatically generated from attack profiles. Second, a coverability tree is automatically generated from the plan to support identification of potential attack scenarios.
+D. Zeng (Ed.): Advances in Information Technology and Industry Applications, LNEE 136, pp. 1­9. Š Springer-Verlag Berlin Heidelberg 2012 springerlink.com
+
+2
+
+S.-H. Chien and C.-S. Ho
+
+Finally, when the PAs are inputted, we make threat prediction according to the analysis of certainty degrees about the involved exploits in related attack scenarios. The organization of the paper is as follows. Section 2 briefly surveys the related works. Section 3 discusses how a CPN-represented network-specific attack plan can be automatically generated. Section 4 describes how coverability trees and exploit certainty degrees support threat prediction. Section 5 describes the architecture of the framework. Section 6 illustrates our experiment result on the threat prediction capability of the framework. Finally, Section 7 gives the conclusions.
+Host Identification Recon Sadmind Others R2R R2L L2R Others Account Alternation Unauthorized Access File Upload Malware Installation DoS Others
+
+Reconnaissance
+
+Network Attack
+
+Penetration
+
+Unauthorized Activity
+
+Fig. 1. Attack class hierarchy
+
+2
+
+Related Works
+
+There are lots of works influencing the design of our framework. Geib and Goldman [2] proposes to extend intrusion detection systems with a probabilistic model for plan recognition. Qin and Lee [3] converts an attack tree to a causal network and uses Bayesian approach to recognize and predict an attack plan. Wang et al. [4] proposes an intrusion alerts correlation and prediction approach. Yang et al. [5] applies information fusion to achieve situation awareness about multistage cyber attacks. Yu and Frincke [6] proposes HCPN (Hidden Colored Petri Nets) to support alert correlation. Two main differences of our framework with these approaches are: Our networkspecific attack plans are automatically constructed by integrating attack patterns under the guidance of generic attack plans, and we adopt CPN to represent the plans to support coverability tree analysis, which together with the knowledge of exploit certainty degrees, helps analyze and predict the threats for protection goals.
+
+3
+
+Network-Specific Attack Plans
+
+This section introduces attack profiles as the most important reusable network security knowledge and describes how they are used for automatically generating networkspecific attack plans. It also formally defines colored Petri nets to support the representation of the plans.
+
+A Novel Threat Prediction Framework for Network Security
+
+3
+
+3.1
+
+Attack Profiles
+
+The content of an attack profile includes a generic attack plan and related attack patterns. A generic attack plan is an abstract level representation of all possible multistage attack scenarios, while an attack pattern captures the knowledge of conducting one of the attack stages by the attacker. Figure 2(a) shows the structure of a generic attack plan represented by CPN. The circles in the graph represent attack states; i.e., attack pre-/post-conditions, and the vertical bars represent attack classes. On the other hand, an attack pattern (Figure 2(b), 2(c)) captures reusable security knowledge of a multistage attack. To facilitate the reuse of security knowledge in network-specific attack plan generation, attack patterns are categorized according to the transitions appearing in the generic attack plans. Therefore, once the pattern is instantiated, it can be anchored to the correct position.
+Gain user R2L L2R Init Reconnaissance Information R2R User unauthorized activity Gain root Root unauthorized activity
+
+{attacker, target}
+Goal
+
+{attacker, target}
+
+{attacker, target} Gain root
+
+Host exist
+
+Recon Vulnerable Sadmind Sadmind Sadmind root
+
+(a)
+
+DoS
+
+(c)
+
+Pattern Name: RPC Sadmind Root_01 Variable: target: {IP} Pre-condition: host exist Post-condition: gain root Vulnerability: CVE-1999-0977 Context: Solaris 2.5, 2.5.1, 2.6,7 Attack-pattern-CPN: CPN-id-sadmind_01 Mitigation: To apply ACLs of blocking access to ports 111/{tcp, udp} at your site's network perimeter, to install the patch and disable sadmind if you do not use it. Description: The sadmind RPC program can support distributed system administration operations remotely. A stack buffer overflow vulnerability of sadmind may be exploited by attackers to execute arbitrary instructions and gain root access. (b) Fig. 2. (a) CPN-represented generic attack plan (b) Attack pattern "RPC Sadmind Root_01" (c) Attack-pattern-CPN "CPN-id-sadmind_01"
+
+3.2
+
+Network-Specific Attack Plan Generation
+
+The automatic generation process of a network-specific attack plan involves three steps, namely, generic network attack plan composition, attack pattern matching, and attack plan integration. In the first step, we replace each sub-network with one generic attack plan. If there is any access path between two sub-networks, an arc will be added to connect the related generic attack plans, indicating that an attacker is capable of enforcing a stepping stone attack toward the latter sub-network after he has penetrated
+
+4
+
+S.-H. Chien and C.-S. Ho
+
+the former. The second step then singles out those attack patterns that can be applied to the protected network. The final step of the process is responsible for generating a network-specific attack plan from the generic network attack plan by integrating all the associated applicable attack patterns. 3.3 Colored Petri Nets
+
+A colored Petri net (CPN) [7, 8] is a formal and mathematical tool to model a concurrent system. It has popularly been applied in the network security literature [6]. Our framework adopts CPN to represent attack plans in order to support situation assessment, during which the token colors can be used to reflect how imminent a detected attack is and allow the framework to correctly recognize timely security situations. Figure 3 formally defines a CPN.
+Definition 2 CPN={, T, P, A, V, C, G, D}, where  is a set of colors, stands for a non-empty and finite number of data types; T is a set of transitions, T= {T1, T2,..., Tn}. Each transition can be enabled and fired to change system states; P is a set of places, P= {P1, P2,..., Pn}. Each place relates a condition, i.e., a network state; A is a set of arcs, A=A1 A2, where A1(P×T) is the set of pre-condition links, and A2 (T×P) is the set of post-condition links; V is a finite set of type variables such that Type(v) for all vV; C: P, a color set function that assigns a color set to a place; G: TExprv, a guard function that assigns a guard to a transition t such that tT: Type(G(t))=Boolean and Type(Var(G(t)))  ; and D: TExprv, a token processing function, responsible for color tokens generation after transition t fires. Fig. 3. Colored Petri Net (CPN)
+
+4
+
+Threat Prediction
+
+The capability of threat prediction of our framework is based on the analysis of network security situations, which in turn stems from the analysis of coverability trees derived from network-specific attack plans. This section describes how coverability trees and exploit certainty degrees are derived and how they support threat prediction. 4.1 Coverability Tree Generation
+
+Our coverability tree generation algorithm is adapted from [8], except we introduce two modifications. First, if the current `new' marking M is identical to another existent marking M', we will "tag M with Old_Of M'" to help enumerate attack scenarios. Second, the arc that links current marking M to new marking Mj will be tagged with the fired transition tj and a corresponding exploit certainty degree j (as exemplified in Table 1), which is derived as described in next subsection. A coverability tree can be viewed as the combination of all potential markings linked by the fired transitions.
+
+A Novel Threat Prediction Framework for Network Security
+
+5
+
+There may be more than one attack path starting from the initial marking to the goal markings. An example of coverability tree can be found in Figure 6 (Section 7).
+Table 1. Exploiot certainty degrees Exploits related to vulnerability Exploits not related to vulnerability Certainty Certainty Certainty AC metric E metric Linguistic term Degree,  Degree,  Degree,  high 0.25 unproven 0.67 certainty 1 medium 0.75 prove-of-concept 0.78 probable 0.85 low 0.85 functional 0.89 expected 0.75 high 1 fair 0.5 not defined 1 unlikely 0.25 improbable 0.15
+
+4.2
+
+Exploit Certainty Degrees Derivation
+
+The certainty degree of an exploit indicates how likely it can be successfully executed by the attacker given all required preconditions are satisfied. The Common Vulnerability Scoring System (CVSS) [9] has provided the standard security metrics to assess the vulnerabilities. Among the security metrics, Access Complexity (AC), a base metric, represents the intrinsic complexity of the attack required to exploit the vulnerability, while Exploitability (E), a time metric, represents the current state of an exploit or code availability. The National Vulnerability Database (NVD) already provides the AC metric for each vulnerability. The E metric can be decided by looking up the public security websites, e.g., Bugtraq. The AC metric has been used to specify the uncertainty for the attack structure of exploits in [10]. In this work, we enhance the semantics with E metrics. For the exploits related to software vulnerability, our framework defines their certainty degrees to be the product of the associated AC and E metrics. As to the exploits that are not related to software vulnerability, we leave their uncertainty degrees to be decided by the domain expert. Table 1 illustrates the exploit certainty degrees calculated from AC and E metrics as well as given by the domain expert. 4.3 Situation Assessment and Threat Prediction
+
+A security situation is a state of knowledge about how network resources have been compromised, which is what a marking in a coverability tree reveals. The goal situation is a situation that an adversary has attained his final malicious intention, i.e., a goal marking being reached. By recognizing the current situation to be a marking in a coverability tree, we can project attack scenarios and accordingly make proper threat prediction, to be detailed below. Note that "situation" and "marking" are used interchangeably in our framework, because they carry the same meaning. First, given a coverability tree, an attack scenario is a list of situations connected by arcs labeled with the associated transitions and certainty degrees. It can be easily
+
+6
+
+S.-H. Chien and C.-S. Ho
+
+discovered by any general tree traversal algorithm over the coverability tree. Let us define ASm to be the mth attack scenario that starts from initial situation M0 to goal situation Mn, i.e., ASm=M0(t0,0)M1,..,Mi(ti,i)Mi+1,..,(tn-1,n-1)Mn. Now, given Mi+1 to be the current marking inside ASm, we can project the subsequent attack scenario that may lead to Mn, the goal marking, to be ti+1ti+2...tn-1. In order to make threat prediction, we first define scenario completeness ratio mi by Formula (1), where |t i| stands for the number of transitions having been explored by the attacker and |ASm| represents the number of all transitions included in the scenario. Then, we define impact score kmi by Formula (2), where pr(gk) represents the prior probability of attack goal gk implied by goal marking Mn. kmi can be informally described as the threat degree on attack goal gk by the explored attack scenario t0t1...ti-1ti along attack scenario ASm. Finally, we can make threat prediction by calculating threat score kmi using Formula (3), which calculates the threat likelihood against attack goal gk by advancing the current situation to the goal situation. We use Formula (4) to define km0 to be the threat score for the initial situation.
+ mi = t
+kmi
+i
+
+ASm
+
+(1) (2)
+AS m
+
+= pr ( g k )   mi  i
+n -1
+
+ kmi =   kmi MAX(kji )     l j   l =i +1
+  km 0 =   pr ( g k ) 
+
+(3) (4)
+
+ pr ( g
+j
+
+j
+
+ )    l  l
+
+AS m
+
+5
+
+The Threat Prediction Framework
+
+Figure 4 illustrates the architecture of our framework. The major function of the offline operations part is responsible for generating network-specific attack plans. The on-line operations part comes into play as soon as a PA is detected, which means some alerts are recognized to be a primitive attack. Since we solely work on networkspecific attack plans in this and next sections, we will call them plans or attack plans for simplicity. Whenever a PA takes place, the situation assessment module will try to classify it into some attack class by looking up the attack class hierarchy. If the attack class matches a transition of the attack plan, the corresponding guard is triggered to decide if the transition can be fired. When the situation assessment module reports a newly generated marking, the situation prediction module goes to locate the position of the marking in the generated scenarios from the coverability tree. For each scenario with successful location of the marking, the module will predict subsequent attack scenarios, and calculate a corresponding threat score for each reachable goal marking. If the result satisfies a pre-set threat threshold, the module will generate an alarm accordingly.
+
+A Novel Threat Prediction Framework for Network Security
+Protection Goals Attack Plan Generation Network Specific Attack Plan Situated Attack Plan PAs Security Situation Assessment Security Situation Prediction Network Context
+
+7
+
+Experts Attack Pattern Construction Attack Classes Hierarchy
+
+Attack Scenarios Base
+
+Attack Profile
+
+Off line operation On line operation
+
+Predicted Situations
+
+Fig. 4. Our threat prediction framework
+
+6
+
+Experiments
+
+We designed and conducted an experiment to demonstrate the threat prediction capability of the framework. The experiment is based on the LLDOS 2000 dataset [11]. While constructing the attack plan, we deliberately set two protection goals, DDoS and Data theft, with the same prior probability 0.1. Figure 5 and Figure 6 shows the attack plan and coverability tree constructed for the experiment. Table 2 shows the experiment results of threat prediction for one of the victim hosts, Pascal. The experiment shows a shorter attack scenario usually gets a higher impact score given the same matched attacks. The threat threshold is pre-set to 0.3. This value can be adjusted according to the sensitivity requirement of the protected network. Note that the alarm of "Data theft" is issued very early, right after the attacker takes the first action, i.e., "IP sweep," on the victim. On the other hand, an attacker may run "account alternation" and "upload" the malware to the victim in order to launch a DDoS attack. Our framework will trigger the DDoS attack alarm after the account is alternated, which is shown at the last step where a token is placed in place DDoS.
+Account alternation Host Account compromised accessed DDoS agent installed DDoS
+
+DNS HInfo request Init IP sweep
+
+Host Vulnerable exist Sadmind Recon Sadmind Sadmind root
+
+Unauthorized DoS DDoS access agent interaction Account compromised Malware Backdoor Data Data File installed installed prepared theft added Gain root Export Upload Unauthorized Backdoor Get data2 access data file Get data1
+
+Fig. 5. Attack plan for the LLDOS dataset
+
+8
+
+S.-H. Chien and C.-S. Ho
+
+t1(1) M0 t0(0.85)
+
+M2
+
+t6(0.85) t4(0.75) M5
+
+M8 M11 t5(0.85) t5(0.85) M7 M10 t11(0.85) M12 t10 (0.85) M14 Lead_To Old_Of M16 M13 M15 t12(0.85)
+
+M1
+
+M3
+
+M4
+
+t2(0.85) t3(0.85) t8(0.75)
+
+t6(0.85) t7 (0.85) t9(0.75) t13(0.85) M6 M9
+
+Mn Mn
+
+Marking node Terminal node
+
+t0: IS, t1: DHR, t2:RS, t3:SR, t4: AA, t5: UA, t6: UF, t7: UA, t8: GD1, t9: B, t10: GD2, t11: DAI, t12: D, t13: ED
+
+Fig. 6. Coverability tree for the LLDOS attack plan Table 2. Threat prediction results for the LLDOS dataset Impact score,  Threat score,  Predicted scenario Data Data Data DDoS theft DDoS theft DDoS theft 1 M0:(1,0,0,0,0,0,0,0,0,0,0,0,0,0)T AS9 0 0 0.12 0.23 AS5 2 M1:(0,1,0,0,0,0,0,0,0,0,0,0,0,0) T AS4 0.009 0.017 0.13 0.46 AS0,1 3 M3:(0,0,1,0,0,0,0,0,0,0,0,0,0,0) T AS4 0.019 0.034 0.16 0.54 AS0,1 4 M4:(0,0,0,1,0,0,0,0,0,0,0,0,0,0) T AS4 0.028 0.051 0.18 0.64 AS0,1 5 M5:(0,0,0,0,1,0,1,0,0,0,0,0,0,0) T AS2,3 0.033 0.03 0.44 0.30 AS0,1 6 M7:(0,0,0,0,0,1,1,0,0,0,0,0,0,0) T AS2 0.047 0.043 0.52 0.35 AS0 7 M10:(0,0,0,0,0,1,0,1,0,0,0,0,0,0) T AS2 0.057 0.051 0.61 0.41 AS0 8 M12:(0,0,0,0,0,0,0,0,1,0,0,0,0,0) T AS2 0.066 0.060 0.72 0.48 AS0 9 M13:(0,0,0,0,0,0,0,0,0,1,0,0,0,0) T AS0 0.076 0.85 M15:(0,0,0,0,0,0,0,0,0,0,1,0,0,0) T 0.085 goal Attack:1. IP sweep; 2. Recon Sadmind; 3. Sadmind root; 4. Account alternation; 5. Unauthorized access; 6. Upload file; 7. Unauthorized access; 8. DDoS agent interaction; 9. DoS Predicted scenarios: {AS0: (t0, t2, t3, t4, t5, t6, t7, t11, t12), AS1: (t0, t2, t3, t4, t6, t5, t7, t11, t12), AS2: (t0, t2, t3, t4, t5, t6, t7, t9, t10, t13), AS3:( t0, t2, t3, t4, t6, t5, t7, t9, t10, t13), AS4: (t0, t2, t3, t8, t13), AS9: (t1, t2, t3, t8, t13), AS5: (t1, t2, t3, t4, t5, t6, t7, t11, t12)} Attack Current marking
+
+7
+
+Conclusions
+
+This paper proposes a novel threat prediction framework to promote security threat prediction accuracy. The contributions of the work are as follows. First, it offers a formal methodology for generation of network-specific attack plans from reusable network security knowledge. Second, it advocates the use of the colored Petri net formalism, which supports coverability tree analysis. Third, it employs exploit certainty degrees for evaluation of threat scores for security goals. Our experiment has demonstrated its effectiveness.
+
+A Novel Threat Prediction Framework for Network Security
+
+9
+
+References
+1. Chien, S.H., Chang, E.H., Yu, C.Y., Ho, C.S.: Attack Subplan-based Attack Scenario Correlation. In: The International Conference on Machine Learning and Cybernetics 2007, pp. 1881­1887. IEEE Press, Hong Kong (2007) 2. Geib, C.W., Goldman, R.P.: Plan Recognition in Intrusion Detection Systems. In: 2nd DARPA Information Survivability Conf. and Exposition (DISCEX II), vol. 1, pp. 46­55. IEEE Press, California (2001) 3. Qin, X., Lee, W.: Attack Plan Recognition and Prediction Using Causal Networks. In: 20th Annual Computer Security Applications Conference (ACSAC 2004), pp. 370­379. IEEE Press, Tucson (2004) 4. Wang, L., Liu, A., Jajodia, S.: Using Attack Graphs for Correlating, Hypothesizing and Predicting Intrusion Alerts. Computer Communications 29, 2917­2933 (2006) 5. Yang, S.J., Stotz, A., Holsopple, J., Sudit, M., Kuhl, M.: High Level Information Fusion for Tracking and Projection of Multistage Cyber Attacks. International Journal on Information Fusion 10(1), 107­121 (2009) 6. Yu, D., Frincke, D.: Improving the Quality of Alerts and Predicting Intruder's Next Goal with Hidden Colored Petri-Net. Computer Networks 51(3), 632­654 (2007) 7. Murata, T.: Petri Nets: Properties, Analysis and Applications. Proc. of the IEEE 77(4), 541­580 (1989) 8. Zurawski, P.R., Zhou, M.C.: Petri Nets and Industrial Applications: A Tutorial. IEEE Transactions on Industrial Electronics in Industrial Electronics 41(6), 567­583 (1994) 9. Mell, P., Scarfone, K., Romanosky, S.: A Complete Guide to the Common Vulnerability Scoring System Version 2.0, http://www.first.org/cvss/cvss-guide.pdf 10. Xie, P., Li, J.H., Ou, X., Liu, P., Levy, R.: Using Bayesian Networks for Cyber Security Analysis. In: 40th Annual IEEE/IFIP International Conference on Dependable Systems and Networks (DSN 2010), pp. 211­220. IEEE Press, Chicago (2010) 11. MIT Lincoln Lab. DARPA 2000 intrusion detection evaluation datasets, http://www.ll.mit.edu/mission/communications/ist/corpora/ ideval/data/2000data.html
+
+

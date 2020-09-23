@@ -1,0 +1,1603 @@
+Computer Communications 29 (2006) 2917–2933
+www.elsevier.com/locate/comcom
+
+Using attack graphs for correlating, hypothesizing, and
+predicting intrusion alerts
+Lingyu Wang *, Anyi Liu, Sushil Jajodia
+Center for Secure Information Systems, George Mason University, Fairfax, VA 22030-4444, USA
+Available online 25 April 2006
+
+Abstract
+To defend against multi-step intrusions in high-speed networks, eﬃcient algorithms are needed to correlate isolated alerts into
+attack scenarios. Existing correlation methods usually employ an in-memory index for fast searches among received alerts. With ﬁnite
+memory, the index can only be built on a limited number of alerts inside a sliding window. Knowing this fact, an attacker can prevent
+two attack steps from both falling into the sliding window by either passively delaying the second step or actively injecting bogus
+alerts between the two steps. In either case, the correlation eﬀort is defeated. In this paper, we ﬁrst address the above issue with a
+novel queue graph (QG) approach. Instead of searching all the received alerts for those that prepare for a new alert, we only search
+for the latest alert of each type. The correlation between the new alert and other alerts is implicitly represented using the temporal
+order between alerts. Consequently, our approach can correlate alerts that are arbitrarily far away, and it has a linear (in the number
+of alert types) time complexity and quadratic memory requirement. Then, we extend the basic QG approach to a uniﬁed method to
+hypothesize missing alerts and to predict future alerts. Finally, we propose a compact representation for the result of alert correlation.
+Empirical results show that our method can fulﬁll correlation tasks faster than an IDS can report alerts. Hence, the method is a promising solution for administrators to monitor and predict the progress of intrusions and thus to take appropriate countermeasures in a
+timely manner.
+ 2006 Elsevier B.V. All rights reserved.
+Keywords: Intrusion detection; Alert correlation; Vulnerability analysis; Intrusion prevention
+
+1. Introduction
+A network intrusion that is composed of multiple
+attacks preparing for each other can inﬁltrate a well-guarded network. Defending against such multi-step intrusions is
+important but challenging. It is usually impossible to
+respond to such intrusions based on isolated alerts corresponding to individual attack steps. The reason lies in the
+well-known impreciseness of Intrusion Detection Systems
+(IDSs). That is, alerts reported by IDSs are usually ﬁlled
+with false alerts that correspond to either normal traﬃc
+or failed attack attempts.
+To more eﬀectively defend against multi-step intrusions,
+isolated alerts need to be correlated into attack scenarios.
+*
+
+Corresponding author. Tel.: +1 703 993 3931.
+E-mail addresses: lwang3@gmu.edu (L. Wang),
+(A. Liu), jajodia@gmu.edu (S. Jajodia).
+
+aliu1@gmu.edu
+
+0140-3664/$ - see front matter  2006 Elsevier B.V. All rights reserved.
+doi:10.1016/j.comcom.2006.04.001
+
+Alerts can be correlated based on similar attributes (for
+example, the same destination hosts) and prior knowledge
+about alert types or corresponding vulnerabilities. Regardless of the diﬀerent knowledge used to decide whether an
+alert prepares for another, the following nested loop procedure is usually adopted. Each new alert searches all the previous alerts for those who prepare for it. For oﬀ-line
+applications with a ﬁxed set of alerts, such as computer
+forensics, the nested loop approach is a natural choice with
+reasonably good performance.
+However, the defense against multi-step intrusions in
+large-scale high-speed networks poses a new challenge to
+the nested loop approach. To correlate potentially intensive alerts, the search in alerts must be implemented using
+an in-memory index [21]. However, an index built on all the
+received alerts would quickly exhaust any ﬁnite memory.
+Hence, the index can only be maintained for those alerts
+that are close enough to the new alert, namely, those inside
+
+2918
+
+L. Wang et al. / Computer Communications 29 (2006) 2917–2933
+
+a sliding window. Unfortunately, an attacker aware of this
+fact can prevent two attack steps from both falling into
+the sliding window by either passively delaying the second
+step or actively injecting bogus alerts between the two
+steps. In either case, the correlation eﬀort is completely
+defeated.
+In this paper, we ﬁrst propose a novel queue graph
+approach to remove the above obstacle towards eﬃcient
+alert correlation. A queue graph only keeps in memory
+the latest alert matching each of the known exploits (that
+is, host-bound vulnerabilities). The correlation between a
+new alert and those in-memory alerts is explicitly recorded,
+whereas the correlation with other alerts is implicitly represented using the temporal order between alerts. Our
+approach has a linear time complexity and a quadratic
+memory requirement (both in the number of known
+exploits in the given network). Those are both independent
+of the number of received alerts, meaning the eﬃciency
+does not decrease over time. Our approach can correlate
+two alerts that are separated by arbitrarily many others.
+It is thus immune to deliberately slowed intrusions and
+injected bogus attacks.
+Our second contribution is a uniﬁed method for the
+correlation, hypothesis, and prediction of intrusion alerts.
+The method compares knowledge encoded in a queue
+graph with facts represented by correlated alerts. An
+inconsistency between the knowledge and the facts
+implies potential attacks missed by IDSs, whereas
+extending the facts in a consistent way with respect to
+the knowledge indicates potential future attacks. Empirical results indicate that our method can fulﬁll those tasks
+even faster than the IDS can report alerts. The proposed
+techniques thus provide a promising solution for administrators to monitor and predict the progress of intrusions, and thus to take appropriate countermeasures in
+a timely manner.
+Finally, we extend the preliminary results in [42] with a
+compact representation of the result graph. This compact
+representation removes all transitive edges and aggregates
+those alerts that are indistinguishable in terms of correlation. Consequently, the result graph contains no redundant
+information and becomes more perceptible. We modify the
+QG approach to support the compact representation.
+Unlike existing methods that take extra eﬀorts to compress
+a result graph, the modiﬁed QG approach is actually more
+eﬃcient in most cases. This extension is especially important in high-speed networks where potentially intensive
+attacks can lead to complex result graphs.
+The rest of this paper is organized as follows. The
+next section reviews related work. Section 3 states basic
+concepts and assumptions. Section 4 proposes the queue
+graph approach. Section 5 devises a uniﬁed method for
+alert correlation, hypothesis, and prediction. Section 6
+proposes a compact representation for the result graph.
+Section 7 gives empirical results. Finally, Section 8 concludes the paper. All the ﬁgures can be found at the
+end of the paper.
+
+2. Related work
+To reconstruct attack scenarios from isolated alerts,
+some correlation techniques employ prior knowledge about
+attack strategies [7,9,4,10,38] or alert dependencies
+[3,20,22]. Some techniques aggregate alerts with similar
+attributes [2,6,37,41] or statistical patterns [17,29]. Hybrid
+approaches combine diﬀerent techniques for better results
+[22,30,43]. Alert correlation techniques are also used for
+other purposes than analyzing multi-step intrusions, such
+as to relate alerts to the same thread of attacks [14]. The
+privacy issue of alert correlation has recently been investigated [44]. Alert correlation is employed to deal with insider attacks [32,31]. To our best knowledge, the limitation of
+the nested-loop approach, especially for correlating intensive alerts in high-speed networks, has not been addressed.
+Network vulnerability analysis enumerates potential
+attack sequences between ﬁxed initial conditions and
+attack goals [26,33,5,34,36,16,1,15,25,45,11]. To avoid
+potential combinatorial explosion in the number of attack
+sequences, we adopt a notation of attack graphs similar to
+that of [1,26]. However, we do not assume ﬁxed initial or
+goal conditions but let alerts to indicate the actual start
+and end of an intrusion. Eﬀorts in integrating information
+from diﬀerent sources include the formal model M2D2 [19]
+and the Bayesian network-based approach [46]. We adopt
+the vulnerability-centric approach to alert correlation [24]
+because it can eﬀectively ﬁlter out bogus alerts irrelevant
+to the network. However, the nested loop procedure is still
+used in [24].
+Attack scenarios broken by missed attacks are reassembled by clustering alerts with similar attributes [23], and
+those caused by incomplete knowledge are pieced together
+through statistical analyses [30,29]. Instead of repairing a
+broken scenario afterwards, our method can tolerate and
+hypothesize missed attacks at the same time of correlation.
+Real-Time detection of isolated alerts is studied in [18,28].
+Some products claim to support real-time analyses of
+alerts, such as the Tivoli Risk Manager [13]. Designed for
+a diﬀerent purpose, the RUSSEL language is similar to
+our approach in that the analysis of data only requires
+one-pass of processing [12].
+This paper extends the preliminary results reported in
+[42] as follows. First, we show that a result graph produced
+by the basic QG approach given in [42] still contains redundant information, such as transitive edges. The transitive
+edges can be removed to simplify a result graph without
+losing any information. Moreover, some alerts in a result
+graph are indistinguishable with respect to their relationship
+with others. Those alerts can thus be aggregated to make
+the result graph more perceptible. Second, we modify the
+basic QG approach such that it produces result graphs with
+all transitive edges removed and indistinguishable alerts
+aggregated. Unlike existing approaches that take extra
+eﬀorts to compress result graphs, the modiﬁed version of
+our QG approach not only produces more compact result
+graphs, but also is more eﬃcient in most cases.
+
+L. Wang et al. / Computer Communications 29 (2006) 2917–2933
+
+3. Preliminaries
+This section reviews relevant concepts and states our
+assumptions. Section 3.1 introduces attack graphs and Section 3.2 discusses intrusion alerts. Section 3.3 then indicates
+the limitations of the nested loop approach to motivate our
+study.
+3.1. Attack graph
+An attack graph represents prior knowledge about a given network in terms of vulnerabilities and connectivity
+[1,36]. An attack graph is a directed graph having two type
+of vertices, exploits and security conditions. Exploits are
+host-bound vulnerabilities. More precisely, an exploit,
+denoted as a triple (vul, src, dest), indicates that the vulnerability vul exists on the host dest and the two hosts src and
+dest are connected (src and dest may refer to the same host
+in a local exploitation). Security conditions refer to the network states required or implied by exploits, such as privilege levels or trusts. The interdependencies between
+exploits and security conditions form the edges of an attack
+graph. An edge from a security condition to an exploit indicates that the exploit cannot be executed until the security
+condition has been satisﬁed; an edge from an exploit to a
+security condition indicates that executing the exploit will
+satisfy the security condition.
+Example 3.1. Fig. 1 depicts part of an attack graph.
+Security conditions appear as ovals and exploits as
+rectangles. The edges indicate that the buﬀer overﬂow
+exploit can be executed only if the attacker can access the
+source host and the destination host has the vulnerable
+service.
+We assume attack graphs can be obtained with existing
+tools, such as the Topological Vulnerability Analysis
+(TVA) system [15], which can model 37,000 vulnerabilities
+taken from 24 information sources including X-Force,
+Bugtraq, CVE, CERT, Nessus, and Snort. We assume
+the attack graph can be placed in memory. For a given network, the size of an attack graph can usually be estimated
+and the required memory can be accordingly allocated.
+
+User privilege on host1
+
+Vulnerable Sadmind RPC service on host2
+
+Sadmind buffer overflow vulnerability
+host1 → host2
+
+Arbitrary code execution with
+root privileges on host2
+
+Fig. 1. An example of attack graph.
+
+2919
+
+Unlike in [36,33], we do not assume ﬁxed initial or goal
+conditions in an attack graph but let alerts to indicate
+the actual start and end of an intrusion. We do not assume
+external host addresses to be trustful and use wildcards to
+match them. This may cause false correlations when multiple attackers concurrently launch similar attacks while they
+do not intend to cooperate with each other.
+To simplify our discussion, we introduce some notations to formally denote attack graphs. Let E be the set
+of known exploits, and C be the set of relevant security
+conditions. Denote the require and imply relationship
+between exploits and security conditions as the relation
+Rr ˝ C · E and Ri ˝ E · C, respectively. An attack graph
+is the directed graph G(E [ C, Rr [ Ri). The prepare-for
+relationship between exploits, as captured by many alert
+correlation methods [3,20], is simply the composite relation Ri  Rr. We shall denote this composite relation using
+the symbol ﬁ.
+3.2. Intrusion alert
+Intrusion alerts reported by IDS sensors in a given network typically contain attributes like the type of events, the
+address of the source and destination host, the time stamp,
+and so on. Our discussion does not depend on speciﬁc format of alerts, so we simply regard each alert as a relational
+tuple with a given (usually implicit) schema. For example,
+with the schema (event type, source IP, destination IP, time
+stamp), an alert will have the form (RPC portmap sadmind
+request UDP, 202.77.162.213, 172.16.115.20, 03/0708:50:04.74612).
+A vulnerability-centric correlation approach matches
+alerts with exploits such that alerts can be correlated using
+the knowledge encoded in an attack graph [24]. To match
+alerts with exploits, the event type attributes of alerts need
+to be mapped to the vulnerability attributes of exploits
+using domain knowledge, such as the correspondence
+between Snort identiﬁers and Nessus identiﬁers [27]. For
+simplicity, we denote the matching between alerts and
+exploits as a function Exp () from the set of alerts A to
+the set of exploits E (in some cases an event type matches
+multiple vulnerabilities, which will be handled by creating
+a copy of alert for each matched exploit).
+The vulnerability-centric approach can mitigate the negative impact of disruptive alerts. For example, if the attacker blindly launches some Windows-speciﬁc attacks on
+UNIX machines, then the reported alerts will be ignored
+by the approach. On the other hand, the approach also
+has limitations in that relevant alerts do not always match
+exploits. For example, an ICMP PING matches no vulnerability, but it may signal the probing preparation for following attacks. Such relevant alerts can be identiﬁed
+based on attack graphs and the knowledge about alert
+types. We extend the concept of exploits to include alert
+types in the place of vulnerability attributes. Such special
+exploits are added to attack graphs and the function Exp
+is extended accordingly.
+
+2920
+
+L. Wang et al. / Computer Communications 29 (2006) 2917–2933
+
+Our methods critically depend on temporal characteristics of alerts, such the order of arrivals and timestamps. In
+practice, those characteristics are expected to exhibit much
+uncertainty due to various delays in hosts and network,
+especially when alerts are collected from multiple sensors
+at diﬀerent locations. We address such temporal impreciseness in more details in Section 4.3. We assume the clocks of
+IDS sensors are loosely synchronized with the correlation
+engine. This can be achieved in many diﬀerent ways
+depending on speciﬁc IDS systems. For example, Snort
+has built-in support of automatic time synchronization
+through the network time protocol (NTP) [35]. We leave
+the case where attackers may temper with the clocks as
+future work.
+
+correlation in high-speed networks, where performance is
+critical and attacks can be intensive. The problem is exacerbated by those attackers who are aware of the ongoing
+detection eﬀort. An attacker can employ the following slow
+attack to defeat alert correlation. More speciﬁcally, given
+an arbitrarily large window size k, for any two attacks that
+raise the correlated alerts ai and aj, the attacker can delay
+the second attack until at least k other alerts have been
+raised since ai, so j  i > k meaning ai and aj will not be correlated. Instead of passively awaiting, a smarter attacker
+can actively launch bogus attacks between the two real
+attack steps, so the condition j  i > k can be satisﬁed in
+a shorter time. The attacker can even script bogus attack
+sequences between the real attack steps, such that a
+deceived correlation engine will be kept busy in producing
+bogus attack scenarios, while the real intrusion will be
+advanced in peace of mind.
+
+3.3. The nested loop approach and its limitations
+A natural way to correlate alerts is to search all the
+received alerts for those who prepare for a new alert. This
+nested loop procedure is assumed by many correlation
+methods. The left side of Fig. 2 shows a sequence of alerts
+ascending in time, a0, a1, . . . , an. For each i = 1, 2, . . . , n,
+the approach searches a0, a1, . . . , ai-1 for those ajs that satisfy Exp (aj) ﬁ Exp (ai). However, this does not imply that
+ai must be compared to every aj (0 6 j 6 i  1), although it
+comprises a simple implementation of the search. The
+search for the alerts that prepare for ai can be optimized
+with an index on a0, a1, . . . , ai-1. After ai is processed, an
+entry corresponding to ai is inserted into the index. By
+maintaining such an index in memory, the nested loop
+approach can have a relatively good performance (for
+example, 65 k alerts can be processed in less than 1 s [21]).
+It is not always possible to have enough memory for
+indexing all the alerts. Hence, a sliding window approach
+comes to the rescue. That is, only the alerts close enough
+to the new alert are considered for correlation. As illustrated in the right side of Fig. 2, for the alert ai the search is
+only performed on ai-k, ai-k+1, . . . , ai-1, where k is a given
+window size determined by available memory. However,
+this sliding window approach leads to an unavoidable
+tradeoﬀ between the performance and the completeness
+of correlation. On one hand, the performance requires k
+to be small enough so the index ﬁts in memory. On the
+other hand, a smaller k means less alerts will be considered
+for correlation with the new alert, and thus the result may
+be incomplete as two related alerts may in fact be separated
+by more than k others.
+This tradeoﬀ between the performance and the
+completeness causes a more serious problem for real-time
+
+4. The queue graphs (QG) approach to correlating alerts
+This section proposes a novel Queue Graph (QG) data
+structure to remove the limitation of a nested loop
+approach. Section 4.1 makes a key observation. Section
+4.2 then introduces the QG data structure. Finally, Section
+4.3 deals with alerts with imprecise temporal
+characteristics.
+4.1. Implicit correlation and explicit correlation
+The key observation is that the correlation between
+alerts does not always need to be explicit. In Fig. 3, suppose
+the ﬁrst three alerts ai, aj, and ak all match the same exploit
+Exp (ak) (that is, their event types match the same vulnerability and they involve the same source and destination
+hosts); the alert ah matches another exploit Exp (ah);
+Exp (ak) prepares for Exp (ah). Hence, ai, aj, and ak should
+all be correlated with ah. However, if the correlation
+between ak and ah is explicitly recorded (shown as a solid
+line in the ﬁgure), then the correlation between aj and ah
+can be kept implicit (shown as a dotted-line). More precisely, the facts Exp (aj) = Exp (ak) and Exp (ak) ﬁ Exp (ah)
+time
+…
+
+ai
+
+…
+
+aj …
+
+ak
+
+…
+
+ai-1
+
+ai
+
+…
+
+an
+
+Fig. 3. Implicit and explicit correlation.
+time
+
+a0 a1
+
+…
+
+ai-k
+
+…
+
+ai-1
+
+ai …
+
+k
+
+search
+
+ah …
+
+Exp(ai) = Exp(aj) = Exp(ak)
+Exp(ak) → Exp(ah)
+
+time
+a0 a1
+
+…
+
+search
+
+Fig. 2. The nested loop approach with or without a sliding window.
+
+an
+
+L. Wang et al. / Computer Communications 29 (2006) 2917–2933
+
+jointly imply Exp (aj) ﬁ Exp (ah), and the facts that aj
+occurs before ak and ak occurs before ah jointly imply that
+aj must also occur before ah. Similar arguments apply to
+the correlation between ai and ah.
+To generalize the above observation, a new alert only
+needs to be explicitly correlated with the latest alert matching each exploit. Its correlation with other alerts matching
+the same exploit can be kept implicit with the temporal
+order (for example, aj occurs before ak and ak occurs before
+ah) and with the matching between alerts and exploits (for
+example, aj and ak match the same exploit). In the above
+case, if ak is indeed the latest alert matching Exp (ak), then
+only the correlation between ah and ak needs to be explicit.
+As we shall show shortly, keeping correlations implicit can
+signiﬁcantly reduce the complexity and memory requirement. Intuitively, for each exploit the correlation algorithm
+only needs to search backward for the ﬁrst (ak in the above
+case) alert matching that exploit. For the nested loop
+approach, however, the correlation is always explicit.
+Hence, the approach must unnecessarily search all the
+received alerts, as discussed in Section 3.3.
+4.2. Correlating alerts using queue graphs
+We design an in-memory data structure, called Queue
+Graph, to take advantage of the above observation about
+implicit correlation. A queue graph is an in-memory materialization of the given attack graph with enhanced features
+(the purpose of the features will be clear in the following
+sections). Each exploit is realized as a queue of length
+one, and each security condition as a variable.
+The realization of edges is a little more complicated.
+Starting from each exploit ei, a breadth-ﬁrst search
+(BFS) is performed in the attack graph by following
+the directed edges. For each edge encountered during
+the search, a forward pointer is created to connect the
+corresponding queue and variable. Similarly, another
+search is performed by following the directed edges in
+their reversed direction, and a backward pointer is created for each encountered edge. Later, we shall use the
+backward edges for correlation purposes and use the forward edges for prediction purposes.
+
+Attack Graph
+
+e2
+
+The two collections of pointers are then placed at a separate layer tailored to the queue that corresponds to the
+exploit ei. The reason for separating pointers into layers
+is as follows. A BFS always creates a tree (namely, the
+BFS tree), and hence later another BFS starting from the
+same queue can follow only the pointers at that layer. This
+later BFS will then be performed within a tree instead of a
+graph, reducing the complexity from quadratic to linear.
+We ﬁrst illustrate the concepts in Example 4.1.
+Example 4.1. In Fig. 4, from left to right are a given attack
+graph, the corresponding queues (shown as buckets) and
+variables (shown as texts), and the (both forward and
+backward) pointers at diﬀerent layers. Notice that the layer
+one pointers do not include those connecting v2 and Q3,
+because a BFS in the attack graph starting from e1 will
+reach c2 only once (either via e2 or via e3, but we assume e2
+in this example). The layer one pointers thus form a tree
+rooted at Q1.
+In Section 3.3, we discussed how a nested loop approach
+correlates alerts that prepare for each other. As a comparison, we now perform the same correlation using a queue
+graph (we shall discuss other correlation requirements in
+Section 5). Intuitively, we let the stream of alerts ﬂow
+through the queue graph, and at the same time we collect
+correlation results by searching the queue graph. More speciﬁcally, each incoming alert is ﬁrst matched with an
+exploit and placed in the corresponding queue. Then,
+because the length of each queue is one, a non-empty queue
+must dequeue the current alert before it can enqueue a new
+alert.
+During this process, the results of correlation are collected as a directed graph, namely, the result graph. First, each
+new alert is recorded as a vertex in the result graph. Second, when a new alert forces an old alert to be dequeued,
+a directed edge between the two alerts is added into the
+result graph, which records the temporal order between
+the two alerts and the fact that they both match the same
+exploit. Third, after each new alert is enqueued, a search
+starts from the queue and follows two consecutive backward pointers; for each non-empty queue encountered during the search, a directed edge from the alert in that queue
+
+Layer 1
+Pointers
+
+Queues, Variables
+
+c2
+
+v2
+
+e3
+
+Q2
+
+c1
+
+v1
+
+e1
+
+Q1
+
+Layer 2
+Pointers
+
+v2
+
+Q3
+
+2921
+
+v2
+
+Q3
+
+Q2
+
+Layer 3
+Pointers
+v2
+
+Q3
+
+Q2
+
+v1
+
+v1
+
+v1
+
+Q1
+
+Q1
+
+Q1
+
+Fig. 4. An example queue graph.
+
+2922
+
+L. Wang et al. / Computer Communications 29 (2006) 2917–2933
+
+Fig. 5. A procedure for correlating alerts with queue graphs.
+
+to the new alert is added into the result graph. This is illustrated in Example 4.2.
+Example 4.2. Consider correlating the four alerts ai, aj,
+ak, and ah in Fig. 3 with the queue graph given in Fig. 4,
+and suppose Exp (ah) = e1, Exp (ak) = e2, and no other
+alerts match e1 or e2 besides ai, aj, ak, and ah. First,
+when ai arrives, it is placed in the empty queue Q2.
+Then, aj forces ai to be dequeued from Q2, and a
+directed edge (ai, aj) in the result graph records the facts
+that ai is before aj and they both match e2. Similarly, ak
+replaces aj in Q2, and a directed edge (aj, ak) is recorded.
+Finally, ah arrives and occupies Q1, a search starting
+from Q1 and following two layer one backward pointers
+will ﬁnd the alert ak in Q2. Hence, a directed edge (ak, ah)
+records the only explicit correlation.
+Deﬁnition 1. Let G (E [ C, Rr [ Ri) be an attack graph,
+where
+E = {ei j 1 6 i 6 n},
+C = {ci j 1 6 i 6 m},
+Rr ˝ C · E, and Ri ˝ E · C.
+• For k = 1, 2, . . . , n,
+[•] use BFSR (k) to denote the set of edges visited by a
+breadth-ﬁrst search in G (E [ C, Rr [ Ri) starting
+from ek, and
+[•] use BFS (k) for the set of edges visited by a breadth1
+ﬁrst search in GðE [ C; R1
+r [ Ri Þ staring from ek,
+1
+1
+where Rr and Ri are the inverse relations.
+• The queue graph Qg is a data structure with the following
+components:
+[•] Q ¼ fQi j 1 6 i 6 ng are n queues of length one,
+[•] V ¼ fvi j 1 6 i 6 mg are m variables,
+[•] for each k = 1, 2, . . . , n,
+Pk ¼ fhQj ; vi i j ðci ; ej Þ 2 BFSðkÞg [ fhvi ; Qj i j
+ðej ; ci Þ 2 BFSðkÞg are the layer k backward
+pointers, and
+PRk ¼ fhvi ; Qj i j ðci ; ej Þ 2 BFSRðkÞg [ fhQj ; vi i j
+ðej ; ci Þ 2 BFSRðkÞg are the layer k forward
+pointers.
+Deﬁnition 1 formally characterizes the queue graph data
+structure. To rephrase Example 4.1 using those notations,
+the queue graph has three queues Q ¼ fQ1 ; Q2 ; Q3 g and
+two variables V ¼ fv1 ; v2 g.
+
+The layer-one forward pointers are PR1 ¼ /,
+and the
+layer-one
+backward
+pointers
+are
+P1 ¼ fhQ1 ; v1 i; hv1 ; Q2 i; hQ2 ; v2 i; hv1 ; Q3 ig. 1 The layer two
+pointers
+include
+P2 ¼ fhQ2 ; v2 ig
+and
+PR2 ¼
+fhQ2 ; v1 i; hv1 ; Q1 ig. The layer three pointers include
+P3 ¼ fhQ3 ; v2 ig and PR3 ¼ fhQ3 ; v1 i; hv1 ; Q1 ig.
+The process for correlating alerts using a queue graph, as
+illustrated in Example 4.2, is more precisely stated as the procedure QG_Alert_Correlation in Fig. 5 . The result graph Gr
+has a set of vertices V and two separate sets of edges Er and
+El. The edges in Er correspond to the explicit correlations and
+those in El record the temporal order between alerts matching the same exploit. Initially, we set the queues in Q, the sets
+V, Er, and El as empty. The ﬁrst step of the procedure inserts
+the new alert into the result graph. The second step dequeues
+a non-empty queue and updates the result graph by adding
+an edge between the old alert and the new alert. The third
+step enqueues the new alert into the queue graph. The fourth
+step does correlation by searching for the alerts that need to
+be explicitly correlated to the new alert.
+4.2.1. Complexity analysis
+The procedure QG_Alert_Correlation demonstrates the
+advantages of the QG approach over the nested loop
+approach (some of the features of a queue graph, such as
+the variables and the forward pointers, are not used by the
+procedure and will be needed in the next section). First, the
+time for processing each new alert with the QG approach is
+linear in (m + n), that is the number of exploits and security
+conditions in the attack graph. In Procedure QG_Alert_Correlation, the fourth step visits at most (m + n) edges, because
+it searches in a tree (that is, the BFS tree rooted at Qi) by following the layered pointers in Pi ; the other steps of the procedure take almost constant time. Hence, the performance of
+the QG approach does not depend on the number of received
+alerts, as n and m are relatively stable for a given network. On
+the other hand, the nested loop approach (without using a
+sliding window) searches all alerts, and hence the performance keeps decreasing as more and more alerts are
+received.
+1
+We use the notation Æa, bæ for a pointer in a queue graph and (a, b) for
+an edge in a graph.
+
+L. Wang et al. / Computer Communications 29 (2006) 2917–2933
+
+Fig. 6. A procedure for alert correlation and hypothesis.
+
+Second, the memory usage of the QG approach is
+roughly O (n (n + m)) (n layers, with each layer having
+maximally (n + m) pointers),2 and hence does not
+depend on the number of received alerts, either. In
+comparison, the nested loop approach without a sliding
+window needs memory for indexing on all the received
+alerts. Third, the QG approach is not vulnerable to
+slowed attacks, which can easily defeat the nested loop
+approach using a sliding window as described in
+Section 3.3. In the procedure QG_Alert_Correlation,
+an alert is dequeued (and no longer considered for
+correlation) only when a new alert matching the same
+exploit arrives. Hence, if one alert prepares for
+another, then no matter how many unrelated alerts
+are injected, the earlier alert will always sit in the
+queue graph waiting for the later one. In case some
+temporal constraint states that an alert should not be
+considered for correlation once it gets too old, a timer
+can be used to periodically dequeue alerts. However,
+care must be taken in using such temporal constraints
+because they may render the correlation vulnerable to
+slowed attacks again.
+4.3. Alerts with imprecise temporal characteristics
+The correctness of the QG approach critically depends on
+the correct order of alerts. However, neither the order suggested by timestamps nor the order of arrivals should be
+trusted, because the temporal characteristics of alerts are
+
+2
+The correlation only appends to the result graph but does not read
+from it, and hence the result graph needs not to be in memory.
+
+2923
+
+typically imprecise. Instead, we adopt the following conservative approach. First, any two alerts whose timestamps
+have a diﬀerence no greater than a given threshold tcon are
+treated as concurrent; the correct order of concurrent alerts
+is always the one that allows the alerts to be correlated. Second, for non-concurrent alerts, the correct order is the one
+suggested by their timestamps, but alerts are allowed to
+arrive in a diﬀerent (and incorrect) order. This conservative
+approach takes into account varying delays in a network
+and small diﬀerences between the clocks of sensors.3
+The basic QG approach does not work properly if alerts
+do not arrive in the correct order. Consider an alert a1 that
+prepares for another alert a2 but arrives later then a2. As
+described in Section 4.2, the procedure QG_Alert_Correlation will only look for those alerts that prepare for a1, but
+not those that a1 prepares for (a2 in this case). Moreover, if
+another concurrent alert a02 matches the same exploit as a2
+does and arrives after a2 but before a1. Then, a2 is already
+dequeued by the time a1 arrives, and hence the correlation
+between a1 and a2 will not be discovered.
+We address this issue by reordering alerts inside a time
+window before feeding them into the queue graph.4 More
+speciﬁcally, assume the varying delays are bounded by a
+threshold tmax. We postpone the processing of an alert a1
+with a timestamp t1 until tmax (the larger one between tmax
+and tcon, when concurrent alerts are also considered) time
+has passed since the time we receive a1. We reorder the
+postponed alerts, so they arrive at the correlation engine
+in the correct order. Then after tmax time, any alert a2 will
+have a timestamp t2 satisfying t2 > t1 (the worst case is
+when a1 is not delayed but a2 is delayed tmax time, and
+the fact a2 is received tmax later than a1 indicates
+t2 + tmax  tmax > t1, and hence t2 > t1).
+The capability of dealing with concurrent alerts and
+varying delays comes at a cost. The additional delay introduced for reordering alerts causes an undesired decrease in
+the timelineness of alert correlation. However, if we choose
+to report results immediately as each alert arrives, then the
+imprecise temporal characteristics of alerts may cause
+incorrect and confusing results. Such results may diminish
+the value of the correlation eﬀort. This reﬂects the inherent
+tradeoﬀ between the capability of containing unavoidable
+uncertainties and the performance of processing alerts.
+5. A uniﬁed method for alert correlation, hypothesis, and
+prediction
+In this section, we extend the basic QG-based correlation procedure to a uniﬁed method for correlating received
+alerts, hypothesizing missing alerts, and predicting future
+alerts. Section 5.1 introduces some key concepts. Sections
+3
+
+We assume the clocks are loosely synchronized, as discussed in Section
+3.2.
+4
+Notice that here a time window is used for reordering alerts and no
+alert is excluded from correlation, which is diﬀerent from the time window
+used by the nested loop approach.
+
+2924
+
+L. Wang et al. / Computer Communications 29 (2006) 2917–2933
+Inconsistent
+
+time
+a0
+
+a1
+
+a0
+
+a3
+
+Inconsistent
+
+Consistent
+a0
+
+e0
+
+c1
+
+c2
+
+e1
+
+e2
+
+c1
+
+c2
+
+e1
+
+e2
+
+a1
+
+e3
+
+e0
+
+c1
+
+c2
+
+e1
+
+e2
+
+a1
+
+c3
+a3
+
+a0
+
+e0
+
+c3
+a3
+
+e3
+
+c3
+a3
+
+c4
+
+e3
+
+Fig. 7. Examples of consistent and inconsistent alert sequences.
+
+5.2 describes the integration of alert correlation with alert
+hypothesis. Section 5.3 then discusses alert prediction.
+5.1. Consistent and inconsistent alert sequences
+The queue graph approach introduced in Section 4 provides unique opportunities to tolerate and hypothesize
+alerts missed by IDSs, as well as to predict possible consequences. Intuitively, missing alerts cause inconsistency
+between the knowledge (encoded in attack graphs) and
+the facts (represented by received alerts).5 By reasoning
+about such inconsistency, missing alerts can be plausibly
+hypothesized. On the other hand, by extending the facts
+in a consistent way with respect to the knowledge, possible
+consequences of an intrusion can be predicted. To elaborate on those ideas, we ﬁrst illustrate consistent and inconsistent sequences of alerts in Example 5.1 and Example 5.2.
+Example 5.1. The sequence of alerts shown on the left
+hand side of Fig. 7(that is, a0, a3) is inconsistent with
+respect to the attack graph, because the security condition
+c3 is not satisﬁed before the exploit e3 is executed (as
+indicated by the alert a3).
+Example 5.2. In Fig. 7, the sequence a0, a1, a3 is consistent, because executing the exploit e1 (as indicated by the
+alert a1) satisﬁes the only security condition c3 that is
+required by the execution of e3 (as indicated by a3). The
+sequence shown on the right hand side of Fig. 7 is inconsistent, because the security condition c4 is not satisﬁed before
+the execution of e3.
+To generalize the above examples, we say an exploit is
+ready to be executed if all of its required security conditions
+are satisﬁed by previous executions of exploits (or initially
+satisﬁed security conditions, such as c1 in Fig. 7). We say a
+sequence of alerts is consistent, if every alert in the sequence
+matches an exploit that is ready to be executed by the time
+5
+Notice that we assume our vulnerability-centric correlation approach
+can eﬀectively ﬁlter out bogus alerts that do not match any existing
+vulnerability, and hence attacks cannot fool the system into producing
+false inconsistency.
+
+the alert is received. Example 5.1 depicts an inconsistent
+alert sequence in which the consecutive executions of
+exploits is broken by missing alerts. Example 5.2 indicates
+that the relationship between exploits can be either disjunctive (executing e1 or e2 makes e3 ready in the ﬁrst case) or
+conjunctive (both e1 and e2 must be executed to make e3
+ready), and security conditions play an important role in
+such relationship (the approach in [24] cannot distinguish
+the two cases in Example 5.2, because it is based on a simpliﬁed version of attack graphs with no security
+conditions).
+5.2. Alert correlation and hypothesis
+In Section 4.2, the correlation algorithm searches for the
+alerts that prepare for a new alert by following two consecutive pointers. Such an approach only works for consistent
+alert sequences. For inconsistent sequences, such as those
+in Example 5.1 and Example 5.2, the search will stop at
+empty queues that correspond to missing alerts and the
+correlation result will be incomplete. A natural question
+is, Can we continue to search and hypothesize missing alerts
+if necessary? This question motivates us to propose a uniﬁed method to correlating received alerts and at the same
+time making hypotheses of missing alerts.
+Intuitively, the approach attempts to explain the occurrence of a new alert by including it in a consistent sequence
+of alerts (alert correlation) and missing alerts (alert hypothesis). More speciﬁcally, a search starts from the queue that
+contains the new alert; it hypothesizes about a missing alert
+for each encountered empty queue; it stops at each received
+alert because it knows that this received alert must have
+already been explained previously. The search expands its
+frontier in a breadth-ﬁrst manner6 after each hypothesis
+is made, because the hypothesis itself may also need an
+explanation. Such attempts continue until a satisfactory
+explanation for the new alert and all the hypothesized ones
+is obtained. The explanations of all received alerts collec6
+
+Other approaches, such as a DFS, may work as well, but a queue
+graph organizes its pointers in layered BFS trees to improve performance,
+and this makes BFS a preferred choice.
+
+L. Wang et al. / Computer Communications 29 (2006) 2917–2933
+
+tively form the result, that is a graph composed of alerts,
+hypothesized alerts, and security conditions that are either
+satisﬁed or hypothetically satisﬁed. This is illustrated in
+Example 5.3.
+Example 5.3. Consider again the three cases, from left to
+right, in Fig. 7 when the alert a3 is received. For the ﬁrst
+case, two missing alerts matching e1 and e2 need to be
+hypothesized and then a3 can be correlated to a0 (through
+one of the hypothesized alerts). For the second case, no
+alert needs to be hypothesized because the sequence is
+already consistent, and a3 needs to be correlated to a1. For
+the third case, a0 needs to be correlated to a1, and it also
+needs to be correlated to a0 through a hypothesized alert
+matching e2.
+We extend the basic QG approach described in Section 4
+by modifying its correlation sub-procedure. The new procedure, as shown in Fig. 6, correlates and hypothesizes
+alerts as follows. Given a queue graph Qg with n queues
+Q and m variables V. Each variable in V can now have
+one of the three values TRUE, FALSE, and HYP, together
+with a timestamp; those denote a satisﬁed security condition, an unsatisﬁed one, a hypothetically satisﬁed one,
+and the time of the last update, respectively. Each queue
+in Q can contain alerts or hypothesized alerts. The result
+graph Gr (V, El [ Er) is similar to that described in Section
+4.2. However, the vertex set V now includes not only alerts
+but also hypothesized alerts and security conditions.
+Suppose a new alert anew with the timestamp tnew is
+received and enqueued in the queue Qi (1 6 i 6 n). First,
+we start from Qi and follow the pointers in PRi to set each
+variable vj(1 6 j 6 m) adjacent to Qi with the value TRUE
+and the timestamp tnew. This step records the security conditions satisﬁed by anew. Second, we start from Qi and
+make a partial BFS by following the pointers in Pi . The
+BFS is partial, because it stops upon leaving7 a variable
+with the value TRUE or the value HYP (or a queue that
+contains a hypothesized alert). This step correlates anew
+to previously received or hypothesized alerts.
+The result graph Gr is updated during the above process
+as follows. First, after we enqueue anew into Qi and make
+changes to each vj adjacent to Qi, we add anew and vj (that
+is, the value and timestamp of vj) as vertices, and an edge
+from anew pointing to vj into the result graph Gr. This step
+records the fact that the new alert anew satisﬁes its implied
+security conditions at time tnew. Second, during the partial
+BFS, we record each hypothesis. Whenever we change the
+value of a variable vj from FALSE to HYP, we record this
+update in Gr; similarly, whenever we enqueue a hypothesized alert into an empty queue, we record this hypothesized alert in Gr. Third, whenever we leave a variable v
+and reach a queue Q, we insert into Gr a directed edge from
+
+7
+
+Given that a BFS is implemented through manipulating a separate
+queue as usual, we shall refer to the enqueues as reaching and the dequeues
+as leaving to avoid confusions.
+
+2925
+
+each queue Q to v; similarly, we insert edges from a queue
+to its connected variables when we leave the queue.
+Example 5.4. Consider the left-hand side case of Fig. 7.
+The ﬁrst alert a0 will only cause (the variable corresponding
+to) the security condition c2 to be changed from FALSE to
+TRUE. The result graph will be updated with the alert a0
+and satisﬁed security condition c2 and the directed edge
+connecting them. When a3 is received, a search starts from
+(the queue corresponding to) e3; it changes c3 from FALSE
+to HYP; it inserts a hypothesized alert a1 into e1 and a2 into
+e2, respectively; it stops at c1 (which is initially set as
+TRUE) and c2 (which has been set as TRUE when a0
+arrived). The result graph will be updated with the alert a3,
+the hypothesized alerts a1 and a2, the hypothetically
+satisﬁed security condition c3, and the directed edges
+between them.
+5.2.1. Complexity analysis
+At ﬁrst glance, the procedure described above takes quadratic time, because a BFS takes time linear in the number
+of vertices (n + m) and edges (n + m)2, where n and m is the
+number of exploits and security conditions in the attack
+graph, respectively. However, this is not the case. As
+described in Section 4.2, a queue graph organizes its pointers in separate layers, and each layer is a BFS tree rooted at
+a queue. Hence, a BFS that starts from a queue and follows
+the pointers in the corresponding layer will be equivalent to
+a tree traversal, which takes linear time (n + m). This performance gain seems to be obtained at the price of more
+memory requirement, because a pointer may appear in
+more than one layer. However, as described in Section
+4.2, the memory requirement is quadratic (that is,
+O (n (n + m))), which is indeed asymptotically the same as
+that of the original attack graph.
+5.3. Attack prediction
+In the previous section, we explain the occurrence of a
+new alert by searching backwards (that is, in the reversed
+direction of the edges in attack graphs) for correlated (or
+hypothesized) alerts. Conversely, we can also predict possible consequences of each new alert by searching forwards.
+A BFS is also preferred in this case, because the predicted
+security conditions will be discovered in the order of their
+(shortest) distances to the new alert. This distance roughly
+indicates how imminent a predicted attack is, based on the
+alerts received so far (although not pursued in this paper,
+probability-based prediction techniques, such as [30], can
+be easily incorporated into the QG data structure).
+The procedure of prediction is similar to that of correlation and hypothesis discussed in the previous section, and
+hence is omitted. The main diﬀerences between the two
+procedures are as follows. After the correlation and
+hypothesis completes, the prediction starts. It begins at
+the security conditions satisﬁed by the new alert and makes
+a partial BFS in the queue graph by following the pointers
+
+2926
+
+L. Wang et al. / Computer Communications 29 (2006) 2917–2933
+
+in PRi (suppose the new alert is enqueued by Qi). The
+search stops at previously received (or hypothesized) alerts
+and their (hypothetically) satisﬁed security conditions to
+avoid repeating the previous prediction.
+The result of the prediction process is a sequence of nonempty sets Con1, Con2, . . . , with Coni (1 6 i 6 m) containing the security conditions that can possibly be satisﬁed
+in i steps from now. Unlike in correlation and hypothesis,
+the prediction process does not reason about the disjunctive and conjunctive relationship between exploits as discussed in Section 5.1. Instead, a security condition c will
+appear in the set Coni as long as there exists a path of
+length 2i (the path consists of both security conditions
+and exploits) from c to some previously satisﬁed security
+condition. Hence, the number i provides a lower bound
+to the number of exploits that must be executed before c
+can be satisﬁed.
+6. Compressing result graphs
+In this section, we propose a compact representation for
+the correlation result graph. First, Section 6.1 shows that
+the size of a result graph can be reduced without losing
+information by removing transitive edges and aggregating
+indistinguishable alerts. Then, Section 6.2 explains how
+the QG approach can produce the compact result graph,
+and how this will improve the performance.
+6.1. A compact representation of result graphs
+Avoiding unnecessary searches enables the QG
+approach to have a constant performance regardless of
+the number of received alerts. As a side-eﬀect, the approach
+also reduces the size of result graphs by having less transitive edges. However, the QG approach does not completely
+remove transitive edges from result graphs, as illustrated in
+Example 6.1. In practice, brute force attempts of the same
+attack with diﬀerent parameters usually lead to a large
+number of alerts in a short time (the treasure hunt data
+used in Section 7 is a good example for such brute force
+attempts). In Example 6.1, if the bis happen to be such
+an attack, then a large number of transitive edges will make
+the result graph less perceptible. It is thus desired to
+remove such transitive edges.
+Example 6.1. The left side of Fig. 8 shows the result graph
+of correlating a series of alerts using the QG approach. It
+can be observed that transitive edges, such as (a1, b1) and
+time
+
+time
+a1
+
+a2
+
+b1
+c
+
+a1
+
+a4
+
+a3
+b2
+
+b3
+
+…
+
+a4
+
+a2 a3
+b1,b2 …
+
+b4
+c
+
+Exp(ai) = Exp(aj), Exp(bi) = Exp(bj), and Exp(ci) = Exp(cj) for 1 ≤ i , j ≤ 4
+Exp(ai) → Exp(bi) and Exp(ci) → Exp(bi)
+
+Fig. 8. An example of compressing result graphs.
+
+b4
+
+(a2, b1), are not present. Because when b1 arrives, the QG
+approach will search backwards and inserts the edge (a3, b1)
+into the result graph, and then it immediately stops (on the
+other hand, the nested loop approach will continue to
+search in this case). However, the edges (a3, b2) and (a3, b3)
+are both transitive edges. When b2 and b3 arrives, the QG
+approach repeats the same search as it does for b1 and thus
+the two transitive edges are inserted into the result graph.
+Similarly, the edge (c, a3) is also transitive.
+In addition to transitive edges, some alerts carry redundant information as well. Following the above example, b1,
+b2, and b3 are indistinguishable in terms of alert correlation.
+That is, any other alert prepares for (or be prepared for by)
+either all or none of them. The three alerts can thus be
+aggregated as a single vertex in the result graph, with the
+edges connecting those alerts deleted. Similarly, a2 and a3
+are also indistinguishable. However, a1, a2, a3 are not indistinguishable, because c prepares for a2 and a3 but not a1.
+The right side of Fig. 8 shows the compact version of result
+graph, with transitive edges deleted and indistinguishable
+alerts aggregated.
+6.2. Modifying the QG approach to produce compact result
+graphs
+Existing approaches usually take extra eﬀorts in making
+the result graph more compact, such as aggregating alerts
+before correlating them [20]. The additional step increases
+the performance overhead of alert correlation. We show
+that our QG approach can be modiﬁed to directly produce
+a compact result graph. We also show that the modiﬁed
+QG approach is actually more eﬃcient.
+We ﬁrst modify the QG approach to avoid inserting
+transitive edges into the result graph. We let each backward
+pointer in a queue graph to have one of the two states, on
+and oﬀ. Initially, all the backward pointers are on. The
+backward pointers are then switched between the two
+states as follows. Whenever a directed edge (ai, aj) is inserted into Er, we turn oﬀ the backward edges between the corresponding queues Qi and Qj. Whenever an alert is
+enqueued in a queue Qi, all the backward pointers arriving
+at Qi will be turned on. Finally, when we search for older
+alerts that prepare for a new alert, we follow a backward
+edge only if it is currently turned on. This process is illustrated in Example 6.2.
+Example 6.2. For example, in the left side of Fig. 8
+suppose the alerts ai, bi, c correspond to the queues Qa, Qb,
+and Qc, respectively. When the alert b1 arrives, it searches
+through the backward pointers from Qb to Qa and inserts
+an edge (a3, b1) into Er. Then according to the above
+discussion, the backward pointers from Qb to Qa will be
+turned off. Consequently, the alerts b2 and b3 will not
+follow those pointers, and the transitive edges (a3, b2) and
+(a3, b3) are avoided. This remains true until the alert a4
+arrives, which turns on all the backward pointers arriving
+at the queue Qa. Then later when b4 arrives, it follows the
+
+L. Wang et al. / Computer Communications 29 (2006) 2917–2933
+
+backward pointers from Qb to Qa and inserts the edge
+(a4, b4).
+Alerts are aggregated during the above process as follows. Suppose an alert ai arrives and the corresponding
+queue Qi already contains another alert a0i . Then ai is aggregated with a0i if the following two conditions are true. First,
+all the backward pointers arriving at Qi are on. Second, all
+the backward pointers leaving Qi are oﬀ. The ﬁrst condition ensures that a0i does not prepare for any other alerts
+that arrive between a0i and ai, because otherwise ai and a0i
+would not be indistinguishable. The second condition
+
+2927
+
+ensures that a0i and ai are prepared for by the same collection of alerts, so they are indistinguishable with respect to
+those alerts. This process is illustrated in Example 6.3.
+Example 6.3. Following the above example, a3 is aggregated with a2 because the backward pointers from Qb to Qa
+are on and those from Qa to Qc have been turned off by the
+alert a2. Similarly, b2 and b3 are aggregated with b1,
+because the backward pointers from Qb to Qa have been
+turned off by b1. On the other hand, the alert b4 will not be
+aggregated, because the backward pointers from Qb to Qa
+must have been turned on by a4 by the time b4 arrives.
+Time
+
+Fig. 9. The evolving result graphs of alert correlation.
+
+2928
+
+L. Wang et al. / Computer Communications 29 (2006) 2917–2933
+
+The modiﬁed QG approach not only produces a more
+compact result graph, but is also more eﬃcient than the
+original one in most cases. This is because unnecessary
+searches corresponding to transitive edges are avoided. In
+Fig. 8, the alerts a3, b2, and b3 will not lead to a search
+in the modiﬁed approach because the backward pointers
+have been turned oﬀ by earlier alerts. The performance
+gain can be signiﬁcant in the case of brute force attempts
+where a large number of searches can be avoided.
+
+results, validating the correctness of our correlation algorithm. The treasure hunt dataset generates a large amount
+of alerts (about two million alerts taking about 1.4 GB of
+disk space, with most of them being brute force attempts
+of the same attacks), which may render a nested loop-based
+correlation method infeasible (we found that even running
+a simple database query over the data will paralyze the system). In contrast, our correlation engine processes alerts
+with negligible delays (Snort turns out to be the
+bottleneck).
+
+7. Empirical results
+7.1. Eﬀectiveness
+In this section, we evaluate the proposed techniques
+through implementation and empirical results. The correlation engine is implemented in C++ and tested on a Pentium III 860 MHz server with 1 GB RAM running
+RedHat Linux. We use Snort-2.3.0 [35] to generate isolated
+alerts, which are directly pipelined into the correlation
+engine for analyses. We use Tcpreplay 2.3.2 [40] to replay
+network traﬃc from a separate machine to the server running the correlation engine.
+Two data sets are used for experiments, the Darpa 2000
+intrusion detection LLDOS 1.0 by MIT Lincoln Labs [8],
+and the treasure hunt dataset by the University of California, Santa Barbara [39]. The attack scenario in the Darpa
+2000 dataset has been extensively explored before (such
+as in [20]). Our experiments with the dataset show similar
+
+The objective of the ﬁrst set of experiments is to demonstrate the eﬀectiveness of the proposed algorithms in alert
+correlation, hypothesis, and prediction. We use the Darpa
+2000 dataset for this purpose. The reason we use this dataset is that it has well known attack scenarios, which can be
+referenced in the included description or previous work,
+such as [20]. For correlation without hypothesis and prediction, we expect our method to produce exactly the same
+result as previous work do, with the redundant transitive
+edges removed in the result graph (given that the domain
+knowledge encoded in our attack graph exactly matches
+that used by previous work). Notice that the key contribution of this work is to improve the performance of previous
+approach and make them immune to slowed attacks. The
+
+Fig. 10. The hypothesis of missing alerts during correlation.
+
+L. Wang et al. / Computer Communications 29 (2006) 2917–2933
+
+Fig. 11. The prediction of possible consequences during correlation.
+
+2929
+
+2930
+
+L. Wang et al. / Computer Communications 29 (2006) 2917–2933
+CPU Usage per Second
+
+Memory Usage per Second
+
+50
+
+6
+
+45
+
+Memory Usage(percent)
+
+CPU Usage(percent)
+
+40
+35
+30
+25
+20
+15
+Correlation Engine
+
+10
+
+0
+
+0
+
+5
+
+10
+
+4
+3
+2
+Correlation Engine
+
+1
+
+Snort
+
+5
+
+5
+
+15
+
+20
+
+0
+
+25
+
+Snort
+
+0
+
+5
+
+Elapsed Time(per second)
+
+10
+
+15
+
+20
+
+25
+
+Elapsed Time(per second)
+
+Fig. 12. The CPU and memory usage.
+
+Processing Time per Alert (avg per 22 alerts)
+Average
+Processing
+Time(s)
+
+1
+
+Processing Time (s)
+
+1e–0.5
+
+0.18
+0.16
+0.14
+0.12
+0.1
+0.08
+0.06
+0.04
+0.02
+0
+500
+
+1e–1
+1e–1.5
+1e–2
+1e–2.5
+
+Correlation Engine
+
+1e–3
+
+Snort
+
+1e–3.5
+1e–4
+
+0
+
+2
+
+4
+
+6
+
+8
+
+10
+
+12
+
+14
+
+16
+
+5500 10500 15500 20500 25500 30500 35500 40500
+
+Attack Graph Size (no. of exploits and security conditions)
+
+No. of Processed Alerts
+
+Processing Time for Darpa Dataset
+
+Processing Time vs. Attack Graph Size
+
+Fig. 13. The processing time and its relationship with the size of attack graph.
+
+correlation methodology itself is not diﬀerent from that
+found in previous work, and similarly the accuracy of the
+correlation result also depends on the domain knowledge
+used for correlation. However, in contrast to the static
+result graph in previous work, our result evolves in time
+with the continuously arriving alerts, as illustrated in
+Fig. 9 (due to space limitations, only two partial snapshots
+of the result graphs are shown). Such a result can more
+clearly reveal the actual progress of an intrusion.
+Fig. 10 shows two results on hypothesizing missing
+alerts during the correlation. On the left-side of the ﬁgure, two consecutive missing alerts (ICMP PING and
+ICMP Echo Reply) and the corresponding security conditions are hypothesized (shown as shaded) when an
+alert (RPC portmap sadmind request UDP) is received
+but its required security condition (Host 10 Alive) has
+not been satisﬁed. The right-hand side of the ﬁgure
+shows a conjunctive relationship between alerts, that is
+a DDoS mstream traﬃc between two hosts requires
+the mstream software to be installed on both hosts.
+We deliberately deleted the RSERVICES rsh alert on
+one of the host, which is successfully hypothesized
+(shown as shaded).
+
+Fig. 11 shows a result of alert prediction. In the left ﬁgure, some security conditions are predicted to be satisﬁed
+by possible upcoming alerts. The predicted security conditions are shown as shaded, and the numbers are placeholders for alerts. The right-hand side ﬁgure shows a later
+snapshot of the result graph, in which some of the predicted security conditions are indeed realized. Notice that here
+the attack graph exactly (and only) captures the necessary
+domain knowledge, and hence the prediction result is highly accurate. In practice, both false positives (predicted but
+not realized) and false negatives (realized but not predicted) may be introduced because of incomplete or inaccurate
+domain knowledge. Reﬁning our prediction method to
+reduce such inaccuracy comprises an interesting future
+direction.
+7.2. Performance
+The objective of the second set of experiments is to evaluate the performance of the correlation engine. The performance metric includes the resource usage (CPU and
+memory) and the processing time of each alert. The correlation engine measures its own processing time and compares
+
+L. Wang et al. / Computer Communications 29 (2006) 2917–2933
+
+the processing time to the delay between receiving two consecutive alerts from Snort. All the results have 95% conﬁdence intervals within about 5% of the reported values.
+Fig. 12 shows the CPU usage (on the left-hand side) and memory usage (on the right-hand side) over time for the Darpa
+data set. The correlation engine clearly demands less resources than Snort (on average, the correlation engine’s CPU usage
+and memory usage are both under 10% of Snort’s).
+The left chart in Fig. 13 shows the processing time per
+alert (averaged per 22 alerts). Clearly, the correlation
+engine works faster than Snort in processing the entire data
+set. The result also proves that the performance does not
+decrease over time. Indeed, the processing time per alert
+remains fairly steady. We examine the scalability of the
+correlation engine in terms of the number of exploits and
+security conditions. The treasure hunt data set is used for
+this purpose. The original attack graph only has about
+one hundred exploits. We increase the size of attack graphs
+by randomly inserting dummy exploits and security conditions. The inserted exploits increase the complexity of correlation because the correlation engine must search
+through them. The right chart in Fig. 13 shows that the
+average processing time scales with the size of attack
+graphs as expected.
+We replay network traﬃc at relatively high speed (for
+example, the Darpa data set is replayed in about 26 s while
+the actual duration of the dataset is several hours). Realworld attacks are usually less intensive, and consequently
+our correlation engine will exhibit a better performance.
+However, we are aware that real-world traﬃc may bring
+up new challenges that are absent in synthesized data sets.
+For example, we currently set the time window used to
+reorder alerts (that is, tmax as discussed in Section 4.3) as
+one second to deal with identical time stamps of alerts.
+In a real network, the windows size must be decided based
+on the actual placement of IDS sensors and the typical network delays. In our future work, we plan to integrate our
+correlation engine in our TVA tool and test it in real-world
+network settings.
+8. Conclusion
+In this paper, we studied the real-time correlation of
+intrusion alerts. We identiﬁed limitations in applying the
+nested loop-based correlation methods and proposed a
+novel QG approach to remove this limitation. The method
+has a linear time complexity and a quadratic memory
+requirement and can correlate alerts arbitrarily far away.
+We extend the QG approach to a uniﬁed method for the
+correlation, hypothesis, and prediction of alerts. We also
+extend the method to produce a compact version of result
+graphs. Empirical results showed that our correlation
+engine can process alerts faster than an IDS can report
+them, making our method a promising solution for an
+administrator to monitor the progress of intrusions. Our
+future work includes evaluating the techniques with realworld traﬃc in live networks.
+
+2931
+
+Acknowledgments
+The authors thank the anonymous reviewers for their
+valuable comments, and Giovanni Vigna for providing
+the Treasure Hunt dataset. This material is based upon
+work supported by HSARPA under the contract
+FA8750-05-C-0212 administered by the Air Force Research Laboratory, by Army Research Oﬃce under Grants
+DAAD19-03-1-0257 and W911NF-05-1-0374, by Federal
+Aviation Administration under the contract DTFAWA04-P-00278/0001, and by the National Science Foundation
+under grants IIS-0242237 and IIS-0430402. Any opinions,
+ﬁndings, and conclusions or recommendations expressed
+in this material are those of the authors and do not necessarily reﬂect the views of the sponsoring organizations.
+References
+[1] P. Ammann, D. Wijesekera, S. Kaushik, Scalable, graph-based
+network vulnerability analysis, in: Proceedings of the 9th ACM
+Conference on Computer and Communications Security (CCS’02),
+2002, pp. 217–224.
+[2] F. Cuppens, Managing alerts in a multi-intrusion detection environment, in: Proceedings of the 17th Annual Computer Security
+Applications Conference (ACSAC’01), 2001.
+[3] F. Cuppens, A. Miege, Alert correlation in a cooperative intrusion
+detection framework, in: Proceedings of the 2002 IEEE Symposium
+on Security and Privacy (S& P’02), 2002, pp. 187–200.
+[4] F. Cuppens, R. Ortalo, LAMBDA: a language to model a database
+for detection of attacks, in: Proceedings of the 3rd International
+Symposium on Recent Advances in Intrusion Detection (RAID’01),
+2001, pp. 197–216.
+[5] M. Dacier, Towards quantitative evaluation of computer security,
+Ph.D. Thesis, Institut National Polytechnique de Toulouse, 1994.
+[6] O. Dain, R.K. Cunningham, Building scenarios from a heterogeneous
+alert system, in: Proceedings of the 2001 IEEE Workshop on
+Information Assurance and Security, 2001.
+[7] O. Dain, R.K. Cunningham, Fusing a heterogeneous alert stream into
+scenarios, in: Proceedings of the ACM Workshop on Data Mining for
+Security Applications, 2001, pp. 1–13.
+[8] 2000 darpa intrusion detection evaluation datasets. http://www.ll.mit.edu/IST/ideval/data/2000/2000_data_index.html, 2000.
+[9] H. Debar, A. Wespi, Aggregation and correlation of intrusiondetection alerts, in: Proceedings of the 3rd International Symposium
+on Recent Advances in Intrusion Detection (RAID’01), 2001, pp.
+85–103.
+[10] S.T. Eckmann, G. Vigna, R.A. Kemmerer, STATL: an attack
+language for state-based intrusion detection, Journal of Computer
+Security 1 (1/2) (2002) 71–104.
+[11] D. Farmer, E.H. Spaﬀord, The COPS security checker system, in:
+USENIX Summer, 1990, pp. 165–170.
+[12] N. Habra, B.L. Charlier, A. Mounji, I. Mathieu, ASAX: software
+architechture and rule-based language for universal audit trail
+analysis, in: Proceedings of the 2nd European Symposium on
+Research in Computer Security (ESORICS 1992), 2004, pp. 430–450.
+[13] IBM, IBM tivoli risk manager, Available from: <http://www.ibm.com/software/tivoli/products/risk-mgr/>.
+[14] SRI International, Event monitoring enabling responses to anomalous live disturbances (EMERALD). Available from: <http://
+www.sdl.sri.com/projects/emerald/>.
+[15] S. Jajodia, S. Noel, B. O’Berry, Topological analysis of network
+attack vulnerability, in: V. Kumar, J. Srivastava, A. Lazarevic (Eds.),
+Managing Cyber Threats: Issues Approaches and Challenges, Kluwer
+Academic Publisher, 2003.
+
+2932
+
+L. Wang et al. / Computer Communications 29 (2006) 2917–2933
+
+[16] S. Jha, O. Sheyner, J.M. Wing, Two formal analysis of attack graph,
+in: Proceedings of the 15th Computer Security Foundation Workshop
+(CSFW’02), 2002.
+[17] Klaus Julisch, Marc Dacier, Mining intrusion detection alarms for
+actionable knowledge, in: Proceedings of the 8th ACM SIGKDD
+international conference on Knowledge discovery and data mining,
+2002, pp. 366–375.
+[18] W. Lee, J.B.D. Cabrera, A. Thomas, N. Balwalli, S. Saluja, Y. Zhang,
+Performance adaptation in real-time intrusion detection systems, in:
+Proceedings of The 5th International Symposium on Recent Advances in Intrusion Detection (RAID 2002), 2002.
+[19] B. Morin, L. Mé, H. Debar, M. Ducassé, M2D2: a formal data model
+for IDS alert correlation, in: Proceedings of the 5th International
+Symposium on Recent Advances in Intrusion Detection (RAID’02),
+2002, pp. 115–137.
+[20] P. Ning, Y. Cui, D.S. Reeves, Constructing attack scenarios through
+correlation of intrusion alerts, in: Proceedings of the 9th ACM
+Conference on Computer and Communications Security (CCS’02),
+2002, pp. 245–254.
+[21] P. Ning, D. Xu, Adapting query optimization techniques for eﬃcient
+intrusion alert correlation, Technical report, NCSU, Department of
+Computer Science, 2002.
+[22] P. Ning, D. Xu, Learning attack strategies from intrusion alerts, in:
+Proceedings of the 10th ACM Conference on Computer and
+Communications Security (CCS’03), 2003.
+[23] P. Ning, D. Xu, C.G. Healey, R.S. Amant, Building attack scenarios
+through integration of complementary alert correlation methods, in:
+Proceedings of the 11th Annual Network and Distributed System
+Security Symposium (NDSS’04), 2004, pp. 97–111.
+[24] S. Noel, S. Jajodia, Correlating intrusion events and building attack
+scenarios through attack graph distance, in: Proceedings of the 20th
+Annual Computer Security Applications Conference (ACSAC’04),
+2004.
+[25] S. Noel, S. Jajodia, B. O’Berry, M. Jacobs, Eﬃcient minimum-cost
+network hardening via exploit dependency graphs, in: Proceedings of
+the 19th Annual Computer Security Applications Conference
+(ACSAC’03), 2003.
+[26] R. Ortalo, Y. Deswarte, M. Kaaniche, Experimenting with quantitative evaluation tools for monitoring operational security, IEEE
+Trans. Software Eng. 2 (5) (1999) 633–650.
+[27] OSSIM, Open source security information management, Available
+from: <http://www.ossim.net/>.
+[28] V. Paxson, Bro: a system for detecting network intruders in real-time,
+Comput. Networks 3 (23-24) (1999) 2435–2463, 12.
+[29] X. Qin, W. Lee, Statistical causality analysis of INFOSEC alert
+data, in: Proceedings of the 6th International Symposium on
+Recent Advances in Intrusion Detection (RAID 2003), 2003, pp.
+591–627.
+[30] X. Qin, W. Lee, Discovering novel attack strategies from INFOSEC
+alerts, in: Proceedings of the 9th European Symposium on Research
+in Computer Security (ESORICS 2004), 2004, pp. 439–456.
+[31] A.R. Chinchani andIyer, H. Ngo, S. Upadhyay, Towards a theory of
+insider threat assessment, in: Proceedings of the IEEE International
+Conference on Dependable Systems and Networks (DSN’05), 2005.
+[32] I. Ray, N. Poolsappasit, Using attack trees to identify malicious
+attacks from authorized insiders, in: Proceedings of the 10th
+European Symposium on Research in Computer Security (ESORICS’05), 2005.
+[33] R. Ritchey, P. Ammann, Using model checking to analyze network
+vulnerabilities, in: Proceedings of the 2000 IEEE Symposium on
+Research on Security and Privacy (S& P’00), 2000, pp. 156–165.
+[34] R. Ritchey, B. O’Berry, S. Noel, Representing TCP/IP connectivity
+for topological analysis of network security, in: Proceedings of the
+18th Annual Computer Security Applications Conference
+(ACSAC’02), 2002, p. 25.
+
+[35] M. Roesch, Snort – lightweight intrusion detection for networks,
+in: Proceedings of the 1999 USENIX LISA Conference, 1999, pp.
+229–238.
+[36] O. Sheyner, J. Haines, S. Jha, R. Lippmann, J.M. Wing, Automated
+generation and analysis of attack graphs, in: Proceedings of the 2002
+IEEE Symposium on Security and Privacy (S& P’02), 2002, pp.
+273–284.
+[37] S. Staniford, J.A. Hoagland, J.M. McAlerney, Practical automated
+detection of stealthy portscans, J. Comput. Security 1 (1/2) (2002)
+105–136.
+[38] S. Templeton, K. Levitt, A requires/provides model for computer
+attacks, in: Proceedings of the 2000 New Security Paradigms
+Workshop (NSPW’00), 2000, pp. 31–38.
+[39] Treasure hunt datasets, <http://www.cs.ucsb.edu/~vigna/treasurehunt/index.html/>, 2004.
+[40] A. Turner, Tcpreplay: Pcap editing and replay tools for *nix,
+Available from: <http://tcpreplay.sourceforge.net/>.
+[41] A. Valdes, K. Skinner, Probabilistic alert correlation, in: Proceedings
+of the 4th International Symposium on Recent Advances in Intrusion
+Detection, 2001, pp. 54–68.
+[42] L. Wang, A. Liu, S. Jajodia, An eﬃcient and uniﬁed approach to
+correlating, hypothesizing, and predicting intrusion alerts, in: Proceedings of the 10th European Symposium on Research in Computer
+Security (ESORICS 2005), 2005, pp. 247–266.
+[43] D. Xu, P. Ning, Alert correlation through triggering events and
+common resources, in: Proceedings of the 20th Annual Computer
+Security Applications Conference (ACSAC’04), 2004, pp.
+360–369.
+[44] D. Xu, P. Ning, Privacy-preserving alert correlation: a concept
+hierarchy based approach, in: Proceedings of the 21st Annual
+Computer Security Applications Conference (ACSAC’05), 2005.
+[45] D. Zerkle, K. Levitt, Netkuang – a multi-host conﬁguration vulnerability checker, in: Proceedings of the 6th USENIX Unix Security
+Symposium (USENIX’96), 1996.
+[46] Y. Zhai, P. Ning, P. Iyer, D. Reeves, Reasoning about complementary intrusion evidence, in: Proceedings of the 20th Annual
+Computer Security Applications Conference (ACSAC’04), 2004,
+pp. 39–48.
+
+Lingyu Wang is a Ph.D. candidate in Information
+Technology at George Mason University where
+he is being advised by Sushil Jajodia. Since 2000,
+he has been a Research Assistant inthe Center for
+Secure Information Systems (CSIS). His main
+research interests are information security and
+privacy. He holds a M.E. from Shanghai Jiao
+Tong University anda B.E. from Shen Yang
+Institute of Aeronautic Engineering in China.
+
+Anyi Liu received his B.S. and M.S. degree in
+Computer Science from Dalian University of
+Technology in 1997 and 2001, respectively. He is
+currently a Ph.D. student in Information Technology at George Mason University. His research
+interests are information security/assurance,
+intrusion detection and correlation. He is a student member of ACM SIGSAC.
+
+L. Wang et al. / Computer Communications 29 (2006) 2917–2933
+Sushil Jajodia is BDM International Professor of
+Information Technology and the director of
+Center for Secure Information Systems at the
+George Mason University, Fairfax, Virginia. His
+research interests include information security,
+temporal databases, and replicated databases. He
+has authored ﬁve books, edited twenty-four
+books, and published more than 300 technical
+papers in the refereed journals and conference
+proceedings. He is the founding editor-in-chief of
+the Journal of Computer Security and on the
+editorial boards of ACM Transactions on Information and Systems
+Security, IEE Proceedings on Information Security, International Journal
+of Cooperative Information Systems, and International Journal of
+Information and Computer Security.
+
+2933
+
+

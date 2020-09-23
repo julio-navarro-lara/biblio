@@ -1,0 +1,243 @@
+-RXUQDO RI &RPPXQLFDWLRQV DQG ,QIRUPDWLRQ 1HWZRUNV 9RO 1R 'HF  A multi-step attack-correlation '2, MLVVQ
+
+method with privacy protection
+
+Research paper
+
+A multi-step attack-correlation method with privacy protection
+ZHANG Yongtang1, 2, LUO Xianlu1, LUO Haibo1
+
+1. Department of Computer Science and Technology, Guangdong Neusoft Institute, Foshan 528225, China 2. Jiangxi Microsoft Technology Center, Nanchang 330003, China
+
+Abstract: In the era of global Internet security threats, there is an urgent need for different organizations to cooperate and jointly fight against cyber attacks. We present an algorithm that combines a privacy-preserving technique and a multi-step attack-correlation method to better balance the privacy and availability of alarm data. This algorithm is used to construct multistep attack scenarios by discovering sequential attack-behavior patterns. It analyzes the time-sequential characteristics of attack behaviors and implements a support-evaluation method. Optimized candidate attack-sequence generation is applied to solve WKH SUREOHP RI SUHGH¿QHG DVVRFLDWLRQUXOH FRPSOH[LW\ DV ZHOO DV H[SHUWNQRZOHGJH GHSHQGHQF\ $Q HQKDQFHG k-anonymity method is applied to this algorithm to preserve privacy. Experimental results indicate that the algorithm has better performance DQG DFFXUDF\ IRU PXOWLVWHS DWWDFN FRUUHODWLRQ WKDQ RWKHU PHWKRGV DQG UHDFKHV D JRRG EDODQFH EHWZHHQ HI¿FLHQF\ DQG SULYDF\ Key words: QHWZRUN VHFXULW\ PXOWLVWHS DWWDFN LQWUXVLRQ GHWHFWLRQ VHTXHQWLDO SDWWHUQ SULYDF\ SURWHFWLRQ GDWD PLQLQJ
+
+Citation =+$1* < 7 /82 ; / /82 + % $ PXOWLVWHS DWWDFNFRUUHODWLRQ PHWKRG ZLWK SULYDF\ SURWHFWLRQ>-@ -RXUQDO RI FRPPXQLFDWLRQV DQG LQIRUPDWLRQ QHWZRUNV   
+
+1 Introduction
+In recent years, global security threats, e.g., the Code 5HG ,, ZRUP , My Doom  DQG ''R6V 'LVWULEXWHG 'HQLDO RI 6HUYLFHDWWDFNV KDYH EHHQ JURZLQJ This creates an urgent need for mutual cooperation EHWZHHQ GLIIHUHQW RUJDQL]DWLRQV WR UHVLVW WKHVH DWWDFNV and share security-incident alarm data for security DQDO\VLV +RZHYHU LI \RX GRQ¶W VKDUH WKH DODUP GDWD privacy protection, it is easy to be the attacker, lead to OHDN VHQVLWLYH LQIRUPDWLRQ GDWD RZQHUV 3ULYDF\ SURWHFWLRQ JHQHUDOO\ UHIHUV WR WKH SURWHFWLRQ of an individual or organization, excluding public
+>@ >@
+
+LQIRUPDWLRQ GDWD HWF ,Q D VSHFL¿F DSSOLFDWLRQ GDWD privacy preserves sensitive information that the RZQHU LV QRW ZLOOLQJ WR GLVFORVH RU VKDUH ZLWK RWKHUV including characteristics of the sensitive data and the data representation. Normally, privacy refers to VHQVLWLYH GDWD HJ D FRPSDQ\¶V ILQDQFLDO VLWXDWLRQ RQH¶V SHUVRQDO SURSHUW\ VWDWXV D SDWLHQW¶V PHGLFDO records, etc. At present, most of the multi-step attack-correlation methods are carried out based on original police UHSRUWV KRZHYHU ZKHQ D QXPEHU RI GLIIHUHQW organizations fail to provide alarm data because of privacy protection, the multi-step attack alarm-
+
+0DQXVFULSW UHFHLYHG $SU   DFFHSWHG $XJ   7KLV ZRUN LV VXSSRUWHG E\ WKH 2UGLQDU\ 8QLYHUVLW\ ,QQRYDWLRQ 3URMHFW RI *XDQJGRQJ 3URYLQFH 1RV .76&; .41&;
+
+134
+
+Journal of Communications and Information Networks
+
+data association results may be affected because of the lack of accurate information. Therefore, effectively associating privacy-protection technology ZLWK D PXOWLVWHS DWWDFN PHWKRG UHTXLUHV D EHWWHU EDODQFH EHWZHHQ DODUPGDWD SULYDF\ DQG DYDLODELOLW\ requirements. This significantly affects research, ZKHWKHU LQ WKHRU\ RU LQ SUDFWLFH Since 2000, research on the multi-step attack correlation analysis of alarm data has gradually increased, and achieved a number of results. Mange F proposed D FDXVDO UHODWLRQVKLS EHWZHHQ DWWDFN DQDO\VLV DQG DWWDFN DVVRFLDWLRQ ,Q  1LQJ 3
+>@ >@
+
+WKH JOREDO DWWDFN VHTXHQFH LV FODVVL¿HG DV D FDQGLGDWH DWWDFN VHTXHQFH VHW ZLWKLQ WKH DWWDFNVFHQDULR WLPH ZLQGRZ )LQDOO\ IURP WKH FRQFHQWUDWHG FDQGLGDWH attack sequence, he extracts the largest sequential attack-behavior pattern. In recent years, the multi-step attack -- the correlation research in the field of intrusion detection and prevention research is a hot topic. Ringer H A>@ to study the alarm data, and found the alarm data sharing may encounter attack. He suggested to use a hash function or anonymous hash function of sensitive alarm properties, to a certain extent, the protection of SULYDF\ DODUP GDWD +RZHYHU EHFDXVH RI WKH OLPLWHG alarm-attribute value, this method can easily be abused. 1LQJ 3>@ VXPPDUL]LQJ RWKHU PHWKRGV HJ .LVVQFU />@ proposed using a hierarchy to anonymize sensitive attribute values to protect the privacy of sensitive data. This method introduces the concept of discrete DWWULEXWHV ZLWK D FRQWLQXRXV DWWULEXWHKLHUDUFK\ generation measure. By modifying the similarity function, it redefines the relationship, based on the attack probability, and applies privacy protection methods to the alarm data after the alarm correlation. +RZHYHU WKLV PHWKRG KDV VRPH SUREOHPV HJ the original similarity function should be modified for different sensitivity properties. If the original similarity function of a sensitive attribute is more complex, then modifying the attribute-similarity IXQFWLRQ ZLOO EHFRPH YHU\ FRPSOLFDWHG )XUWKHU redefining the relationship based on the attack SUREDELOLW\ FRXOG LQWURGXFH FRUUHODWLRQ HUURUV WKXV increasing the number of false alarms in the attack scene graph. 3ULYDF\SURWHFWLRQ WHFKQRORJ\ DVVRFLDWHG ZLWK multi-step attack methods has a long history in its ILHOG RI VWXG\ +RZHYHU FRPELQLQJ WKH WZR IRU D specific application, choosing appropriate privacySURWHFWLRQ PHWKRGV ZKLOH HIIHFWLYHO\ DYRLGLQJ SULYDF\ information, and providing good information support
+
+proposed
+
+XVLQJ WKH DWWDFN VWHSV EHWZHHQ WKH SUHUHTXLVLWHV DQG consequences to construct attack scenarios. Debar H, et al.
+>@
+
+used similar methods in the
+
+0LUDGRU SURMHFW ZLWK 3URORJ SUHGLFDWH ORJLF WR describe an attack, and automatically generated association rules according to the description of the prerequisites and consequences. Through the association rules, they discovered a relationship EHWZHHQ WKH UHSRUWV XVHG WR FRQVWUXFW DWWDFN VFHQDULRV This type of method uses the causal relationship of WKH GLIIHUHQW DWWDFN VWHSV WR GH¿QH DWWDFNDVVRFLDWLRQ UXOHV KRZHYHU EHFDXVH WKH UXOH GHILQLWLRQ RI UHSRUW is very complex, the design requirement is very high, PRUH GLI¿FXOW VR IRU WKH XQNQRZQ DWWDFN LV GLI¿FXOW to find the cause-and-effect relationship, there is a defect. In 2009, Wu B SURSRVHG XVLQJ WKH *&7 *DUEDJH &ROOHFWLRQ 7LPH VWDWLVWLFDO WLPLQJ DOJRULWKP WR PLQH attack-scene fragments, and then connect the attack IUDJPHQWV LQWR D FRPSOHWH DWWDFN VFHQH +RZHYHU this method relies heavily on domain and expert NQRZOHGJH DQG LW LV GLIILFXOW WR ILQG D FRPSOHWH DWWDFN VFHQDULR ,Q  :DQJ .
+>@ >@
+
+summarized the
+
+DGYDQWDJHV DQG GLVDGYDQWDJHV RI WKH DERYH WZR W\SHV of multi-step attack-correlation methods. He proposed GUDZLQJ RQ D VHTXHQWLDO SDWWHUQPLQLQJ PXOWLVWHS DWWDFNFRUUHODWLRQ PHWKRG 7KH PHWKRG ¿UVW FRQYHUWV WKH DODUP GDWDEDVH WR D JOREDO DWWDFN VHTXHQFH WKHQ
+
+A multi-step attack-correlation method with privacy protection
+
+135
+
+for information sharing, have become important research topics for many scholars and experts. 5HJDUGLQJ WKH SUREOHPV PHQWLRQHG DERYH D 330$& 3ULYDF\3UHVHUYLQJ 0XOWLVWHS $WWDFN &RUUHODWLRQ algorithm is proposed in this paper to discover sequential attack-behavior patterns in a protected alert set. By attempting to determine the sequences for global multi-step attacks, this method can be XVHG WR SUHGLFW LQYDGHUV¶ IXWXUH PRYHV DQG WKXV take proper actions to efficiently decrease the impact of such intrusions. With an affordable FRPSXWDWLRQ FRVW 330$& KDV EHHQ SURYHQ WR EH PRUH HI¿FLHQW WKDQ WUDGLWLRQDO PHWKRGV LQ DWWDFN VFHQDULR FRQVWUXFWLRQ ZKLOH SURWHFWLQJ VHQVLWLYH information in the alert set.
+
+engine, a secure third-party multi-step attack correlation SURFHVVRU DV ZHOO DV DQ DQDO\]HU DUH RQ WKH ULJKW VLGH LQWHUDFWLQJ ZLWK WKH QHWZRUN GRPDLQ WKURXJK the function units of the privacy-preserving agent and monitor. 7KH RULJLQDO LQWUXVLRQ DOHUWV GHWHFWHG LQ WKH QHWZRUN domains are stored in the intrusion event database, ZKLFK WUDQVIHUV WKH UDZ DOHUWV LQWR WKH GDWD FOHDQHU The data cleaner is used to reduce the number and enhance the quality of these alerts. After sanitizing the refined data received from the data cleaner, the privacy-preserving agent submits the data to the 330$& HQJLQH IRU PXOWLVWHS DWWDFN FRUUHODWLRQ Finally, the monitor receives the correlation results of DWWDFN VFHQDULRV IURP WKH 330$& HQJLQH IRU IXUWKHU VHFXULW\ UHVSRQVH E\ WKH QHWZRUN DGPLQLVWUDWRUV 7KH 330$& HQJLQH LV FRPSRVHG RI IRXU IXQFWLRQDO XQLWV  7KH *OREDO $WWDFN6HTXHQFH *HQHUDWRU generates a global sequence of attack behaviors RUGHUHG E\ WKH VWDUWWLPH DWWULEXWH RI WKH DOHUWV ZKLFK are mapped onto the attack-signature identifiers of
+
+2 PPMAC briefing
+7KLV VHFWLRQ GHVFULEHV WKH 330$& IUDPHZRUN DV illustrated in Fig.1. 1HWZRUN GRPDLQV DUH RQ WKH OHIW VLGH 7KH 330$&
+
+PPMAC engine privacy-preserving agent protected alerts for multi-step attack correlation domain 1 domain 2 domain n
+
+global attack sequence generator
+
+intrusion event DB 1
+
+intrusion event DB 2 
+
+intrusion event DB n
+
+candidate attack sequence DB
+
+load raw alerts
+
+load raw alerts
+
+load raw alerts
+
+data cleaner 1
+
+data cleaner 2
+
+data cleaner n sequential patterns of multi-step attacks as feedback
+
+maximal attack behavior set handler
+
+monitor
+
+maximal attack sequence miner
+
+Figure 1 330$& IUDPHZRUN
+
+136
+
+Journal of Communications and Information Networks
+
+FRQVHFXWLYH LQWHJHUV  7KH &DQGLGDWH $WWDFN Sequence DB stores the selected candidate attack VHTXHQFHV IURP WKH JOREDO DWWDFN VHTXHQFH  7KH Maximal Attack-Behavior-Set Handler produces all WKH PD[LPDO DWWDFN EHKDYLRUV ZLWK PLQLPXP VXSSRUW XVLQJ D SUHGHILQHG SDUDPHWHU  7KH 0D[LPDO Attack-Sequence Miner produces multi-step attack scenarios from the protected alert set based on attackbehavior sequence analysis. The mining results can be IHG EDFN WR WKH QHWZRUN GRPDLQV WKURXJK WKH PRQLWRU to defend against complex intrusions. Considering the different sensitivity levels of various attributes in the alert, this paper improves the k -anonymity method, a classical privacySUHVHUYLQJ PHWKRG WR SUHVHUYH WKH DOHUWV¶ VHPDQWLFV as much as possible during the process of attribute anonymization.
+
+'H¿QLWLRQ  Alert set: These are triggered by IDSs ,QWUXVLRQ'HWHFWLRQ 6\VWHPV ZKHQ LQWUXVLRQ HYHQWV are detected. Let AL EH WKH DOHUW VHW ZLWK D ILQLWH number of attribute vectors al. Definition 3 k -anonymity: Let sd = { sd 1,  , sd i}, 0<i  8 be a vector of selected attributes from al ZKLFK are the sensitive items to be protected, sd SD al. SD is the set of sd , as a subset extracted from AL, i.e., AL. AL satisfies k-anonymity if and only if each vector in SD DFFRUGLQJO\ DSSHDUV ZLWK DW OHDVW k occurrences. )ROORZLQJ LV RXU 330$& DOJRULWKP Step 1 3URWHFW VHQVLWLYH DOHUW DWWULEXWHV XVLQJ WKH improved k-anonymity method. One of the major privacy-preserving methods generally uses a quasi-identifier to support judging ZKHWKHU k -anonymity properties are met. When preserving privacy in intrusion alerts, the sensitive DWWULEXWHV DUH WKH SULYDWH LWHPV QRW WKH TXDVLLGHQWL¿HU The k-anonymity method is applied to selected sensitive attributes in SD ZKLOH DOO RWKHU DWWULEXWHV remain unchanged. The discrete values of sensitive alert attributes in AL are replaced by their generalized YDOXHV ZKLFK DUH SUHGHILQHG EDVHG RQ WKH GRPDLQ¶V security policy. For example, the original destination,3 RQH RI WKH PDLQ SULYDWH DWWULEXWHV LV JHQHUDOL]HG WR LWV VXEQHW DGGUHVV ZLWK D ELW PDVN RU HYHQ D ELW mask. Uncertainty is introduced into the alert set, but the alert regulations are kept for mining. The generalized alert set ALG, as the output of the SULYDF\SUHVHUYLQJ DJHQW ZLOO EH VHQW WR WKH 330$& engine for multi-step attack-correlation analysis. 6WHS  Multi-step attack-correlation algorithm. This step discovers maximal attack sequences, based on an Apriori-like theory.  0DSSLQJ DQG JURXSLQJ 7R PDNH WKH PLQLQJ SURFHVV PRUH HIILFLHQW D RQHWRRQH PDSSLQJ WDEOH EHWZHHQ WKH attack-type strings and a series of consecutive integers is HVWDEOLVKHG LH WKH FRUUHVSRQGLQJ LQWHJHUV UHSUHVHQW WKH DWWDFNVLJQDWXUH LGHQWL¿HU $OO YDOXHV RI WKH DWWDFN
+
+3 PPMAC algorithms
+The method of mining sequential attack-behavior patterns is based on the concept that the various multiVWHS DWWDFN EHKDYLRUV LQLWLDWHG E\ DWWDFNHUV DOZD\V DSSHDU LQ RUGHUHG VHTXHQFHV 7KDW LV DWWDFNHUV ZLOO logically perform a certain action before carrying RXW WKH QH[W PRYH 7KH //'R6 /LQFROQ /DERUDWRU\ 'HQLDO RI 6HUYLFH  DWWDFN VFHQDULR >@ explicitly illustrates the general character of multi-step attacks. Consequently, sequential-alert pattern analysis can be used to correlate various suspicious activities WKDW LI FRQVLGHUHG VHSDUDWHO\ ZRXOG QRW SURYLGH VXI¿FLHQW HYLGHQFH WR GHWHFW FRPSOLFDWHG PXOWLVWHS attacks. 7KH IROORZLQJ WHUPV DUH GHILQHG WR FODULI\ WKH 330$& $OJRULWKP Definition 1 Attribute vector: The attribute vector of each intrusion alert is defined as: {date, startWLPH SURWRFRO VRXUFH,3 GHVWLQDWLRQ,3 VRXUFHSRUW GHVWLQDWLRQSRUW DWWDFNW\SH` ZLWK D VWDUWWLPH YHFWRU al = {at1, , at8}.
+
+A multi-step attack-correlation method with privacy protection
+
+137
+
+type alerts in ALG are converted to integers according to the mapping rule. 'H¿QLWLRQ  Attack set S {s1, s2, , sg}: The set of attack-signature identifiers according to the attack types reported by the IDSs. Alert attributes generally have some relationships among the different steps of a multi-step attack SURFHVV HJ WKH VDPH GHVWLQDWLRQ SRUW QXPEHU RU WKH VDPH QHWZRUN SDWK WR WKH GHVWLQDWLRQ ,3 DGGUHVV All alerts in AL G are classified into groups by WKHLU SURWHFWHG GHVWLQDWLRQ,3 VHJPHQWV ZKLFK FDQ recognize single-hop and multi-hop attacks.  &RQVWUXFW D JOREDO DWWDFN VHTXHQFH $IWHU mapping and grouping, the global attack-sequence generator generates a global attack sequence. Definition 5 Attack sequence < a 1, a 2,  , a n>: A VHTXHQFH RI DWWDFN EHKDYLRUV ZKHUH ai   i  n  S. We sort all alerts in each group by ascending starttime after the mapping and grouping procedure to organize the global attack sequences by groups.  3URGXFH D FDQGLGDWH DWWDFNVHTXHQFH VHW $Q attack scenario is a collection of intrusion events WKDW RFFXU FORVHO\ ZLWKLQ D SUHGH¿QHG WLPH ZLQGRZ Therefore, an iterative process is designed to retrieve WKH FDQGLGDWH DWWDFNVHTXHQFH VHW D ,QLWLDOL]H WKH WLPH ZLQGRZ WR EHJLQ DW WKH VWDUWWLPH RI WKH ILUVW DOHUW LQ WKH JOREDO DWWDFN VHTXHQFH E 6HOHFW DOO DOHUWV LQ ZKLFK WKH VWDUWWLPH LV LQ WKH VFRSH RI WKH WLPH ZLQGRZ F 0RYH WKH WLPH ZLQGRZ WR WKH VWDUW WLPH RI WKH QH[W DOHUW G 5HSHDW VWHSV D WR F XQWLO WKH HQG RI WKH WLPH ZLQGRZ UHDFKHV WKH HQG RI WKH sequence. After applying the process for each global sequence, the attack steps that fall into the same DWWDFNVFHQDULR WLPH ZLQGRZ IRUP D FDQGLGDWH DWWDFN sequence. The candidate attack-sequence set is obtained by combining the attack sequences, and then is stored in the sequence matrix database. The set of candidate attack sequences is denoted as CAS, and the candidate attack sequences in CAS are
+
+denoted as casp, 1  p  TS ZKHUH TS is the total number of candidate attack sequences.  2EWDLQ PD[LPDO DWWDFNEHKDYLRU VHW Definition 6 6HTXHQFH VXSSRUW *LYHQ WZR DWWDFN sequences A=<a1, a2,, an> and B=<b1, b2,, bm> m i n  LI a1=b1 and A is a subsequence of B A can be obtained by deleting some data from B ZLWKRXW FKDQJLQJ WKH RUGHU 6HTXHQFH A is contained in sequence B , or sequence B supports sequence A , denoted as BA. In a set of attack sequences, an attack sequence is maximal if it is not contained in any other sequences. The key target of mining sequential attack behavior patterns is to find the maximal attack sequences among all candidate attack sequences by group. ( D F K R I W K H P D [ L P D O D W W D F N V H T X H Q F H V ZLOO represent an attack scenario. The support-evaluation method is applied to determine the maximal attack sequences. Definition 7 Support of attack sequence SUP AS: 7KH UDWLR EHWZHHQ WKH QXPEHU RI FDQGLGDWH DWWDFN sequences supporting attack sequence A , denoted as CS , and the total number of candidate attack sequences, denoted as TS, is given:  'H¿QLWLRQ  Support of attack behavior SUPAB: The UDWLR EHWZHHQ WKH QXPEHU RI RFFXUUHQFHV RI D FHUWDLQ attack behavior a i in the global attack sequence, denoted as AB, and the number of total behaviors contained in this global attack sequence, denoted as TB LV JLYHQ LQ (T  Attack behaviors that satisfy the predefined PLQLPXP VXSSRUW WKUHVKROG  min_sup  DUH FDOOHG maximal attack behaviors. The procedure to obtain the maximal attack behavior set is also the process to produce an attack
+
+138
+
+Journal of Communications and Information Networks
+
+VHTXHQFH ZLWK RQO\ RQH EHKDYLRU VHTXHQFH denoted as L 1. The maximal attack-behavior set handler produces L1 DV VKRZQ LQ $OJRULWKP  7KH total number of maximal attack behaviors is denoted as TA. Algorithm 1 3VHXGRFRGH IRU UHWULHYLQJ L1 for //each attack behavior ai in attack set S If SUPAB ai i min_sup then ai belongs to L1 end if end for $V GHVFULEHG DERYH ZH FDQ FRQFOXGH WKDW WKH elements in the maximal attack sequences must be the ones in the maximal attack-behavior set.  'LVFRYHU PD[LPDO DWWDFN VHTXHQFHV 7KH maximal attack-sequence miner looks for small attack scenarios, and finds progressively larger ones. This SURFHVV LV FRPSRVHG RI WZR SURFHGXUHV SURGXFLQJ a candidate maximal attack-sequence set C y and finding a corresponding maximal attack-sequence set Ly ZKHUH y denotes the length or the number of attack behaviors in the maximal attack sequence. 7KLV SURFHVV HQGV ZKHQ QR QHZ VHTXHQFH FDQ EH derived from Ly to Cy+1. It discovers all the maximal attack sequences of Ly in the given intrusion-event sequences. D $VVXPH Ly1 DV VKRZQ LQ (T
+
+generated by joining the maximal attack-sequence SDWWHUQV LQ WKH SUHYLRXV SDVV DV VKRZQ LQ (T
+
+ 7KH QXPEHU RI URZV LQ Cy is denoted as |Cy| and the candidate maximal attack sequences in Cy are denoted as Cyq   q  |Cy_  
+
+E 6FDQ WKH FDQGLGDWH DWWDFNVHTXHQFH VHW IURP top to bottom and read one attack sequence each time. The support count of each candidate maximal   attack sequence in Cy LQFUHDVHV ZKLOH LW LV FRQWDLQHG in the attack sequence. We obtain the maximal attack sequences of Ly by deleting those candidate VHTXHQFHV ZKRVH VXSSRUW FRXQW LV OHVV WKDQ min_ sup. The pseudo code for retrieving Ly LV VKRZQ LQ The candidate maximal attack-sequence set Cy is Algorithm 2.
+
+A multi-step attack-correlation method with privacy protection
+
+139
+
+$OJRULWKP  3VHXGR FRGH IRU UHWULHYLQJ Ly for //each candidate attack sequence CASp LQ CAS for //each candidate maximal attack sequence Cyq in Cy if CASp  Cyq then SUPAS Cyq  LQFUHDVHV end if end for end for for //each candidate maximal attack sequence Cyq LQ Cy if SUPAS Cyq i min_sup then Cyq EHORQJV WR Ly end if end for 0HDQZKLOH LI WKH ILUVW HOHPHQW LQ D FDQGLGDWH DWWDFN VHTXHQFH GRHV QRW PDWFK ZLWK DQ\ ¿UVW HOHPHQW in Cy, this candidate attack sequence is demonstrated to not support any sequences in C y. The sequence is then flagged in the candidate attack sequence set DQG ZLOO QRW EH LQYROYHG LQ WKH UHVW RI WKH VFDQQLQJ process for producing Ly+1. This pruning technique LV XVHG WR RSWLPL]H WKH 330$& DOJRULWKP DLPLQJ to reduce the number of candidate sequences in the subsequent passes. F 7KH DOJRULWKP HQGV ZKHQ QR QHZ VHTXHQFH FDQ be derived from Ly to Cy+1. All the maximal attack sequences discovered by WKH 330$& DOJRULWKP ZLOO EH IHG EDFN WR WKH QHWZRUN domains through the monitor.
+
+WK 7KH ZRUOG¶V PRVW IDPRXV KDFNHU FRQIHUHQFH datasets>@, one of the most authoritative attack-scenario datasets from the DEF CON organization. ([SHULPHQWV ZHUH SHUIRUPHG LQ DQ LQWUDQHW HQYLURQPHQW ZKHUH 7&3 5HSOD\ DQ RSHQVRXUFH UHSOD\LQJ WRRONLW ZDV DSSOLHG WR LPSRUW WKH QHWZRUN IORZV LQWR WKH GHSOR\HG 6QRUW QHWZRUN LQWUXVLRQ prevention and detection system>@. Tab.1 summarizes SDUW RI WKH UDZ LQWUXVLRQDOHUW LQIRUPDWLRQ
+Table 1 5DZ LQWUXVLRQ DOHUWV SDUWLDO
+type of intrusion alert EDGWUDI¿F ORRSEDFN ,3 EDGWUDI¿F 6<1 WR PXOWLFDVW DGGUHVV EDGWUDI¿F 7&3 SRUW  WUDI¿F 7&3 SRUW VZHHS 6103 UHTXHVW 8'3 fragmentation overlap SCAN FIN FRPPXQLW\ 6,3 7&3,3 PHVVDJH IORRGLQJ GLUHFWHG WR 6,3 SUR[\ ,&03 LFPSHQXP EDGWUDI¿F ORRSEDFN WUDI¿F 6103 PHVVDJH FRPPXQLW\ VWULQJ DWWHPSW DDOS mstream client to handler number of alerts before correlation  150 218 5  91      
+
+ (IIHFWLYHQHVV
+7KHVH H[SHULPHQWV ZHUH GHVLJQHG WR HYDOXDWH 330$&¶V FDSDELOLW\ WR GLVFRYHU PXOWLVWHS DWWDFN behavior sequences. We collected the original experimental data from an experimental data set containing 5 290 intrusion alarm records. Tab  VKRZV WKH H[SHULPHQWDO intrusion-alarm data after the original intrusion alarm and privacy protection. In the experiment, destination,3 DQG GHVWLQDWLRQSRUW ZHUH FRQVLGHUHG DV WKH PDLQ SULYDWH DWWULEXWHV ZKLFK FRXOG VKRZ WKH LQWUDQHW topology and the services running on it. These
+
+4 Experimental results
+This section includes the validation of the effectiveness DQG VFDODELOLW\ RI 330$& IRU PXOWLVWHS DWWDFN FRUUHODWLRQ DQG WKHQ FRPSDUHV LWV SHUIRUPDQFH ZLWK WZR WUDGLWLRQDO VHTXHQWLDO SDWWHUQPLQLQJ DOJRULWKPV $SULRUL$OO DQG *63 *HQHUDOL]HG 6HTXHQWLDO 3DWWHUQV $OO WKH H[SHULPHQWV DUH SURFHVVHG ZLWK '() &21
+
+140
+
+Journal of Communications and Information Networks
+
+7DEOH  ([DPSOH RI UDZ LQWUXVLRQ DOHUWV DQG SURWHFWHG LQWUXVLRQ DOHUWV k
+VDZ LQWUXVLRQ DOHUWV protocol VRXUFH,3 source-port GHVWLQDWLRQ,3 destination-port GHVWLQDWLRQ,3 destination-port 7&3 7&3 7&3 7&3 10.10.1.20  110.121.50.119 123.122.12.120            8 080       10.10.*.*   10.10.*.* * * * * SURWHFWHG LQWUXVLRQ DOHUWV k 
+
+
+attack-type
+
+FRPPXQLW\ 6,3 7&3,3 PHVVDJH ÀRRGLQJ GLUHFWHG WR 6,3 SUR[\ EDGWUDI¿F 6<1 WR PXOWLFDVW DGGUHVV EDGWUDI¿F 6<1 WR PXOWLFDVW DGGUHVV EDGWUDI¿F ORRSEDFN WUDI¿F
+
+DWWULEXWHV ZHUH WUDQVIRUPHG E\ WKH SULYDF\SUHVHUYLQJ agent according to the improved k-anonymity method ZLWK k = 2. 330$&¶V PXOWLVWHS DWWDFNFRUUHODWLRQ UHVXOWV DUH VKRZQ LQ 7DE :H RQO\ FRPSDUHG LW ZLWK WKH *63 algorithm, as AprioriAll algorithm discovered too PDQ\ DWWDFNVFHQDULR IUDJPHQWV ZKLFK ZRXOG UHVXOW in exhausting computation.
+
+
+
+WR 
+
+DV WKH PLQLPXP VXSSRUW YDOXH PLQVXS
+
+7KH UXQWLPHV RI 330$& *63 DQG $SULRUL$OO ZLWKLQ WKH DVVLJQHG PLQVXS UDQJH DUH VKRZQ LQ )LJ
+
+(a) 7 6 5 runtime/minutes PPMACW=2 h GSP AprioriAll
+
+Table 3 &RPSDULVRQ RI DWWDFN VFHQDULR UHFRJQLWLRQ k
+comparison items number of real attack scenarios number of discovered attack scenarios number of correct attack scenarios false positive ratio false negative ratio 330$&      *63   38  
+
+
+
+4 3 2 1 0 1.00 0.75 0.50 0.33 minimum support/% 0.25
+
+AprioriAll  52 39  
+
+(b) 14 PPMACW=6 h GSP AprioriAll
+
+330$& DFKLHYHG FRPSDUDWLYHO\ EHWWHU UHVXOWV IRU the correct multi-step attack scenarios on the protected GDWDVHWV WKLV VKRZV QR FDSDELOLW\ ORVV IRU GLVFRYHULQJ attack scenarios after the privacy preserving process. Because the attack type attributes are fully involved in the process of discovering attack behavior sequences. 0HDQZKLOH 330$& KDV D ORZHU IDOVHSRVLWLYH UDWLR DQG IDOVH QHJDWLYH UDWLR WKDQ *63 ZKLFK ZH DWWULEXWH to our novel method of producing candidate maximal attack sequences.
+2 0 12 10 runtime/minutes 8 6 4
+
+1.00
+
+0.75
+
+0.50 0.33 minimum support/%
+
+0.25
+
+ 6FDODELOLW\
+,Q WKH H[SHULPHQWDO GDWDVHW ZH XVHG WKH UDQJH IURP
+
+)LJXUH  6FDODELOLW\ PLQVXS¶V HIIHFW RQ WKH UXQWLPH ZLWK GLIIHUHQW PHWKRGV D $WWDFN VFHQDULR WLPH ZLQGRZ LV  K E $WWDFN VFHQDULR WLPH ZLQGRZ LV  K
+
+A multi-step attack-correlation method with privacy protection
+
+141
+
+$V SURYHQ LQ WKH H[SHULPHQWV 330$& DYHUDJHV DURXQG   WR  IDVWHU WKDQ $SULRUL$OO :KHQ
+runtime/minutes
+
+18 16 14 12 10 8 6 4 2 0 500 5 000 number of alerts 10 000 time window=2 time window=8 time window=10
+
+W is smaller and min_sup LV KLJKHU *63 LV DURXQG IDVWHU WKDQ 330$& DV 330$& PXVW SURWHFW the sensitive attributes in the original alerts. With the decreasing min _ sup , more maximal attack EHKDYLRUV LQ WKH VHTXHQFH DV ZHOO DV PRUH FDQGLGDWHV PD[LPDO DWWDFN VHTXHQFHV DUH JHQHUDWHG 330$&¶V SHUIRUPDQFH WKXV EHQH¿WV IURP LWV RSWLPL]HG PHWKRG of producing candidate maximal attack-sequence sets. 7KH UXQWLPH JDS EHWZHHQ WKH WZR PHWKRGV LQFUHDVHV *HQHUDOO\ 330$&¶V WRWDO UXQWLPH LQFUHDVHV ZLWK D decreasing min_sup. )LJ VKRZV 330$&¶V H[HFXWLRQ WLPH IRU ¿QGLQJ maximal attack sequences in the experimental dataset, ZLWK YDULRXV DWWDFNVFHQDULR WLPH ZLQGRZV DQG PLQ VXS YDOXHV *HQHUDOO\ LQFUHDVLQJ WKH WLPH ZLQGRZ leads to extending the length of the candidate attack VHTXHQFHV ZKLOH GHFUHDVLQJ PLQVXS OHDGV WR WKH JURZWK RI LQLWLDO PD[LPDODWWDFN EHKDYLRUV 7KH MRLQW effort of both factors should be held liable for the rapid increase in processing time.
+10 9 8 7 runtime/minutes 6 5 4 3 2 1 0 2 4 6 8 10 attack scenario time window 12 min_sup=1% min_sup=0.33% min_sup=0.25%
+
+)LJXUH  6FDODELOLW\ 330$& OLQHDU SHUIRUPDQFH LQ GLIIHUHQW VLWXDWLRQV minimum support  
+
+5 Conclusions and future work
+Sequential pattern-mining techniques are considered an essential part of the alert correlation and analysis ILHOG ,Q WKLV SDSHU ZH SURSRVHG D QRYHO PHWKRG 330$& ZKLFK FRXOG GLVFRYHU PXOWLVWHS DWWDFN EHKDYLRU SDWWHUQV ZKLOH SUHYHQWLQJ WKH ULVN RI sensitive-information disclosure during the process. 2Q WKLV EDVLV H[SHULPHQWV ZHUH FRQGXFWLQJ DQG WHVWLQJ GDWD SURYHG WKDW 330$& KDG REYLRXVO\ EHWWHU performance and accuracy in recognizing multi-step attack scenarios. 3ULYDF\ JXDUDQWHHV ZLOO DFFHOHUDWH WKH UHVHDUFK developments in the corresponding area, and make it more feasible to discover hidden multi-hop attacks DFURVV QHWZRUN GRPDLQV ZKLFK FRXOG EH D SURPLVLQJ direction for future research. 0HDQZKLOH WKH DWWDFN WLPH ZLQGRZ LV XVXDOO\ SUH defined according to off-line analysis of the attack GDWD +RZHYHU FRQVLGHULQJ WKH ÀH[LEOH WLPH H[SHQVH UHJDUGLQJ YDULRXV DWWDFN W\SHV ZKHWKHU D VFDODEOH WLPH ZLQGRZ FDQ EH DSSOLHG WR PRUH HIILFLHQWO\ produce candidate attack sequences to discover multistep attack scenarios remains an open question.
+
+Figure 3 6FDODELOLW\ WLPH ZLQGRZVXSSRUW YHUVXV UXQWLPH LQ 330$&
+
+The effectiveness of the number of alerts versus the UXQWLPH LV VKRZQ LQ )LJ ,W LOOXVWUDWHV WKDW WKH WLPH cost is roughly linear, despite the different ranges of alert numbers.
+
+References
+>@ =+$1* 6 /, - &+$1 ; HW DO %XLOGLQJ QHWZRUN DWWDFN JUDSK IRU
+
+142
+
+Journal of Communications and Information Networks
+
+>@
+
+>@
+
+>@
+
+>@
+
+>@
+
+>@
+
+DOHUW FDXVDO FRUUHODWLRQ>-@ &RPSXWHUV VHFXULW\    =+28 - +(1&+0$1 0 5(<12/'6 % HW DO 0RGHOLQJ QHWZRUN LQWUXVLRQ GHWHFWLRQ DOHUWV IRU FRUUHODWLRQ>-@ $&0 WUDQVDFWLRQV RQ LQIRUPDWLRQ DQG V\VWHP VHFXULW\    0$1*( ) 0XOWLVWHS DWWDFN GHWHFWLRQ DQG DOHUW FRUUHODWLRQ LQ LQWUXVLRQ GHWHFWLRQ V\VWHP>-@ ,QIRUPDWLRQ VHFXULW\ DQG DVVXUDQFH 2011, 200: 101-110. 1,1* 3 &8, < 5((9(6 ' 6 HW DO 7HFKQLTXHV DQG WRROV IRU DQDO\]LQJ LQWUXVLRQ DOHUWV>-@ $&0 WUDQVDFWLRQV RQ LQIRUPDWLRQ DQG V\VWHP VHFXULW\    '(%$5 + :,63< $ $JJUHJDWLRQ DQG FRUUHODWLRQ RU LQWUXVLRQ GHWHFWLRQ DOHUWV>-@ /HFWXUH QRWHV LQ FRPSXWHU VFLHQFH   85-98. 025,1 % '(%$5 + &RUUHODWLRQ RI LQWUXVLRQ V\PSWRPV DQ DSSOLFDWLRQ RI FKURQLFOHV>-@ /HFWXUH QRWHV LQ FRPSXWHU VFLHQFH 2013, 2820: 91-112. :8 % $QDO\VLV RI DOHUW FRUUHODWLRQ EDVHG RQ VHTXHQWLDO SDWWHUQ LQ
+
+>@
+
+>@ >@ >@
+
+>@
+
+>@
+
+LQWUXVLRQ GHWHFWLRQ>-@ -RXUQDO RI XQLYHUVLW\ RI HOHFWURQLF VFLHQFH DQG WHFKQRORJ\ RI &KLQD    :$1* . 62/2 6 - 3ULYDF\SUHVHUYLQJ SD\ORDGEDVHG FRUUHODWLRQ IRU DFFXUDWH PDOLFLRXV WUDIILF GHWHFWLRQ>&@7KH  6,*&200 :RUNVKRS RQ /DUJHVFDOH $WWDFN 'HIHQVH 3LVD ,WDO\   5,1*(5 + $ 3ULYDF\SUHVHUYLQJ FROODERUDWLYH DQRPDO\ GHWHFWLRQ>'@ 3ULQFHWRQ 3ULQFHWRQ 8QLYHUVLW\  .,661&5 / 621* ' 3ULYDF\SUHVHUYLQJ VHW RSHUDWLRQV>-@ /HFWXUH QRWHV LQ FRPSXWHU VFLHQFH    65,.$17 5 $*5$:$/ 5 0LQLQJ VHTXHQWLDO SDWWHUQV *HQHUDOL]DWLRQV DQG SHUIRUPDQFH LPSURYHPHQWV>-@ /HFWXUH QRWHV LQ FRPSXWHU VFLHQFH    <&*1&6:$5$1 9 %5$')25' 3 -+$ 6 *OREDO LQWUXVLRQ GHWHFWLRQ LQ WKH GRPLQR RYHUOD\ V\VWHP>5@ 8QLYHUVLW\ RI :LVFRQVLQ Madison Department of Computer Sciences, 2010. $8*85$/ * )2'25 7 $SSUR[LPDWLRQ DOJRULWKPV IRU NDQRQ\PLW\>-@ -RXUQDO RI SULYDF\ WHFKQRORJ\   
+
+About the authors
+ZHANG Yongtang >FRUUHVSRQGLQJ DXWKRU@ ZDV ERUQ LQ  +H HDUQHG D 0DVWHU¶V GHJUHH LQ QHWZRUN and communications engineering in 2005 from the Central China Normal University. He is currently ZRUNLQJ LQ WKH *XDQJGRQJ 1HXVRIW ,QVWLWXWH DV DQ associate professor, and as a systems analyst at the Jiangxi Microsoft Technology Center. At present, his main research interests are communications and ZLUHOHVV VHQVRU QHWZRUN DSSOLFDWLRQV QHWZRUN VHFXULW\ DQG RIIHQVLYH DQG GHIHQVLYH WHFKQLTXHV (PDLO JRY#FRP LUO Xianlu ZDV ERUQ LQ  +H HDUQHG D 0DVWHU¶V degree in computer applications in 2002 from 1RUWKHDVWHUQ 8QLYHUVLW\ +H LV FXUUHQWO\ ZRUNLQJ in the Guangdong Neusoft Institute as an associate professor and systems analyst. At present, his main UHVHDUFK LQWHUHVWV DUH DOJRULWKPV QHWZRUN VHFXULW\ DQG RIIHQVLYH DQG GHIHQVLYH WHFKQLTXHV (PDLO OXR[O#QHXVRIWFRP LUO Haibo ZDV ERUQ LQ  ,Q  KH JUDGXDWHG ZLWK D 0DVWHUV LQ FRPSXWHU VFLHQFH DQG FRPSXWHU application engineering from Wuhan University. He is currently in Guangdong Neusoft Institute, as a lecturer. His research interests are informationVHFXULW\ UHVHDUFK DQG GDWD PLQLQJ (PDLO OXR KE#QHXVRIWFRP
+
+

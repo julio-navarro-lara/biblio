@@ -1,0 +1,61 @@
+\documentclass{article}
+\usepackage{pgfplots}
+\usepackage{filecontents}
+\usetikzlibrary{pgfplots.groupplots}\tikzset{>=latex}
+\pgfrealjobname{papers_per_year}
+\begin{document}
+\beginpgfgraphicnamed{papers_per_year_histogram_v2}
+\begin{tikzpicture}
+\begin{groupplot}[
+                        group style={
+                            group name=Number of papers per approach,
+                            group size=1 by 5,
+                            xlabels at=edge bottom,
+                            xticklabels at=edge bottom,
+                            vertical sep=0pt
+                        },
+                        ybar,
+                        footnotesize,
+                        width=8cm,
+                        height=3cm,
+                        xlabel=Year,
+                        minor xtick = {2000,2001,...,2016,2017},
+                        xtick = {2000,2004,...,2016},
+                        xticklabels = {2000,2004,2008,2012,2016},
+                        minor ytick = {0,1,...,6},
+                        ytick = {2,4,6},
+                        xmin=1999.5, xmax=2017.75,
+                        ymin=0, ymax=7,
+                        tickpos=left,
+                        ytick align=outside,
+                        xtick align=outside,
+                        legend style={at={(1.05,0.5)},anchor=west, draw=none}
+        ]
+\nextgroupplot
+\addplot[fill=blue] coordinates
+{(2001,5) (2002,1) (2003,2) (2004,1) (2005,2) (2006,6) (2007,0) (2008,0) (2009,4) (2010,3) (2011,2) (2012,1) (2013,3) (2014,2) (2015,2) (2016,4) (2017,3) (2018,4) }; \addlegendentry{Similarity-based};
+\coordinate (top) at (rel axis cs:0,1);
+\nextgroupplot
+\addplot[fill=red] coordinates
+{(2001,1) (2002,7) (2003,5) (2004,4) (2005,3) (2006,3) (2007,5) (2008,8) (2009,3) (2010,4) (2011,5) (2012,7) (2013,3) (2014,6) (2015,1) (2016,5) (2017,3) (2018,4) }; \addlegendentry{Causal correlation};
+\nextgroupplot
+\addplot[fill=green] coordinates
+{(2001,0) (2002,2) (2003,1) (2004,1) (2005,3) (2006,1) (2007,9) (2008,3) (2009,0) (2010,3) (2011,3) (2012,4) (2013,1) (2014,1) (2015,1) (2016,3) (2017,3) (2018,1) }; \addlegendentry{Case-based};
+\nextgroupplot
+\addplot[fill=orange] coordinates
+{(2001,0) (2002,0) (2003,0) (2004,4) (2005,0) (2006,1) (2007,2) (2008,1) (2009,3) (2010,0) (2011,2) (2012,1) (2013,0) (2014,2) (2015,3) (2016,3) (2017,0) (2018,1) }; \addlegendentry{Mixed};
+\nextgroupplot
+\addplot[fill=purple] coordinates
+{(2001,0) (2002,0) (2003,0) (2004,1) (2005,0) (2006,1) (2007,2) (2008,2) (2009,0) (2010,1) (2011,1) (2012,2) (2013,1) (2014,1) (2015,0) (2016,1) (2017,2) (2018,1) }; \addlegendentry{Structural-based};
+\coordinate (bot) at (rel axis cs:1,0);
+\end{groupplot}
+
+            \path (top)--(bot) coordinate[midway] (group center);
+
+            \node[above,rotate=90] at (group center -| current bounding box.west) {Number of papers};
+
+            \end{tikzpicture}
+
+            \endpgfgraphicnamed
+
+            \end{document}

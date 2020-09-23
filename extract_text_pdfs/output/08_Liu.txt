@@ -1,0 +1,253 @@
+2008 International Conference on Information Security and Assurance
+
+Correlating Multi-Step Attack and Constructing Attack Scenarios Based on Attack Pattern Modeling
+Zhijie Liu, Chongjun Wang, Shifu Chen National Key Laboratory for Novel Software Technology (Nanjing University), Nanjing 210093, China 2 Department of Computer Science and Technology, Nanjing University, Nanjing 210093, China liuzhijie@iip.nju.edu.cn; chjwang@nju.edu.cn; chensf@nju.edu.cn Abstract
+Most cyber-attacks are not single attack actions. They are multi-step attacks composed by a set of attack actions. Although techniques used by attackers can be diverse, attack patterns are generally finite. So we need to find attack steps that are correlated in an attack scenario. By studying the patterns of multi-step cyber attacks, an algorithm is presented for correlating multi-step cyber attacks and constructing attack scenario system based on modeling multi-step cyber attacks. When alerts appear, the algorithm turns them into corresponding attack models based on the knowledge base and correlates them, whether alert or not is based on the weighted cost in the attack path graph and the attack degree of the corresponding host. And attack scenarios can be constructed by correlating the attack path graphs. Moreover, the model can detect intrusion alerts in real time and revise the attack scenarios. Experiments on the DARPA IDS test dataset show the validity of the algorithm. construction are good solutions for this problem. The probabilistic approach of alerts correlation was used in [1, 2]. In [3], Ning et al. introduced hyper alerts to construct attack scenarios that alerts can be correlated if the consequence of a hyper alert fulfills the prerequisites of the second hyper alert. In [4], Cuppens et al. correlated alerts if the prerequisites of some later alerts are satisfied by the consequences of some earlier alerts. In [5], the method of alert correlation based on intrusion intension was presented. The notion of attack graph was proposed in [6, 7] to aid in the understanding and detection of multi-step attacks. Most alert correlation approaches focus on observating a series of attacks, but less attention has been paid to the steps an attacker would take to compromise a system. Our work is motivated by the requirements to overcome the drawbacks of above approaches. Attacks are usually not isolated, but related as different steps, with the earlier steps preparing for the later ones. So we propose an approach that correlating multi-step attacks and constructing attack scenario based on modeling attack patterns. The main contributions of this paper are: 1. Proposed a general attack pattern that an attacker would take to intrude a system. 2. An algorithm for constructing attack path graph and attack scenarios. The remainder of this paper is organized as follows. Section 2 describes the relationships between attack actions in a multi-step cyber attack scenario and the concept of attack patterns that carried by attackers in an attack plan. Section 3 presents our approach that correlating multi-step attacks and constructing attack scenarios based on attack patterns. Section 4 describes the experiment results on the DARPA test dataset and Section 5 concludes this paper with some directions for our future research.
+
+1
+
+1. Introduction
+With the dramatically increased computer attacks during the last several years, Intrusion Detection Systems (IDS) have become a major element for network secure. However, by detecting simple attack steps, IDSs usually generate huge volumes of low-level alerts, in which the information on multi-step attack scenarios is missing. The analysts and secure administrators can't know how relevant the attack actions detected by IDS are to a whole attack plan. As a matter of fact, most IDSs fail to have good performance on detecting compound attacks involving multiple steps. Some researches [1-4] show that multi-step intrusion alerts correlation and attack scenarios
+
+978-0-7695-3126-7/08 $25.00 Š 2008 IEEE DOI 10.1109/ISA.2008.11
+
+214
+
+2. Multi-step attack and attack patterns
+2.1 Multi step attack activities
+In realistic networks, hackers initiate attacks on target machines through multiple attack actions and mechanisms. These multiple single attack actions belong to an attack plan indeed. Although IDSs can generate alerts in corresponding to a single attack, we can't figure out the relationships between these attack actions. So we can't observe the whole attack plan. To defense the network security, we must perform more research on detection and prediction of the multi-step attack. Accordingly, attack actions are not separated or isolated. There are some logic relations between them, which is defined as follows: 1. Pre-condition: An attack A putting into effect must depend on the success of other attacks as premises, and we use Precondition(A) to denote the precondition set of A. Post-condition: The success of an attack B is the prerequisite for the success of an attack A. So we consider B is prerequisite to A, and we use Postcondition( A) to denote the consequence set of A. Parallel: There are no specific logic relations between attack actions, any attack actions can execute successfully, and the attacker can implement the next step. We use Parallel ( A) to denote the attack actions that parallel to A. Relativity: The attacker can carry on the next step of an attack only if multiple prerequisite attack actions have all succeeded. And we use Relative(A) to denote the attack actions that have correlativity relations with A.
+
+detecting the attackers and stopping him before further damage is made. So we model attacks to a general pattern: probe, scan, intrusion, goal , and we use a set { probe, scan, intrusion, goal} to present it as figure 1. Intrusion
+
+Probe
+
+Figure1. Multi-step Attack Pattern
+
+illustration
+
+3. Correlation of Multi-step Attack and Attack Scenarios Construction
+The process of our approach can also be illustrated as follows. 1. Preprocess .In this phase, the alerts can be simplified and reduced. And we can use knowledge base to map alerts to its attack pattern. The alerts was converted to such format( Sip , Tip , Sport , Tport  AttackType  Timestamp  AttackModel  Weight  , Sip is the attack Source IP Tip is the attack Target IP  Sport , Tport are the port of attacker and victim, AttackType is the attack type that defined by the IDS sensor, Timestamp is the time of attack, AttackModel is the attack pattern that defined above , Weight is the danger weight of the alert. Construction of APG (attack path graph). Alerts would correlated by aggregated its attack source and attack target. The goal of this step is to construct attack path graph, and generate alerts to the victim whose criticality weight go beyond the threshold. Scenario-generation. Apply attack scenarios construction algorithm to the set of attack path graph, and provide results for observing the whole attack plan.
+
+2.
+
+3.
+
+4.
+
+2.
+
+2.2 Attack pattern
+There are many ways for an attacker to probe a system. No matter by which way the attacker realize it, there are some general steps that are follows [8, 9]. 1. Run reconnaissance against the network. 2. Run port scan. 3. Exploit vulnerable ports. 4. Attack goal. For launching an attack against a system, an attacker has to go through all of the steps above. Therefore, if we can properly model the general pattern to accomplish attacks, we will have a better chance for
+
+3.
+
+3.1 Attack path graph
+Definition 1: Attack path graph
+
+APG = ( Ns, Nt , Nm, E ) (Attack Path Graph) is a direction-
+
+215
+
+Scan
+
+Goal
+
+graph. Ns is the node represents the attack source, Nt is
+the node that represents the attack
+Pinger
+
+Attack Source nmap ping Probe Tcpscan Scan Intrusion nmap scan Buffer Overflow
+
+target. Nm = {nm1, nm 2, nm3, nm 4} is a set of nodes that represent the attack pattern corresponds to a whole attack plan, and
+nm1 denotes the step of probe  nm 2 represents the step of scan  nm 3 denotes the step of intrusionand nm 4 denotes
+
+the step of goal . We can also use Ns and Nt to identify
+
+attack path graph uniquely so APG ( Ns, Nt ) denotes the attack path from attack source to attack target. E is the set that represents the attack actions between attack steps. For each ( ni, nj )  N , N  Ns  Nt , there is a edge e = {ei  ej}  E  iff ni  Pr econdition( nj ) and
+nj  Postcondition (ni ) 
+
+Goal
+
+Attack Target
+
+Definition 2 w(e) w(e) denote the weight of each
+
+edge within an attack path graph e  E  w(e) can be set based on the attack steps and the existing vulnerability et. Definition 3 Eij Eij is a set that indicates the edge that correlate the node ni and nj . For each (ei , ej )  Eij there are parallel relations or correlativity relations between ei and ej . Definition 4 W ( apg ) Given a APG ( Ns, Nt )  its danger weight is define as follows
+W ( APG ) = w( ns , nm1) + w( nm1, nm 2) + w( nm 2, nm3) + w( nm 3, nm 4) + w (nm 4, nt )
+
+1
+
+The meanings of nm1, nm 2, nm3, nm 4 are define in definition 1. w(ni, nj ) show the weight between the node ni and nj , w( ni , nj ) = MAX ( w( Eij ))  ei  Eij .
+Definition 5 Key - Edge If after adding the edge e into an APG, the W ( apg ) of this APG exceeds
+W ( apg - e)
+
+Figure 2. Attack Path Graph Figure 2 shows an attack path graph. The attack is deriving from Sip , and target on Tip In phase probe , the attacker probe the host by using two techniques: nmap ping  pinger . In phase scan , attacker use nmap scan and tcpscan trying to find the vulnerability of the system, subsequently, the attacker tries to break into the target by remote buffer-overflow attack in the next phase intrusion . The phase goal which is surrounded with dashed indicates that the attacker have not arrive this step of attack. Definition 7: Based on above definition, we can define multi-step attack scenarios as a nine-tuple:
+S = {Ns ( S ), Nt ( S ), Nm( S ), APG( S ), K ( S ), E ( S ),W ( S ), C ( S ),V ( S )}
+
+, where: 1) 2) 3)
+Ns( S ) = {ns1, ns 2,..., nsn} is a set of nodes that presents attack source Nt ( S ) = {nt1, nt 2,..., ntm} is a set of nodes that represents attack target Nm( S ) = {nm1, nm 2, nm 3, nm 4} is a set of attack pattern nodes that represents four steps combined in a attack plan which was defined in Definition 1. APG ( S ) = { APG1, APG 2,..., APGk}  Ns × Nt , APG is a set of attack path graphs. apg  Ns × Nt , is a mapping from an attack source to an attack goal. And we can use apg(ns,nt) to presents apg , K ( S ) = {K 1, K 2,..., Kk} is a set of attack critical steps. E ( S ) = {E (apg 1), E ( apg 2),..., E (apgk )} is a set of edges . W ( S ) = {W 1,W 2,...,Wk} is a set of weights of
+
+which
+
+denotes
+
+the
+
+danger
+
+weight
+
+of APG ( Ns, Nt ) without e then the edge e is defined as the key edge to the attack path graph, and is denoted as
+Key - Edge .
+
+Definition 6 AKT ( AttackKeyTrace ) Attack Key Trace is constituted of Key - Edge , Precondition(Key - Edge)
+
+4)
+
+and Postcondition( Key - Edge) , where:
+AKT = Key - Edge + Precondition ( Key - Edge ) + Relative ( Key - Edge )
+
+2 5) 6) 7)
+
+It's obvious that the danger weight W ( apg ) is equal to the weight of attack key track W ( AKT ) which can be expressed as follows:
+W ( APG ) = w( AKT ) = w ( Key - Edge )
+
++ w(Precondition(Key - Edge)) + w(Relative(Key - Edge)) (3)
+
+216
+
+attack target. 8) 9)
+C ( S ) = {C1, C 2,..., Cm} is a set of attack criticalities of attack target. V ( S ) = {v1, v 2,..., vt} is a set of victim nodes. A victim node is represented by vi, where vi is a victim.
+
+6.
+
+If the C ( nt ) go beyond the threshold. Then }
+V V
+
+
+
+nt
+
+3.3 The constructor of multi-step attack scenarios
+We can construct multi-step attack scenarios from the set of attack path graphs. In simple words, based on the given set of attack path graphs, we construct attack scenarios with aggregated vertices by correlating the same attacker and the same victim. The algorithm of constructing attack scenarios is described as follows: The set MAS = {MAS 1, MAS 2,..., MASs} is used to preserve the correlated multi-step attack scenarios in the algorithm, and we also use Q to save the temp resultant. Algorithm 2  Multi-step Attack Scenario Constructing Input: Set APG,  Nt  APG  K  E  C  V Output: Set MAS scenarios. 1. 2. 3. 4. 5. containing all the attack
+
+3.2 The constructor of attack path graph
+Attack path graphs can be constructed from the alerts set. The algorithm is depicted as follows: Algorithm 1: Attack Path Graph Constructing Input: set A containing all the alerts that detected by the IDS, Output: set V containing all the victims that are attack by attackers. 1. 2.
+Ns  Nt  APG  K  E  C  V  
+
+For each a  A { 1) Create a attack source node ns , if
+ns  Ns Ns  Ns
+
+ {ns}
+
+3.
+
+2) Create a attack target node nt , if nt  Nt Nt  Nt  {nt} , C ( nt ) = a.weight , C  C  C ( nt ) 3) Create a edge e that map to correspond attack pattern. 4) Create a new apg APG ( ns , nt ) If APG ( ns, nt )  APG { i. APG  APG  APG ( ns , nt ) ii. E ( ns , nt )  E ( ns , nt )  e , E 
+E
+
+Q , MAS   , i  1 If V =  , then the algorithm terminate. Else if V   ,then{ For each v  V , Q  Q  v ,and V  V - {v}
+
+
+
+E ( ns , nt )
+
+iii. } 4.
+
+w( ns , nt ) = a.weight C ( nt ) = MAX ( w(ns , nt ), C ( nt ))
+
+,
+
+If APG ( ns, nt )  APG { i. If e  E ( ns , nt ) ,then abandon the edge e ,and process the next alerts ii. If e  E ( ns , nt ) ,then update the weight w( ns , nt ) of APG ( ns , nt ) { If e is the Key - Edge , then update w( ns , nt ) according to the formula (3) } }
+
+If Q   ,for each q  Q , Q  Q - {q} and then { Look up each map ( ns, nt )  APG a) If q = ns ,then add the correspond attack nt to set Q , target Q  Q  {nt} , MASi  MASi  {( q, nt )} ,and if nt V , V  V - {nt} b) If q = nt ,then add the correspond attack ns to set source Q , Q  Q  {ns} , MASi  MASi  {( ns, q)} ,and if ns  V , V  V - {ns} }
+i  i +1
+
+}
+
+5.
+
+Update the Criticality C ( nt ) of attack target :
+C ( nt ) = MAX ( w(ns , nt ), C ( nt ))
+
+4. Experiment and result analysis
+
+217
+
+To evaluate the effectiveness of our multi-step attack scenarios construction approach, we applied it to the DARPA 2000 LLDOS1.0 dataset from MIT Lincoln Laboratory. In this section, we describe and report our experiment results. DARPA 2000 LLDOS1.0 dataset contains a series of attacks in which the attacker probes the network, break in to a host by exploiting the Solaris sadmind vulnerability, installs Trojan mstream DDoS software, and launches a DDoS attack at an off site server from the compromised host[10]. In phase 1, the attacker performs a IPsweep to determine which hosts are "up". In phase 2, the attacker probes the hosts that were discovered in the previous phase to determine which hosts are running the "sadmind" remote administration tool. In phase 3, the attacker tries to break into the hosts. Entering phase 4, the attacker successfully intrude the victim as mill (172.16.115.20), pascal (172.16.112.50), and locke (172.16.112.10) and to install the Mstream DDoS software. In the final phase 5, the attacker launches a DDOS attack.
+202. 77.162.213
+
+by IDS. From the figure we can see that the attack source IP is 202.77.162.213, and the attack target IP is 172.16.112.10. And we can also know that the attacker has successfully gone through the step of probe, scan, intrusion . The tools and methods which were taken by the attacker to go through these steps are pointed out in figure 3. Other information we can obtain from figure 3 is that the next attack which the attacker would carry out is goal step which was surrounded by dashed. Based on the given set of attack path graphs, we can construct attack scenarios with aggregated vertices by correlating the same attacker and the same victim. The graph for the attack scenario is shown in figure 4. The attacker successfully intrudes the victim as mill (172.16.115.20), pascal (172.16.112.50), and locke (172.16.112.10) and to install the Mstream DDoS software (step A1, A2 and A3). Subsequently, Mill control pascal and locke to organize the attack (Step A4 and A5). Finally, the attackers launch DDoS attack from the three victims. Attacker
+
+Probe
+Sadmind Ping 67341 202.077.162.213
+
+A1
+172.016.112.10
+
+Scan
+Sadmind_Amslverify Overflow 67442 Sadmind_Amslverify Overflow 67438 Sadmind_Amslverify Overflow 67430 Sadmind_Amslverify Overflow 67428
+
+A2
+
+A4
+
+Interim puppet
+
+A3
+
+172.016.115.20
+
+A5
+172.016.112.50
+
+Intrusion
+
+Launch DDos attack
+Figure 4. Attack Scenario illustration
+
+Goal
+
+172. 16.112.10
+
+Figure 3. Attack path graph after receive Sadmind_Amslverify_Overflow alert We use RealSecurity as the IDS sensor, and for each alert that produced by IDS, we applied the attack path graph construction algorithm to it. If the criticality of an attack target goes beyond the alert threshold, then an alarm is given to the security administrator. The simulation results that depict the attack on victim locke (172.16.112.10) are shown in Figure 3.
+
+To better understand the effectiveness of our approach, we use the same evaluating indicator such as completeness and the soundness as Ning et al. once used in [3]. The notion of completeness of alert correlation evaluates how well we can correlate related alerts together, while the notion of soundness evaluates how correctly the alerts are correlated. Table 1 shows the results about completeness and soundness of the alert correlation for the LLDOS1.0 dataset. Considering the fact that the values of the completeness measures and the soundness measure can well satisfy the dataset, we can conclude that our approach is effective for the dataset. The experimental evaluation reported in this paper is still preliminary, though they have demonstrated the
+
+Figure 3 describes such situation after we receive the Sadmind_Amslverify_Overflow alert that produced
+
+218
+
+potential of the proposed approach. To further understand the capability of these methods, we will perform more detailed, quantitative evaluation in our future research. Table 1. Ability to differentiate true and false alerts LLDOS1.0 DMZ Inside #related alerts 57 44 #correlated 58 44 alerts #correctly correlated 44 44 alerts Our method Completeness 100 100 measure (%) Soundness 100 98.3 measure(%) Completeness 94.7 93.2 measure (%) TIAA Soundness 94.7 93.2 measure (%)
+
+heterogeneous alert stream. In: Proceedings of the IEEE SMC Information Assurance Workshop, West Point, NY, 2001. [ 2 ] Valdes A., Skinner K. Probabilistic alert correlation. In: Proceedings of the 4th International Symposium on Recent Advances in Intrusion Detection.Lecture Notes in Computer Science. Spring-Verlag, 2001. 54-68. [ 3 ] Ning P., Cui Y., Reeves D.S., Xu D. Techniques and tools for analyzing intrusion alerts. ACM Transactions on Information and System Security, 2004, 7(2):274318. [ 4 ] Cuppens F,Miege A. Alert Correlation in a Cooperative Intrusion Detection Framework, Proceedings of the IEEE Symposium on Security and Privacy, Oakland, California, USA, 2002. [ 5 ] Steven Cheung, Ulf Lindqvist and Martin W. Fong Modeling multistep cyber attacks for scenario recognition. The 3rd DARPA Information Survivability Conference and ExpositionWashington D.C., 2003. [ 6 ] S.Jha, O. Sheyner, and J. Wing. Two Formal Analyses of Attack Graphs. In 15th IEEE Computer Security Foundation Workshop, 49-63, Cape Breton, Nova Scotia, Canada, 2002. [ 7 ] S.Noel, E.Robertson, and S.Jajodia. Correlating Intrusion Events and Building Attack Scenarios through Attack Graph Distances. In Proceedings of the 20th Annual Computer Security Applications Conference, 2004. [ 8 ] Eric Cole, Hackers Beware, New Riders Publishing, Indianapolis, 2001. [ 9 ] J.Haines, D.Ryder, L. Tinnel, and S. Taylor. Validation of sensor alert correlators. IEEE Security and Privacy, 2001.
+
+5. Conclusion
+A novel attack pattern modeling method was proposed to correlate single attack actions and construct attack scenarios in this paper. By our approach, firstly, the raw alerts are preprocessed. Then, the attack path graphs are constructed by correlated multiple alerts. Based on the attack path graphs, attack scenarios are generated. The results are forwarded to the security administrator for the intrusion analysis. One of the most important works in the future is to infer the full scope of the attack from the attack scenarios which allows for deeper analysis. Another direction of our future research is to create better and more sophisticated pattern for the individual steps which the attacker takes to compromise a system. In addition we plan to test our approach using data captured from a live network.
+
+[ 10 ]
+
+MIT Lincoln
+
+Lab.
+
+2000
+
+DARPA intrusion datasets.
+
+detection
+
+scenario
+
+specific
+
+6. Acknowledgements
+This research was supported by the National Natural Science Foundation of China, No.60721002 and No.60503021 and by the High-tech Research Program of Jiangsu Province, No.BG2006027 and BG2007038.
+
+http://www.ll.mit.edu/IST/ideval/data/2000/2000_data_ index.html, 2000.
+
+7. References
+[ 1 ] Dain O., Cunningham R. K. Building scenarios from a
+
+219
+
+

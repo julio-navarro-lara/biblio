@@ -1,0 +1,970 @@
+Front. Comput. Sci. China 2011, 5(1): 109–118
+DOI 10.1007/s11704-010-0321-y
+
+RESEARCH ARTICLE
+
+Boosting performance in attack intention recognition by
+integrating multiple techniques
+Hao BAI (✉)1, Kunsheng WANG2, Changzhen HU1, Gang ZHANG2, Xiaochuan JING2
+1 School of Computer Science and Technology, Beijing Institute of Technology, Beijing 100081, China
+2 China Aerospace Engineering Consultation Center, Beijing 100048, China
+
+© Higher Education Press and Springer-Verlag Berlin Heidelberg 2010
+
+Abstract Recognizing attack intention is crucial for
+security analysis. In recent years, a number of methods for
+attack intention recognition have been proposed. However, most of these techniques mainly focus on the alerts
+of an intrusion detection system and use algorithms of low
+efﬁciency that mine frequent attack patterns without
+reconstructing attack paths. In this paper, a novel and
+effective method is proposed, which integrates several
+techniques to identify attack intentions. Using this
+method, a Bayesian-based attack scenario is constructed,
+where frequent attack patterns are identiﬁed using an
+efﬁcient data-mining algorithm based on frequent patterns. Subsequently, attack paths are rebuilt by recorrelating frequent attack patterns mined in the scenario.
+The experimental results demonstrate the capability of our
+method in rebuilding attack paths, recognizing attack
+intentions as well as in saving system resources.
+Speciﬁcally, to the best of our knowledge, the proposed
+method is the ﬁrst to correlate complementary intrusion
+evidence with frequent pattern mining techniques based
+on the FP-Growth algorithm to rebuild attack paths and to
+recognize attack intentions.
+Keywords attack path, attack intention, compensatory
+intrusion evidence, FP-Growth
+
+1
+
+Introduction
+
+Intrusion detection systems (IDS) play an essential role in
+analyzing and responding to different kinds of attack
+Received February 3, 2010; accepted June 7, 2010
+E-mail: david_xiaobai@126.com
+
+aimed at jeopardizing cyber systems. However, IDS
+produce large quantities of raw alerts including false and
+missed alerts which cannot be used to evaluate the impact
+on systems being attacked. Therefore, it is a challenging
+task to deduce the real intentions of attackers directly from
+the alerts of IDS.
+To make up for the limitations of IDS, Ning et al. [1,2],
+propose a method to correlate alerts, based on similarity
+between alert attributes and the prerequisites and
+consequences of known attacks, to construct attack
+scenarios. This method estimates attack intentions in
+terms of this correlation. The advantage of alert correlation is that isolated alerts can be fused into analyzable
+scenarios with the number of false alerts being reduced
+[3]. However, this policy relies on underlying IDS for
+alerts, which means the results of alert correlation are
+limited by the ability of the IDS [2]. Wang et al. [4],
+present a scheme to recognize attack intentions by means
+of mining frequent attack patterns with raw alerts of IDS
+using an Apriori [5] based algorithm. However, this
+method has a high cost in handling a large number of
+candidate sets, and must repeatedly scan the database
+containing IDS alerts and check a large set of candidates,
+few of which make positive contributions to efﬁciency
+[6,7]. In particular, as the input data to be mined are
+discrete alerts without correlation, the output is just an
+accumulation of alerts whose conﬁdence is higher than the
+threshold, from which a user cannot build an attack paths
+unless the data are reprocessed manually by resorting to
+user expertise. Therefore it is hard to guarantee that the
+attack intentions extracted in this way are accurate.
+In this paper, the technique of attack scenarios is ﬁrst
+depicted from two aspects via fusing compensatory
+
+110
+
+Front. Comput. Sci. China 2011, 5(1): 109–118
+
+intrusion evidence, namely the attacker and the system
+being attacked, which helps the attack scenarios to be
+presented more comprehensively. We subsequently propose a technique for mining the frequent attack patterns in
+attack scenarios with a “Frequent Pattern Growth” (FPGrowth) based algorithm [7]. Finally, we create our
+technique for attack path reconstruction and attack
+intention recognition. We base this upon the speciﬁc
+attributes of elements in frequent attack patterns. We
+propose a novel and effective method via a combination of
+the three techniques, which addresses those disadvantages
+described in previous paragraph.
+Our efforts are aimed at developing a more effective and
+efﬁcient approach for attack intention recognition. By
+fusing and extending the three techniques introduced
+above, we succeed in boosting performance in attack
+intention recognition, improving the efﬁciency of frequent
+attack pattern mining, and rebuilding attack paths more
+precisely. As far as we know, the method proposed in this
+paper is the ﬁrst to integrate compensatory intrusion
+evidence with the FP-Growth [7] based frequent pattern
+mining algorithm which we use to rebuild attack paths and
+implement attack intention recognition.
+The major contributions of this paper are threefold:
+1) Compensatory intrusion evidence is introduced to
+construct attack scenarios. These scenarios ensure that in
+each step of an intrusion some particular system state
+reﬂects the effect of the attack. Therefore the aims of
+attackers can be deduced at every move and then
+summarized as the attack intentions.
+2) The FP-Growth [7] based algorithm is developed,
+which can deal with large-scale attack patterns. This effort
+considerably improves the performance in attack pattern
+mining and is helpful to the whole procedure.
+3) Frequent attack patterns are re-correlated by
+examining speciﬁc attributes of compensatory intrusion
+evidence, in order to eliminate false alerts and rebuild
+attack paths in logical and temporal sequence. Consequently, the attack intentions are deduced more precisely.
+Our proposed method is implemented in three sequential modules: 1) attack scenario construction based on
+compensatory intrusion evidence, 2) frequent attack
+pattern mining based on FP-Growth [7], and 3) attack
+path reconstruction. Figure 1 shows an overview of the
+implementation of the proposed method. The infrastructure of the proposed method and the relationships between
+different modules are also shown in this ﬁgure.
+Section 2 summarizes related work; Section 3.1 brieﬂy
+
+Fig. 1
+
+Implementation of techniques
+
+introduces the basic concept of the FP-Growth algorithm
+[7]; Section 3.2 presents the technique to construct attack
+scenarios with compensatory intrusion evidence; Section
+3.3 describes the technique that is used to mine frequent
+attack patterns in attack scenarios with an efﬁcient
+algorithm; Section 3.4 explains the technique to rebuild
+attack paths with frequent attack patterns; Section 4
+reports the experimental results and shows the efﬁciency
+of our solution; Lastly, conclusions and future research
+directions are outlined in Section 5.
+
+2
+
+Related work
+
+In recent years, there have been a number of proposals on
+attack scenario construction and attack intention recognition.
+One of the proposed techniques works by deﬁning preconditions and post-conditions and ﬁnding the causal
+relations of alerts, and then building the attack scenarios
+[8–11]. This technique is the most related to our own. The
+key to these works is that the attack is not isolated since
+the attacker would take several steps during an invasion to
+compromise the system [12]. This kind of technique
+focuses on identifying a sequence of attack characteristics
+and ﬁnding happen-before relations of invasions [13,14].
+Some researchers utilize physical clocks in distributed
+systems to enhance the accuracy in determining orders of
+attack steps [13]. However, only IDS alerts are correlated,
+so it is difﬁcult for this approach to specify the
+involvement of system status with alerts extracted only
+from IDS. Our solution to targeting this shortage is
+presented in Section 3.2.
+
+Hao BAI et al. Boosting performance in attack intention recognition by integrating multiple techniques
+
+Another approach closely related to ours uses a data
+mining algorithm to generate attack scenarios [15,16]. Li
+et al. [15], mine attack scenarios from an historical alert
+database using an association rule algorithm. They also
+detect real-time attack behaviors and predict forthcoming
+intrusion with mined patterns [16]. However, there are
+limitations to this approach. First, it is based on a pattern
+mining algorithm that produces a large number of
+candidate sets; this reduces the efﬁciency. In contrast,
+our FP-Growth [7] based algorithm makes the mining
+process more effective and efﬁcient. Even with mined
+attack patterns, however, it is infeasible to recognize
+attack intentions automatically. Section 3.4 of this paper
+introduces an algorithm to re-build attack paths to address
+this problem.
+Li [17], and Qin and Lee [18] conduct probabilistic
+deduction to present tree-liked attack scenarios [17,18].
+This approach builds a hierarchical architecture to analyze
+an attacker’s strategies and predict potential attacks [18].
+Furthermore, isolated attack scenarios can be correlated
+with pre-deﬁned networks [18]. The disadvantage is that
+the architecture is required to be pre-deﬁned and it cannot
+recognize a new type of attack which is not deﬁned in the
+scenario.
+Qin and Lee [19] develop an approach to correlating
+alerts based on statistical causality analysis. It discovers
+new relations in a scenario if statistical correlations exist
+[19]. Although with this approach one doesn’t need to
+deﬁne hard-coded knowledge, it is less effective when
+attacks happen occasionally and alerts are isolated.
+Ou et al. [20,21] use logical formulation to carry out
+attack graph-based analysis. Their main contribution is the
+scalable generation of attack graphs by which security
+ﬂaws can be detected [20,21]. A weakness in logical
+formulation generation is that redundant logical expressions are enumerated through the entire process which
+results in low efﬁciency and low accuracy since an attack
+is alerted only when all sub logical expressions are
+satisﬁed.
+Mei et al. [22] presented an approach to correlate IDS
+alerts with an alerts conﬁdence fusion algorithm. The
+fusing process is based on D-S evidence theory and the
+source of evidence comes only from IDS [22]. Therefore,
+the attack scenarios still rely on the ability of IDS.
+Some other researchers use distributed hash table
+(DHT) technology to correlate IDS alerts and use DHT
+in an agent-based distributed IDS environment [23]. The
+main limitation of these approaches is that they produce
+
+111
+
+high level meta-alerts [23] without correlating them with
+logical or timing sequences.
+
+3
+
+Proposed method
+
+Despite the progresses achieved by prior works, none of
+them is able to provide a satisfactory solution in itself. For
+example, most prior mining methods of frequent attack
+patterns are based on the Apriori algorithm [5], and thus
+inherit all its limitations, like consuming enormous
+resources and having high time complexity which reduce
+the efﬁciency. Several researchers [7] point out that with
+Apriori [5], it is difﬁcult to mine frequent patterns of large
+sizes. In reality, as attackers take multiple precautions to
+prevent being detected, it is common to see multi-step
+attacks containing deceptive behavior. It is therefore
+imperative to ﬁnd a new solution to replace less effective
+techniques. To accomplish this goal, we integrate multiple
+individual approaches and develop a novel method based
+on the FP-Growth algorithm [7] which can provide a more
+effective solution.
+3.1
+
+Basic concept of FP-Growth
+
+To facilitate a better understanding of our proposed
+method, before the detailed illustration of three modules
+of our method, we give a brief introduction of the FPGrowth algorithm which is presented in Han’s paper [7].
+The FP-Growth algorithm includes two steps: 1)
+Constructing a Frequent Pattern Tree (FP-tree), and 2)
+Mining frequent patterns with a FP-tree.
+First, a frequent pattern tree (FP-tree) comprises a root
+whose value is “null,” branches of the tree composed of a
+group of item-preﬁx sub-trees and a frequent-item-header
+table. Each node of the item-preﬁx sub-tree consists of
+item-name, count and node-link, where item-name stores
+the item represented by the node, count stores the number
+of paths passing through the node (i.e., the number of
+transactions represented by the paths) and node-link links
+the node with other nodes in FP-tree that share the same
+item-name (null if no such nodes in FP-tree). Each entry
+node in the frequent-item-header table consists of itemname and head of node-link where the latter is a pointer
+pointing to the ﬁrst node having item-name in FP-tree.
+According to the above structure of FP-tree, only two
+cycles of scanning the transaction database are needed for
+building such a tree, the ﬁrst scan collects frequent item
+sets and the second builds the FP-tree. Though it is
+
+112
+
+Front. Comput. Sci. China 2011, 5(1): 109–118
+
+compact, an FP-tree can provide all the information
+needed for a frequent pattern mining algorithm. And
+beneﬁting from its compact structure, the size of an FPtree is not only far smaller than that of the database but
+also smaller than those of candidate sets produced in the
+mining process using the Apriori algorithm [5].
+The mining algorithm is designed based on the FP-tree,
+which is created in two recursive steps: First, identify
+frequent patterns with length-1 in the database and build a
+conditional pattern database for every frequent pattern;
+second, mine all frequent patterns with length-1 in these
+conditional pattern databases.
+With the above effort, the task of mining frequent
+patterns with length-k is successfully transferred to a set of
+sub-tasks which focus on mining frequent patterns with
+frequency-k and length-1 and do not produce any
+candidate sets in the entire mining process.
+Although the FP-Growth algorithm [7] is effective and
+efﬁcient for dense data mining, it recursively constructs
+the FP-tree, which may result in low efﬁciency when the
+captured data are sparse. In this case, we can switch to the
+H-mine based algorithm [24] that aims at mining sparse
+data sets which elicit long frequent patterns.
+3.2
+
+Attack scenario construction
+
+The ﬁrst module of the proposed method is used to
+construct attack scenarios, see Fig. 1. Zhai et al. present a
+method to construct an attack scenario using complementary intrusion evidence [25]. Similarly, we collect data
+from two source-evidence based both on system states and
+on IDS alerts to form compensatory intrusion evidence,
+and use Boolean variables to represent system states and
+IDS alerts, e.g., if a scanner detects Telnet running, this
+state can be registered as TelnetRunning(TRUE).
+We deﬁne two attributes for the system-state variable:
+1) time_stamp: to register the time when system-state is
+being detected or determined.
+2) host: to register the host, i.e., the system being
+attacked, using IP address, e.g., TelnetRunning(host)
+denotes Telnet is running on host).
+For IDS-alert variable alert, besides time_stamp and
+host, we deﬁne a further two attributes: precondition and
+postcondition. The precondition is a Boolean logic
+expression that is combined with system-state variables;
+the postcondition is a set that includes system-state
+variables as elements. If the precondition of an alert is
+satisﬁed, then current system states will be transferred to
+those in the postcondition of this variable.
+
+In general cases, an attacker launches a series of attacks
+to put the system into some intermediate states, and ﬁnally
+into the target states which are usable by the attacker.
+There are causal relations between attack behaviors and
+system states. We refer to [25] to construct attack
+scenarios based on a Bayesian network: fusing alerts
+with system-states on the basis of causal relations.
+The construction of a Bayesian network is initialized
+from a system-state variable. If a new alert is registered
+and only if its precondition turns out to be TRUE, then we
+add the variables of its precondition as nodes to the
+network; next we link the alert with those system-state
+variables of its precondition with directed edges; for every
+system-state variable in the postcondition of the alert, we
+add it to the network and link it with the alert with directed
+edges.
+Every single node in the Bayesian network preserves a
+conditional probability table reﬂecting its probabilistic
+relations with the parent nodes. When an IDS alert is
+reported, the probability that this alert e corresponds to a
+real attack is Pr(e). The variable e being TRUE means that
+its corresponding attack is successful, and its probability is
+the prior conﬁdence of e when its precondition is satisﬁed.
+When the precondition of e is not satisﬁed, the probability
+of e being TRUE is 0.
+For the conditional probabilities of system-state nodes,
+we have the following hypothesis. If alert e registers a
+successful attack, then all elements of its postcondition are
+TRUE; otherwise, those which are FALSE before e is
+detected are still FALSE.
+3.3
+
+Frequent attack pattern mining
+
+The second module of the proposed method is also shown
+in Fig. 1. To conﬁne the scale of data to be mined, it is
+imperative to set an attack time window. In the traditional
+manner, it is believed that attacks can be time consuming.
+So the size of the time window is always set to be a
+constant which takes days or even weeks. For example, all
+alerts in this period construct a holistic attack scenario.
+We observe that using such a method to set the attack
+time window collides with two known facts. First, since
+attack-and-defense scenarios are in reality complex,
+attackers are always confronted by layers of defenders
+during the intrusion. As a result, the attacking strategies
+may be compromised; meanwhile, attackers use camouﬂage to prevent their efforts from being detected. Both
+create an attack scenario ﬁlled with failed and deceptive
+behaviors, which are also registered as IDS alerts. If the
+
+Hao BAI et al. Boosting performance in attack intention recognition by integrating multiple techniques
+
+size of a time window is huge, this useless data may ﬂood
+the entire attack scenario, which will reduce the mining
+efﬁciency. Second, as a result of a large time window,
+there may be many very long attack patterns. Although
+using FP-Growth [7] can deal with very long attack
+patterns to some extent, the mining process is inevitably of
+low efﬁciency if there are too many such long patterns.
+In order to make the size of attack time window more
+reasonable, we do not conﬁne the size as days or weeks
+long, but resort to the real length of a successful attack.
+It is known that each attack type usually has an initial
+step, w.r.t. alertstart , and a ﬁnal step, alertend , and the time
+window, T, for a particular attack type, A, is calculated as:
+TA ¼ ðalertend :time stamp – alertstart :time stampÞ. As a
+whole, the general size of the time window, T, can be
+calculated using the known attack types: T ¼
+!
+n
+X
+wi  Ti =n, where Ti is time window of a speciﬁc
+i¼0
+
+attack type and wi is weight of Ti designed by experts
+according to the severity level of the attack type.
+During the mining process, our approach registers the
+nodes in an attack scenario as items in an itemset.
+Accordingly, all attack scenarios mapped within one time
+window can be incorporated into a single attack transaction database consisting of multiple itemsets (i.e.,
+patterns). In the case of sparse itemsets that will elicit
+relatively long frequent patterns, since our approach is
+designed to be modularized, we can integrate the H-mine
+based [24] algorithm into our current approach. In the
+common condition, based on FP-Growth [7] and the
+above observation, we obtain the following algorithm in
+Fig. 2 for mining frequent attack patterns.
+After the process of mapping from Line 1 to Line 4, the
+scale of data to be mined is considerably diminished. In
+experiment, Algorithm 1 demonstrates a higher efﬁciency
+than previous approaches in many aspects. The frequent
+attack patterns mined from attack scenarios using
+Algorithm 1 are not correlated which need to be further
+processed to rebuild attack paths.
+3.4
+
+Attack paths reconstruction
+
+Note that after the mining process with Algorithm 1, the
+elements of frequent attack patterns are sequentially
+random without timing or logical correlation, from
+which we cannot yet extract usable frequent attack
+paths. Using the speciﬁc attributes of the nodes in the
+original attack scenarios, we are able to re-correlate the
+
+113
+
+Fig. 2 Algorithm to mine frequent attack pattern
+
+elements of frequent attack patterns to reconstruct attack
+paths and assess possible attack intentions. This is
+implemented in the ﬁnal module in Fig. 1.
+For every frequent attack pattern mined in the same
+attack transaction database, we use Algorithm 2 (shown in
+Fig. 3) to reconstruct attack paths.
+In Algorithm 2, we have the mined frequent attack
+patterns (FAP) as source data from which we need to
+extract necessary elements and rebuild attack path.
+Since system-states and alerts which constitute FAP
+have time-stamp attributes, Step 1 (Line 1) sorts FAP in
+time sequence to prepare for the next phase.
+In Step 2, Line 2 through Line 11 is a loop, which
+always looks for alerts in FAP and will not stop until all
+alerts are traversed. For each alert in the loop, if there is
+any system-state in FAP or in the attack path, APath,
+which belongs to the precondition set of alert, Line 4 adds
+alert and all the variables in its precondition set to APath;
+then Line 5 combines the same system-state nodes, after
+which Line 6 links the rest of nodes representing systemstates in precondition with alert. Otherwise, if no systemstates are found as the precondition for alert, Line 8
+simply drops this APath. After adding alert and its
+precondition, Line 9 adds the elements in postcondition of
+alert into APath. Likewise, Line 10 to Line 11 removes
+the duplicate nodes and links the rest with alert.
+The ﬁnal step removes isolated system-state nodes. Line
+12 through Line 16 is another loop for alert. Line 13 to
+Line 14 checks if a system-state node is part of the
+postcondition of some alert and if this node does not
+belong to the precondition set of any other alerts. If this is
+
+114
+
+Front. Comput. Sci. China 2011, 5(1): 109–118
+
+techniques, we implement the proposed method and
+design a system on which a series of tests is run. The
+hardware environment is a preconﬁgured LAN that
+consists of three hosts linked by hubs; the software
+environment includes an IDS (snort), a scanner (X-scan),
+and anti-virus software (Kaspersky). A host is selected
+randomly as the attacker to launch attacks against another
+host acting as the victim. The anti-virus software and
+scanner are installed on the victim while the IDS on the
+third host acts as the monitor.
+4.1
+
+Fig. 3 Algorithm to rebuild attack path
+
+the case, Line 15 prunes this uncorrelated node from
+APath. Line 16 ﬁnally outputs the APath.
+Since we fuse two kinds of compensatory intrusion
+evidence as the input and re-correlate the output of mining
+process, we can guarantee the reliability of attack paths
+and integrity of information while deducing the attack
+intension precisely.
+
+4
+
+Experimental analysis
+
+To examine and evaluate the effectiveness of our
+
+Experimental setup and results
+
+In the experiments, we import the DARPA 2000 data set1)
+to simulate the background trafﬁc in the attack scenario so
+as to make it more realistic. As the experiments proceed,
+the proposed system collects a large amount of IDS alerts
+and corresponding data representing system states, all of
+which are considered as false and deceptive alerts and are
+used to evaluate the robustness and stability of our system.
+The experiments are performed in four steps as follows.
+1) The DARPA 2000 data set1) is imported as the
+background trafﬁc in the LAN. The attacker selects a
+random time to launch attacks against the victim, which
+includes ﬁve steps: Scanning active host, seeking and
+exploiting vulnerabilities, compromising security software, obtaining root access, and installing malicious
+wares (e.g., backdoors and trojans). We repeat the above
+ﬁve steps and make the entire process last 2, 4, 8, 16 and
+24 hours.
+2) The proposed system collects compensatory intrusion evidence from the victim and the monitor, and
+constructs an attack scenario using the compiled program
+and knowledge base which stores the precondition and
+postcondition of IDS alerts.
+3) Algorithm 1 is ﬁrst used to mine attack scenarios to
+discover all frequent attack patterns. To show the
+advantages of Algorithm 1 in performance, we also use
+Apriori [5] based SATA system [4] to do the same job. We
+repeat this step 4 times and use the attack scenarios
+extracted from the simulated attacks. During the process,
+the size of attack time window is set dynamically
+according to the calculation formula described in Section
+3.3.
+4) Algorithm 2 is then used to re-correlate all frequent
+attack patterns mined in Step 3 to rebuild attack paths and
+further deduce possible attack intensions. In this step, we
+
+1) Lincoln Lab M I T. 2000 DARPA intrusion detection scenario speciﬁc datasets. http://www.ll.mit.edu/mission/communications/ist/corpora/ideval/data/
+2000data.html
+
+Hao BAI et al. Boosting performance in attack intention recognition by integrating multiple techniques
+
+115
+
+also compare the results of Algorithm 2 with that of SATA
+[4] to further prove the performance of our algorithm.
+Figure 4 shows a part of the attack scenarios constructed
+by our system in Step 2, where the noise and redundancies
+have been ﬁltered from background trafﬁc (the hollow
+circles in Fig. 4 represent IDS-alerts and the solid ones
+represent system-states).
+Figure 5 shows the attack path rebuilt by our system in
+Step 4 where infrequent nodes have been ﬁltered during
+the process of mining in Step 3.
+
+Fig. 5 Attack path
+
+Fig. 4 Attack scenario
+
+4.2
+
+Performance comparison
+
+As explained in Sections 1 and 2, the previous algorithm
+described in [4] has poor performance in a real network.
+To evaluate the superiority of our system especially that of
+Algorithms 1 and 2, we collect data after each step to
+examine the effectiveness and efﬁciency of our proposed
+approach.
+To reﬂect the beneﬁt of using our algorithms and make
+the experiment results more prominent, we take measures
+to make the environment “pure” (i.e., free from other
+
+interference). First, we use the DARPA 2000 data set1)
+without involving other back trafﬁc; then, we introduce
+back trafﬁc within a controllable amount; thirdly, our
+experiment environment is isolated from outside networks; and ﬁnally, all hosts in action take this experiment
+as the sole assignment. In addition to the above, we pick
+typical and preferable experiment results from candidates
+to compare with other methods.
+When analyzing the performance of our algorithms, we
+take simulated attacks from the DARPA 2000 data set1)
+which last 2, 4, 8, 16 and 24 hours. During these attacks,
+the total number of alerts we collect for each time duration
+are 10973, 50176, 114309, 320417 and 587410 respectively.
+First, to gain a comparison, we apply both Algorithm 1
+and SATA [4] to mine frequent attack patterns in these
+alerts. During the mining, Algorithm 1, step by step,
+constructs attack scenarios, breaks scenarios into childAS, breaks child-AS into local-AP, and mines frequent
+patterns based on FP-Growth [7]. Contrasting sharply
+with Algorithm 1, SATA [4] does the same job using a predeﬁned time window and without distinguishing attacked
+
+1) Lincoln Lab M I T. 2000 DARPA intrusion detection scenario speciﬁc datasets. http://www.ll.mit.edu/mission/communications/ist/corpora/ideval/data/
+2000data.html
+
+116
+
+Front. Comput. Sci. China 2011, 5(1): 109–118
+
+We use the above ﬁve groups of alerts to show the ﬁnal
+results of Algorithm 2 and SATA [4]. Table 3 lists the
+detailed data from the experiment. We can see that after
+sorting the difference between Algorithm 2 and SATA [4]
+is less evident; however, with further processes completed
+(i.e., correlation and pruning), Algorithm 2 gets more
+precise attack paths than SATA [4] since lots of deceptive
+data are eliminated.
+
+hosts based on Apriori [5] with low efﬁciency. The result
+is that Algorithm 1 has the advantage of reducing more
+redundant alerts and consuming fewer resources.
+With the back trafﬁc generated from DARPA 2000 data
+set1), Table 1 shows a comparison between Algorithm 1
+and SATA [4] both generating frequent attack patterns in
+2, 4, 8, 16 and 24 h. We can see that a considerable
+decrease in redundant alerts is achieved with Algorithm 1
+compared to SATA [4].
+Table 2 demonstrates a comparison of time consumption between Algorithm 1 and SATA [4] for generating
+alerts with the same back trafﬁc in different time
+durations. It is easy to see that with the number of alerts
+increasing, the advantage of Algorithm 1 in saving system
+resource becomes increasingly evident.
+Then with Algorithm 2, we process the frequent attack
+patterns which are originally discrete by means of sorting,
+correlating and pruning to re-build attack paths that have
+time sequences and are associated logically. In contrast,
+SATA [4] just does sorting with no further process.
+Table 1
+
+5
+
+Conclusions and future work
+
+In this paper, we developed a series of techniques to 1)
+correlate data from IDS alerts and other security tools and
+fuse them as compensatory intrusion evidence, on which
+we construct Bayesian based attack scenarios; 2) mine
+frequent attack patterns from attack scenarios using
+FP-Growth [7] based algorithm; and 3) re-correlate
+frequent attack patterns to reconstruct attack paths. The
+main contributions are shown as follows.
+
+Frequent attack patterns generated by Algorithm 1 and SATA [4]
+
+Running time/h
+
+Number of alerts
+
+2
+
+Number of frequent attack patterns
+
+10973
+
+Algorithm 1
+
+SATA
+
+1819
+
+2160
+
+4
+
+50176
+
+8321
+
+9891
+
+8
+
+114309
+
+18947
+
+22546
+
+16
+
+320417
+
+51596
+
+63448
+
+24
+
+587410
+
+95513
+
+115632
+
+Table 2
+
+Time consumed by Algorithm 1 and SATA [4]
+
+Running time/h
+
+Number of alerts
+
+Time consumed/h
+Algorithm 1
+
+SATA
+
+2
+
+10973
+
+1.86
+
+1.92
+
+4
+
+50176
+
+4.59
+
+4.75
+
+8
+
+114309
+
+8.73
+
+10.89
+
+16
+
+320417
+
+22.45
+
+25.61
+
+24
+
+587410
+
+51.32
+
+56.16
+
+Table 3
+
+Number of attack paths generated by Algorithm 2 and SATA [4]
+
+Number of alerts
+
+Number of attack paths
+After sorting
+
+After correlating
+
+After pruning
+
+SATA
+
+10973
+
+1819
+
+1655
+
+1457
+
+2160
+
+50176
+
+8321
+
+7648
+
+6573
+
+9891
+
+114309
+
+18947
+
+17052
+
+16447
+
+22546
+
+320417
+
+51596
+
+46952
+
+45309
+
+63448
+
+587410
+
+95513
+
+88827
+
+87348
+
+115632
+
+1) Lincoln Lab M I T. 2000 DARPA intrusion detection scenario speciﬁc datasets. http://www.ll.mit.edu/mission/communications/ist/corpora/ideval/data/
+2000data.html
+
+Hao BAI et al. Boosting performance in attack intention recognition by integrating multiple techniques
+
+First, the object of attack intention consists of
+compensatory intrusion evidences from multi-sources,
+which ensures that each step of an attack has some certain
+system states as an attack effect. With this evidence, we
+can precisely surmise the aim of each single attack
+behavior as well as the intention of attacker as a whole in
+follow-up analysis.
+Second, to eliminate the deﬁciency of Apriori [5], we
+use an FP-Growth [7] based algorithm to mine frequent
+attack patterns, which improves the efﬁciency of mining
+while reducing the cost of resources.
+Third, to avoid the limitations of non-correlated data
+after mining in previous methods, we take advantage of
+the approach including compensatory intrusion evidence
+and their speciﬁc attributes to re-correlate frequent attack
+patterns after mining. Based on this effort, we clearly
+rebuild attack paths and carry out analysis of possible
+attack intentions.
+The experimental evidence has proven that the
+proposed method which integrates the three techniques
+introduced above enables a better solution compared to
+the earlier works. To make the method more robust in
+different situations, additional efforts may be helpful or
+should be considered. For example, the method is less
+efﬁcient when mining frequent patterns from a database
+contiaing particularly sparse or dense data. In our future
+research, we will focus on additional techniques to further
+improve the performance of our method. In particular, we
+will introduce the Bayesian probability formula to
+calculate the inverse probability of an attack when some
+system states (or changes) are detected in order to add
+conﬁdence of nodes representing intrusion evidence in the
+Bayesian network, which can ﬁlter false alerts in the
+construction of attack scenario and ease the follow-up
+work such as mining and analysis. We also plan to develop
+a more ﬂexible data-mining algorithm to deal with the
+case when the captured data is sparse or dense. Besides,
+we will test our algorithms in real network circumstances.
+
+117
+
+2. Ning P, Xu D, Healey C, Amant R. Building attack scenarios
+through integration of complementary alert correlation methods. In:
+Proceedings of the 11th Annual Network and Distributed System
+Security Symposium. 2004, 97–111
+3. Soleimani M, Ghorbani A. Critical episode mining in intrusion
+detection alerts. In: Proceedings of the 6th Communication
+Networks and Services Research Conference, Halifax, 2008,
+157–164
+4. Wang L, Li Z, Li D, Lei J. Attack scenario construction with a new
+sequential mining technique. In: 8th ACIS International Conference on Software Engineering, Artiﬁcial Intelligence, Networking, and Parallel/Distributed Computing. 2007, 53–87
+5. Agrawal R, Srikant R. Fast Algorithms for Mining Association
+Rules. IBM Alamnden Research Center. 1994
+6. Han J, Pei J, Yin Y, Mao R. Mining frequent patterns without
+candidate generation: A frequent-pattern tree approach. Data
+Mining and Knowledge Discovery, 2004, 8(1): 53–87
+7. Pei J, Han J, Wang W. Constraint-based sequential pattern mining:
+the pattern-growth methods. Journal of Intelligent Information
+Systems, 2007, 28(2): 133–160
+8. Cuppens F, Miege A. Alert correlation in a cooperative intrusion
+detection framework. In: Proceedings of the 2002 IEEE Symposium on Security and Privacy. 2002, 202–215
+9. Xiao S, Zhang Y, Liu X, Gao J. Alert fusion based on cluster and
+correlation analysis. In: Proceedings of International Conference on
+Convergence and Hybrid Information Technology 2008. Gyeongbuk S. Korea, 2008, 163–168
+10. Yusof R, Selamat S R, Sahib S. Intrusion alert correlation technique
+analysis for heterogeneous log. IJCSNS International Journal of
+Computer Science and Network Security, 2008, 8(9), 132–138
+11. Long W, Xin Y, Yang Y. Vulnerabilities analyzing model for alert
+correlation in distributed environment. In: Proceedings of the 2009
+IITA International Conference on Services Science, Management
+and Engineering. Zhangjiajie, 2009, 408–411
+12. Liu Z, Wang C, Chen S. Correlating multi-step attack and
+constructing attack scenarios based on attack pattern modeling.
+In: Proceedings of the International Conference on Information
+Security and Assurance. Busan, 2008, 214–219
+13. Xu M, Wu T, Tang J. An IDS alert fusion approach based on
+
+Acknowledgements This work was supported by the National High
+Technology Research and Development Program of China (863 Program)
+(2009AA01Z433).
+
+happened before relation. In: Proceedings of 4th International
+Conference on Wireless Communications, Networking and Mobile
+Computing. Dalian, 2008, 1–4
+14. Yi P, Xing H, Wu Y, Li L. Alert correlation by a retrospective
+
+References
+
+method. In: Proceedings of the 23rd international conference on
+Information Networking. Chiang Mai, 2009, 380–382
+
+1. Yi P, Xing H, Wu Y, Cai J. Alert correlation through results tracing
+
+15. Li Z, Lei J, Wang L, Li D. A Data mining approach to generating
+
+back to reasons. In: Proceedings of the 2009 International
+
+network attack graph for intrusion prediction. In: Proceedings of
+
+Conference on Communications and Mobile Computing. Kunm-
+
+4th International Conference on Fuzzy Systems and Knowledge
+
+ing, 2009, 465–469
+
+Discovery. Haikou, 2007, 307–311
+
+118
+
+Front. Comput. Sci. China 2011, 5(1): 109–118
+
+16. Li Z, Zhang A, Lei J, Wang L. Real-time correlation of network
+security alerts. In: Proceedings of IEEE International Conference
+on e-Business Engineering. 2007, 73–80
+
+PhD thesis. Department of Computer Science. Princeton University. 2005
+22. Mei H, Gong J. Intrusion alert correlation based on D-S evidence
+
+17. Li W, Tian S. Preprocessor of intrusion alerts correlation based on
+
+theory. In: Proceedings of 2nd International Conference on IEEE
+
+ontology. In: Proceedings of 2009 International Conference on
+
+Communications and Networking in China. Shanghai, 2007, 377–
+
+Communications and Mobile Computing. Kunming, 2009, 460–
+464
+
+381
+23. Hofmann A, Dedinski I, Sick B, deMeer H. A novelty-driven
+
+18. Qin X, Lee W. Attack plan recognition and prediction using causal
+
+approach to intrusion alert correlation based on distributed hash
+
+networks. In: Proceedings of the 20th Annual Computer Security
+
+tables. In: Proceedings of 12th IEEE Symposium on Computer and
+
+Applications Conference. 2004, 370–379
+
+Communications. Averio Portugal, 2007, 71–78
+
+19. Qin X, Lee W. Statistical causality analysis of INFOSEC alert data.
+
+24. Pei J, Han J, Lu H, Nishio S, Tang S, Yang D. H-mine: hyper-
+
+In: Proceedings of the 6th International Symposium on Recent
+
+structure mining of frequent patterns in large database. In:
+
+Advances in Intrusion Detection. 2003, 73–93
+
+Proceedings of 1st IEEE International Conference on Data Mining.
+
+20. Ou X, Govindavajhala S, Appel A. MulVAL: A logic-based
+network security analyzer. In: 14th USENIX Security Symposium.
+Society for Industrial and Applied Mathematics. 2005, 8–8
+21. Ou X. Logic-programming approach to network security analysis.
+
+2001, 441–448
+25. Zhai Y, Ning P, Iyer P, Reeves D. Reasoning about complementary
+intrusion evidence. In: Proceedings of the 20th annual Computer
+Security Applications Conference. 2004, 39–48
+
+

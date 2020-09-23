@@ -1,0 +1,557 @@
+Plan Recognition in Intrusion Detection Systems
+Using Logic Programming
+Sandeep Chintabathina
+
+Jessie J. Walker
+
+Computer Science Department
+University of Arkansas at Pine Bluff
+Pine Bluff, Arkansas, USA
+chintabathinas@uapb.edu
+
+Computer Science Department
+University of Arkansas at Pine Bluff
+Pine Bluff, Arkansas, USA
+walkerjj@uapb.edu
+
+Jorge Villacis
+Computer Science Department
+University of Arkansas at Pine Bluff
+Pine Bluff, Arkansas, USA
+villacisj@uapb.edu
+
+Hugo R. Gomez
+Computer Science Department
+University of Arkansas at Pine Bluff
+Pine Bluff, Arkansas, USA
+gomezh@uabp.edu
+expressed in complex descriptive languages that allow us to
+describe security events or a combination of events. These
+descriptions will allow us to explain observations made by the
+IDS. Most common explanations include actions performed by
+the intruder to attack a system. The problem of inferring the
+goal of the intruder by explaining the observations made by
+the IDS is often called Plan Recognition. A solution to the
+plan recognition problem will allow the IDS to predict future
+actions of the intruder and warn the network administrator of
+an impending attack.
+
+Abstract—In this paper we focus on logic programming based
+approach to plan recognition in intrusion detection systems. The
+goal of an intruder is to attack a computer or a network system
+for malicious reasons and the goal of the intrusion detection
+system is to detect the actions of the intruder and warn the
+network administrator of an impending attack. We show how an
+intrusion detection system can recognize the plans of the intruder
+by modeling the domain as a logic program and then reducing
+the plan recognition problem to computing models of the logic
+program. This methodology has been used widely for several
+planning problems and fits very naturally for plan recognition
+problems. We give an example scenario and show how to model
+it. Our results are quite satisfactory and we believe that our
+approach can lead to a generalized solution to plan recognition.
+Keywords- Plan Recognition;
+Programming; A-Prolog
+
+1.
+
+Intrusion
+
+Detection;
+
+Previously, first order logic was used to solve the plan
+recognition plan. However, first order logic has several
+bottlenecks when it comes to representing knowledge about a
+domain including knowledge about network systems. An
+important drawback is that it is monotonic i.e. we are unable to
+retract previously drawn conclusions in the light of new
+information. For this reason, in this paper we use a logic-based
+language called Answer Set Prolog (A-Prolog) [1, 2] for
+representing knowledge. A-prolog is non-monotonic in nature,
+which allows us to withdraw previously drawn conclusions in
+the light of new information. It is also capable of dealing with
+incomplete knowledge and causality, the ability to represent
+action and change, which will allow us to reason about
+intruder actions. A-prolog has been used extensively in
+planning and diagnosis and we will use those methodologies
+for finding solutions to the plan recognition problems.
+
+Logic
+
+INTRODUCTION
+
+An intrusion of a computer or a network system is an act of
+wrongfully entering, seizing or taking control of property of
+another for malicious purposes. Intrusions are no longer
+limited to hardwired devices but also to wireless and mobile
+devices connected across multiple platforms (also commonly
+known as Ubiquitous/Pervasive Computing (UPC) devices).
+An Intrusion Detection System (IDS) monitors a computer or
+network system for possible intrusions and warns the
+administrator when it detects an intrusion. An ideal IDS,
+would incorporate automatic protection services, which is
+defined by the administrator and is based on the intrusion
+types and the potential impact on the system. Currently, there
+are several types of IDSs each with its own benefits and
+limitations.
+
+The paper is organized as follows. In section 2 we describe
+related work on plan recognition in IDSs. In section 3 we
+describe the syntax of A-Prolog. In section 4 we give an
+example scenario and in section 5 we show how to use AProlog to model the scenario and find solutions to the plan
+
+In several modern IDSs, the security policies are normally
+
+978-1-4673-2709-1/12/$31.00 ©2012 IEEE
+
+609
+
+negation –a. A (non-disjunctive) rule of A-Prolog is a
+statement of the form [18]
+
+recognition problem. Section 6 contains the conclusion and
+future work.
+2.
+
+l0 :- l1,…,lm, not lm+1,….,not ln
+
+RELATED WORK
+
+The l’s are literals and the not is called default negation
+[19]. The rule states that if a rational reasoner believes in
+literals {l1,…,lm }and has no reason to believe in literals
+{lm+1,….,ln} then he must believe in l0 . The l0 is called head of
+the rule and {l1,…,lm, not lm+1,….,not ln} is called the body of
+the rule.
+
+Indeed, computer networks are the “central nervous system”
+of a nation’s infrastructure. Present day attacks on the nation’s
+computer systems do not simply affect an isolated machine or
+disrupt an enterprise’s network system. Instead, modern day
+attacks target infrastructure that is integral to the economy,
+national defense, and daily life.
+
+A program is a pair <Σ ,Π> where Σ is the signature and Π
+is a collection of rules over Σ.
+
+Nations are now faced with the difficult task of securing cyber
+infrastructure from foreign and domestic attacks. Currently,
+IDS technologies play a vital role in protecting these cyber
+infrastructure systems. However, these technologies are not
+very effective in predicting the future attacks of an intruder [35]. Limitations of current technologies include performance,
+flexibility, and scalability.
+
+4.
+
+In this section we will describe a sample scenario in which
+we have an intruder, an IDS and host computer. The goal of the
+intruder is to perform a Denial of Service (DoS) attack on the
+host computer. A DoS attack is an attempt to make the host
+machine unavailable to its intended users. The IDS, on the
+other hand, is capable of detecting the actions of the intruder
+and alerting the system administrator of an impending attack. It
+achieves this by observing the actions of the intruder and
+making predictions about the intentions of the intruder. Once it
+identifies the goals of the intruder it will alert the administrator.
+Thus, identifying the goals of the intruder is an important task
+of the IDS.
+
+Plan recognition in IDSs is not a new concept; it has been
+deployed in numerous forms [6-10]. Our approach differs in
+that we focus on a unique type of intrusion attacks called
+multistage intrusion attacks.
+In a multistage attack, an intruder will take extraordinary
+measures to ensure their actions go unrecorded by the IDS or
+appear as low priority intrusions. To detect such an attack,
+researchers have proposed building reactive IDSs in which the
+intrusion detection capability resides within the network
+system [11-16]. However, it is still not clear how to best
+implement a reactive IDS.
+
+In this paper we focus on a logic programming based
+approach to plan recognition. In this approach, the domain
+consisting of the intruder, the IDS and the host computer is
+modeled as a logic program and the task of identifying the
+plans of the intruder is reduced to computing models
+(collection of statements that are true) of the logic program.
+This approach is applicable if the intruder and IDS are viewed
+as two agents acting in a domain consisting of a host computer.
+To behave intelligently the agents must have knowledge about
+their environment, their own capabilities and goals. The
+intruder is capable of performing probing actions that will
+allow it to gain more knowledge about the host. These actions
+and their effects will be encoded as logic rules. The
+observations made by the IDS, which serve as input to our
+logic program, are encoded as facts in the program. The goal
+of the program is to generate a sequence of actions performed
+by the intruder based upon the observations made by the IDS.
+This is accomplished by adding additional rules to our
+program. Thus, a model of the resulting logic program encodes
+the sequence of actions along with other consequences. In this
+way, the problem of plan recognition is reduced to computing
+models of our logic program.
+
+In a multistage attack, suspicious actions that are normally
+non-malicious are ignored. However, these ignored actions
+can be part of a larger multistage intrusion attack (also called
+intrusion scenarios). Each individual action may seem
+harmless but a collection of such actions executed in a specific
+order can compromise a system. This is particularly true in
+cloud computing environments, which are typically setup to
+detect malicious actions but ignore seemingly harmless ones.
+The intruder can probe the environment and discover series of
+actions that are not considered malicious by the IDS and are
+ignored [17]. The goal of our research is to build IDSs that do
+not ignore seemingly harmless actions but instead use these
+actions to predict the goals of the intruders. One step in this
+direction is finding a solution to the plan recognition problem.
+In the next section we present the syntax of A-Prolog.
+3.
+
+EXAMPLE SCENARIO
+
+5.
+
+SYNTAX OF A-PROLOG
+
+MODELING THE DOMAIN
+
+Before we describe how to encode action and their effects
+we will describe the framework on which our encoding is
+based. Our encoding uses a transition diagram based approach
+to modeling the domain. The states of the transition diagram
+correspond to physical states of the domain and the arcs are
+labeled by actions in the domain [20]. A transition <s,a,s’>
+denotes that action a is possible in state s and that after the
+executing of a the system moves to state s’. So we can imagine
+
+Let Σ be a signature consisting of constants, function
+symbols and predicate symbols. A term is either a constant
+symbol or an expression of the form f(t1,…,tn) where f is an nary function symbol and t1,…,tn are terms. An atom is an
+expression of the form p(t1,…,tn) where p is a n-ary predicate
+symbol and t1,…,tn are terms. A literal is either an atom a or its
+This material is based upon work supported in part by the U. S.
+Army Research Laboratory and the U. S. Army Research Office under
+contract/grant number #W911NF-11-1-0164
+
+610
+
+the domain being in one state where the host computer is
+working normally and then an intruder action of injecting
+harmful data into the host results in a state in which the host is
+under DoS attack. The transition diagram based approach is
+used very commonly for modeling dynamic domains because it
+is very simple and intuitive.
+
+initial state, 1 to represent its successor, 2 to represent the
+successor of 1 and so on. These numbers represent steps of a
+trajectory in the transition diagram. We encode them in AProlog as follows.
+step(0..n).
+The n denotes the length of the plan. Since every action
+takes place in a state, we must include step as a parameter
+when we talk about action occurrences. We use the atom
+occurs(A,I) to denote that action A occurred in step I.
+Similarly, when we talk about fluents we must include step as a
+parameter. We use the atom h(F,I) to denote that fluent F holds
+in step I. The negated atom -h(F,I) denotes that F does not hold
+in step I. Note that we are only dealing with Boolean fluents
+here. It is possible to have non-Boolean fluents depending on
+the type of domain.
+We will now discuss how to write rules that encode the
+effects of actions. We will use variables in our rules to make
+the rules more generic. For example, H is a variable ranging
+over host names, Ip is variable ranging over IP addresses and I
+is a variable ranging over steps. The effect of executing action
+nslookup(H) in step I is that in the next step, I+1, the IP
+address of host H is known. This is encoded in A-Prolog as
+follows.
+
+Let us begin with the description of actions in the domain.
+The intruder is capable of performing various probing actions
+to gain more knowledge about the agent. It performs the action
+nslookup to look up the IP address of the host computer. Then
+it is capable of performing the ping action to check if the host
+is reachable. It is also capable of scanning various ports on the
+host to check which ports are available for communication.
+Finally, it is capable of injecting malicious data into the host
+through an available port. In this way it will achieve its overall
+goal of a DoS attack on the host. For simplicity we chose the
+host name cowboy and port 139 as one of the open ports on the
+host. The following is the encoding of various actions of the
+intruder in the syntax of A-Prolog.
+action(nslookup(cowboy)).
+action(ping(cowboy)).
+action(scan(139,cowboy)).
+action(inject(d,139,cowboy)).
+Every action is parameterized by the host name and then for
+actions scan and inject we have port number as one of the
+parameters. The action inject has an additional parameter d
+which denotes the malicious data. Now that we have discussed
+how to represent actions we will discuss how to represent the
+effects of these actions. The properties of the domain that may
+change as a result of actions are often referred to as fluents. We
+will assume that 192.122.145.43 is the IP address of cowboy.
+When the intruder does an nslookup, the intruder knows the IP
+address of the host. We represent this by the fluent
+known(192.122.145.43, cowboy). When the intruder does a
+ping action the host responds with an Internet Control Message
+Protocol (ICMP) message denoted by the fluent
+icmp_response(cowboy). When the intruder scans an open port
+it receives a reply from the host denoted by the fluent
+replied(139,cowboy). When the intruder injects malicious data
+into an open port of the host, the data is injected into the host
+denoted by the fluent injected(d,139,cowboy). We also have
+fluents denial_service(cowboy), which denotes that the host is
+under Denial of Service attack, and reachable(cowboy) which
+denotes that the host is reachable. We will represent all the
+fluents in the syntax of A-Prolog as follows.
+
+h(known(Ip,H), I+1) :- occurs(nslookup(H),I),
+address(Ip,H).
+The atom address(Ip,H) is a fact stating that Ip is the IP address
+of host H. Similarly, the next rule states that if the intruder
+knows the IP address of the host and it pings the host, it will
+receive an icmp message from the host in the next step.
+h(icmp_response(H),I+1):- occurs(ping(H),I),
+h(known(Ip,H),I).
+This implies that the host is reachable. We can encode this
+information using the rule.
+h(reachable(H),I) :- h(icmp_response(H),I),
+-h(denial_service(H),I).
+The rule states that if an icmp message is received from the
+host and the host is not under DoS attack then the host is
+reachable. Notice that this rule does not encode the direct effect
+of an action but encodes the indirect effect of ping. Therefore,
+we use the same step I on both sides of the rule. The effects of
+scan are encoded using the rule
+h(replied(Port,H),I+1) :- occurs(scan(Port,H),I),
+h(reachable(H),I), open(Port).
+The rule states that if the intruder scans an open port on a
+reachable host then it receives a reply from the host on that
+port. In this rule, we are ignoring the fact that firewalls are
+enabled. Notice that open(Port) is not a fluent but a fact.
+Finally, the effects of inject are encoded as follows.
+
+fluent(known(192.122.145.43, cowboy)).
+fluent(icmp_response(cowboy)).
+fluent(replied(139,cowboy)).
+fluent(injected(d,139,cowboy)).
+fluent(denial_service(cowboy)).
+fluent(reachable(cowboy)).
+
+h(injected(D,Port,H),I+1):- occurs(inject(D,Port,H),I),
+h(replied(Port,H),I).
+
+To encode the effects of actions on these fluents we write
+logic programming rules. Since we are dealing with a dynamic
+environment we must differentiate between values of a fluent
+in one state versus its value in another state. One approach to
+distinguishing between various states is using positive integers
+starting from 0. For example, we will use 0 to represent the
+
+The rule states that when the intruder injects data into an
+open port of the host, the data is injected into the host. An
+indirect effect of this action is that the host is under DoS attack.
+We encode this as follows.
+
+611
+
+h(denial_service(H),I) :- h(injected(D,Port,H),I),
+harmful(D).
+The rule states that if the host is injected with harmful data
+then the host is under DoS attack. Such a host is also
+unreachable.
+
+obs(icmp_response(cowboy),true,2).
+Next, it observes that the host sent a reply on port 139 and
+received some data on port 139.
+obs(replied(139,cowboy),true,3).
+obs(injected(d,139,cowboy),true,4).
+
+-h(reachable(H),I) :- h(denial_service(H),I).
+
+We add the above facts to our program and compute the
+models of the resulting program. The output consists of the
+following sequence of actions that explains the above
+observations.
+
+Next, we will talk about the observations made by the IDS.
+Observations will be encoded using atoms of the form
+obs(F,V,I) which says that fluent F was observed to have value
+V in step I. They are usually added as facts to our program.
+Next, we will discuss about reality axioms, which are rules that
+force the IDS to explain its observations. In other words, we
+add these rules to force the IDS to find explanations for its
+observations. The rules are written as follows.
+
+occurs(nslookup(cowboy),0).
+occurs(ping(cowboy),1).
+occurs(scan(139,cowboy),2).
+occurs(inject(d,139,cowboy),3).
+Notice that the initial situation and observations are added
+as facts to our program, but it is our program that has derived
+the above sequence of actions. The actions nslookup(cowboy)
+and ping(cowboy) at steps 0 and 1 respectively explain why the
+IDS observed that the host has sent an ICMP response to the
+intruder in step 2. Similarly, the scan(139,cowboy) action in
+step 2 explains why the IDS observed that the host replied on
+port 139 in step 3. And finally, inject(d,139,cowboy) action in
+step 3 explains why the IDS observed that data d was injected
+into the host in step 4. In this way the IDS is able to reconstruct
+all the actions executed by the intruder.
+
+:- obs(F,false,I),
+fluent(F),
+h(F,I).
+The rule states that if fluent F was observed to be false in
+step I then it is impossible that it holds in step I. The underlying
+intuition is that the observations of the IDS must match with its
+predictions. Similarly, we can also write
+:- obs(F,true,I),
+fluent(F),
+-h(F,I).
+The rule states that if fluent F was observed to be true in
+step I then it is impossible for it to not hold in step I. Ideally the
+IDS would not prefer to violate these constraints and would
+look for explanations. An explanation for the observations
+made by the IDS will be the sequence of actions performed by
+the intruder. The task of the IDS is to find the sequence of
+actions that matches with its observations. This is where
+Answer Set Programming methodology will be quite useful. In
+this approach we write special rules that allows the underlying
+solver to generate all possible sequences of intruder actions and
+test them against the above constraints. The sequences that
+violate the constraints are eliminated and the rest are
+considered as possible explanations of the IDS. These special
+rules are called choice rules and they are written as follows.
+
+Notice that we have not been able to predict future actions
+of the intruder yet. To do this, we must do the following. For
+any given state, the IDS must compute all possible sequences
+of actions that are possible from that state. The IDS must
+identify sequences that end up in state in which the system is
+compromised. The IDS can adopt a criteria based on which it
+decides whether the administrator must be alerted. One such
+criterion would be to compute the probability of all sequences
+of actions that lead to a compromised state. If the probability is
+high then the IDS will alert the administrator. Otherwise the
+IDS can wait for the next action of the intruder and repeat the
+same procedure. We have not implemented this idea yet.
+However, we plan to implement it in the near future. We
+believe that our approach is quite scalable because the
+underlying answer set solvers (clasp+gringo) [21] are quite
+efficient and reliable.
+
+{occurs(A,I): action(A)} :- I<n.
+
+6. CONCLUSION AND FUTURE WORK
+
+This rule will generate either 0 or more number of atoms
+of the form occurs(A,I). It is the action generation module of
+the program that is used very commonly in planning problems
+[20]. The initial situation of the domain can be described by
+adding the facts
+
+In this paper we have shown how a logic programming
+based approach can be used for reconstructing intruder actions.
+The methodology is very similar to generate and test and does
+not require us to develop a new algorithm or software. This
+demonstrates that, for the plan recognition problem, declarative
+approach is much quicker and easier than the procedural
+approach. We used state-of-the-art solvers to compute answer
+sets of our program and the results were obtained within
+seconds.
+
+-h(known(192.122.145.43,cowboy),0).
+-h(icmp_response(cowboy),0).
+-h(denial_service(cowboy),0).
+-h(replied(139,cowboy),0).
+Note that it is not necessary to have a complete initial
+situation since A-Prolog is capable of dealing with incomplete
+information. Now suppose that the IDS observes that the host
+sent an ICMP response in step 2 of the trajectory. In other
+words
+
+As mentioned earlier we would like to expand our work
+further to be able to predict future actions of the intruder. We
+would like to model a number of scenarios such as DoS attacks
+and distributed DoS attacks, which will allow us to come up
+
+612
+
+with a more generalized version of our rules. This in turn will
+allow us to apply our approach to a real system and come up
+with ready-made solutions to known sequences of intruder
+actions. In this paper we did not address how to deal with
+multiple attackers that have different goals.
+
+We hope to address this issue in the near future. We would
+also like to compare our work with other logic-based cyber
+security work such as those outlined by Ou et al [22].
+
+REFERENCES
+[1]
+
+M. Gelfond and V. Lifschitz, "The stable model semantics for logic
+programming," Proceedings of ICLP-88, pp. 1070–1080, Cambridge,
+Massachusetts, 1988.
+[2] M. Gelfond and V. Lifschitz, "Classical negation in logic programs
+and disjunctive databases," New generation computing, vol. 9, pp.
+365-385, 1991.
+[3] R. Mesic, Air Force Cyber Command (provisional) decision support,
+Santa Monica, CA: RAND, 2010.
+[4] M. C. Libicki, "Project Air Force (U.S.): Modernization and
+Employment Program, Rand Corporation and United States Air
+Force," Cyberdeterrence and cyberwar, 2009.
+[5] T. M. Wu, "Information Assurance Technology Analysis Center
+(IATAC) Information Assurance Tools Report – Intrusion Detection
+Systems," Defense Technical Information Center, McLean 2009.
+[6] C. W. Geib, "Lexical Ambiguity and its Impact on Plan Recognition
+for Intrusion Detection," pp. 65, 2010.
+[7] F. Sadri, "Intention Recognition with Event Calculus Graphs,"
+Proceedings of Web Intelligence-IAT, pp. 386-391, 2010.
+[8] C. V. Zhou, C. Leckie, and S. Karunasekera, "A survey of
+coordinated attacks and collaborative intrusion detection," Computers
+& Security, vol. 29, pp. 124-140, 2010.
+[9] C. Cipriano, A. Zand, A. Houmansadr, C. Kruegel, and G. Vigna,
+"Nexat: a history-based approach to predict attacker actions,"
+Procedings of ACSAC, pp. 383-392, 2011.
+[10] M. Albanese, S. Jajodia, A. Pugliese, and V. Subrahmanian, "Scalable
+Detection of Cyber Attacks," Computer Information Systems‚
+Analysis and Technologies, pp. 9-18, 2011.
+[11] J. Allen, A. Christie, W. Fithen, J. McHugh, J. Pickel, and E. Stoner,
+"State of the Practice of Intrusion Detection Technologies," Technical
+Report Carnegie Mellon University, 2000.
+[12] M. Arvidson and M. Carlbark, "Intrusion Detection Systems -Technologies, weaknesses and trends," Master's thesis, Institute for
+System Technology, Linköping University, Stockholm, 2003.
+
+[13] T. Escamilla, Intrusion detection : network security beyond the
+firewall, Wiley publication, 1998.
+[14] A. Valdes and D. Zamboni, Recent advances in intrusion detection :
+8th international symposium, RAID 2005.
+[15] R. U. Rehman, Intrusion detection systems with Snort: Advanced IDS
+techniques using Snort, Apache, MySQL, PHP, and ACID. Prentice
+Hall Publication, ISBN: 0131407333, 2003.
+[16] J. Koziol, Intrusion detection with Snort. Sam's Second edition,
+ISBN:157870281X, 2003.
+[17] A. Nayyar, "Intrusion Detection System for Pervasive Computing
+Enviornments," Proceedings of IJCST, vol. 2, 2011.
+[18] C. Baral, Knowledge representation, reasoning and declarative
+problem solving, Cambridge University Press, ISBN: 0521818028,
+2003.
+[19] K. Clark, "Negation as failure," Readings in nonmonotonic reasoning,
+Morgan Kaufmann Publishers, pp. 311 – 325, 1987.
+[20] C. Baral and M. Gelfond, "Reasoning agents in dynamic domains,"
+Logic-Based Artificial Intelligence, Kluwer Academic Publishers, pp.
+257-280, 2000.
+[21] M. Gebser, R. Kaminski, B. Kaufmann, M. Ostrowski, T. Schaub and
+M. Schneider, "Potassco: the Potsdam Answer Set Solving
+Collection," AI Communications, pp. 105-124, 2011.
+[22] X. Ou, S. Rajagopalan and S. Sakthivelmurugan, "An Empirical
+Approach to Modeling Uncertainty in Intrusion Analysis,"
+Proceedings of the 2009 Annual Computer Security Applications
+Conference, pp. 494-503, 2009.
+
+613
+
+

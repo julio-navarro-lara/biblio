@@ -1,0 +1,962 @@
+IEEE TRANSACTIONS ON INFORMATION FORENSICS AND SECURITY, VOL. 3, NO. 3, SEPTEMBER 2008
+
+359
+
+Projecting Cyberattacks Through
+Variable-Length Markov Models
+Daniel S. Fava, Stephen R. Byers, Student Member, IEEE, and Shanchieh Jay Yang, Member, IEEE
+
+Abstract—Previous works in the area of network security have
+emphasized the creation of intrusion detection systems (IDSs)
+to flag malicious network traffic and computer usage, and the
+development of algorithms to analyze IDS alerts. One possible
+byproduct of correlating raw IDS data are attack tracks, which
+consist of ordered collections of alerts belonging to a single multistage attack. This paper presents a variable-length Markov
+model (VLMM) that captures the sequential properties of attack
+tracks, allowing for the prediction of likely future actions on
+ongoing attacks. The proposed approach is able to adapt to newly
+observed attack sequences without requiring specific network
+information. Simulation results are presented to demonstrate the
+performance of VLMM predictors and their adaptiveness to new
+attack scenarios.
+Index Terms—Attack prediction, suffix tree, variable-length
+Markov model (VLMM).
+
+I. INTRODUCTION
+
+T
+
+HE growth of information in digital format and the
+pervasion of computer networks into human activity
+have amplified the importance of managing data access and
+the channels through which data flows. Information and cybersecurity are multifaceted and entail the provision of user
+accounts and passwords to protect data, the encryption of communication mediums, the imposition of network-access rules
+through firewalls, etc. In addition to such preventive methods,
+intrusion detection systems (IDSs) are often employed to
+monitor networks for traces of malicious actions and security
+breaches. IDSs work by performing anomaly detection or
+misuse detection on host computers or network traffic. Several
+IDS solutions have been proposed and taxonomies have been
+provided [1], [2].
+As the complexity and size of networks grew, the increasing
+number of deployed IDSs generated a number of alerts that became overwhelming to human analysts [3], [4]. Many methods
+for creating comprehensive alert reports have been proposed as
+potential solutions to this problem. Some of these efforts were in
+Manuscript received October 14, 2007; revised March 17, 2008. Published
+August 13, 2008 (projected). This work was supported by the National Center
+for Multisource Information Fusion (NCMIF) Grant under the technical supervision of AFRL/IFEA. The associate editor coordinating the review of this manuscript and approving it for publication was Prof. Muriel Medard.
+D. S. Fava is with Intel Corporation, Santa Clara, CA 95054 USA (e-mail:
+daniel.s.fava@intel.com).
+S. R. Byers is a Freelance Information Technology Consultant, Enon Valley,
+PA 16120 USA (e-mail: stephen.byers@gmail.com).
+S. J. Yang is with the Department of Computer Engineering, Rochester Institute of Technology, Rochester, NY 14623 USA (e-mail: jay.yang@rit.edu).
+Color versions of one or more of the figures in this paper are available online
+at http://ieeexplore.ieee.org.
+Digital Object Identifier 10.1109/TIFS.2008.924605
+
+the area of alert aggregation [5], [6], alert correlation [7]–[11],
+current and future threat analysis [12], [13], and projection of
+likely future attack actions [14], [15]. Among these, threat projection is an important step toward the mitigation of critical
+attacks.
+Previous works in the area of attack projection heavily rely on
+a priori knowledge of network and system configurations and
+are, therefore, challenged by the diversity and the everchanging
+nature of system settings and exploitation methods. Alternatively, the framework presented here models malicious network
+activity and extracts relevant information about an attacker’s
+overall behavior and intent without requiring knowledge of the
+underlying network configuration. The attacker’s probable future attack steps and behavior are inferred from a variable-length
+Markov model (VLMM) created from previously observed as
+well as ongoing attack sequences.
+The method presented in this paper borrows from sequence
+modeling techniques that have successfully been implemented
+in fields, such as text compression, computational biology
+(DNA sequence analysis), and data forecasting. By interpreting
+cyberattacks as sequences of malicious actions observed
+through IDS alerts, this research is able to investigate the
+application of sequence modeling techniques in the context of
+cyberthreat projection.
+II. RELATED WORK
+A. Previous Approaches
+Qin and Lee were one of the first to propose a high-level attack projection scheme [15]. They investigated the use of an
+alert correlation system that was also capable of performing attack prediction. It applied Bayesian networks to IDS alerts in
+order to identify attack sequences and to predict possible future
+attack steps. Its high-level correlation was based on plan recognition and required the creation of several possible attack plans
+by domain experts. Challenging steps in such an approach are:
+1) the creation of attack plans that are general enough to capture
+a myriad of attack behavior, but specific enough to provide insights about an attacker’s goals and 2) the search for a match between an unfolding multistage attack among the many devised
+attack plans. Similar to Qin and Lee’s work, Mehta et al. [16]
+also employs preconstructed probabilistic attack graphs to rank
+attack tracks.
+The problem of projecting possible future cyberattacks was
+also explored by Holsopple et al. [13]. In this work, three pieces
+of information were used in order to identify likely attack targets: network topology, a mapping between services and host
+
+1556-6013/$25.00 © 2008 IEEE
+
+360
+
+IEEE TRANSACTIONS ON INFORMATION FORENSICS AND SECURITY, VOL. 3, NO. 3, SEPTEMBER 2008
+
+computers, and observed attack sequences. Given this information, a threat score was assigned to different entities of the network. More recently, a similar work that assigns an overall risk
+score to the entire networks as well as to individual hosts was
+presented by Arnes et al. [12].
+Li et al. [14] proposed an approach to assess the threat by
+anticipating likely attacks. The authors were able to identify
+short sequences of probable attack steps, and to construct attack graphs by employing data-mining techniques on a dataset
+containing representative attack actions.
+The approach described in this paper is complementary to
+risk assessment algorithms presented by Arnes et al. [12] and
+Holsopple et al. [13]. Similar to Li et al. [14], likely sequences
+of attack actions are identified. However, the objective here is to
+study attack behavior and to predict an attacker’s future actions.
+Unlike Qin and Lee [15] and Mehta et al. [16], who relied on
+expert knowledge and the preconstruction of probabilistic attack
+graphs, the approach described here loosely employs domainspecific information.
+Since network and behavior modeling are two complex tasks,
+decoupling them will allow the selection of a specialized solution tailored to the problem at hand. The approach presented
+here decouples the task of network modeling from attack behavior modeling by employing universal predictors on highlevel attack information. The end result is a model capable of
+predicting probable attack actions given an attacker’s unfolding
+sequence of malicious activities.
+B. Sequence Modeling
+Modeling can be performed based on event types and their
+frequency of occurrence, on the time properties of events (duration, time interval, etc.), or on the ordering within event sequences. In the cyberdomain, these approaches have been used
+when performing intrusion detection. For example, it has been
+shown that statistical tests applied to transport control protocol
+and Internet protocol (TCP/IP) packet fields and the interval
+of arrival between packets are indicative of denial-of-service
+(DoS) attacks [17]–[19]. Instead of looking at event frequencies
+or their time properties for intrusion detection, we model and
+project attack behavior by investigating the sequential properties of correlated IDS alerts; therefore, an overview of sequence
+modeling applied in the context of intrusion detection is presented next.
+The analysis of program behavior through sequences of
+system calls is an important example of how sequence-modeling techniques have been applied in the cybersecurity domain.
+As shown in [20]–[24] and [25], a program exploited, such as
+through a buffer overflow attack, will produce a sequence of
+system calls that often differs from the ones generated during
+the program’s regular usage. Even though evading attack
+methods have been explored [26], the analysis of sequence
+of system calls is an important component when detecting
+vulnerability exploitations.
+Sequence modeling has also been used when finding exploitations through the command line. Models for the users’ command
+line patterns are proposed in, for example, [27] and [28]. Probabilities for newly observed commands based on a history of
+command sequences are used to determine whether an attacker
+
+has hijacked an authentic user account, or whether a disgruntled user is compromising the network. Similar approaches have
+been employed when finding anomalies in system log messages.
+Ye et al. [29] proposed to find anomalies by computing the probability of a sequence of log messages given the model generated
+under regular conditions.
+Similar to the works described previously, the approach presented here focuses on the ordering of events and on sequence
+models, such as Markov and hidden Markov models (HMMs).
+However, unlike approaches described previously, the proposed
+work is not an IDS. Instead, it builds upon existing IDSs and
+alert correlators to extract attack patterns and predict attack behavior from identified and correlated IDS alerts. In summary,
+this paper addresses the problem of projecting cyberattacks by
+looking at the sequential properties of correlated IDS alerts belonging to multistage attack tracks.
+C. Prediction
+One goal of the proposed sequence model is to predict probable future actions belonging to an attack track. The problem of
+prediction has been addressed from many fronts. For example,
+consider a long sequence of symbols
+. In 1992,
+Ehrenfeucht and Mycielski proposed a simple predictor that
+looked for the longest repeating suffixes of a sequence, which is
+called the maximal suffix [30]. Ehrenfeucht and Mycielski preto be equivalent to the symbol following the most
+dicted
+recent maximal suffix.
+Jacquet et al. modified Ehrenfeucht’s and Mycielski’s predictor by searching for a fraction of the maximal suffix in the
+original sequence [31]. The fraction of the maximal suffix was
+such that the fractional suffix would occur
+set to a size
+more than twice in the original string. Each occurrence was
+called a marker. The algorithm then performs a majority vote
+among the symbols that immediately follow the markers. It was
+shown that this scheme yields to a universal predictor, which is
+an optimal predictor whose average error converges to the minimum regardless of the generating source as long as the source
+is stationary [31]. Other universal predictors have also been proposed, including the seminar paper by Feder et al. [32].
+This work investigates the use of several finite-context
+models (also known as Markov Models), including a VLMM.
+Similar to the algorithm proposed by Jacquet et al., finite-context based predictors also take into account the frequency count
+of previously observed symbols and their contexts. However, in
+addition to being able to extrapolate from these sequences when
+anticipating likely future attack actions, the model also allows
+, which is the probability of occurfor the calculation of
+rence of given that an -order model has been created from
+several representative attack sequences. A detailed description
+of the approach and the proposed algorithm is given next.
+III. METHODOLOGY
+A. Attack Track Preprocessing
+Attack tracks are one possible byproduct of running a correlation engine on raw IDS alerts. These tracks consist of ordered
+collections of alerts belonging to a single multistage attack. An
+XML representation of a partial attack sequence is shown in
+
+FAVA et al.: PROJECTING CYBERATTACKS THROUGH VLMMS
+
+Fig. 1. Partial attack track example in XML.
+
+Fig. 1. Each track is composed of several
+tags and other
+subtags. As will be shown next, an attack behavior model is built
+based on the information contained in these fields.
+Let the collection of attack tracks be
+, where each attack track
+is a time-stamped or. Let
+be an
+dered set of intrusion alerts
+. For
+intrusion alert composed of many fields
+example,
+may represent the type of exploitation method of
+, while may represent the attack target IP, and so on
+
+Let
+, where is the space defined by the set of fields
+of an alert message. Note that the richness of the set of fields of
+an alert message depends on the types of IDSs deployed and on
+the correlation engine used to create attack tracks.
+An important step in the proposed approach is to translate
+into a sequence of symbols
+each attack track
+, where each symbol represents an attack
+action captured by an IDS alert. For example, symbol
+represents the th alert of track . Once attack tracks have been
+converted, different sequence modeling schemes, such as various Markov models, may be used to characterize their corresponding sequences of malicious actions.
+When building the behavior model, not all IDS alert fields
+must be considered. Often, one is interested in a subspace of .
+is the
+For example, if only the th alert field is relevant, then
+space in which
+. In this work, the alert
+fields that define are shown in bold in Fig. 1. Three different
+subspaces of are considered. One subspace takes into account
+
+361
+
+, another takes into account the catethe attack description
+, and one accounts for the destination IP
+gory of the attack
+. These
+of the attack combined with the attack’s category
+are derived from the
+and
+tags of Fig. 1.
+Alert description contains a detailed account of the attack
+method, while the category field contains a coarser definition
+of the attack. For example, one possible category is an intrusion
+root. Within this category, there are WU-FTP exploitations, different WEB-IIS exploitations, and many others that may lead to
+an intruder gaining root access to a network computer. An initial
+analysis of the tradeoffs in creating models from information at
+high and low levels of granularity (such as an attack category
+versus description) was presented in [33].
+Different choices of alphabets are applicable to the proposed
+VLMM approach; these choices may offer different insights into
+and catean attacker’s behavior. For example, description
+fields reflect the attacker’s tendency in choosing difgory
+ferent reconnaissance and exploitation methods and are used in
+this paper to analyze the effectiveness of modeling at two different levels of granularity. The field “classification” is another
+choice that captures the attacker’s method, but at a granularity
+between category and description. The incorporation of destiis also considered since it allows
+nation IP of attack steps
+the model to account for the path and “agility” of the attacker.
+Further research can also explore the benefits of employing additional subspaces of , such as destination port, protocol, and
+any combination of the fields.
+Fig. 2 shows the conversion of a single attack track into sequences of symbols. Each of the three alerts belonging to the
+track is mapped into a different symbol depending on the choice
+. From the point of view of the alert’s cateof
+gory, the two first attack actions in Fig. 2 were caused by reconnaissance scanning activities, while the third alert corresponds
+to an intrusion as root; therefore, this track is translated to the se, where corresponds to the category
+quence of symbols
+represents Intrusion Root. From the
+Recon Scanning, and
+point of view of the alert’s description, the first two alerts were
+“ICMP PING NMAP” and “SCAN SOCKS Proxy attempt,”
+while the intrusion was an exploitation of the WEB-IIS server
+through the nsiislog dynamically linked library (DLL). There, where corresponds to
+fore, this track is translated to
+“ICMP PING NMAP,” to “SCAN SOCKS Proxy attempt,”
+and to “WEB-IIS nsiislog.dll access.”
+Another important piece of information is the destination of
+the attack steps, that is, the IP of the attack targets. When taking
+,
+into account the attack target IP, this track translates to
+where
+and correspond to the category Recon Scanning,
+with the lowercase letter representing a change in IP since the
+previous attack. That is, the transition in an attack target between
+the first and the second attack steps of Fig. 2 is represented as
+a lowercase character. The third attack step is represented as an
+uppercase , because its destination IP is the same as the previous alert’s.
+Sequences created based on the three subspaces
+are used to create three different models. These
+sequences of symbols are the input to the attack projection
+framework discussed in this paper.
+
+362
+
+IEEE TRANSACTIONS ON INFORMATION FORENSICS AND SECURITY, VOL. 3, NO. 3, SEPTEMBER 2008
+
+Fig. 3. Suffix tree for the finite sequence “
+
++FGGFGF3.”
+
+addition, incorporating destination IPs
+allows the observation of how each attacker navigates the network.
+For example, consider the sequence
+(1)
+
+Fig. 2. Representing an attack track as different sequences of symbols.
+
+B. Sequence Modeling
+The next task is to build a model that captures the ordering properties of sequence symbols. Finite-context models,
+typically known as Markov models, and finite-state models,
+also known as HMMs, are two main approaches to sequence
+characterization.
+Finite-context models assign a probability to a symbol based
+on the context in which the symbol appears [34]. In an th
+order finite-context model, an event is said to depend on previous observations, where the transition probability is defined
+. On the
+as
+other hand, finite-state models, also known as HMMs, are composed of an observable part (events) and a hidden part (states)
+[35]. Events are observed with different probability distribution
+depending on the state of the system.
+For the results presented in this paper, attack tracks are modeled with finite-context models because they allow us to investigate how an attacker’s current actions are correlated with recently observed ones. If IDS alerts belonging to a single attack
+track represent several attack steps performed by an intruder,
+then an th-order finite-context model determines the probability of a future attack step based on the attacker’s previous
+actions. Looking back at the example of Fig. 2, a finite-context
+will help undermodel created based on attack categories
+stand the relationship between root intrusions that are preceded
+by reconnaissance activities. Similarly, a model created from atcontains data at a finer level of granularity.
+tack description
+In this case, the relationship between different pings, scans, and
+WEB-IIS exploitations, for example, will be under analysis. In
+
+where and represent the start and the end of a sequence, and
+and correspond to Snort alerts “WEB-IIS nsiislog.dll access” and “WEB-MISC Invalid HTTP Version String,” respectively. One may be interested in the probability of seeing symbol
+after having observed . This is captured by the first-order
+. In (1), was followed by in two
+Markov model
+out of three occurrences of and by once; therefore, a probais obtained. In our work, numerous atbility
+tack sequences will be taken into account when computing the
+transition probabilities for each th order model.
+A first-order Markov model can be represented by a squared
+holds the
+transition probability matrix in which entry
+probability of a transition from state to . A second-order
+Markov model can be represented with a rectangular matrix
+holds the probability of a transition into state
+in which
+given that states and have been observed. Similarly, higher
+order Markov models can be represented in matrix form.
+Instead of using several matrices, one for each model
+order, this work implements different order Markov models
+using a suffix tree. The complexity for finding a context of
+and its succeeding symbol
+in the suffix tree
+size
+. Yet, the suffix tree naturally holds all subcontexts
+is
+(suffixes) of a sequence. In other words, it holds all fixed-order
+models in a single data structure. These models can then be
+combined into a VLMM [34]. For example, Fig. 3 shows
+the suffix tree for the attack sequence shown in (1). Notice
+that all suffixes and their frequencies are captured by the
+and
+tree
+. Fig. 4 shows the pseudocode for building a
+suffix tree from a set of attack sequences.
+C. Prediction
+be an unfolding sequence of attack
+Let
+given
+actions. Our objective is to predict the next action
+and given a dataset containing representative attack tracks.
+denote the probability of the next symbol in being
+Let
+according to an th-order Markov model. Note that can
+be, at most, , which is the length of the already observed
+context. For a given set of representative attack sequences, the
+entire context of length
+may not match any suffix in the
+tree; that is, this newly observed sequence is not part of the
+be a set containing all suffixes of representadataset. Let
+is contained
+tive attack tracks (in the case of this research,
+
+FAVA et al.: PROJECTING CYBERATTACKS THROUGH VLMMS
+
+363
+
+Fig. 4. Suffix tree creation pseudocode.
+
+in a suffix tree), and is the size of the longest suffix of such
+exists in . A VLMM determines
+that
+by combining or blending
+according to (2). The intuition is that past observations (captured by the symbols following suffixes of that exist in ) are
+representative of the future
+(2)
+The prediction process is illustrated in the pseudocode of
+Fig. 5. The model is capable of generalizing by combining information belonging to previous observations that may be distinct from one another. The model uses a weighting scheme to
+combine these distinct observations contained in the different
+suffixes. The weights are computed in terms of escape probabilities as shown in (3) with
+(3)
+Escape probabilities work by allocating “some code space in
+each model to the possibility that a lower order model should
+be used to predict the next character” [34]. There are different
+approaches to computing escape probabilities. An empirical test
+between the methods described in [34] showed no performance
+difference among them [33]. Therefore, a method that allocates
+one additional count over and above the number of times the
+context has been seen in each model order was implemented
+due to its simplicity. Specifically,
+.
+
+Fig. 5. Prediction pseudocode.
+
+D. Realization of Proposed Methodology
+The proposed methodology has three main components: 1) alphabet creation and update (where sequences of
+symbols are created from attack tracks); 2) sequence modeling;
+and 3) prediction. Due to the computational simplicity—polynomial time for sequence modeling and prediction—the entire
+system can be developed as an offline or a real-time process.
+In the offline mode, representative finite attack sequences are
+fed into the system to train the suffix tree model, which is then
+used to make predictions when live attacks are unfolding. In
+the real-time case, individual attack actions are appended to
+the model as live attack sequences are unfolding. As the suffix
+tree is built and updated with unfolding attack sequences, the
+model adapts to newly observed symbols and sequences. This
+adaptive ability, to be shown in Section IV-C, is critical since
+attacks and attack sequences could evolve due to changes in
+network configurations and discoveries of new vulnerabilities.
+One implementation issue is that the real-time system will
+eventually run out of resources (memory) if it is indefinitely fed
+with new attack tracks. Future works will address questions on
+capacity, pruning of the model, and minimum sufficient statistics.1 While the real-time implementation is more viable for its
+usefulness in the real world, the offline development allows us to
+analyze the results in a more controlled setting, where VLMM
+predictions for different sequences and different symbols in the
+same sequence are made based on the same model trained.
+1Minimum sufficient statistics refer to the most compact summary of the data
+which retains all predictively relevant information [36].
+
+364
+
+IEEE TRANSACTIONS ON INFORMATION FORENSICS AND SECURITY, VOL. 3, NO. 3, SEPTEMBER 2008
+
+IV. EXPERIMENTS AND DISCUSSIONS
+A. Experiment Setup
+Both offline and real-time implementations of the proposed
+approach were tested: one to analyze the VLMM’s ability in
+capturing sequential orders of cyberattacks, and another to
+investigate the adaptiveness of the model to new attack actions
+in a real-time environment. In the first experiment, a dataset is
+randomly split into two halves. One half of the tracks is used to
+train the attack behavior model, and the other half is to test the
+model’s predictions. An important goal of this experiment is to
+examine the effectiveness of predicting by combining multiple
+fixed-order Markov models. On the other hand, the second
+experiment utilizes a real-time implementation of the VLMM
+that processes alert messages one by one based on an alert time
+stamp. This experiment will demonstrate the methodology’s
+ability to adapt to new attack scenarios.
+Note that the proposed methodology aims at projecting future
+actions for each attack track. Commonly known cybersecurity
+datasets, including those from the MIT Lincoln Lab [37], [38],
+KDD Cup 99 [39], and Defcon [40], are crafted for intrusion detection and, thus, do not have the notion of attack tracks. More
+specifically, these datasets are typically used to separate malicious activities from normal ones, but do not have the ground
+truth that specifies which malicious activities are executed as
+part of a multistage attack. The alert messages in some of the
+public datasets may be sent through an alert correlator (such as
+those illustrated in Sections I and II) in order to produce correlated attack tracks. While this is desirable in a real-life system,
+the lack of multistage scenarios in these datasets could introduce
+errors to the attack tracks and, consequently, affect the confidence in the results obtained when analyzing the proposed attack projection system. In the absence of a proper public dataset
+for our experiments, this work utilizes one that is created for military applications and contains the ground truth of attack tracks.
+The dataset used in this research was created through scripted
+multistage attacks performed on a VMware network.2 Note that
+the proposed methodology does not require knowledge about
+specific network topology or configurations. As network configuration or attack strategy evolves, the proposed methodology
+shall adaptively adopt new symbols and new sequences of symbols in the model. In fact, the dataset contains different attack
+scenarios that target different parts of the network and utilize
+different exploitation methods. This allows for testing the proposed system’s adaptiveness.
+The network used for our reported results contains seven internal subnets (each having a number of user address spaces),
+22 external servers, and 24 internal servers. Sample servers include IIS web servers, MS exchange servers, FTP, and VPN
+servers that run on various Linux and Windows OS’s. Five sets
+of attack scenarios are executed, producing a total of 19 908
+alerts and 2559 attack tracks. The attack scenarios range among
+CGI overflow, data exfiltration, phishing, and deniel of service,
+and differ in the attack targets. Alert messages were produced
+by Snort, Dragon, Apache, and IIS. A real-world operational
+system should have a data-alignment preprocessing component
+2A second dataset was created for a different network topology and tested. It
+exhibits similar performance trends as the ones detailed in this paper.
+
+Fig. 6. Prediction rate using zero-, first-, second-, and third-order models
+.
+on
+
+that homogenizes alert messages produced by different types of
+IDSs [9], [11]. A homogenization step was not performed on
+the dataset used for this research. Instead, we used solely snort
+alerts, which encompass approximately 50% of the total alerts
+and cover 55% of the attack tracks.
+An additional study of the data reveals that some attack tracks
+contain a series of alert messages that are identical in every
+single field except for the time stamps and the IDS reporting the
+event. These messages could be duplicate alerts for the same attack action, or they could indeed correspond to a series of identical attack actions, which is not uncommon for scripted attacks.
+Regardless, consecutively repeated alerts add little value for a
+cyberattack projection system [33]. This work aims at extracting
+changes within attack tracks, and to predict symbols that are different from the latest observed one in the sequence. Therefore,
+repeated consecutive alerts are filtered, which helps reduce the
+model size [33].
+be a recently observed and
+Let
+unfolding sequence of attack actions captured by IDSs and
+translated from an attack track. A prediction set composed
+, for
+of the most likely future steps is computed for
+all sequences
+in the testset. The prediction performance is
+measured as the percentage of correctly predicted attacks over
+the total number of predictions. They are given in terms of
+top-1, top-2, and top-3 predictions. The term top-n is used to
+where
+.
+refer to a prediction set of size
+In the case of top-1, a correct prediction means that the attacker
+performed an action that corresponded to the symbol identified
+by the model as the most likely to occur. Similarly, a correct
+prediction in terms of top-2 and top-3 mean that the attacker’s
+action is among the two and three most probable attack steps
+identified by the model.
+B. Experiment 1: Effectiveness of VLMM
+Fig. 6 shows the prediction results of different Markov
+models created from sequences mapped based on attack de. The dash (“ ”) represents the prediction rate
+scriptions
+when considering the symbol that is attributed to the highest
+probability of occurrence (top-1). Points marked with “ ” and
+
+FAVA et al.: PROJECTING CYBERATTACKS THROUGH VLMMS
+
+365
+
+TABLE I
+ENTROPY OF CORRECTLY PREDICTED AND MISPREDICTED
+ATTACK STEPS FOR DIFFERENT ATTACK ACTION SUBSPACES
+
+Fig. 7. Prediction rate using zero-, first-, second-, and third-order models
+.
+on
+
+“ ” represent top-2 and top-3 prediction rates, respectively.
+Results from ten independent runs with a random 50-50 split
+training and testing sets are averaged and shown with one
+standard deviation.
+As mentioned in Section III, the relationship between an attack action and the attacker’s recent behavior can be inferred
+from the correlation of neighboring actions within a sequence.
+When using a first-order model, the next attack action is predicted based on the immediate previous action. Similarly, an
+th order finite-context relates the next action with the previous ones. For the results in Fig. 6, attack actions were predicted based on zero-, first-, second-, and third-order finite-context models as well as a VLMM. For example, when top-3 is
+considered, the correct prediction is about 48% of the time in
+the case of a zero-order predictor, 59% for a first, 48% for a
+second, 35% for a third, and 68% for the VLMM.
+The zero-order model, which predicts based on frequency
+counts of previously observed attacks, yields among the lowest
+performance. This suggests the importance of an attacker’s previously observed actions when inferring his or her next step.
+The first-order model performs better than the second- and the
+third-order models, indicating that the next exploit has a strong
+correlation with the attacker’s immediate previous action. This
+is intuitively correct, as the immediate previous action often
+grants certain privileges for the attacker’s next action. Also notice that VLMM outperforms the first-order model, which suggests that, while higher order models individually may not be a
+good indicator, they do introduce additional information that is
+not captured by the first-order model. The end result for the combined VLMM prediction is a top-three accuracy approaching
+70% when predicting specific methods that the attacker may use
+next during an ongoing attack.
+Sequences can also be created based on attack categories
+. Fig. 7 plots the prediction accuracy for the case of .
+The results are impressive; the VLMM achieves 90% accuracy
+when predicting the next attack type in an ongoing attack
+sequence. The finer the granularity of a data model is, the more
+information is needed in order for special cases to be captured
+with statistical significance; therefore, with the same dataset,
+finer grained models are expected to have worse prediction
+and 7
+.
+rates. This can be noticed by comparing Figs. 6
+
+Arguably, predicting granularity at coarser levels may also be
+advantageous given the dynamic nature of exploitations. Since
+specific exploitation methods can evolve due to configuration
+changes and discovery of new vulnerabilities, modeling and
+predicting granularity at coarser levels may be more desirable
+because it provides network analysts with overall directions
+instead of specific yet not necessarily accurate predictions.
+Since attack behavior can be very diverse, certain attack sequences may be easier to predict than others. Information entropy is a logical choice to measure the confidence or uncerbe the entropy of the th
+tainty of each predicted action. Let
+given a prediction model. The
+symbol of
+is, the larger the uncertainty associated
+larger the value that
+with the attack step is
+
+(4)
+was calculated for all symbols in the testing data given a
+were combined into two categories
+VLMM. The values of
+depending on whether the symbol was correctly or incorrectly
+predicted. Results are presented in Table I. Notice that despite
+the large standard deviation, symbols that were mispredicted
+have, on average, higher entropy. Further investigation will help
+us understand this large fluctuation.
+In addition to entropy, average log-loss was used to measure the complexity of an entire attack sequence. The greater
+the probability assigned by a predictor to the symbols of a sequence is, the smaller the sequence’s average log-loss is. In
+this work, average log-loss is used to classify a sequence as
+common or sophisticated. Let be a predictor that assigns a
+to symbol
+. Then, given a sequence
+probability
+, the average log-loss is defined as
+(5)
+For the results presented in Table II, the VLMM was used
+as the predictor , and the average log-loss of each sequence
+in the testset was computed based on (5). A threshold value
+is used when classifying attack sequences as common
+of
+, versus sophisticated
+. Table II shows
+the prediction rates of common and sophisticated sequences
+chosen empirically.
+classified based on different values of
+Notice that results based on different attack action subspaces
+
+366
+
+IEEE TRANSACTIONS ON INFORMATION FORENSICS AND SECURITY, VOL. 3, NO. 3, SEPTEMBER 2008
+
+TABLE II
+PREDICTION RATES OF COMMON AND SOPHISTICATED SEQUENCES
+CLASSIFIED BY THRESHOLDING THEIR AVERAGE LOG LOSS
+
+Fig. 8. Number of unique targets visited versus the number of target transitions
+within the attack sequences.
+
+are given. When comparing the two sets, one would expect the
+higher log-loss sequences (sophisticated set) to have lower prediction rates. The results shown in Table II are in accordance
+with this intuition.
+and atSequences created based on an attack description
+model the transitions within attack methods
+tack category
+chosen by an intruder. Another logical procedure is to characterize attack behavior with regards as to how an attacker maneuvers within a network. This is possible when attack destination
+IP is incorporated into the model. Extending the use of , a
+new set of sequences is created according to the tendency of an
+attack action to occur at the same or at a different target machine
+. The idea behind this
+from the immediate previous action
+approach is to examine the agility of each attack track.
+,
+When incorporating the destination IP into the model
+we noticed that only 2% of the DoS attack actions were incurred on a different machine than the one targeted by the immediate previous action. DoS is an attempt to make a computer resource unavailable to its intended users by saturating the victim
+machine with external communications requests; therefore, this
+low tendency for DoS to cover several distinct machines within
+the same attack sequence is expected. On the other hand, 21.6%
+and 16.7% of the “data exfiltration” and “backdoor, trojan, virus
+and worm” attacks occurred on a different target machine from
+their preceding attack actions. This suggests that “data exfiltration” and “backdoor, trojan, virus and worm” are more “agile,”
+or more likely to target multiple machines in a network.
+Fig. 8 provides an insightful representation for these attack
+transitions. The axis represents the number of transitions in
+an attack target within an attack sequence. The axis represents the number of unique target machines visited by the attack sequence; that is, the number of distinct destination IPs.
+For example, the point (9,3) represents a sequence in which the
+attacker hopped nine times across three different machines. The
+size of the squares in Fig. 8 is logarithmically proportional to
+the number of attack tracks that fall within the given point. For
+example, most of the attack sequences in our data lie in (0,1),
+which is represented by the large square. The (0,1) coordinate
+indicates that the attacker targeted only one machine; therefore,
+there are no transitions within his or her attack track.
+Fig. 8 can be used to characterize attack behavior. Points close
+line that have
+represent attackers that
+to the
+hop many times across a small number of machines. For ex-
+
+TABLE III
+AVERAGE NUMBER OF ATTACK TARGET TRANSITIONS FOR SEQUENCES
+THAT WERE CLASSIFIED AS COMMON AND SOPHISTICATED
+
+ample, point (20,3) represents an attack sequence that contained
+20 transitions covering only three different destination IPs. on
+line that have
+the other hand, point closed to or at the
+indicate attacks that hop across many distinct machines.
+Given the differences in target IPs and IP transitions, one may
+hypothesize that the more “agile” attack sequences are more
+“sophisticated” and harder to predict. A threshold of
+was chosen to classify roughly half of the sequences in the
+dataset as common and half as sophisticated based on their average log loss. Then, the number of target IP transitions and the
+prediction rate for the sophisticated and the common attack sequences were computed as shown in Table III. Despite the large
+deviations, the significant difference in the average IP transitions (3.71 versus 0.50) suggests that the more agile multistage
+attacks are likely to exhibit rare ordering in attack actions and
+are harder to predict. Note that the approach presented in this
+paper allows for the examination and classification of attack sequences based on target IPs without requiring information about
+network topology and system configurations.
+C. Experiment 2: Real-Time Adaptation
+Performance results shown in Experiment 1 can be improved
+if the new attacks and attack sequences are incorporated into the
+model as they are observed. An implementation that takes correlated alerts, one by one, and continuously updates the model as
+it predicts, is tested by using the same VMware dataset. For this
+second experiment, the entire dataset is fed into the real-time
+system according to the time stamp of the alerts. This real-time
+implementation is possible because of the computational efficiency of the VLMM model and prediction.
+Fig. 9 shows the window average prediction accuracies
+(top-3) achieved by the system versus the total number of
+injected alerts for the
+and
+subspaces. The window size
+
+FAVA et al.: PROJECTING CYBERATTACKS THROUGH VLMMS
+
+Fig. 9. Window average prediction accuracy (top-3) as alerts are injected to the
+and
+.
+real-time system for the cases of
+
+Fig. 10. Percentage of symbols observed as alerts are injected to the real-time
+and
+.
+system for the cases of
+
+is approximately 100 alerts. This set of results reveals how the
+real-time system performs as the model is trained with more
+alert data. First, observe the initial transient periods where
+the system has not yet observed enough alerts to build an
+accurate model. After approximately 1000 alerts, the prediction
+and
+accuracies rise but fluctuate around 75% and 95% for
+, respectively. The overall cumulative average prediction
+accuracies for the entire dataset are 76.25% and 94.69% for
+and , respectively.
+As expected, the overall performance improves by continuously updating the model with new attacks and new attack sequences. The fluctuation observed can be partially attributed to
+the introduction of new symbols in the corresponding alphabet.
+Fig. 10 shows the percentage of symbols known to the model as
+the alerts are injected. Note that with 1000 alerts injected, only
+and , respec36% and 67% of symbols have occurred in
+tively. In fact, because the alerts are injected according to their
+time stamps, which correspond to the attack scenario they belong to, new symbols may not be seen by the system until late in
+the simulated time period. Even with new symbols being continuously introduced by different attack scenarios, the system
+prediction accuracies remain between 55%–95% and between
+85%–100% for
+and , respectively.
+The number of symbols generally levels during the middle
+of the five scenario sets, but each scenario contributes with new
+symbols to the description alphabets. The last scenario is an inalerts have been observed
+teresting case. It starts after
+
+367
+
+and it introduces new specific attack methods to the model as noticeable from Fig. 10. For this reason, the system performance
+drops temporarily. After 1000 additional alerts have been observed, the system performance rises again to around 85%–90%
+accuracy. This phenomenon suggests the adaptiveness of the
+proposed approach in the presence of new attacks. Note that the
+new attacks can be introduced by a combination of changes in
+network configuration and the discovery of new exploits.
+Note also that while the prediction performance fluctuates for
+in the beginning of the last scenario, the use of
+maintains a steady performance of 95%. This is encouraging and reinforces the notion that assessing granularity at a coarser level
+helps the analysts focus on the right type of attacks (as opposed
+to relying on software to suggest specific attacks that may not
+have been observed with enough frequency in order to yield accurate predictions). In fact, given his or her a priori knowledge
+and experience on the specific network, an analyst should probably know more about new (zero-day) attacks than the system
+does.
+The real-time implementation also attempts to predict that
+a never-seen-before attack is about to occur. The system does
+not predict exactly when the new attack will occur; instead,
+it predicts that something new will occur. In addition to the
+regular symbols representing specific attack methods or attack
+categories, each alphabet subspace contains a special symbol
+to track the instances when a new attack occurs for the first
+time. When these instances occur, the suffix tree will update
+for the branches leading to this symbol. Although there are few
+such instances, incorporating this symbol in the VLMM allows
+warning to be generated for new attacks. In our experiment, the
+system is able to predict 18 out of 51 occurrences of new attack
+. While
+% is not as impressive
+methods
+as the prediction accuracy presented earlier, this result shows
+promises that VLMM is able to not only adaptively train and
+predict attacks that have been observed, but also provide warnings of new attacks.
+V. CONCLUSION
+This paper introduces a framework for the characterization
+and prediction of cyberattack behavior. Built upon existing technologies, namely, IDSs and alert correlation engines, the proposed approach aims at capturing the sequential properties residing in the correlated IDS alerts. Different from existing approaches that heavily rely on network-specific information, our
+approach does not require the modeling of network configuration and system vulnerabilities. This separation is accomplished
+by applying ideas from universal predictors on high-level attack
+information. Specifically, the behavior trends exhibited in various fields of IDS alerts are captured via VLMMs. Our results
+demonstrate that sequential properties (i.e., the first-, second-,
+third-, order Markov models are all beneficial and a combination of them via VLMM leads to the best prediction accuracy).
+Information theory-based metrics, such as entropy and log loss,
+are proposed as indicators of the prediction quality.
+Historical and ongoing alert sequences are used to build and
+update suffix tree models that store statistical information for
+VLMM predictions. Since it does not require specific network
+
+368
+
+IEEE TRANSACTIONS ON INFORMATION FORENSICS AND SECURITY, VOL. 3, NO. 3, SEPTEMBER 2008
+
+information, the proposed methodology is able to adapt to new
+attacks and new attack sequences, regardless of changes in network configurations or discoveries of new exploits. Our results
+demonstrate that soon after new attack scenarios are introduced,
+the prediction accuracy rises as the model starts capturing sufficient statistics for the new attacks and attack sequences. The
+new attack predictions will not be diluted by the historical sequences as the new symbols and new symbol sequences are different from the old ones.
+We believe that the battle against cyberattacks goes beyond
+password protection, encryption, intrusion detection, and alert
+correlation. Having these components is essential for protected
+network operations and usage; however, a proactive measure
+that projects ongoing attack actions is crucial for timely mitigation of cyberattack impacts. In order to create a comprehensive assessment of cyberattacks, we propose the presented approach to be considered as part of the cyberattack projection solution, complementing the projection schemes that depend on
+network-specific information.
+ACKNOWLEDGMENT
+The authors would like to thank J. Holsopple, M. Sudit,
+J. Salerno, G. Tadda, and M. Hinman for their valuable inputs.
+REFERENCES
+[1] S. Axelsson, Intrusion Detection Systems: A Survey and Taxonomy.
+Chalmers Univ., Gothenburg, Sweden, Tech. Rep. 99-15, 2000.
+[2] H. Debar, M. Dacier, and A. Wespi, “Towards a taxonomy of intrusiondetection systems,” Int. J. Comput. Telecommun. Netw., vol. 31, pp.
+805–822, 1999.
+[3] T. Bass, “Intrusion detection systems and multisensor data fusion,”
+Commun. ACM, vol. 43, pp. 99–105, 2000.
+[4] J. R. Goodall, W. G. Lutters, and A. Komlodi, “The work of intrusion detection: Rethinking the role of security analysts,” in Proc. Amer.
+Conf. Information Systems, 2004, pp. 1421–1427.
+[5] F. Cuppens, “Managing alerts in a multi-intrusion detection environment,” in Proc. 17th Annu. Comput. Security Appl. Conf., 2001, pp.
+22–31.
+[6] O. Dain and R. K. Cunningham, “Fusing a heterogeneous alert stream
+into scenarios,” presented at the ACM Workshop Data Mining for Security Applications, Nov. 2001.
+[7] S. King, M. Mao, D. Lucchetti, and P. Chen, “Enriching intrusion alerts
+through multi-host causality,” presented at the Network and Distributed
+Systems Security Symp., San Diego, CA, 2005.
+[8] P. Ning, Y. Cui, and D. Reeves, “Analyzing intensive intrusion alerts
+via correlation,” presented at the 9th ACM Conf. Computer Communications Security, Washington, DC, 2002.
+[9] A. Stotz and M. Sudit, “INformation fusion engine for real-time
+decision making (INFERD): A perceptual system for cyber attack
+tracking,” presented at the Int. Conf. Information Fusion, Quebec City,
+QC, Canada, 2007.
+[10] A. Valdes and K. Skinner, “Probabilistic alert correlation,” in Proc. 4th
+Int. Symp. Recent Advances in Intrusion Detection, 2001, vol. 2212,
+pp. 54–68.
+[11] F. Valeur, G. Vigna, C. Kruegel, and R. A. Kemmerer, “A comprehensive approach to intrusion detection alert correlation,” IEEE
+Trans. Dependable Secure Comput., vol. 1, no. 3, pp. 146–169,
+Jul.–Sep. 2004.
+[12] A. Arnes, F. Valeur, and R. Kemmerer, “Using hidden markov models
+to evaluate the risk of intrusions,” presented at the Int. Symp. Recent
+Advances in Intrusion Detection, Hamburg, Germany, 2006.
+[13] J. Holsopple, S. J. Yang, and M. Sudit, “TANDI: Threat Assessment
+of Network Data and Information,” in Proc. SPIE Security Defense
+Symp.: Multisensor, Multisource Information Fusion: Architectures,
+Algorithms, and Applications, 2006, pp. 211–222.
+[14] Z. Li, J. Lei, L. Wang, and D. Li, “Assessing attack threat by the probability of following attacks,” in Proc. Int. Conf. Networking, Architecture, Storage, 2007, pp. 91–100.
+
+[15] X. Qin and W. Lee, “Attack plan recognition and prediction using
+causal networks,” in Proc. 20th Annu. Computer Security Applications
+Conf., 2004, pp. 370–379.
+[16] V. Mehta, C. Bartzis, H. Zhu, E. M. Clarke, and J. Wing, “Ranking attack graphs,” presented at the Int. Symp. Recent Advances in Intrusion
+Detection, Hamburg, Germany, Sep. 20–22, 2006.
+[17] L. Feinstein, D. Schnackenberg, R. Balupari, and D. Kindred, “Statistical approaches to DDoS attack detection and response,” in Proc.
+DARPA Information Survivability Conf. Expo., 2003, vol. 1, pp.
+303–314.
+[18] D. Moore, C. Shannon, D. J. Brown, G. M. Voelker, and S. Savage,
+“Inferring Internet Denial-of-Service activity,” ACM Trans. Comput.
+Syst., pp. 115–139, 2006.
+[19] K. Park and H. Lee, “On the effectiveness of probabilistic packet
+marking for IP traceback under Denial of Service Attack,” Proc. IEEE
+INFOCOM, pp. 338–347, 2001.
+[20] S. Forrest, S. A. Hofmeyr, A. Somayaji, and T. A. Longstaff, “A sense
+of self for Unix processes,” in Proc. IEEE Symp. Research in Security
+and Privacy, 1996, pp. 120–128.
+[21] C. Ko, M. Ruschitzka, and K. Levitt, “Execution monitoring of
+security-critical programs in distributed systems: A specificationbased approach,” in Proc. IEEE Symp. Security and Privacy, 1997,
+pp. 175–187.
+[22] A. Kosoresow and S. Hofmeyr, “Intrusion detection via system call
+traces,” IEEE Softw., vol. 14, pp. 35–42, Sep./Oct. 1997.
+[23] W. Lee, S. J. Stolfo, and P. K. Chan, “Learning patterns from Unix
+process execution traces for intrusion detection,” in Proc. Workshop
+AI Approaches to Fraud Detection and Risk Management, 1997, pp.
+50–56.
+[24] C. Warrender, S. Forrest, and B. Pearlmutter, “Detecting intrusion
+using system calls: Alternative data models,” in Proc. IEEE Symp.
+Security Privacy, 1999, pp. 133–145.
+[25] N. Ye, X. Li, Q. Chen, S. M. Emran, and M. Xu, “Probabilistic
+techniques for intrusion detection based on computer audit data,”
+IEEE Trans. Syst., Man, Cybern. A, Syst., Humans, vol. 31, no. 4, pp.
+266–274, Jul. 2001.
+[26] D. Wagner and P. Soto, “Mimicry attacks on host-based intrusion detection systems,” in Proc. 9th ACM Conf. Computer and Communications Security, 2002, pp. 255–264.
+[27] W.-H. Ju and Y. Vardi, “A hybrid high-order Markov chain model
+for computer intrusion detection,” Nat. Inst. Stat. Sci., Tech. Rep.
+2, 1999.
+[28] T. Lane and C. Brodley, “Temporal sequence learning and data reduction for anomaly detection,” ACM Trans. Inf. Syst. Security, vol. 2, pp.
+295–331, 1999.
+[29] N. Ye, Y. Zhang, and C. M. Borror, “Robustness of the markov-chain
+model for cyber-attack detection,” IEEE Trans. Rel., vol. 53, no. 1, pp.
+116–123, Mar. 2004.
+[30] A. Ehrenfeucht and J. Mycielski, “A pseudorandom sequence—How
+random is it?,” Amer. Math. Monthly, vol. 99, pp. 373–375, 1992.
+[31] P. Jacquet, W. Szpankowski, and I. Apostol, “A universal predictor
+based on pattern matching,” IEEE Trans. Inf. Theory, vol. 48, no. 6,
+pp. 1462–1472, Jun. 2002.
+[32] M. Feder, N. Merhav, and M. Gutman, “Universal prediction of
+individual sequences,” IEEE Trans. Inf. Theory, vol. 38, no. 4, pp.
+1258–1270, Jul. 1992.
+[33] D. S. Fava, “Characterization of cyber attacks through variable
+length Markov models,” M.Sc. dissertation, Rochester Inst. Technol.,
+Rochester, NY, 2007.
+[34] T. C. Bell, J. G. Cleary, and I. H. Witten, Text Compression. Englewood Cliffs, NJ: Prentice-Hall, 1990.
+[35] L. R. Rabiner, “A tutorial on hidden Markov models and selected applications in speech recognition,” Proc. IEEE, vol. 77, no. 2, pp. 257–286,
+Feb. 1989.
+[36] C. R. Shalizi and K. L. Shalizi, “Blind construction of optimal nonlinear recursive predictors for discrete sequences,” in Proc. 20th Conf.
+Uncertainty in Artificial Intelligence, 2004, pp. 504–511.
+[37] K. Kendall, “A database of computer attacks for the evaluation of intrusion detection systems,” M.Sc. dissertation, Mass. Inst. Technol., Cambridge, 1999.
+[38] 2001 [Online]. Available: http://www.ll.mit.edu/IST/ideval/data/
+data_index.html., Mass. Inst. Technol. Lincoln Laboratory. DARPA
+intrusion detection evaluation.
+[39] 1999 [Online]. Available: http://kdd.ics.uci.edu/databases/kddcup99/
+kddcup99.html., KDD Cup. KDD Cup data.
+[40] DEFCON Conf. [Online]. Available: http://www.defcon.org/. DEFCON capture the flag (CTF) contest.
+
+FAVA et al.: PROJECTING CYBERATTACKS THROUGH VLMMS
+
+Daniel S. Fava received the B.S. and M.S. degrees
+(Hons.) in computer engineering from the Rochester
+Institute of Technology (RIT), Rochester, NY, in
+2007.
+His research interests include mathematical
+modeling of security threats and system-level design
+for security. Currently, he is with Intel Corporation,
+working on post-silicon functional validation of
+Larrabee, a multicore 86 graphics processor.
+Mr. Fava is a member of Tau Beta Pi and Golden
+Key Collegiate Honor Societies. He is a recipient
+of the Outstanding Undergraduate Scholar Award from RIT, the Xerox/RIT
+Hispanic College Liaison Scholarship, and the ECI Systems and Engineering
+Award.
+
+2
+
+Stephen R. Byers (S’06) received the B.S. and M.S.
+degrees in computer engineering at the Rochester Institute of Technology, Rochester, NY.
+He is a member of the Tau Beta Pi honor society
+and a Recipient of the Rochester Engineering Society
+IEEE merit scholarship. His primary research interest
+is in the area of cybersecurity. He is a Freelance Information Technology Consultant.
+
+369
+
+Shanchieh Jay Yang (M’96) received the B.S.
+degree from the National Chiao-Tung University,
+Hsinchu, Taiwan, R.O.C., in 1995, and the M.S. and
+Ph.D. degrees from the University of Texas at Austin
+in 1998 and 2001, respectively.
+Currently, he is an Assistant Professor in the Department of Computer Engineering at the Rochester
+Institute of Technology, Rochester, NY. His research
+interests include threat and impact assessments on
+cyberattacks, cooperative and autonomous robots,
+Internet user behavior modeling, and ad-hoc sensor
+networks.
+Dr. Yang is an active member of the Center for Multisource Information Fusion (CMIF) based in Western NY. He is Past Chair of the IEEE Joint Communications and Aerospace Chapter in Rochester. He has been a member of the
+IEEE Communications Society since 1996.
+
+

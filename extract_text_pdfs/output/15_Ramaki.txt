@@ -1,0 +1,2475 @@
+c o m p u t e r s & s e c u r i t y 4 9 ( 2 0 1 5 ) 2 0 6 e2 1 9
+
+Available online at www.sciencedirect.com
+
+ScienceDirect
+journal homepage: www.elsevier.com/locate/cose
+
+RTECA: Real time episode correlation
+algorithm for multi-step attack scenarios detection
+Ali Ahmadian Ramaki a, Morteza Amini b,*, Reza Ebrahimi Atani a
+a
+b
+
+Dept. of Computer Engineering, The University of Guilan, Rasht, Iran
+Dept. of Computer Engineering, Sharif University of Technology, Azadi Ave., Tehran 145888-9694, Iran
+
+article info
+
+abstract
+
+Article history:
+
+Today, from information security perspective, prevention methods are not enough solely.
+
+Received 14 May 2014
+
+Early Warning Systems (EWSs) are in the category of reactive methods. These systems are
+
+Received in revised form
+
+complementing Intrusion Detection Systems (IDSs) where their main goals include early
+
+19 August 2014
+
+detection of potential malicious behavior in large scale environments such as national
+
+Accepted 14 October 2014
+
+level. An important process in EWSs is the analysis and correlation of alerts aggregated
+
+Available online 6 November 2014
+
+from the installed sensors (e.g., IDSs, IP telescopes, and botnet detection systems). In this
+paper, an efficient framework for alert correlation in EWSs is proposed. The framework
+
+Keywords:
+
+includes a correlation scheme based on a combination of statistical and stream mining
+
+Network security
+
+techniques. The method works real-time by extracting critical episodes from sequences of
+
+Early warning system
+
+alerts, which could be part of multi-step attack scenarios. A Causal Correlation Matrix
+
+Alert correlation
+
+(CCM) is used for encoding correlation strength between the alert types in attack scenarios.
+
+Stream mining
+
+Experimental results show that the framework is efficient enough in detecting known
+
+Multi-step attacks
+
+attack scenarios and new attack strategies. The results also show that the system is able to
+predict the next steps of running attack scenaris up to 95% of accuracy under special
+circumstances.
+© 2014 Elsevier Ltd. All rights reserved.
+
+1.
+
+Introduction
+
+With the advent of new technologies and various services
+provided in the context of computer networks, large volume of
+data is being generated. The main challenge in this area is
+providing network protection services against various threats
+and vulnerabilities. So far, many techniques have been proposed to deal with these threats, all of which pursue the same
+goal; preventing attackers from reaching their objectives.
+Nowadays, IDSs are used considerably to increase security
+in computer systems. The main objective of IDSs is detection
+and probably identification of attacks and security problems
+
+in computer systems or networks and reporting them to the
+system administrators (Valeur et al., 2004), and hence, prevention of attacks and intrusions does not fall in their objectives. IDSs play undeniable and important role in solidification
+of security in computer systems and networks (Amini et al.,
+2006). Nevertheless, using IDSs has its own problems; high
+rate of false-positive alerts, inefficiency in real-time applications, inability and inefficiency in detecting incomplete events
+that in near future will turn into actual attacks (Liao et al.,
+2013).
+Despite the aforementioned problems for IDSs, researchers
+believe that collaboration and cooperation of IDSs in a
+distributed environment will overcome some of the
+
+* Corresponding author. Tel.: þ98 21 66166656; fax: þ98 21 66166677.
+E-mail addresses: ahmadianrali@msc.guilan.ac.ir (A.A. Ramaki),
+(R. Ebrahimi Atani).
+http://dx.doi.org/10.1016/j.cose.2014.10.006
+0167-4048/© 2014 Elsevier Ltd. All rights reserved.
+
+amini@sharif.edu
+
+(M.
+
+Amini),
+
+rebrahimi@guilan.ac.ir
+
+c o m p u t e r s & s e c u r i t y 4 9 ( 2 0 1 5 ) 2 0 6 e2 1 9
+
+mentioned problems (Elshoush and Osman, 2011). This is the
+concept that motivated researchers to form Cooperative
+Intrusion Detection Systems (CIDSs). However, for thorough
+detection of Internet threats in a wide scope, a new era
+appeared in computer systems, something that caused
+emersion of Early Warning Systems (EWSs).
+
+1.1.
+
+Early Warning Systems(EWSs)
+
+An EWS detects unknown behaviors of a system that is
+potentially hazardous (Chen and Ranka, 2004). This detection
+is based on the early incidents. A solution based on EWSs is
+what exactly security teams need to manage the threats
+properly. EWS as a complement to Intrusion Detection System
+(IDS), is a reactive approach against security threats, follow
+early detection of the potential behaviors of a system, evaluating the scope of malicious behaviors, and finally using
+suitable responses against the detected security events.
+Another emerging application of EWSs is using them in
+large scale networks at national and continental level. The
+main goal of EWSs designed for this purpose is early detection
+of security events and forecasting Internet threats. These
+systems receive security incidents and alerts from their
+distributed sensors in the whole intended network and by
+analyzing the gathered alerts; they generate the early warnings for different parts of the network. These systems should
+be able to detect security events and generate necessary reports on time and before the time that those security events
+becoming a real and actual threat. Already, multiple EWSs
+have been designed for this purpose, where each of them has
+the ability to detect special events based on the sensors
+embedded in the whole network.
+Several researches have been done on developing EWSs for
+detecting special events. Liu et al. (2010) have designed an
+EWS to detect DDoS attacks early. The system works based on
+the analysis of the vulnerabilities of a network. Chen and
+Ranka (2004) have designed a system for early detection of
+propagated worms in the Internet. The main goal of this system is detecting the scans by focusing on the RESET packets
+contrary to the conventional methods proposed for this purpose, i.e., analyzing the SYN packets. Edelkamp et al. (2009)
+have designed an EWS for intrusion detection based on the
+combined artificial intelligent methods. The goal of their EWS
+is the early detection of intrusions in a large network.
+
+1.2.
+
+Motivation
+
+The core component of EWSs is alert correlation engine. Alert
+Correlation is a process in which generated alerts by one or
+more sensors in a network are analyzed in order to have an
+overview of probable intrusion efforts (Lee et al., 2006). Instead
+of generating hundreds of low-level and discrete alerts,
+correlator generates a few number of high level alerts for the
+system administrators by processing the sensors' generated
+alerts, and discovering logical relationships between them
+(Valeur et al., 2004; Zhang et al., 2008; Sadoddin and Ghorbani,
+2009). In some methods that are used for detecting multi-step
+attack scenarios, the learning phase has a considerable overhead that affects the efficiency of the system (Ren et al., 2010;
+Soleimani and Ghorbani, 2012). In this paper, an effective
+
+207
+
+correlation algorithm is proposed; this algorithm detects
+attack scenarios, and generates early warnings showing next
+actions of intruders in a target network. The proposed correlation framework works in two modes, on-line and off-line,
+using a combination of statistical and stream mining
+methods. The knowledge provided in the off-line mode can be
+considered for the prediction of the next steps of under
+running attacks in the on-line mode.
+
+1.3.
+
+Organization of the paper
+
+The rest of this paper is organized as follows. Section 2 reviews the related work. In Section 3, the proposed correlation
+framework is introduced. Also learning and detection, prediction, and new attack scenario mining components of the
+correlation system are explored. Section 4 reports the experiments that are conducted for evaluating the proposed technique, and presents the results. Finally, Section 5 concludes
+the paper.
+
+2.
+
+Related work
+
+Different works have been done in the area of alert correlation. One of the most important approaches is based on data
+mining concepts. Peng et al. (2008) have proposed a method
+for alert aggregation and correlation based on clustering
+methods. Shin and Jeong (2006) have proposed a framework
+for alert correlation based on data mining techniques for the
+management of alerts. These kinds of researches are not able
+to detect unknown attack scenarios. Dain and Cunningham
+(2002) have proposed a real-time method based on stream
+mining for scenario detection. In this method, alerts are
+queued to construct a scenario. Each new alert is compared
+against the defined scenarios and is attached to a scenario
+with the most similarity. If the similarity does not satisfy the
+assumed threshold, it detects a new scenario. In this way,
+length and number of scenarios will increase gradually.
+Another method is the use of statistical techniques. Li et al.
+(2006) have provided a method based on statistical filtering
+for attack scenario detection.
+Debar and Wespi (2001) have proposed a method for alert
+aggregation and correlation. In their method, alerts are
+correlated by following three phases. The first one is alert
+preprocessing. The second phase is alert correlation; where
+attacks could be detected by extracting frequent alerts and
+their consequences. Then in the last step, the extracted alert
+types are correlated to form attack scenarios. These kinds of
+methods cannot detect unknown attack scenarios.
+Another new technique for alert correlation is using machine learning methods. Soleimani and Ghorbani (2012) have
+proposed an approach to detect multi-step attack scenarios
+using combination of stream mining and decision tree
+methods. In their method, a decision tree-based method is
+used for learning the specification of each attack pattern and
+detecting them in alert streams. They use alert correlation
+matrix (ACM) for this purpose. ACM defines the correlation
+strength of each two alert types in the system. Manganiello
+et al. (2011) have proposed a method based on neural networks. In their method, a multilayer perceptron neural
+
+208
+
+c o m p u t e r s & s e c u r i t y 4 9 ( 2 0 1 5 ) 2 0 6 e2 1 9
+
+network is used for alert correlation. The main disadvantage
+of their method is the inefficiency of the learning process due
+to the considerable cost of training resulted from using a decision tree. Moreover, generating and pruning the decision
+tree is expensive.
+Farhadi et al. (2011) have proposed a method based on
+stream mining, which is able to predict the future events by
+Hidden Markov Model (HMM). They construct attack scenarios
+using alert frequency in different time windows and analyze
+the correlated alerts. High false-negative rate in detecting the
+scenarios is the main drawback of the ASEA algorithm proposed by them. Moreover, the ASEA algorithm is not able to
+detect new attack scenarios.
+In this paper, an alert correlation scheme, which is called
+RTECA, is proposed for EWSs. RTECA detects known and unknown attack scenarios in real time, and generates early
+warnings with high accuracy showing the next actions of intruders in a target network.
+
+3.
+
+Proposed alert correlation framework
+
+There are many different methods for alert correlation problem, but each of them has considerable drawbacks. The
+method proposed in this paper, provides a real-time algorithm
+for alert correlation suitable for EWSs. Of course there are
+challenges towards this aim: there are considerable amount of
+low level alerts; alerts of a multi-step attack do not reach the
+correlation component at the same time; and the most
+important challenge is that the received alerts are analyzed
+and omitted upon arrival; because in real-time applications
+the memory is limited.
+To propose our alert correlation framework, we assume
+that there is a large network with multiple intrusion detection
+sensors. These components generate alerts and the alerts are
+aggregated in a central node. The alerts need to be normalized
+and sorted based on their time tag, because they are generated
+by different sensors. Then, the main attack scenario detection
+algorithm plays its role. Alerts generated by the sensors are
+categorized into larger parts, named batches. Each batch is
+divided into the smaller parts, named episode windows (see
+Fig. 1). When a batch of alerts is received, the alerts are sorted
+based on their creation time and then, the alerts are aggregated and divided into the episode windows. Processing a
+window starts when that window is completed. Then, episode
+extraction module is applied for extracting suspicious episodes that might be parts of some under running attack scenarios. Other episodes that are false-positive episodes or subepisodes of new unknown attack scenarios are sent to the new
+attack strategy mining component. In this framework, a
+
+Fig. 1 e Episode extraction using episode window of size
+win.
+
+prediction component is taken into account where the prediction rules are extracted to predict the next steps of under
+running attack scenarios in the network.
+Our proposed alert correlation framework has two modes:
+on-line and off-line. In the off-line mode, at the beginning, it
+aggregates alerts based on the similarity of their alert types.
+Next, an episode mining algorithm is leveraged for discovering the possible combination of the alerts. Using the
+learning data, and by generating an off-line attack tree, the
+system learns multi-step attack scenarios in the off-line
+mode. In the on-line mode, by generating an on-line attack
+tree based on the received alerts from the sensors, it determines the steps of the multi-step attacks precisely and
+efficiently. The overview of our proposed alert correlation
+framework is shown in Fig. 2.
+Before describing the alert correlation in this framework,
+we need to define Causal Correlation Matrix (CCM), which is
+represented in the following.
+Definition 3.1. (Causal Correlation Matrix (CCM)). The matrix
+that defines the correlation strength of each two alert types in
+the system. For alert types A1, A2, …, An, the CCM is defined as
+size of n  n, where J(Ai, Aj) defines the correlation strength of
+alert types Ai and Aj.
+CCM is usually asymmetric. We say alerts ai and aj are
+correlated, if J(@(ai),@(aj))  t, where @ determines the type of
+an alert and t is a threshold. Table 1 represents an example of
+a CCM. As shown in the table, J(A1, A2) and J(A2, A1) have two
+different values. The former one represents the value of the
+correlation strength between A1 and A2, when an alert of type
+A2 occurs after A1, whereas the latter one represents the value
+of the correlation strength between A1 and A2, when an alert
+of type A2 occurs before A1. In RTECA, in order to calculate the
+correlation of alerts and adjusting the CCM, linear combination of prior knowledge and statistical analysis is used (for
+more details refer to Section 3.3).
+
+3.1.
+
+Aggregation component
+
+Aggregation component reduces the number of generated
+alerts to facilitate alerts analysis and management, while
+preserves a short description of each potential intrusion activity. Thousands of alerts, generated by the sensors, are
+converted into an aggregated alert (or hyperalert).
+As mentioned earlier, an alert consists of some features
+based on specific attributes of network traffic. The most
+important features of alerts (i.e., source IP address, destination IP address, source and destination port numbers, intrusion type or alert type, attack severity and timestamp) are
+used for the alert correlation process proposed in this paper.
+In the aggregation component, all alerts with
+the same alert type, which are satisfying a predefined
+time frame condition, are merged together. Combination
+of these alerts forms hyperalerts. The number of hyperalerts is
+less than the number of original alerts. More formally, if
+there is an alert set {εt1, εt2, …, εtn} in a time interval and
+each alert has a set of features as mentioned above, it
+is possible to assume these alerts are similar if
+
+c o m p u t e r s & s e c u r i t y 4 9 ( 2 0 1 5 ) 2 0 6 e2 1 9
+
+209
+
+Fig. 2 e Overview of the proposed alert correlation framework.
+
+εt1[alertType] ¼ εt2[alertType] ¼ … ¼ εtn[alertType]. A hyperalert
+(named a) of these similar alerts, is defined as follows:
+a½srcIPs ¼ fεt1 ½srcIP; εt2 ½srcIP; …; εtn ½srcIPg;
+a½dstIPs ¼ fεt1 ½dstIP; εt2 ½dstIP; …; εtn ½dstIPg;
+a½srcPorts ¼ fεt1 ½srcPort; εt2 ½srcPort; …; εtn ½srcPortg;
+a½dstPorts ¼ fεt1 ½dstPort; εt2 ½dstPort; …; εtn ½dstPortg;
+a½t ¼ t1;
+a½alertType ¼ εt1 ½alertType;
+a½attackSeverity ¼ εt1 ½attackSeverity;
+a½counter ¼ the number of similar alerts:
+
+3.2.
+
+Episode extraction
+
+An episode is a partially ordered set of concurrent events
+(hyperalerts) that can be defined as a directed acyclic graph
+(DAG). An episode is defined more formally as follows.
+Definition 3.2. (Episode). An episode is a triple of e ¼ ðV; ⩽; gÞ,
+where
+ V is a set of hyperalerts.
+ ⩽ determines the time order of hyperalerts, and forms a partial
+order on set Vðai ⩽aj iff ai ½t  aj ½tÞ.
+ g : V/A is a labeling function that maps each hyperalert
+of the episode to an alert type. A determines the set of alert
+types.
+For example, consider episode e ¼ ðV; ⩽; gÞ in Fig. 3. Set
+V consists of two hyperalerts represented by a and b.
+Mapping function g labels these hyperalerts with alert types
+as shown in the figure, where g(a) ¼ Sadmind_Ping and
+g(b) ¼ Sadmind_Amslverify_Overflow. In this example, a hyperalert of type Sadmind_Ping occurs before a hyperalert of type
+Sadmind_Amslverify_Overflow, which means a⩽b.
+
+We say, episode e0 ¼ ðV0 ; ⩽0 ; g0 Þ is a sub-episode of another
+episode e ¼ ðV; ⩽; gÞ, denoted by e0 8e, if there is a mapping like
+p in which p: V0 / V and for each v 2 V0 : g0 (v) ¼ g(p(v)) and for
+each v, w 2 V0 , if v⩽w, then pðvÞ⩽pðwÞ. Note that based on the
+prepared definition, in determining the sub-episode relationship, the types of the alerts are important not the alerts
+themselves. Thus henceforth, in the graphical representation
+of episodes, we label the nodes (hyperalerts) with their alert
+types. An example of a sub-episode concept is illustrated in
+Fig. 4.
+An episode e ¼ ðV; ⩽; gÞ is a serial episode if ⩽ relation is a
+total order (a state in which for each, ai ; aj 2V : ai ⩽aj or aj ⩽ai ). A
+sample of a serial episode is shown in Fig. 3. In this paper,
+serial episode concept is used to extract different serial combinations from hyperalert sequences to determine critical
+episodes.
+Notation- For the sake of simplicity, we show a serial
+episode ei as a tuple ei ¼ 〈A1, A2, …, An〉, where A1 to An are the
+types of hyperalerts a1, a2, …, an constructing the serial
+episode and occurring in the order appeared in the tuple.
+A frequent serial episode is a serial episode extracted from
+the sequence of alerts in an episode window such that its
+repetition frequency in the episode window is more than a
+predefined threshold, named min  fr. A frequent serial
+episode might be a part of a multi-step attack scenario, if it is
+recognized as a critical episode.
+In order to find the episodes of attacks, relations between
+hyperalerts are important. This relation could be useful in
+analyzing the intruders' activities, i.e., interpreting the reasons of a special activity of an intruder, and predicting the
+future events. In the alert sequence illustrated in Fig. 5,
+episode 〈E, A, B〉 is a frequent one, where firstly a hyperalert of
+type E, then a hyperalert of type A, and finally a hyperalert of
+type B appears, and frequency of this episode is more than the
+defined threshold (here configured as 8). Considering the
+
+Table 1 e Sample of causal correlation matrix (CCM).
+
+A1
+A2
+A3
+A4
+
+A1
+
+A2
+
+A3
+
+A4
+
+0
+0
+0
+0.25
+
+0.5
+0.5
+0.25
+0.5
+
+0
+0.5
+0.25
+0
+
+0.25
+0.5
+0.5
+0
+
+Fig. 3 e Example of a serial episode.
+
+210
+
+c o m p u t e r s & s e c u r i t y 4 9 ( 2 0 1 5 ) 2 0 6 e2 1 9
+
+Fig. 4 e e1 is a sub-episode of serial episode e2.
+above episode and its occurrence time, its repetition patterns
+are:
+〈ðE; 1Þ; ðA; 2Þ; ðB; 4Þ〉;
+〈ðE; 1Þ; ðA; 2Þ; ðB; 5Þ〉;
+〈ðE; 10Þ; ðA; 11Þ; ðB; 12Þ〉;
+〈ðE; 10Þ; ðA; 11Þ; ðB; 13Þ〉;
+〈ðE; 16Þ; ðA; 17Þ; ðB; 18Þ〉;
+〈ðE; 16Þ; ðA; 17Þ; ðB; 19Þ〉;
+〈ðE; 26Þ; ðA; 27Þ; ðB; 29Þ〉;
+〈ðE; 26Þ; ðA; 28Þ; ðB; 29Þ〉
+In the episode extraction phase, serial episodes can be
+extracted by sliding a batch window to its episode windows
+over a sequence of hyperalerts as it is shown in Fig. 1. The
+extracted frequent serial episodes are categorized into critical
+episodes and benign episodes. Critical episodes are recognized based on the CCM as defined in the following.
+Definition 3.3. (Critical Episode). A frequent serial espisode
+e ¼ 〈A1, …, An〉 is a critical episode, if the correlation strengths
+of all pairs of hyperalert types 〈Ai, Aiþ1〉 ð1  i < nÞ in the
+episode are equal or greater than threshold t (i.e.,
+JðAi ; Aiþ1 Þ  t).
+A frequent serial episode that is not critical, is defined as a
+benign episode.
+Definition 3.4. (Benign Episode). A benign episode is a
+frequent serial episode that has at least a pair of uncorrelated
+hyperalert types (i.e., there exists a binary sub-episode 〈Ai,
+Aiþ1〉 (where 1  i < n) such that J(Ai, Aiþ1) < t), which might be
+a false-positive or a sub-episode of a new unknown attack
+scenario.
+
+the critical episodes and updating the CCM during both the
+off-line and on-line modes. An adaptive learning method is
+used in the proposed framework to learn both multi-step
+attack scenarios and benign episodes with the following
+steps: episode extraction and labeling, updating the CCM, and
+attack tree construction. Fig. 7(a) and (b) illustrate an overall
+view of the learning and detection component in the off-line
+and on-line modes, respectively.
+In our proposed alert correlation framework, once we
+receive an episode window, first of all, we find all the frequent
+episodes that could be critical based on the CCM and also the
+benign episodes. In both the off-line and on-line modes, we
+construct an attack tree using the critical episodes. Next, we
+generate the binary sub-episodes of each extracted critical
+episode, in the form of 〈Ai, Aiþ1〉, such that Aiþ1 is occurring
+immediately after Ai in the critical episode. For example if 〈E,
+A, B〉 is a critical episode, the binary sub-episodes 〈E, A〉 and 〈A,
+B〉 are taken into account. Then, we update the CCM in the
+both mentioned modes based on the generated binary subepisodes of extracted critical episodes. In the rest of this section, after the definition of attack trees, CCM updating process
+is described in more details.
+
+3.3.1.
+
+Attack tree construction
+
+In the both off-line and on-line modes of the correlation
+framework, we need to model attacker behavior using an
+attack tree, which is constructing based on the extracted
+
+The extracted critical episodes in each episode window are
+sent to the learning and detection component for attack tree
+construction and the benign episodes are sent to the new
+attack strategy mining component for recognizing new possible
+multi-step attack scenarios. This process is shown in Fig. 6. In
+the rest, we explain the functionality of the main components
+of the proposed alert correlation framework including the
+learning and detection component, the prediction component, and the new attack strategy mining component.
+
+3.3.
+
+Learning and detection component
+
+The main objective of the learning and detection component is
+constructing the off-line and on-line attack trees by detecting
+
+Fig. 5 e An example of an alert sequence (in an episode
+window).
+
+Fig. 6 e Episodes categorization based on CCM.
+
+c o m p u t e r s & s e c u r i t y 4 9 ( 2 0 1 5 ) 2 0 6 e2 1 9
+
+211
+
+Fig. 7 e Learning and detection component (a) In the off-line mode and (b) In the on-line mode.
+
+critical episodes in episode windows. An attack tree is defined
+formally as follows.
+Definition 3.5. (Attack Tree). An attack tree is defined as
+AT ¼ ðT; ⩽; fÞ, where
+ T is a set of hyperalerts.
+ ⩽ is a partial order over set T (determining the time
+ordering relation of hyperalerts) such that for each ai 2 T,
+
+set faj 2Taj ⩽ai g is a well-ordered set by relation ⩽ (the
+characteristic required to be a tree).
+ f is a labeling function that assigns to each node a 2 T, a
+triple f(a) ¼ 〈A, ef, ew〉 where A determines the type of the
+node (hyperalert), ef is the frequency of the episode forming
+by traversing from the root node to node a in the tree (in the
+sequence of alerts processed till now), and ew is the number
+of episode windows where the episode have been seen.
+Note that the labels of nodes are used in retrieving the
+prediction rules that are extracted for early prediction of the
+next steps of the under running attacks (for more details refer
+to Section 3.4). Also, each attack tree contains a null node (in T)
+as its root node.
+At the beginning, an attack tree has just the null node as its
+root node. The attack tree is updated by adding the extracted
+critical episodes. For this purpose, after extracting the critical
+episodes in an episode window, each extracted critical
+episode that is a sub-episode of another one in the list, is
+eliminated from the list (to avoid redundant episode insertion
+in the attack tree). For adding an extracted critical episode, if a
+prefix of the critical episode is matched with a prefix of a path
+(without the root node) in the attack tree, the episode is
+concatenated to the attack tree and the labels of nodes
+existing in the matched prefix are updated (except the alert
+types in the labels that remain unchanged). Note that if no
+path is found in the tree with a prefix matching a prefix of the
+critical episode, the critical episode is concatenated to the root
+node.
+For example, Fig. 8(a) shows episodes e1, e2, e3, and e4 that
+are critical episodes (extracted from the first episode window)
+and should be inserted into the attack tree. Episode e1 is a subepisode of episode e2 and should be eliminated from the list.
+As shown in Fig. 8(b), episode e2 (which contains e1 as well) is
+concatenated to the root of the attack tree. After inserting the
+
+episodes e3 and e4, as shown in Fig. 8(c), the labels of the nodes
+are updated (e.g., the labels of nodes A and D).
+In the off-line mode, the system constructs the off-line
+attack tree using the aggregated off-line alerts. However, in
+the on-line mode, the system constructs the on-line attack
+tree and updates it in real-time after processing the alerts of
+each episode window. Fig. 9 demonstrates a sample of an offline attack tree and the different states of an on-line attack
+tree.
+
+3.3.2.
+
+CCM updating process
+
+As it is described earlier in this paper, for estimating the
+causal correlation of two types of alerts, after extracting critical episodes in an episode window, the binary sub-episodes
+(such as 〈Ai, Aiþ1〉 where hyperalert aiþ1 of type Aiþ1 appears
+immediately after hyperalert ai of type Ai in the episode) are
+generated. These binary sub-episodes are used to estimate the
+casual correlation of alert types in an adaptive learning process. For this purpose, we first calculate some factors for a pair
+of hyperalerts and their alert types (which are exist in a binary
+sub-episode) and then update the related cell in the CCM
+based on the calculated factors and previous value of the cell.
+ Similarity of Two Hyperalerts: For determining the similarity
+of two hyperalerts, source IP addresses, destination IP addresses, source port numbers and destination port
+
+Fig. 8 e Example of attack tree (a) Critical episodes e1, e2, e3
+and e4, (b) Insertion of episode e2 (including e1) in the attack
+tree, and (c) Insertion of episodes e2, e3 and e4 in the attack
+tree.
+
+212
+
+c o m p u t e r s & s e c u r i t y 4 9 ( 2 0 1 5 ) 2 0 6 e2 1 9
+
+numbers are used. For this purpose, we define two similarity measures including IP similarity and port similarity
+of two hyperalerts.
+IPSim function is used for calculating the similarity between two sets of IP addresses as follows. To this aim,
+ipsimðIPi ; IPj Þ ¼ k=32 is defined to calculate the similarity of two
+IP addresses, where k is the maximum number of high order
+bits that the two IP addresses match. Equation (1) calculates
+the similarity of two sets of IPs, i.e., ipsi and ipsj.
+
+
+IPSim ipsi ; ipsj ¼
+
+P
+
+
+
+IP 2ips ipsim IPi ; IPj
+
+ j  j
+ipsi :ipsj 
+
+P
+IPi 2ipsi
+
+(1)
+
+Analogously, PortMatching function is used for calculating
+the similarity of two sets of port numbers in two hyperalerts.
+For each pair of port numbers, for example porti and portj,
+portmatching function calculates this similarity. If the two port
+numbers are equal, the function returns 1, otherwise it
+returns 0. Equation (2) calculates the similarity of two sets of
+prots, portsi and portsj.
+
+
+
+PortMatching portsi ; portsj ¼
+
+P
+
+
+
+P
+Porti 2portsi
+
+Portj 2portsi portmatching
+
+
+
+
+portsi :portsj 
+
+
+w1 :
+
+confidenceða1 ; a2 Þ ¼
+
+frð〈A1 ; A2 〉Þ
+frð〈A1 〉Þ
+
+(4)
+
+where fr(ei) is the frequency of episode ei.
+Using the above two criteria, i.e., similarity and confidence,
+we can now define the weighted confidence (wc) of two consecutive hyperalerts (existing in a binary sub-episode) as it is
+represented in Equation (5).
+wcða1 ; a2 Þ ¼ simða1 ; a2 Þ:confidenceða1 ; a2 Þ
+
+(5)
+
+In Equation (6), the formula of updating the CCM is
+represented.
+
+Porti ; Portj
+
+Based on these two criteria, the similarity function of two
+hyperalerts (here a1 and a2), are defined in Equation (3) in
+which weights w1 and w2 satisfy this condition that w1 > w2;
+because the similarity of source and destination IP addresses
+is much more important than the matching of the port
+numbers in the hyperalerts.
+
+simða1 ; a2 Þ ¼
+
+hyperalerts. In fact, the confidence of an association rule
+represents the causal correlation strength of the subsequent hyperalert to the precedent one in the binary subepisode. The confidence is calculated based on Equation
+(4). Note that A1 and A2 are the labels (the alert types) of
+hyperalerts a1 and a2 which are existing in the binary subepisode.
+
+
+(2)
+
+J'ðA1 ; A2 Þ ¼ a:JðA1 ; A2 Þ þ b:wcða1 ; a2 Þ; a; b  1 and a þ b ¼ 1
+(6)
+where a and b are two configurable weights, A1 ¼ a1[alertType],
+0
+A2 ¼ a2[alertType], and also J(A1, A2) and J (A1, A2) are the old
+and new values of the correlation strength of the two alert
+types, respectively.
+
+
+IPSimða1 ½srcIPs; a2 ½srcIPsÞ þ IPSimða1 ½dstIPs; a2 ½dstIPsÞ
+2
+
+
+
+PortMatchingða1 ½srcPorts; a2 ½srcPortsÞ þ PortMatchingða1 ½dstPorts; a2 ½dstPortsÞ
+þ w2 :
+2
+
+ Binary Sub-episode Confidence: One of the helpful stream
+mining methods is association rule mining method (Harms
+and Deogun, 2004). In this application, association rules
+represent the interesting relationships between the hyperalerts aggregated in an alert sequence. In fact, in our
+proposed framework, each binary sub-episode of a critical
+episode can be considered as an association rule. Following
+the method proposed by Harms and Deogun (Harms and
+Deogun, 2004), the binary sub-episodes (as association
+rules) are used to determine the correlation of the
+
+3.4.
+
+(3)
+
+Prediction component
+
+In the prediction component, we are about to predict the next
+steps of active attack scenarios whose parts of them are
+detected and appeared in the on-line attack tree. For this
+purpose, the knowledge of attack scenarios, which is represented as an off-line attack tree, is used.
+In the on-line attack tree, there are some leaves which can
+be considered for predicting the next steps of attack scenarios.
+Suppose that A is the alert type of a leaf node in the on-line
+
+213
+
+c o m p u t e r s & s e c u r i t y 4 9 ( 2 0 1 5 ) 2 0 6 e2 1 9
+
+
+
+ddev F〈A〉 ; Fek
+
+
+
+
+
+
+
+
+nþ1 
+X
+
+
+
+¼
+F〈A〉 i  Fek i
+
+i¼1
+
+
+
+ where size of F〈A〉 and Fek is n þ 1
+
+
+bdev F〈A〉 ; Fe ¼
+d
+k
+
+8
+>
+>
+>
+<
+>
+>
+>
+:
+
+2
+ðn þ 1Þ2
+
+
+
+ddev F〈A〉 ; Fek
+
+2
+2
+
+ðn þ 1Þ  1
+
+
+
+ddev F〈A〉 ; Fek
+
+; if n is odd
+:
+
+attack tree and ei is the critical episode containing A (the
+episode obtained by traversing from the root node to leaf node
+A in the tree). Also suppose that ej is an episode in the off-line
+attack tree (starting from the root node) such that ei 8ej (ei is a
+sub episode of ej) and ei matches with a prefix of ej. For prediction, for each leaf node, such as A, a set of prediction rules
+are generated. Each prediction rule for leaf A is in the form of
+〈A〉 0 ek where ek 8ej .
+Now for each prediction rule generated for a leaf node A,
+we compute a probability based on the following approach
+and report the most probable rule, which predicts the next
+steps of the running attack scenario. Note that the size of the
+episodes appear in the subsequents of the rules can be 1, 2, …,
+and generally n. Thus, just the rules with the subsequents of
+the same size can be compared together, using the computed
+probability.
+To compute the mentioned probability for each rule of the
+form 〈A〉 0 ek, where size of ek is n, we construct a vector F〈A〉
+of size n þ 1 for 〈A〉 and a vector Fek of size nþ1 for ek as follows.
+ðAÞ½2
+ F〈A〉 ¼ 〈ff ðAÞ½3
+; 0; …; 0〉 where f(A)[2] and f(A)[3] are the frequencies appear in (the 2nd and 3rd parts of) the label of
+node A in the on-line attack tree.
+0
+0
+f 0 ðB1 Þ½2
+f 0 ðBn Þ½2
+ If ek ¼ 〈B1, …, Bn〉, then Fek ¼ 〈ff 0 ðAÞ½2
+ðAÞ½3; f 0 ðB1 Þ½3; …; f 0 ðBn Þ½3〉, where f
+is the labeling function of the off-line attack tree.
+
+Having the above vectors, the probability of each prediction rule is calculated using the Equations (7)e(9). Equation (7) calculates the deviation distance between sets F〈A〉
+and Fek . Equation (8) represents normalized deviation distance of the two aforementioned sets. The probability of
+occurring the consequent steps of the under running attack
+scenario (predicted in the rule) is calculated in Equation (9),
+which represents the likelihood percentage between the
+current alert stream and the learned attack tree (off-line
+attack tree).
+
+(8)
+
+; if n is even
+
+bdev F〈A〉 ; Fe 
+probability ¼ 1  d
+k
+
+Fig. 9 e Samples of attack trees, (a) An example of an offline attack tree, (b) Inserting episode 〈A〉, (c) Inserting
+episodes 〈A〉 and 〈A, D〉, and (d) Inserting episodes 〈A〉, 〈A,
+D〉, and.〈A, D, F〉.
+
+(7)
+
+(9)
+
+To clear the above description, the following example is
+given. As illustrated in Fig. 9(a), episode 〈A〉 has been
+observed 45 times in 30 consecutive episode windows in a
+batch, and episode 〈A, B〉 has been observed 15 times in 10
+consecutive episode windows in a batch. In Fig. 9(b), (c), and
+(d), the generated on-line attack tree in the on-line mode is
+illustrated. For prediction, as shown in Fig. 9(b), episode 〈A〉
+with frequency of 10 in 10 episode windows of a batch is
+inserted in the on-line attack tree. Considering episode 〈A〉
+in the off-line attack tree, either attack steps of types B or D
+may occur after attack step of type A by different probabilities. Thus, two prediction rules 〈A〉 0 〈B〉 and 〈A〉 0 〈D〉 can
+be generated at this time and the probability of each rule
+using the aforementioned equations is calculated as 50% and
+33%.
+Also, the prediction method makes it possible to have
+predictions of more than one step. For example, as illustrated
+in Fig. 9(a), it is intended to predict the probability of occurrence of two prediction rules 〈A〉 0 〈D, F〉 and 〈A〉 0 〈D, G〉. In
+this case, vectors F〈A〉 and F〈D,F〉 and F〈D,G〉 are calculated as
+30 20 10
+30 20 10
+F〈A〉 ¼ 〈30
+45; 0; 0〉, F〈D;F〉 ¼ 〈45; 20; 25〉 and F〈D;G〉 ¼ 〈45; 20; 30〉. Therefore,
+the probability of occurring 〈D, F〉 after A is calculated as 57%
+and the probability of occurring 〈D, G〉 after A is calculated as
+59%.
+
+3.5.
+
+New attack strategy mining component
+
+Benign episodes with different lengths are sent to the new
+attack strategy mining component. These episodes could be
+false-positive episodes or sub-episodes of new unknown
+attack scenarios. To separate the false positive ones from the
+malicious ones, we need to extract the binary sub-episodes of
+each benign episode like e ¼ 〈A1, …, An〉 where n > 1 and Ai is
+the alert type of hyperalert ai in the episode. If a benign
+episode like e satisfies the following conditions, we mark it as
+a malicious episode.
+1. There is an alert type in the episode (such as Ak) which is
+absent in the CCM. In other words, the alert type is new.
+Pn1
+IPSimðai ½srcIPs;aiþ1 ½srcIPsÞ
+ q1
+2. i¼1
+ðn1Þ
+Pn1
+IPSimða
+½dstIPs;a
+½dstIPsÞ
+i
+iþ1
+3. i¼1
+ q1
+ðn1Þ
+Pn1
+IPSimðai ½dstIPs;aiþ1 ½dstIPsÞ
+4. i¼1
+ q1
+ðn1Þ
+Pn
+a
+½severityÞ
+i
+5. i¼1 n
+ q2
+
+214
+
+c o m p u t e r s & s e c u r i t y 4 9 ( 2 0 1 5 ) 2 0 6 e2 1 9
+
+In the above formulas average similarity between the
+source IP address of a hyperalert and the source IP address of
+its consequent hyperalert, average similarity between the
+destination IP address of a hyperalert and the source IP
+address of its consequent hyperalert, average similarity between the destination IP address of a hyperalert and the
+destination IP address of its consequent hyperalert, and finally
+average attack type severity of an episode are calculated,
+respectively.
+To consider the new alert type (in the detected malicious
+episode) and update the system in order to detect such an
+episode as an attack scenario in the future, we should add the
+absent alert type to the CCM (by adding new row and column
+and setting the new cells to zero). Then, the CCM should be
+updated using the malicious episode as a critical episode.
+Here, the CCM updating process is similar to the one specified
+in Section 3.3.2.
+
+4.
+
+Implementation and evaluation
+
+In this section, we present the evaluation results of the RTECA
+algorithm. We use three measures including the completeness of the detected known and new attack scenarios, the
+prediction accuracy, and the run time.
+
+4.1.
+
+Experiments setup
+
+The parameter values of the algorithm are listed in Table 2. In
+these experiments, the length of batches is 1 h and the length
+of slippery episode windows are 5 min as used in (Soleimani
+and Ghorbani, 2012). The proposed correlation framework
+has been implemented in Java. The application has been
+tested on a system with 4 GB RAM, the Intel Core2 2.60 GHz,
+CPU, and the Windows 7 operating system.
+
+4.2.
+
+because it is more accurate than Snort and removes some unsuccessful attacks. The alerts are generated by RealSecure IDS
+after replaying the DARPA network traffic. This dataset has two
+DDoS attack scenarios named LLDDoS 1.0 and LLDDoS 2.0. There
+are five steps in each scenario. We describe the functionality of
+the proposed system in detecting the first attack scenario. The
+scenario is consisting of the following steps:
+1. IPSweep
+2. Probe using sadmind “ping” option
+3. Breaking into Mill (IPAddress: 172.016.115.020), Lock
+(IPAddress: 172.016.112.010), and Pascal (IPAddress:
+172.016.112.050) using sadmind exploit
+4. Installing DDoS Software via telnet, rcp and rsh
+5. Starting a DDoS via a telnet session
+The generated alerts were given to the correlation system.
+The alert-set includes 924 alerts with 19 unique alert types.
+These alert types are presented in (MIT Lincoln Laboratory,
+2000) and shown in Table 7 of the Appendix. The CCM needs
+to be initialized before running the algorithm. For this purpose, we assign value 0.5 to the correlation strength of the
+alerts with more correlation and 0.25 to the ones with less
+correlation, similar to the approach considered in (Farhadi
+et al., 2011; Zhu and Ghorbani, 2006). The Initial values of
+the CCM are represented in Table 7. After initializing the parameters and the CCM, the algorithm was tested on alert-set
+of first scenario. The values of the CCM cells after running
+the RTECA algorithm are represented in Table 8.
+Fig. 10 represents the correlation graph of the RealSecure
+alerts for the inside traffic of the first scenario. As you can see,
+
+Evaluation on LLDDoS 1.0
+
+DARPA 2000 intrusion detection evaluation dataset (MIT Lincoln
+Laboratory, 2000) is often used to evaluate the correlation systems in discovering the existing multi-step attack scenarios.
+There are two IDSs for generating alerts from the dataset: Snort
+IDS and Realsecure IDS. In this study, we use the RealSecure IDS,
+
+Table 2 e The paramaeters of the RTECA algorithm for the
+experiments.
+Parameter name
+Batch Length
+Episode Window Length
+minfr
+t
+w1
+w2
+a
+b
+maxlen
+t (in hyperalert)
+q1
+q2
+
+Parameter value
+1h
+5 min
+3
+0.5
+0.8
+0.2
+0.4
+0.6
+6
+1 min
+0.5
+0.5
+
+Fig. 10 e Correlation graph of the inside traffic of the
+LLDDoS 1.0 attack scenario in RTECA.
+
+Plan_Server_
+Status_Down
+
+0
+0
+0.74
+0
+0.16
+0.19
+0.69
+0
+
+Plan_Service_
+Status_Down
+
+0
+0.84
+0
+0.32
+0.36
+0
+0
+0
+
+c o m p u t e r s & s e c u r i t y 4 9 ( 2 0 1 5 ) 2 0 6 e2 1 9
+
+almost all the major steps of the scenario have been extracted
+from the alertset. Furthermore, only three successful scenarios have been extracted for RealSecure and the falsepositive scenarios have not been extracted.
+The results of applying the proposed algorithm in processing the first scenario of DARPA 2000 dataset is comparable
+to other works, such as (Soleimani and Ghorbani, 2012;
+Farhadi et al., 2011; Zhu and Ghorbani, 2006). Detected
+attack graphs in these three works are very similar to the
+patterns detected in RTECA. Detected DDoS attack scenarios
+in this work are complete scenarios that cover all scenarios
+reported in the aforementioned works.
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0.37
+0
+0
+0
+0.72
+0.66
+0
+0
+0
+0
+0
+0
+
+0
+0.42
+0
+0.21
+0
+0
+0
+0
+
+HTTP_
+Shell
+
+Evaluation on GCP
+
+To evaluate algorithm efficiency in detecting the unknown
+attacks scenarios, Grand Challenge Problem (GCP) dataset has
+been used. This dataset has been provided by DARPAs program panel cyber (DARPA Cyber Panel Program, 2003). GCP
+version 3.1 is an attack scenario simulator. It can simulate the
+behavior of security sensors and generate alert streams. GCP
+3.1 includes two worm attack scenarios to specifically evaluate alert correlation methods. In GCP, multiple heterogeneous security systems (e.g., network-based IDSs, host-based
+IDSs, firewalls, and network management systems) are
+deployed in several network domains.
+In our evaluation, GCP scenario II has been considered.
+In the scenario, there are around 22,500 raw alerts. After
+alert aggregation, a dataset of 1800 hyperalerts has been
+generated including 8 unique alert types. Table 3 represents
+these alert types. In this multi-step attack scenario, an
+intruder is intended to propagate worms in a distant server
+and steal its database. The scenario includes four steps as
+follows:
+
+0
+0
+0
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+0
+0
+0
+
+1. Buffer overflow attack to the IIS server in order to access
+the application server to install a malicious program
+2. Updating the registry file in the server
+3. Disabling the IIS services
+
+IIS_Buffer_Overflow
+IIS_Unicode_Attack
+Plan_Registry_Modified
+HTTP_Shell
+HTTP_Java
+HTTP_RobotsTxt
+Plan_Service_Status_Down
+Plan_Server_Status_Down
+
+IIS_Buffer_
+Overflow
+
+IIS_Unicode_
+Attack
+
+Plan_Registry_
+Modified
+
+HTTP_
+Java
+
+HTTP_
+RobotsTxt
+
+4.3.
+
+Table 3 e CCM values after running the algorithm on LLDDoS 1.0. Bold faced values are the updated correlation strengths.
+
+215
+
+Fig. 11 e Correlation graph of the application server on the
+GCP scenario II in RTECA.
+
+216
+
+c o m p u t e r s & s e c u r i t y 4 9 ( 2 0 1 5 ) 2 0 6 e2 1 9
+
+Episode
+length
+1
+2
+3
+4
+5
+6
+
+Table 6 e Accuracy of the prediction rule mining process.
+
+Total extracted
+episodes
+
+Causal
+correlated
+
+Reduction
+percentage
+
+19
+1450
+1124
+683
+262
+46
+
+6
+315
+128
+28
+16
+3
+
+68.5%
+78.22%
+99.88%
+99.95%
+99.93%
+99.93%
+
+4. Disabling the server and starting the attack
+By arrival of the episodes, including the aforementioned
+alerts, they are checked to ensure that they are satisfying the
+conditions of detecting the new unknown attacks; if they do,
+they are inserted into the on-line attack tree. By correlating
+the above alerts, the most important detected scenarios by the
+RTECA algorithm are shown in Fig. 11.
+The results are comparable with the results of other works
+done in this area. The attack graph detected by the method
+reported in Qin and Lee (2005) have extreme similarity with
+the patterns detected in RTECA. Table 3 represents the
+updated CCM values after running the algorithm.
+Another important point in this evaluation is the reduction
+of frequent discovered patterns; after extracting critical episodes and inserting them into the attack tree, other episodes
+are filtered. The proposed framework accomplishes this task
+with 99% accuracy. Table 4 illustrates the results for different
+lengths of episodes for LLDDoS 1.0. Table 5 illustrates the
+reduction of discovered frequent patterns for different lengths
+of episodes for GCP 2.0.
+
+4.4.
+
+Performance evaluation
+
+Accuracy of responses for episodes with different lengths was
+a topic of interest in this work. In other words, what are the
+accuracy rates of the prediction rules extracted in constructing
+the attack tree. To this end, we used 30% of the test dataset for
+prediction. With the remaining of the test dataset, we created
+the on-line attack tree. Table 6 represents the accuracy of the
+prediction for episodes of different lengths based on Equation
+(10). The results show that when the length of attack scenarios
+increases, the accuracy of these predictions increases significantly. Meanwile, the probability of running an attack by an
+intruder increases by increasing the scenario length. Furthermore, Fig. 12 shows the better performance of the RTECA algorithm in comparison with the other related works.
+
+Table 5 e Episode reduction in GCP 2.0.
+Episode
+length
+1
+2
+3
+4
+
+Total extracted
+episodes
+
+Causal
+correlated
+
+Reduction
+percentage
+
+8
+956
+378
+98
+
+4
+98
+24
+4
+
+50%
+99.89%
+99.93%
+99.95%
+
+Dataset
+
+Correctly mined rules Incorrectly mined rules
+
+LLDDoS 1.0
+GCP 2.0
+
+95.2%
+97.6%
+
+4.8%
+2.4%
+
+Run Time (msec)
+
+Table 4 e Episode reduction in LLDDoS 1.0.
+
+Fig. 12 e Run time comparison of RTECA, Farhadi et al.
+(2011), and Soleimani and Ghorbani (2012).
+
+Prediction Accuracy ¼
+
+5.
+
+#of correct predictions rules
+#of total predictions rules
+
+(10)
+
+Conclusion
+
+In this paper, an efficient alert correlation framework is
+presented, which is suitable for detecting multi-step attack
+scenarios. In fact, the designed system acts as an EWS. It has
+two modes: on-line and off-line. In the off-line mode, at the
+beginning, it aggregates alerts based on the similarity of
+their alert types and generates the hyperalerts. Next, an
+episode mining algorithm is leveraged for discovering the
+possible combination of the hyperalerts. Using the learning
+data, and by generating an off-line attack tree, it learns
+multi-step attack scenarios. In the on-line mode, by generating an on-line attack tree, it determines the steps of the
+multi-step attacks precisely and efficiently. We also provided
+a prediction facility in the framework to predict the next
+steps of an active multi-step attack by observing its early
+behaviors. In some cases, the prediction component can
+estimate the next steps of the attacks with more than 95%
+accuracy. The experimental results show the effectiveness
+of RTECA (for leveraging it as an alert correlation framework
+in EWSs) from detection, prediction, and performance points
+of views.
+ It offers the higher rate of false alarm reduction, alert
+correlation, and (known and unknown) attacks identification and also the lower rate of misclassification.
+ It predicts the next steps of active multi-step attack scenarios by observing their early behaviors that is useful for
+preventing the completion of attacks and restricting their
+propagation.
+ It employs an ongoing learning process for investigating
+new unknown attack strategies.
+ The runtime of the algorithm is much less than the other
+approaches and frameworks proposed in this scope.
+
+Appendix
+Table 7 e CCM initialization for LLDDoS 1.0.
+
+Sadmind Ping
+Telnet Terminal
+Type
+Email Almail
+Overflow
+Email Elho
+FTP User
+FTP Pass
+FTP Syst
+HTTP Java
+HTTP Shells
+Admind
+Sadmind
+Amslverify
+Overflow
+Rsh
+Mstream Zombie
+HTTP Cisco
+Catalyst Exec
+SSH Detected
+Email Debug
+Telnet Xdisplay
+Telnet Env All
+Stream DoS
+
+0
+0
+
+0
+0.5
+
+0
+0.5
+
+0
+0.5
+
+0
+0.5
+
+0
+0.5
+
+0
+0.5
+
+0
+0
+
+0
+0
+
+0.5
+0.25
+
+0.5
+0.25
+
+0.25
+0.25
+
+0.25
+0.25
+
+0
+0
+
+0
+0.25
+
+0.25
+0.25
+
+0.25
+0
+
+0
+0.25
+
+0
+0
+
+0
+
+0.5
+
+0.5
+
+0.5
+
+0.5
+
+0.5
+
+0.5
+
+0
+
+0
+
+0
+
+0
+
+0.25
+
+0
+
+0
+
+0
+
+0.25
+
+0
+
+0
+
+0
+
+0
+0
+0
+0
+0
+0
+0
+0
+
+0
+0
+0.5
+0.5
+0.5
+0
+0
+0
+
+0.5
+0.5
+0
+0
+0
+0
+0
+
+0.5
+0.25
+0.5
+0.5
+0.5
+0
+0
+0
+
+0.5
+0.5
+0.5
+0.5
+0.25
+0
+0
+0
+
+0.5
+0.5
+0.5
+0.5
+0.25
+0
+0
+0
+
+0.5
+0.5
+0.5
+0.5
+0.25
+0
+0
+0
+
+0.5
+0
+0
+0
+0.5
+0.25
+0
+0
+
+0
+0
+0
+0
+0.25
+0
+0
+0
+
+0.25
+0
+0
+0
+0
+0
+0.5
+0.5
+
+0.25
+0
+0
+0
+0
+0
+0.5
+0.5
+
+0.25
+0
+0
+0
+0
+0
+0.5
+0.5
+
+0
+0
+0
+0
+0
+0
+0.5
+0.5
+
+0.25
+0.25
+0
+0.25
+0
+0
+0
+0
+
+0.5
+0
+0
+0.25
+0
+0
+0
+0
+
+0.5
+0.25
+0.25
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+0
+0.25
+0.25
+
+0
+0
+0
+0
+0
+0
+0.25
+0.25
+
+0
+0
+0
+0
+0
+0
+0
+0
+
+0
+0
+0
+
+0
+0
+0
+
+0
+0
+0
+
+0
+0
+0
+
+0
+0
+0
+
+0
+0
+0
+
+0
+0
+0
+
+0
+0
+0
+
+0
+0
+0
+
+0
+0
+0
+
+0
+0
+0
+
+0.5
+0
+0
+
+0.25
+0.5
+0
+
+0
+0
+0.25
+
+0
+0
+0
+
+0
+0
+0
+
+0.25
+0
+0
+
+0.25
+0
+0
+
+0
+0.5
+0
+
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+
+0.25
+0.25
+0
+0
+0
+
+0
+0
+0
+0
+0
+
+0
+0.25
+0
+0
+0
+
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+
+0
+0
+0.5
+0.5
+0
+
+0
+0
+0
+0
+0
+
+0.25
+0
+0
+0
+0
+
+0.25
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+
+0
+0
+0.25
+0
+0
+
+0
+0
+0
+0
+0
+
+c o m p u t e r s & s e c u r i t y 4 9 ( 2 0 1 5 ) 2 0 6 e2 1 9
+
+Sadmind Telnet
+Email Email FTP FTP FTP HTTP HTTP Admind Sadmind Rsh Mstream HTTP
+SSH
+Email Telnet Telnet Stream
+Ping
+Terminal Almail Elho User Pass Syst Java Shells
+Amslverify
+Zombie
+Cisco Detected Debug Xdisplay Env All DoS
+Type
+Overflow
+Overflow
+Catalyst
+Exec
+
+217
+
+218
+
+Table 8 e CCM state after running the algorithm.
+Sadmind Telnet
+Email Email FTP FTP FTP HTTP HTTP Admind Sadmind Rsh Mstream HTTP
+SSH
+Email Telnet Telnet Stream
+Ping
+Terminal Almail Elho User Pass Syst Java Shells
+Amslverify
+Zombie
+Cisco Detected Debug Xdisplay Env All DoS
+Type
+Overflow
+Overflow
+Catalyst
+Exec
+0
+0
+
+0
+0.5
+
+0
+0.5
+
+0
+0.5
+
+0
+0.5
+
+0.15
+0.5
+
+0
+0.5
+
+0
+0
+
+0
+0
+
+0.5
+0.25
+
+0.63
+0.25
+
+0.25
+0.25
+
+0.25
+0.25
+
+0
+0
+
+0
+0.4
+
+0.25
+0.25
+
+0.25
+0
+
+0
+0.25
+
+0
+0
+
+0
+
+0.5
+
+0.5
+
+0.5
+
+0.5
+
+0.5
+
+0.5
+
+0.19
+
+0
+
+0
+
+0
+
+0.25
+
+0
+
+0
+
+0
+
+0.25
+
+0
+
+0
+
+0
+
+0
+0
+0
+0
+0
+0
+0
+0
+
+0
+0.17
+0.61
+0.63
+0.5
+0
+0
+0
+
+0.5
+0.5
+0
+0
+0
+0
+0
+0.16
+
+0.5
+0.25
+0.5
+0.5
+0.5
+0
+0
+0
+
+0.5
+0.5
+0.5
+0.5
+0.25
+0
+0
+0
+
+0.5
+0.5
+0.81 0.5
+0.5
+0.65
+0.5
+0.5
+0.25 0.25
+0
+0
+0
+0
+0.19 0
+
+0.5
+0
+0
+0
+0.5
+0.32
+0
+0
+
+0
+0.37
+0.31
+0
+0.25
+0
+0
+0
+
+0.25
+0
+0
+0
+0
+0.18
+0.5
+0.85
+
+0.25
+0.19
+0.15
+0
+0.14
+0
+0.82
+0.5
+
+0.25
+0
+0
+0
+0
+0
+0.65
+0.64
+
+0
+0
+0
+0
+0
+0
+0.5
+0.5
+
+0.25
+0.25
+0
+0.25
+0
+0
+0
+0
+
+0.5
+0
+0
+0.25
+0
+0
+0
+0
+
+0.5
+0.25
+0.25
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+0
+0.25
+0.25
+
+0
+0
+0
+0
+0
+0
+0.25
+0.25
+
+0
+0
+0
+0
+0
+0
+0
+0
+
+0
+0
+
+0
+0
+
+0
+0
+
+0
+0
+
+0
+0
+
+0
+0
+
+0
+0
+
+0
+0
+
+0
+0
+
+0
+0
+
+0
+0
+
+0.5
+0
+
+0.25
+0.5
+
+0
+0
+
+0
+0
+
+0
+0
+
+0.25
+0
+
+0.25
+0
+
+0
+0.5
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0.25
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+
+0.25
+0.25
+0
+0
+0
+
+0
+0
+0
+0
+0
+
+0
+0.25
+0
+0
+0
+
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+
+0
+0
+0.5
+0.5
+0
+
+0
+0
+0
+0
+0
+
+0.25
+0
+0
+0
+0
+
+0.25
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+
+0
+0
+0.25
+0
+0
+
+0
+0
+0
+0
+0
+
+c o m p u t e r s & s e c u r i t y 4 9 ( 2 0 1 5 ) 2 0 6 e2 1 9
+
+Sadmind Ping
+Telnet Terminal
+Type
+Email Almail
+Overflow
+Email Elho
+FTP User
+FTP Pass
+FTP Syst
+HTTP Java
+HTTP Shells
+Admind
+Sadmind
+Amslverify
+Overflow
+Rsh
+Mstream
+Zombie
+HTTP Cisco
+Catalyst
+Exec
+SSH Detected
+Email Debug
+Telnet Xdisplay
+Telnet Env All
+Stream DoS
+
+c o m p u t e r s & s e c u r i t y 4 9 ( 2 0 1 5 ) 2 0 6 e2 1 9
+
+references
+
+Amini M, Jalili R, Shahriari HR. RT-UNNID: a practical solution to
+real-time network-based intrusion detection using
+unsupervised neural networks. Comput Secur 2006;25:459e68.
+Chen S, Ranka S. An internet-worm early warning system. In: The
+Proc. of global telecommunications conference, 2004.
+GLOBECOM '04. IEEE, 4; 2004. p. 2261e5.
+Dain M, Cunningham RK. Building scenarios from a
+heterogeneous alert stream. In: The Proc. of the 2001 ACM
+workshop on data mining for security applications; 2002.
+DARPA Cyber Panel Program. DARPA cyber panel program Grand
+Challenge Problem (GCP). 2003. http://www.
+grandchallengeproblem.net/.
+Debar H, Wespi A. The intrusion detection console correlation
+mechanism. In: The Proc. of the 4th international symposium
+on recent advances in intrusion detection. CA, USA: LNCS,
+Springer; 2001. p. 87e105.
+Edelkamp S, Elfers C, Horstmann M, Schrder MS, Sohr K,
+Wagner T. Early warning and intrusion detection based on
+combined ai methods. In: The Proc. of the 19th international
+conference on automated planning and scheduling; 2009.
+Elshoush HT, Osman IM. Alert correlation in collaborative
+intelligent intrusion detection SystemsA survey. Appl Soft
+Comput 2011;11:4349e65.
+Farhadi H, Amirhaeri M, Khansari M. Alert correlation and
+prediction using data mining and HMM: ISeCure. ISC Int J Inf
+Secur 2011;3:77e102.
+Harms SK, Deogun JS. Sequential association rule mining with
+time lags. J Intell Inf Syst 2004;21:7e22.
+Lee S, Chung B, Kim H, Lee Y, Park C, Yoon H. Real-time analysis
+of intrusion detection alerts via correlation. Comput Secur
+2006;25:169e83.
+Li W, Zhi-tang L, Jie L, Yao L. A novel algorithm SF for mining
+attack scenarios model. In: the Proc. of IEEE Int. Conf. on ebusiness engineering, Shanghai, China; 2006. p. 55e61.
+Liao HJ, Lin CR, Lin YC, Tung KY. Intrusion detection system: a
+comprehensive review. J Netw Comput Appl 2013;33:16e24.
+Liu Q, Yin JP, Cai ZP, Zhu M. A novel threat assessment method
+for DDoS early warning using network vulnerability analysis.
+In: The Proc. of the 4th international conference on network
+and system security (NSS), Melbourne, VIC; 2010. p. 70e4.
+Manganiello F, Marchetti M, Colajanni M. Multistep attack
+detection and alert correlation in intrusion detection systems.
+Inf Secur Assur 2011;200:101e10.
+MIT Lincoln Laboratory. 2000 DARPA intrusion detection scenario
+specific dataset. 2000. http://www.ll.mit.edu/.
+Peng X, Zhang Y, Xiao S, Wu Z. An alert correlation method based
+on improved cluster algorithm. In: The Proc. of Pacific-Asia
+
+219
+
+workshop on computational intelligence and industrial
+application (PACIIA '08), China; 2008. p. 342e7.
+Qin X, Lee W. A probabilistic-based framework for Infosec alert
+correlation [Doctoral dissertation]. GA, USA: Georgia Institute
+of Technology Atlanta; 2005.
+Ren H, Stakhanova N, Ghorbani AA. An on-line adaptive approach
+to alert correlation. In: The Proc. Of the 7th Int. Conf. On
+detection of intrusions and malware, and vulnerability
+assessment, Germany; 2010. pp.153e172.
+Sadoddin R, Ghorbani AA. An incremental frequent structure
+mining framework for real-time alert correlation. Comput
+Secur 2009;28:153e73.
+Shin MS, Jeong KJ. Alert correlation analysis in intrusion
+detection. In: The Proc.. Of the 2nd Int. Conf. On advanced
+data mining and applications, Xi'an, China; 2006. p. 1049e56.
+Soleimani M, Ghorbani A. Multi-layer episode filtering for the
+multi-step attack detection. Comput Commun
+2012;35:1368e79.
+Valeur F, Vigna G, Kruegel C, Kemmerer RA. Comprehensive
+approach to intrusion detection alert correlation. IEEE Trans
+Depend Secure Comput 2004;1:146e69.
+Zhang S, Li J, Chen X, Fan L. Building network attack graph for
+alert causal correlation. Comput Secur 2008;27:188e96.
+Zhu B, Ghorbani A. Alert correlation for extracting attack
+strategies. Int J Netw Secur 2006;3:244e58.
+Ali Ahmadian Ramaki received his B.Sc. and M.Sc. degrees in
+computer software engineering from The University of Guilan in
+2011 and 2014, respectively. He is now Ph.D student of computer
+software engineering at Department of Computer Engineering,
+Ferdowsi University of Mashhad, Mashhad, I.R.Iran. His research
+interests are computer and network security, intrusion detection
+and prevention system, alert correlation, and data mining.
+Morteza Amini received his PhD in software engineering (data
+security field) from Sharif University of Technology in 2010. He is
+currently an assistant professor at Department of Computer Engineering, Sharif University of Technology, Tehran, Iran. His
+research interests include database security, access control,
+intrusion detection systems, and formal methods in information
+security.
+Reza Ebrahimi Atani received his BSc degree from The University
+of Guilan, Rasht, Iran in 2002. He also received his MSc and PhD
+degrees all from Iran University of Science and Technology, Tehran, Iran in 2004 and 2010 respectively. Currently, he is an assistant professor at the Faculty of Engineering, The University of
+Guilan, Rasht, Iran. His research interests are cryptography,
+computer security, network security, information hiding, and
+VLSI design.
+
+The author has requested enhancement of the downloaded file. All in-text references underlined in blue are linked to publications on ResearchGate.
+
+

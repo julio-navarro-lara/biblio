@@ -1,0 +1,967 @@
+International Journal of Network Security, Vol.10, No.2, PP.142–152, Mar. 2010
+
+142
+
+Automatic Multi-step Attack Pattern
+Discovering
+Li Wang, Ali Ghorbani, and Yao Li
+(Corresponding author: Li Wang)
+
+Faculty of Computer Science, University of New Brunswick
+550 Windsor Street, Fredericton, New Brunswick, Canada (Email: liwang.lizy@gmail.com)
+(Received July 31, 2008; revised and accepted Feb. 17, 2009)
+
+Abstract
+
+attack strategies. Correlating security alerts and discovering attack strategies are important components of such
+Current techniques employed in security alert correlation systems.
+area for multi-step attack recognition purpose are intricate to be performed due to the complexity of the methods and huge computing workload generated during alert 1.1 Related Works
+analysis and processing. In this paper, we proposed a new
+method of alert correlation aiming at providing concen- Up to now, there have been several proposed techniques
+trated security event information and thus finding multi- of analyzing attack scenarios from security alerts [1, 2, 3,
+step attack patterns accordingly. We use a kind of exten- 4, 5, 6, 7, 8, 12, 13, 14, 15, 17, 18, 19, 20]. However, most
+sion time window when aggregate the alerts into high level of these approaches depend on complex correlation rule
+alerts. We then connect hyper alerts into candidate multi- definition and hard-coded domain knowledge that lead to
+step attack patterns according to their IP address associa- their difficult implementation and limited capabilities of
+tion. The final real multi-step attack patterns are discov- detecting new attack strategies.
+In [2, 3, 4], Cuppens et al. correlates alerts if the preered from these connected attack patterns with quantitarequisites
+of some later alerts are satisfied by the consetive correlation calculation method. The method is easy
+quences
+of
+some earlier alerts in MIRADOR correlation
+to implement and practical to deploy which is proved by
+method.
+The
+attack base was specified in LAMBDA and
+the result of our experiments. The experiment also shows
+was
+analyzed
+to generate correlation rules to be used to
+our approach can effectively find real multi-step attack
+construct
+attack
+scenarios. Ning et al. [12, 13, 14] use
+behavior patterns and can be used to identify true attack
+similar
+method
+with
+theirs. They construct attack scenarthreats.
+ios through alert correlation, using prerequisites and conKeywords: Alert correlation, correlativity, extension time
+sequences of attacks in TIAA correlation method. Both
+window, multi-step attack pattern
+approaches are based on the observation that in a series of
+attacks, the attacks were usually not isolated, but related
+as different stages, with the earlier stages preparing for
+1 Introduction
+the later ones. Such methods can potentially uncover the
+The information security industry has been very active in causal relationship between alerts, but they need to define
+recent years. In order to counterwork security threats to the specification of attacks and the attack plan recognicomputer systems and networks, many technologies have tion results rely on the precision of the correlation rules.
+been developed and applied in security operations such as Such limitations make the methods difficult and complex
+IDS, firewalls, routers. All those security application de- to implement.
+IBM researchers also have made some efforts on the
+vices, whether aimed at prevention or detection of attacks,
+techniques of alert aggregation and alert verification.
+usually generate huge volumes of security audit data.
+Deploying information security systems can provide in- Araujo et al. [1] presents a method of mining correlation
+depth protection for networks. However, large volume rules from hand-labelled training examples by using rule
+of security data which is the output of different security wizard and rule editor. It is integrated in the IBM Tivoli
+sensors can overwhelm security managers and keep them Event Console (TEC). It enables automatic creation of
+from performing effective analysis and initiating timely rules, which helps operators by providing a simple way to
+response. Therefore, it is important to develop an ad- create rules based on observed events, but it relies on the
+vanced alert correlation system that can reduce alert re- expertise knowledge and manual configuration. Julisch et
+dundancy, intelligently correlate security alerts and detect al. [5, 6] introduce the concept of root cause and propose
+
+International Journal of Network Security, Vol.10, No.2, PP.142–152, Mar. 2010
+an alarm clustering method to support the discovery of
+root cause which can help remove most of the redundant
+alarms that can be attributed to a small number of root
+causes. This method also need expertise knowledge and
+can not solve the problem of false negative [16].
+Valdes et al. [17] proposed a probabilistic-based approach to correlate and aggregate security alerts by measuring and evaluating the similarities of alert attributes.
+They use a similarity metric to fuse alerts into meta-alerts
+to provide a higher-level view of the security state of the
+system. Alert aggregation and scenario construction are
+conducted by enhancing or relaxing the similarity requirements in some attribute fields. But similarity calculation
+is the only way for them to aggregate the alerts. They
+have to compare all the alert pairs and have to determine
+a lot of thresholds with expert knowledge which lead to
+their huge volume of computing workload.
+Sheyner and J. W. Wing et al. [15] proposed a model
+checking based technique to automatically construct attack graphs. Although it helps facilitate the task of defining attack graphs, it has the limitation of scalability especially for larger network and systems.
+In [8, 18] Wenke lee and Xinzhou Qin proposed a GCTbased and Bayesian-based correlation approach to identifying new alert relationship without depending on prior
+knowledge of attack transition patterns. The method
+originates from the idea that attack steps are directly related because an earlier attack enables or positively affects
+the later one. But the method can only detect scenario
+segment by mining related alert pairs and the analysis of
+alert pairs results in huge computing workload which also
+leads to the limitation of the final multi-step discovering
+result.
+All the existing methods in security alert correlation
+area have their limitations. They either depend on complex correlation rule definition or depend on hard-coded
+domain knowledge. Most approaches are lack of flexibilities and adaptability. These drawbacks lead to their difficult implementation and limited capabilities of detecting
+new attack strategies. In addition, most of them are offline processing.
+To solve the problems of complex rule definition and
+fragmentized attack scenario construction, we proposed
+a new method of attack scenario construction [9]. Our
+multi-step attack correlation method has two components. We first mine multi-step attack activity patterns
+with attack sequential pattern mining method from history aggregated high level alerts which we call security
+event data. We then match the events online to identify
+the events which accord with certain attack sequential
+pattern and correlate them using a quantitative method.
+Therefore, attack plans of the attackers can be recognized
+and the next step the attacker will take can be predicted
+accordingly. While this method requires good integration
+of history database which should include various multistep attack instances.
+This paper focuses on discovering multi-step attack
+strategies via the analysis of security alerts based on a
+
+143
+
+Figure 1: The general description of the communication
+phase
+
+new alert correlation method. We first aggregate all the
+alerts into three types of hyper-alerts and then connect
+these hyper-alerts according to their IP address attribute
+associations. With the connected hyper-alert links which
+are the candidates of multi-step attack patterns, we analyze the relationship between contextual nodes of each
+link to find out all the meaningful multi-step attack patterns.
+
+1.2
+
+Organization of the Paper
+
+We discover multi-step attack patterns in four phases: i)
+Aggregation Phase, ii) Candidate Attack Link Generation Phase, iii) Pattern Correlation Phase, iv) Real Attack Discovery Phase. Section 2 introduces the overview
+of our work. Section 3 gives this problem decomposition. Section 4 proposes the algorithm of the problem.
+Section 5 reports our experiments with the 2000 DARPA
+intrusion detection scenario specific datasets and live data
+collected from our test bed. We conclude with a summary
+and directions for future work in Section 6.
+
+2
+2.1
+
+About Our Work
+Overview of Our Work
+
+Figure 1 shows an overview of our system architecture.
+There are four main modules in our system including:
+alert normalization, alert aggregation, hyper alert connection, multi-step pattern discovery. All the security reports
+of these four procedures are output through our web user
+interfaces.
+Data collection and alert normalization module can be
+functionally divided into two parts: the agent sub-module
+which is installed on the sensor-side reading and normalizing reports from log files generated from different security
+application devices continuously and sending them to the
+server, and the server sub-module which manages all the
+agents, receives the security data and stores them in alert
+database.
+Alert aggregation function merges the alerts according
+to their IP address similarities and time attribute associations into three types of hyper alerts. Alert aggregation
+module thus combines repetitious and redundant alerts
+in order to provide more synthetic information to security manager and to the following module.
+
+International Journal of Network Security, Vol.10, No.2, PP.142–152, Mar. 2010
+After that the hyper alert connection function find out
+those related hyper alerts with associated destination and
+source IP addresses or same source IP addresses and connect them to form candidate multi-step attack patterns
+(pseudo attack links).
+The final multi-step pattern discovery module takes
+the result of hyper alert connection function and further
+analyzes the correlativity between contextual node pair
+in these pseudo attack links to find out meaningful multistep attack patterns. With the attack patterns we can
+create rules for detecting multi-step attacks and thus recognize the attack plans of the attackers or even predict
+the next step the attacker will take.
+
+2.2
+
+Terminology
+
+We define some time windows used for alert aggregation
+processing and alert connection processing. They determine the associate time window when processing raw
+alerts or hyper alerts. We also define three different types
+of hyper alerts in this section which represent three different kinds of hyper alerts having different synthetical
+features according to their IP address associations besides
+attack type and timestamp features.
+
+144
+
+Definition 2. (Inter-Event Time Window WIE ) Suppose
+SE1 and SE2 are two security events associated to two
+contextual event time window,
+< a1 , · · · ai · · · aj · · · , an > (1 ≤ i < j ≤ n) and
+< b1 , · · · bk · · · bl · · · , bm > (1 ≤ k < l ≤ m)
+are the alert sequences corresponding to the two security
+events respectively. a1 .stampltime < b1 .stamptime, in
+this situation, SE1 is considered as occurring earlier than
+SE2 . We define WIE 1 as:
+M in{(ai − aj ), (bk − bl )} ≤ WIE 1 ≤
+M ax{(ai − aj ), (bk − bl )}.
+Definition 3. (Attack Scenario Time Window WAS )
+Consider that h1 and hk are the hyper alerts generated
+after aggregation phase, and they correspond to the first
+attack step and the last attack step taken by the attacker in
+a possible attack scenario AS respectively. hi (1 < i < k)
+is any hyper alert between h1 and hk in AS, that is
+AS =< h1 , · · · , hi , · · · , hk > (1 < i < k).
+Then we define
+
+2.2.1
+
+Time Window Definition
+
+WAS = AS.end time − AS.begin time
+Event time window defines the time interval within which
+all the alerts aroused by same security event are inter- and for
+spersing. Event time window can be considered as the
+∀AS and h1 , h2 , hk ∈ AS,
+maximum delay for two alerts aroused by same security
+event. So when aggregate the alerts together, those which it satisfies following inequation:
+fall into the same event time window can be considered
+M in(hi .timestamp − h1 .timestamp) ≤ WAS ≤
+to aggregate into a hyper alert.
+M ax(hk .timestamp − h1 .timestamp).
+Definition 1. (Security Event Time Window WSE ) Consider that a1 and ak are the first and last alerts re- 2.2.2 Hyper Alert Definition
+ceived which are aroused by the same security event SE,
+ai (1 < i < k) is any alert between a1 and ak which is also For all the alerts fall into the same security event time
+window can be merged into hyper alerts according to the
+aroused by SE, then we get
+similarity of their attack type and IP address attribute
+a1 .attack type = a2 .attack type = · · · · · ·
+features. We defined three types of hyper alerts and defined them as follows:
+= ak .attack type.
+For ∀SE and a1 ,ai ,ak j SE, we define event time window Definition 4. (Type I Hyper Alert) Suppose the alert sequence
+WSE satisfies the following inequation:
+M in(ai .timestamp − a1 .timestamp) 6 WSE
+6 M ax(ak .timestamp − a1 .timestamp).
+
+A =< a1 , · · · ai , · · · , an > (1 ≤ i ≤ n)
+locates in a WSE , that means
+
+We use inter-event time window term to describe the
+an .stamptime − a1 .stamptime ≤ Sizeof WSE ,
+time interval that between two successively happened security events. This is useful to determine the size and if
+location of event time window when doing alert aggregation. Since different delays exist in event detection and
+a1 .srcIP = a2 .srcIP = · · · = an .srcIP,
+reporting by IDS, the event time window is flexible in
+∀ai .srcIP ∈ SIP (1 ≤ i ≤ n),
+different situations, we use event time window appended
+a1 .dstIP = a2 .dstIP = · · · = an .dstIP,
+with inter-event time window to help us group similar
+∀ai .dstIP ∈ DIP (1 ≤ i ≤ n)
+alerts together.
+
+International Journal of Network Security, Vol.10, No.2, PP.142–152, Mar. 2010
+and
+
+145
+
+and
+a1 .attack type = a2 .attack type = · · ·
+= an .attack type = at,
+
+b1 .attack type = b2 .attack type = · · ·
+= bn .attack type = at.
+
+at is the attack type name defined by the system Then we can aggregate the alert set
+or simply integer signature ID which corresponds to
+particular attack type.
+Then we can aggregate the
+C =< c1 , · · · ci , · · · , cn > (1 ≤ i ≤ n)
+alert set A into a Type I hyper alert, represented as:
+at(I, SIP, DIP, AID, T, N ), in which I refers to Type I into a Type III hyper alert, represented as:
+at(III, SIP, DIP, AID, T ), in which III refers to
+hyper alert,
+Type III hyper alert, SIP is the IP address set contains
+AID = {ai .alert ID|∀ai ∈ A, a ≤ i ≤ n},
+all the source IP addresses of set C, DIP is the set with
+single value of destination IP address of all the members
+T = a1 .timestamp,
+in set C,
+N = |AID|.
+AID = {ci .alert ID|∀ci ∈ C, cn > (1 ≤ i ≤ n)},
+According to the definition, Type I hyper alerts have
+the feature of having same source and destination IP adT is the timestamp attribute of hyper alert
+dresses as well as same attack type.
+at(III, SIP, DIP, AID, T ),
+Definition 5. (Type II Hyper Alert) For alert sequence
+T = c1 .timestamp,
+B =< b1, · · · bi , · · · , bn > (1 ≤ i ≤ n)
+N = |AID|.
+received in a security event time window WSE , if
+According to Definition 6, Type III hyper alerts are
+b1 .srcIP = b2 .srcIP = · · · = bn .srcIP = SIP,
+composed of all the alerts in the same security event time
+window which have same destination IP address and difb1 .dstIP 6= · · · bi .dstIP 6= · · · bn .dstIP
+ferent source IP addresses and same attack type.
+and
+b1 .attack type = b2 .attack type = · · ·
+= bn .attack type = at,
+
+3
+
+Problem Decomposition
+
+After alert normalization phase, we get standard alert
+at refers to some attack type. Then we can aggregate the database. Each alert in the database consists of the folalert set
+lowing fields: alert-id (id-number, sensor-id), signature-id
+(attack type), timestamp, source (source-IP, source-port),
+B = {b1 , · · · bi , · · · , bn }(1 ≤ i ≤ n)
+destination (destination-IP, destination-port), risk (reliainto a Type II hyper alert,
+represented as: bility, asset, and priority), and protocol.
+at(II, SIP, DIP, AID, T, N ), in which II refers to
+3.1
+Type II hyper alert,
+DIP
+AID
+T
+
+=
+=
+=
+
+{bi .dstIP |∀bi ∈ B, (1 ≤ i ≤ n)},
+{bi .alert ID|∀bi ∈ B, (1 ≤ i ≤ n)},
+b1 .timestamp,
+
+N
+
+=
+
+|AID|.
+
+Alert Aggregation
+
+Alert aggregation then merges the alerts into three types
+of high level alerts. Those who have same attack type and
+occur in a certain time interval are combined into a hyper
+alert according to the similarity of IP address attributes.
+
+3.1.1 Extension Time Window Technique
+According to the definition, Type II hyper alerts composed of all the alerts in the same security event time When aggregating the alerts, we use an extension time
+window which have same source IP address, different des- window technique to decide the size and the location of
+tination IP addresses and same attack type.
+each event time window. The quantities of the alerts triggered by different security events are different, varying
+Definition 6. (Type III Hyper Alert) For alert sequence
+from one to thousands. If we use event time window with
+fixed size to aggregate the alerts, the settling of the winC =< c1 , · · · ci , · · · , cn > (1 ≤ i ≤ n)
+dow size is difficult. If it is set too large, alerts aroused
+received in a WSE , if
+by different security events may be merged into one hyper
+alert. If it is set small, the alerts belonging to same secuc1 .srcIP 6= c2 .srcIP 6= · · · 6= cn .srcIP,
+rity event may be split into at least two parts. Both situ∀ci .srcIP ∈ SIP,
+ations will result in inaccurate alert aggregation. Therec1 .dstIP = · · · ci .dstIP = · · · cn .dstIP = DIP
+fore, we use a kind of extension time window for setting
+
+International Journal of Network Security, Vol.10, No.2, PP.142–152, Mar. 2010
+
+Figure 2: The general description of the communication
+phase
+
+146
+
+input WIE = ε , ex alert no= δ; WSE base = α
+alert sequence from id 0 to id last alert id
+(sorted by timestamp)
+begin
+i=0; j=0; n=0;
+while(j6=last alert id)do{
+if (alert(j).timestamp-alert(i).timestamp≤ α)
+j++;
+elseif (alert(j).timestamp-alert(i).timestamp≤
+ε&&n ≤ δ)
+{j++; n++;}
+else{
+AggregateInEw(i, j);
+j++; i=j; n=0;}
+} end while
+end
+
+event time window when aggregate the alerts. Figure 2
+gives the illustration of the idea of this extension time
+window technique. We apply a base event time window
+which has the basic size of all event time windows. That
+Figure 3: Algorithm of extension event time window
+means the event time windows can be extended based on
+the base event time window according to the particular
+situations.
+3.1.2 Alert Aggregation Method
+In Figure 2, from left to right, are the hyper alerts
+received one after the other. Hyper alert h1 to hyper alert
+hk fall into the first base event time window WSE 1 . Then
+we examine the time interval between the last alert hk in
+WSE 1 and the first alert hk+1 following the window, if it
+is less than or equal to the inter event time window size ε
+defined in advance, we think alert hk and hk+1 have close
+time association, the event time window WSE 1 expands
+to contain alert hk+1 . If the time interval between hk+1
+and hk+2 is still less than ε, repeat the same operation
+until the time interval between the last alert in current
+time window and the next following alert is larger than ε
+or until the times of window expanding operation exceed
+a certain predefined threshold number, for example 500
+times, then the window stops extension and the next event
+window is supposed to begin.
+
+Figure 4 gives the algorithm of alert aggregation in one
+generated event time window. In alert aggregation processing, we consider aggregate the alerts fall into an event
+time window into hyper alerts. We study the association
+between the alert attributes of attack type, source IP address and destination IP address in a same event time
+window and aggregate the alerts into 3 types of hyper
+alerts as defined in Section 2.
+After alert aggregation, we keep the information of hyper alert type, source IP address set, destination IP address set, alert ID set, timestamp, number of raw alerts
+and window ID. This information facilitates the following
+hyper alert connection and correlation processing. We
+can also study the similarity or other features between
+the alert sets, hyper alert type or attack type frequency,
+or the regularity of the timestamp for each similar pattern group to figure out if there exists any pattern which is
+Compared with general sliding associated time wincaused by some system configuration error or some failure
+dow, the extension time window is more flexible which
+operations.
+can operate in different situations. It is also more efficient than the way of simply moving the window one by
+one alert, thus it avoids the complexity of solving the over- 3.2 Multi-step Attack Pattern Recognition
+lap parts and also solves the efficiency problem caused by
+too many timers generated during window sliding.
+3.2.1 Candidate Attack Link
+Figure 3 shows the algorithm of extension event time After alert aggregation, we merged low level alerts into
+window used in generating event time windows during three types of hyper alerts.
+alert aggregation processing. From the algorithm we can
+see there are two criteria for event time window to be exA(II, SIP, DIP, {1, 2}, T1 , 2, W1 )
+panded. One is the time interval between the last alert in
+current event window and the first following alert exceeds is an examples of hyper alert after aggregation processing.
+the size of inter-event window. The other criteria is the A refers to attack type. II means hyper alert type. SIP
+extension for the number of extra alerts to be contained in and DIP are source IP address set and destination IP
+one event window is no more than a certain predefined fig- address set respectively. It also contains raw alert ID set,
+ure which means the window will not extend unlimitedly timestamp, number of corresponding raw alerts and event
+in busy network flow situation, after collecting enough time window ID. We sort all the hyper alerts according
+number of alerts the window will stop extension in case to their timestamp attribute and connect them according
+to their IP address associations.
+the event window expanding to an unreasonable size.
+
+International Journal of Network Security, Vol.10, No.2, PP.142–152, Mar. 2010
+
+input EW(i,j) // alert sequence in a Event Time Window (start from alert id i and end with alert id j, k is
+the current hyper alert id)
+begin
+H = HI ∪ HII ∪ HIII = ∅; //h yper alert set for
+current EW
+k=i;
+while(i ≤ j) do {
+if ((alert(i).attacktype is new ) || ((alert(i).srcIP
+and alert(i).dstIP are new) && alert(i).attacktype ∈
+/
+HI )) {
+k++;
+create h alert(k) in HI ;
+add i to h alert(k).AID;
+h alert(k).N++; i++; }
+elseif ((alert(i).srcIP and alert(i).dstIP are new)
+&& alert(i).attacktype)∈ HI {
+take
+h alert(d)
+with
+attack
+type
+alert(i).attacktype in ∈ HI ; //d is h alert id
+add i to h alert(d).AID;
+h alert(d).N++; i++; }
+elseif (alert(i).srcIP
+is
+new
+&&
+alert(i).attacktype∈ HI ∪ HII ){
+take h alert id with same dstIP in HI ∪ HII ;
+d= h alert id;
+remove alert(i).dstIP from h alert(d).DIP;
+if h alert(d).DIP= ∅ {
+move h alert(d) to HIII ;
+add i to h alert(k).AID;
+h alert(k).N++; i++; }
+else{
+remove alert(l) with same dstIP from HI ∪
+HII ;
+k++;
+
+147
+
+create h alert(k);
+add alert(l) to h alert(k)
+add alert(i) to h alert(k);
+add h alert(k) to HIII ; i++; }
+} //end of if (alert(i).srcIP is new && · · ·
+if (alert(i).srcIP is new && alert(i).attacktype ∈
+HIII {
+take h alert id with same dstIP in HIII ;
+d= h alert id;
+add alert(i) to h alert(k); i++; }
+elseif (alert(i).attacktype ∈ HI ∪ HIII ){
+take h alert id with same srcIP in HI ∪ HIII ;
+d= h alert id;
+remove alert(i).srcIP from h alert(d).SIP;
+if h alert(d).SIP= ∅{ move h alert(d) to HII ;
+add i to h alert(k).AID;
+h alert(k).N++; i++; }
+else{
+remove alert(l) with same srcIP from HI ∪
+HIII ;
+k++;
+create h alert(k);
+add alert(l) to h alert(k)
+add alert(i) to h alert(k)
+add h alert(k) to HII ; i++; }
+} //end of if (alert(i).attacktype ∈ HI ∪ HIII
+···
+else{take h alert d with same srcIP in HII ;
+d= h alert id;
+add alert(i) to h alert(k);
+i++; } // end of if ((alert(i).attacktype is new
+) || · · ·
+} end while
+end
+output H.
+
+Figure 4: Algorithm of alert aggregation
+The condition of connecting two hyper alerts together first scan the target network, then select a target host
+to form candidate attack link is that h1 and h2 can be from the result of the first step to exploit it. The source
+connected is they satisfy:
+IP address should be the same. In another case, the attacker installed a daemon program on the victim host,
+h1 .SIP ∩ h2 .SIP 6= ∅
+or
+then victim host attack the target. The destination IP
+h1 .DIP ∩ h2 .SIP 6= ∅
+and
+address of the former step contains the source IP of the
+latter step.
+h2 .timestamp − h1 .timestamp ≤ WAS .
+For contextual attack steps involved in the same multistep attack, their source IP always have associations or
+the destination IP of the previous step and the source
+IP of the next step usually have similarities or associations. So if two hyper alerts meet such condition, we consider connect them to form candidate attack links. The
+final real multi-step patterns can be further detected from
+these candidate attack links.
+The foundation of doing so bases on the observations
+that in multi-step attack aroused by certain attacker, the
+source IP and destination IP address always have some
+association or are the same. For example, the attacker
+
+3.2.2
+
+Filtering Phase
+
+In this phase, we filter out segment attack links from the
+result of hyper alert connection processing. We fist remove all the short links which are contained by other
+longer links to remove attack scenario segment. We also
+study the similar links with periodical features to remove
+them. Because periodically happened attack links are
+caused by some system configuration error or some normal network activities, they are not the real attack we are
+looking for.
+
+International Journal of Network Security, Vol.10, No.2, PP.142–152, Mar. 2010
+of a single IP address. It can be represented as:
+
+Table 1: Wij weigh matrix
+i/j
+SrcIP
+DstIP
+SrcPort
+DstPort
+
+SrcIP
+0.15
+0.15
+0
+0
+
+DstIP
+0.05
+0.25
+0
+0
+
+SrcPort
+0
+0
+0.15
+0
+
+DstPort
+0
+0
+0
+0.25
+
+After filtering, we get pseudo-attack-link in the form of
+connected hyper alert links. We correlate the contextual
+nodes in pseudo-attack-link to determine whether they
+have real correlation or just happen to be connected together.
+3.2.3
+
+148
+
+Correlation Phase
+
+{IP1 , IP2 , · · · , IPn−1 , IPn }, (n >= 1).
+Since the hyper alert attribute values are set values
+instead of single value types. We need to determine the
+calculation of correlativity between set values. For the
+problem of computing the distance between two sets, we
+need to classify the set first and then do the computation. The existing classification algorithms are complicated and are not suitable for online processing, especially for this particular question. We use our CTG (correlation tree graph) method here to define the alert attribute value classification and correlativity. According
+to alert correlativity definition, we should determine the
+following alert attribute correlativity functions shown in
+Table 2. We need to determine the method of evaluating
+the correlation-ship between IP address sets, port number
+sets.
+
+For the same intension of attack steps in an attack scenario, there is relationship existing between two attack
+steps except their time association. For example, the at- Table 2: Alert attribute correlativity involved in alert cortacker takes an IP Sweep action first and then inquires relativity definition
+about the vulnerability. The source IP or other attributes
+of the two steps maybe similar or may have relationFunction type
+ship more or less. The alert association describes the Alert Attribute
+correlation-ship of the two alerts. The larger the alert Correlativity
+between IP address sets
+correlativity is, the more possible they belong to the same HAC(SrcIPi , SrcIPj )
+HAC(SrcPorti , SrcPortj )
+between port number sets
+scenarios.
+The alert correlativity measures the relationship be- HAC(DstPorti , DstPortj ) between port number sets
+between IP address sets
+tween two hyper alerts. The correlativity between hyper HAC(DstIPi , SrcIPj )
+HAC(DstIPi , DstIPj )
+between IP address sets
+alerts hi and hj is determined by the formula:
+HAC(SrcIPi , DstIPj )
+between IP address sets
+p
+p
+X
+X
+wij HAC(xi , yj )/
+wij .
+HC(hi , hj ) =
+i,j=1
+
+i,j=1
+
+hi and hj are described by p attributes x1 , x2 , · · · , xp
+and y1 , y2 , · · · , yp , respectively. The correlativity between hi and hj is described as the weighted sum of their
+attribute correlativity HAC(xi , yj ). Currently we only
+consider four attributes of hyper alert which contribute
+the value of HC(hi , hj ), they are source IP address, destination IP address, source port number, destination port
+number.
+Table 1 gives the weight matrix. For the sake of standard normalization computation, the sum of all weights
+in the table is 1. In addition, since hi is earlier than hj ,
+the matrix is not symmetrical. The weight values are set
+empirically and can be tuned in practice. Small deviation of weight setting will not affect the accuracy of final
+correlation result, since we only calculate the correlativity between two alerts which accord with certain pattern
+already. They either have strong relationship or not, depending on they either belong to the same attack scenario
+or not.
+Hyper alert is composed of more than one raw alert.
+Therefore, attribute values of every alert are sets with
+various data type elements. For example, an IP address
+type attribute of a hyper alert is an IP address set instead
+
+Before determine the correlativity between two sets,
+we should first classify the set value to a designated class.
+The classification threshold is 80%. IP address data type
+parameter is very important reference of measuring the
+level of final alert correlativity. Figure 5 shows the CTG
+for IP address type alert attribute value. The classification and correlativity of IP address sets are defined by a
+correlation tree graph structure.
+We use this CTG definition to get the value of alert attribute correlativity especially with IP address data type.
+First we use the CTG in figure 5 to classify the IP address
+type alert attribute value.
+Situation 1: Suppose we need to determine the value of
+HAC(S1 , S2 ) which is the correlativity between two sets
+S1 and S2 with IP address data type,
+S1 = {162.199.102.184}
+
+and
+
+S2 = {162.199.102.184, 162.199.102.184,
+162.199.102.184, 162.199.102.184, 162.199.5.1}.
+We first determine each set belongs to which node of the
+CTG in figure 1. The classification threshold is 80%. It
+is not hard to figure out that S1 and S2 all belongs to
+
+International Journal of Network Security, Vol.10, No.2, PP.142–152, Mar. 2010
+
+149
+
+node “162.199.102.184” since more than 80% elements of
+both sets belong to this node. According to the definition
+given in figure 5, we get the correlativity between S1 and
+S2 is 1, that is HAC(S1 , S2 ) = 1 which means there is
+maximum correlation-ship existing between S1 and S2 .
+Situation 2:
+
+To determine the value of HAC(S3 , S4 ).
+
+S3 = {162.199.102.184, 162.199.102.34, 162.199.20.254}
+belonging to “server” node in CTG and
+S4 = {162.199.102.1, · · · , 162.199.102.13, 162.199.102.68} Figure 6: CTG for Port address type attribute correlativity definition
+belonging to “station” class, by searching the CTG in
+figure 5, we get the result:
+HAC(S3 , S4 ) = 0.3.
+.
+
+Figure 7: Examples of dropped attack links after correlativity checking
+Situation 1:
+P1
+P2
+
+=
+=
+
+Given HAC(P1 , P2 ),
+{80},
+{80, 1044, 1045, 80, 80, 80, 80, 80, 80}.
+
+Both P1 and P2 belong to the class “80”, the node with
+port number “80”. From figure 6, we get the correlativity
+Figure 5: CTG for IP address type attribute correlativity of the two sets is 1, that is HAC(P1 , P2 ) = 1.
+definition
+Situation 2: Given HAC(P3 , P4 ), P3 belongs to node
+“21”, P4 belongs to node “Privileged”, their parent node
+Situation 3: Consider the correlativity between S3 and is “Privileged”. Therefore, according to the port address
+S5 (S3 belongs to “server” class and S5 belongs to “out- CTG definition in figure 6, HAC(P3 , P4 ) = 0.5.
+side” class), then the result according to the definition in
+figure 1 is 0.0 is the minimum of correlativity which means Situation 3: Given HAC(P3 , P5 ), P3 is classified to
+the two sets representing two alert IP address attribute node “21” and P5 belongs to the class “None Privileged”.
+values have no relationship. That is, they have the least By querying the CTG in figure 6, we get the correlativity
+possibility of belonging to the same attack scenario. Cor- of the two sets is 0, that means P3 and P5 have no relationrelativity between Port address data type sets is another ship with each other. They have the minimum possibility
+important factor for the degree of alert correlativity. Fig- of contributing to the degree of alert correlativity.
+ure 6 shows the CTG for Port address type alert attribute
+correlativity. Each node of CTG represent different class 3.2.4 Recognition Phase
+of Port address set and the figure besides the node represents the correlativity between two child nodes of this We calculate the correlativity of each contextual pair
+nodes in each pseudo attack link. Remove those attack
+node.
+For each port address type alert attribute value, it can links with low correlativity. We also split a link into two
+parts if a low correlativity result is found between two
+be represented as:
+nodes, to remove any meaningless segment attached to a
+real attack link. After this recognition phase, all the atp1 , p2 , · · · pn−1 , pn , (n ≥ 1).
+tack links which have real relationship between all their
+The classification threshold is 80%, if more than 80% el- contextual pair nodes are kept. The links with low correlements of the set belong to one node, then the set is clas- ativity are considered having no real associations between
+sified to the class represented by the node. For example: neighbor nodes and are dropped after processing.
+
+International Journal of Network Security, Vol.10, No.2, PP.142–152, Mar. 2010
+
+150
+
+Figure 8: Examples of final attack patterns in DARPA test
+
+4
+
+Experiment
+
+when using IP address associations to connect them. Correlativity calculation can reduce this part of attack links
+To evaluate the effectiveness of our method, we applied and keep those meaningful attack patterns which correour algorithm to DARPA 2000 benchmark repository, spond to real multi-step attacks.
+scenario-specific datasets [10] and live data collected from
+Figure 7 shows some examples of dropped patterns afour honey-net test platform. DARPA 2000 datasets conter
+correlativity checking. They are dropped for their
+sist of two intrusion scenarios, LLDDOS1.0 and LLDlow
+correlativity between contextual nodes in connected
+DOS2.0.2 [MIT Lincoln Lab 2000]. LLDOS 1.0 contains
+attack
+links. From the example of figure 7(b) we can see
+a series of attacks in which an attacker probes, breaks
+that
+although
+the involved contextual attack types are the
+in, installs the components necessary to launch a DDoS
+same,
+the
+correlativity
+is not always high. This demonattack, and actually launches a DDoS attack against an
+strates
+that
+correlativity
+is a good way to evaluate the reoff-site server. We use playback technique (Open source
+lationship
+between
+contextual
+two steps in a multi-stage
+tool Tcpreplay32 [11]) to induct the workflow to the IDS
+attack
+other
+than
+the
+similarity
+of two alerts.
+sensors integrated in the system. We then use the alerts
+reported by RealSecure and Snort as the input of our apFigure 8 shows the real attack patterns we got from
+proach.
+the final correlation result. The correlativity of neighTable 3 shows the aggregation and correlation result boring node pairs reflect strong relationship residing in
+of our method with Event time window and Attack sce- contextual steps of a real multi-step attack, specifically,
+nario time window setting to 5 minutes and 60 minutes Sadmind DDoS attack in this experiment.
+respectively. Aggregation rate is defined as:
+Figure 8(a) shows the attack patterns we found from
+#of raw alerts − #of hyper alerts
+snort alerts. Figure 8(b) to 8(d) are the examples of at#of raw alerts
+tack patterns we found from RealSecure alerts. We can
+C AL means the number of candidate multi-step attack see that in figure 8(b) and figure 8(c) there exists repeated
+links after hyper alert connection process. P AL means attack types in a particular attack link. This is due to
+the number of pseudo-attack-links after subset filtering the particularity of hyper alert generating and connection
+process. F AL means the number of final meaningful at- mechanisms and can be easily combined into one step to
+tack patterns discovered from pseudo-attack-links with reduce the redundancy of the attack pattern. That is also
+hyper alert correlativity verification process. Drop rate the reason why there is only one main multi-step attack
+scenario in DARPA test but we got more than one attack
+is defined as:
+patterns. After manually checking the result patterns,
+#of P AL − #of F AL
+they are all meaningful and can be related back to the
+#of P AL
+original alert distribution condition.
+We set correlativity threshold as 0.4. The attack links
+which contain correlativity lower than 0.4 are dropped
+from the final attack patterns. In our DARPA test, all
+the dropped attack links are meaningless multi-step attack patterns. They happened to be connected together
+
+We also used real data to test our method. Figure 9
+shows a real Trinoo multi-step attack pattern built by
+our correlation method. We can thus build corresponding
+correlation rules according to these patterns to realize the
+goal of real-time multi-step attack detection.
+
+International Journal of Network Security, Vol.10, No.2, PP.142–152, Mar. 2010
+
+Raw alert #
+937(Snort)
+922(RS)
+
+Table 3: Test result with DARPA 2000 LLDOS 1.0 dataset
+H I # H II # H III # Aggregation Rate C AL P AL F AL
+25
+9
+2
+96.2%
+1133
+176
+14
+21
+86
+107
+76.8%
+51384 1207
+21
+
+151
+
+Drop Rate
+92.1%
+98.3%
+
+References
+
+Figure 9: A real Trinoo DDoS attack pattern
+
+5
+
+Conclusion
+
+In this paper we proposed a new multi-step attack pattern
+discovering method which aims at solving the problems of
+new attack pattern discovering and difficulty in complex
+attack association rule definition and maintenance.
+We classified the raw alerts into three types of hyper
+alerts and connected the hyper alerts to form candidate
+attack links according to their IP address attribute associations. We then apply hyper alert correlativity calculation method to candidate attack links to filter out the
+attack links which have no real relationship.
+Experiment shows our method can find real multi-step
+attack patterns from network security alert data successfully. The hyper alert generation method can provide
+a concentrated perspective of network security event information and provide favorable prerequisites for further
+multi-step attack pattern discovering processing. The correlation method can effectively differentiate real attacks
+and fake attack links. The final attack patterns we got
+can easily help us build the association rules which can
+help us detect possible upcoming multi-step attacks in
+real-time system.
+As to future work, we currently use correlativity
+to measure the correlation-ship between pair nodes in
+pseudo-attack-link to determine if the link is real attack
+pattern or not. We only consider four attributes of hyper
+alert in the calculation of correlativity. We can add more
+attributes in the formula to further ensure the accuracy
+of the result in future. Besides, how to build the precise
+rules based on the attack patterns found by our method
+and how to predict the future attack behaviors are also
+the research directions we are interested in.
+
+[1] C. Araujo, A. Biazetti, A. Bussani, J. Dinger,
+M. Feridun, and A. Tanner, “Simplifying correlation rule creation for effective systems monitoring,” 15th IFIP/IEEE International Workshop on
+Distributed Systems: Operations and Management,
+DSOM, Davis, CA, USA, pp. 266-268, 2004.
+[2] S. Benferhat, F. Autrel, F. Cuppens, “Enhanced
+correlation in an intrusion detection process,” Second International Workshop Mathematical Methods,
+Models and Architectures for Computer Networks Security, pp. 157-170, 2003.
+[3] F. Cuppens, “Managing alerts in multi-intrusion detection environment,” 17th ACSAC conference, New
+Orleans, pp. 22, December 2001.
+[4] F. Cuppens, A. Miège, “Alert correlation in a cooperative intrusion detection framework,” IEEE symposium on security and privacy, Oakland, pp. 202,
+May 2002.
+[5] K. Julisch, “Mining alarm clusters to improve alarm
+handling efficiency,” 17th Annual Computer Security
+Applications Conference, New Orleans, LA, USA,
+pp.0012, 2001.
+[6] K. Julisch, “Clustering intrusion detection alarms to
+support root cause analysis,” ACM Transaction on
+Information and System Security, vol. 6, pp. 443-471,
+2003.
+[7] P. Kabiri and A. A. Ghorbani, “A Rule-based Temporal Alert Correlation System,” International Journal of Network Security, vol. 5, no. 1, pp. 66-72, 2007.
+[8] W. Lee and X. Qin, “Statistical causality analysis of
+INFOSEC alert data,” RAID’03, pp. 73-93, 2003.
+[9] W. Li, Z. T. Li, J. Lei, D. Li, “Attack scenario construction with a new sequential mining technique,”
+SNPD’07, pp. 872-877, 2007.
+[10] MIT Lincoln Lab. 2000 DARPA Intrusion Detection
+Scenario Specific Data Sets. (http:// www.ll.mit.
+edu/ IST/ideval/data/2000/2000 data index.html)
+[11] MIT Lincoln Lab. Tcpdump File Replay Utility.
+(http://ideval.ll.mit.edu/IST/ideval/tools/
+tools index.html)
+[12] P. Ning, Y. Cui, and D. S. Reeves, “Constructing attack scenarios through correlation of intrusion alerts,” 9th ACM Conference on Computer and
+Communications Security, Washington, DC, United
+States, pp. 245-254, 2002.
+[13] P. Ning, Y. Cui, D. S. Reeves, and D. Xu, “Techniques and tools for analyzing intrusion alerts,” ACM
+Transactions on Information and System Security,
+vol. 7, pp. 274, 2004.
+
+International Journal of Network Security, Vol.10, No.2, PP.142–152, Mar. 2010
+[14] P. Ning and D. Xu, “Alert correlation through triggering events and common resources,” ACSAC’04,
+Tucson, AZ, USA, pp. 360-369, 2004.
+[15] O. Sheyner, J. Haines, S. Jha, R. Lippmann, and
+J. M. Wing, “Automated generation and analysis of
+attack graphs,” Proceedings of the 2002 IEEE Symposium on Security and Privacy, pp. 273, May 2002.
+[16] N. Srinivasan and V. Vaidehi, “Performance analysis
+of soft computing based anomaly detectors,” International Journal of Network Security, vol. 7, no. 3,
+pp. 436-447, 2008.
+[17] A. Valdes and K. Skinner, “Probabilistic alert correlation,” Proceedings of the 4th International Symposium on Recent Advances in Intrusion Detection,
+LNCS 2212, pp. 54-68, Oct. 2001.
+[18] Q. Xinzhou and L. Wenke, “Discovering novel attack
+strategies from INFOSEC alerts,” ESORICS’04, pp.
+439-456, 2004.
+[19] A. Zhu and A. A. Ghorbani, “Alert correlation for
+extracting attack strategies,” International Journal
+of Network Security, vol. 3, no. 3, pp. 244-258, 2006.
+[20] Y. Zhu, X. Fu, and R. Bettati, “On the effectiveness of continuous-time mixes under flow-correlation
+based anonymity attacks,” International Journal of
+Network Security, vol. 7, no. 1, pp. 130-140, 2008.
+
+152
+
+Li Wang is currently a post-doc Researcher at the Information Security Centre of Computer Science, University
+of New Brunswick. She received her Ph.D. degree from
+Computer Science Department of Huazhong University
+of Science and Technology in 2007.
+Ali Ghorbani is currently a Project Leader of Network
+Security Laboratory, Faculty of Computer Science,
+University of New Brunswick. He is interested in the area
+of artificial intelligence, intelligent information processing
+systems, web intelligence and adaptive Web systems.
+He is also doing computational security and trust work
+focusing on the development of highly effective network
+survivability systems, intrusion detection and response,
+and trust and reputation within the agent societies.
+Yao Li is currently a post-doc Researcher at the Information Security Centre of Computer Science, University
+of New Brunswick. He received his Ph.D. degree from
+Computer Science Department of Huazhong University
+of Science and Technology in 2006.
+
+

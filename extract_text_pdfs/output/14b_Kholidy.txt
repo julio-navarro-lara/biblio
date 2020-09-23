@@ -1,0 +1,660 @@
+2014 UKSim-AMSS 8th European Modelling Symposium
+
+A Finite Context Intrusion Prediction Model for Cloud Systems
+with a Probabilistic Suffix Tree
+Hisham A. Kholidy
+
+Ahmed M. Yousof
+
+Abdelkarim Erradi
+
+Computer Science and Engineering,
+College of Engineering,
+Qatar University
+Doha, Qatar
+hkholidy@qu.edu.qa
+
+Computer Engineering and Systems
+Faculty of Engineering,
+Mansoura University,
+Mansoura, Egypt
+amyousof@gmail.com
+
+Computer Science and Engineering,
+College of Engineering,
+Qatar University
+Doha, Qatar
+erradi@qu.edu.qa
+
+Sherif Abdelwahed
+
+Hisham Arafat Ali
+
+Electrical and Computer Engineering,
+Mississippi State University,
+Starkville, MS, USA
+sherif@ece.msstate.edu
+
+Computer Engineering and Systems,
+Faculty of Engineering,
+Mansoura University,
+Mansoura, Egypt
+h_arafat_ali@mans.edu.eg
+
+Abstract—The success of the cloud computing paradigm
+depends on how effectively the cloud infrastructures will be
+able to instantiate and dynamically maintain computing
+platforms that meet Quality of Service (QoS) requirements.
+Most of the current security technologies do not provide
+early warnings about future ongoing attacks. This paper
+introduces new techniques in prediction model that is built
+based on Variable Order Markov Model and Probabilistic
+Suffix Tree. The proposed model uses a risk assessment
+model to evaluate the overall risk in the cloud system.
+According to our experiments on DARPA 2000 dataset, the
+prediction model has successfully signaled early warning
+alerts 58.983 minutes before the launching of the
+LLDDoS1.0 attack and 43.93 minutes before the launching
+of the LLDDoS2.0. This gives the system administrator or an
+autonomic system ample time to take corrective action.
+
+host based, network based, and masquerade attacks [4] in
+cloud systems. The proposed prediction model is based on
+learning Variable Order Markov Model (VMM) [5] over a
+finite context. The model uses a training algorithm that is
+based on a Probability Suffix Tree (PST) algorithm [6].
+According to the received alerts, the prediction model
+predicts any possible multi step attacks before they
+compromise the system. It is also able to predict the noncompleted multistage attacks that repeat their attempts.
+The proposed prediction model is very flexible and is able
+to model complex sources of sequential alerts. The
+proposed prediction model was evaluated using the two
+attack scenarios of DARPA 2000 intrusion data-set,
+LLDOS 1.0 and LLDOS 2.0.2 as multi-step DDoS attacks
+signatures [7]. To make our results comparable with the
+research community, we compare our proposed model to
+the HMM [8] that ACIDF currently uses. The HMM
+usually requires very large training sample which is very
+difficult in case of attack prediction because of the few
+attack tracks available in the currently available datasets.
+Our experiments proved that the proposed prediction
+model achieves highly accurate results and requires few
+training samples comparing to the HMM one.
+This paper is organized as follows. Section 2 highlights
+the background and reviews literature about prediction
+approaches, VMM, and PST. Section 3 introduces the
+proposed prediction model and discusses the formal
+definition, implementation, training, and evaluation of the
+model. Section 4 discusses the experimental results of the
+model. Finally, Section 5 draws some conclusion remarks
+and outlines future work.
+
+Keywords-cloud computing; security; privacy; intrusion
+detection systems; intrusion prediction; variable order markov
+model; probabilistic suffix tree
+
+I.
+
+INTRODUCTION
+
+Cloud computing is a large-scale distributed computing
+paradigm where a pool of visualized, dynamicallyscalable, managed computing services are delivered on
+demand over the Internet [1]. While the need for cloud
+computing is compelling, the security challenges it poses
+are equally striking [2]. There is a consensus that securing
+data and services in a cloud system is more challenging
+than in other traditional systems due to their openness and
+the loss of control on data location and the shared
+resources with malicious users. Conventional Intrusion
+Detection System, IDS, are not able to meet all these
+challenges and need to be extended with further
+capabilities such as prediction models. This paper
+discusses the algorithms and approaches we advocate to
+provide attack prediction capabilities to our IDS
+framework named ACIDF [3], Cloud Intrusion Detection
+Framework. ACIDF has experimentally proved its ability
+of detecting Distributed Denial of service attacks (DDoS),
+
+978-1-4799-7412-2/14 $31.00 © 2014 IEEE
+DOI 10.1109/EMS.2014.90
+
+II.
+
+BACKGROUND AND LITERATURE REVIEW
+
+A number of different schemes that predict multi-step
+attacks have been proposed. There are two main models
+can be used for the prediction target [9] namely, (1) Finitecontext models, that are applied using Markov Models,
+MM, and Variable Order Markov Model, VMM. These
+models assign a probability to a symbol based on the
+
+526
+
+context in which it appears and, (2) Finite-state models.
+These models are applied using Hidden Markov Models,
+HMM, which are composed of an observable part called
+“events,” and a hidden part called “states”. These models
+provide flexible structure that can model complex sources
+of sequential data, but their use typically requires
+considerable understanding and insight look into the
+problem domain in order to restrict possible model
+architectures. Also, due to their flexibility, successful
+training of HMM usually requires very large training
+sample which is very difficult in case of attack prediction
+because of the few attack tracks available in the currently
+available datasets.
+In this paper we use the Variable order Markov Model
+(VMM) over a finite alphabet. This algorithm attempts to
+learn probabilistic finite state automata, which can model
+sequential data of considerable complexity. VMMs
+provide the means of capturing both large and small order
+Markov dependencies based on the observed data,
+although in general less expressive than HMMs, The
+simpler nature of VMM methods also makes them
+amenable for analysis, and some VMM algorithms enjoy
+tight theoretical performance guarantees, which in general
+are not possible in learning using HMMs [10]. A PST over
+a finite alphabet is a non-empty rooted tree, where the
+degree of each node varies between zero (for leaves) and
+. Each edge in the tree is associated with a unique
+symbol σ in . The label of the edge defines a unique
+sequence s for each path from a node to the root. Any
+such PST tree induces a suffix set S consisting of the labels
+of all the nodes. The goal of the PST learning algorithm is
+to identify a good suffix set S for a PST tree and to assign
+a probability distribution P(σ|S) over ∑, for each s Є S
+[11].
+There are some proposals for the intrusion prediction
+issue such as the Hidden Colored Petri-Net proposed by
+Yu and Frincke [12] to predict intruder’s next goal. They
+proposed a method to improve the quality of alerts for
+prediction. Their approach is not accurate enough to be
+applied in real applications. Haslum et al [13] proposed a
+model based on HMM to predict the next step of an
+anomaly. They simulated the distributed system attacks in
+four steps. The state of the system changes according to
+the observations from the IDSs in the network. Thus, the
+prediction of the next goal can be estimated by the
+probability of each state. Recently, Fava et al [14]
+proposed a new approach based on Variable Length
+Markov Models (VMM) for the characterization and
+prediction of cyber-attack behavior. It captures the
+sequential properties of attack tracks to predict the likely
+future actions on ongoing attacks. However, this model
+needs to be tested in a real network.
+III.
+
+come from the predictor itself [15]. Attack sequence may
+be considered as sequential data especially multistage
+attacks. The learning of sequential data continues to be a
+fundamental task and a challenge in pattern recognition
+and machine learning. Using traditional techniques with
+such data is a big challenge. The VMM is based on
+learning Variable Order Markov Models over a finite
+alphabet. Such algorithms attempt to learn probabilistic
+finite state automata, which can model sequential data of
+considerable complexity that can be computed for each
+attack independently. VMM provides the mean for
+capturing both large and small order Markov dependencies
+based on the observed data. Beside the VMM models, we
+will use Probabilistic Suffix Tree (PST) algorithm. It
+attempts to construct the best order of VMM according to
+training sequence. We adapt the VMM to provide the
+predictability and early-warning feature of ACIDF. To
+build this model, we consider three main issues, (1) The
+formal definition of the model (2) The implementation of
+the model and, and (3) The evaluation of the model.
+A. The Formal Definition of the Prediction Model
+ACIDF produces an ordered collection of alerts
+whenever it detects a sequence of multi-stage attack
+signatures. These alerts have an IDMEF XML format.
+Each collection of alerts is composed of several alert tags
+and other sub-tags or fields. An attack behavior model is
+built based on the information contained in these fields.
+Let σ to be the time-stamped order set of intrusion alerts
+{a1, a2, a3, ……, aj} where aj is an intrusion alert composed
+of j fields (v1, v2, v3, ....,vi).
+
+
+
+
+
+
+
+
+
+
+
+
+To build the behavior model, we only consider, among
+all alert fields, the alert “name” to be used in the proposed
+prediction model. Let vi denotes the alert name field, then
+a sequence of j alert names σi={vi,1, vi,2, vi,3, vi,4,…… vi,j}.
+Let Σ be a finite alphabet. Each alphabetic symbol
+represents an alert captured by an IDS alert according to
+alert “name” field. A sequence of these alerts S = {x1 x2
+x3...xL}, where xL ϵ Σ. To extract these sequences, an attack
+dataset is used to learn the prediction model by mapping
+the attack data-set intrusion alerts by the alphabetic
+sequence. A learner is given a training sequence q = {q1 q2
+· · · qn} where qi ∈ . The goal is to learn a model
+that provides a probability assignment for any future
+outcome given some past, for any “context” s ∈ Σ. Using a
+PST, the learner generates a conditional probability
+distribution
+. By using a PST to model the VMMs,
+a string depth will not be fixed for every node. The
+
+ACIDF PREDICTION AND EARLY-WARNINGS
+
+The basic idea underlying the prediction model is that
+most intrusions consist of many stages and each early
+stage prepares for the later one. ACIDF based on
+predicting the distance future alerts using not only the
+present alerts but it also uses the near future alerts that
+527
+
+transition probability of a symbol on a given path is
+computed through the frequency of this symbol in the
+observed data, given the preceding substring on the path.
+In this way, we can compute the probability of occurrences
+of a subsequence
+using (3). We can also
+predict the following symbol to a subsequence using a
+vector of conditional probability distribution
+for
+each node in PST.
+
+attack in the system. That way, while an attack is in
+progress, the prediction model generates new alerts
+depending on the previous real alerts. A predefined
+confidence level threshold is used to reduce the false
+positive rates. The prediction component does not require
+detailed information about malicious activities such as
+alert severity. In the following, we describe the prediction
+components in details, see Figure 2:
+
+ 
+E.g., a DDoS attack dataset consists of alerts a={a1, a2,
+a3,....}. A sequence of alert names σname =
+{Email_Ehlo,FTP_User,…,…,TelnetXdisplay,Mstream_Z
+ombie, Stream_DoS }. According to Table 1, σname can be
+mapped as q={ABRACADABRA}.
+TABLE 1: AN EXAMPLE OF MAPPING ALPABETIC SYMBOLS TO THE
+ALERTS OF THE DDOS ATTACK DATA-SET
+
+σname
+Email_Ehlo
+FTP_User
+TelnetXdisplay
+Mstream_Zombie
+Stream_DoS
+
+Figure. 2. Elements of the prediction model that starts with Alert
+Mapping the takes real alerts and ends with Predictor that provides
+predicted alerts to Auto Response Controller.
+
+Symbols
+A
+B
+C
+D
+R
+
+1) Alerts Mapping: This component is responsible for
+the online mapping of the IDS alerts into alphabetic
+characters. It also maps the attack dataset alerts to provide
+the learning sequence. The mapping process is done using
+the alert name field. The output of this component will be
+a sequence of characters that represents the mapped alerts.
+2) PST Learner: The learner is trained using the first
+half of the attack dataset to be used for predicting the next
+alert sequences and adjusting the PST parameters. During
+this learning stage, the learner constructs a predictor based
+on a conditional probability distribution
+. The
+predictor is then fixed and ready for use.
+3) Predictor: The main role of this component is to
+compute the conditional probability distribution of the
+next symbol after receiving the preceding alert sequence.
+Using the computed probability, the predictor selects the
+symbol with the highest probability.
+
+Figure 1 shows an example for building a PST and
+generating a conditional probability distribution
+for each node in PST.
+
+Figure. 1. An example of a PST over the alphabet Σ = {A, B, C, D, R}
+
+C. The Evaluation of the Prediction Models
+In this section we evaluate the proposed prediction
+model using DARPA 2000 Dataset [7]. DARPA 2000
+dataset consists of two multistep DDoS attack scenarios,
+LLDoS 1.0 and LLDoS 2.0.2. Both attack scenarios
+include a Distributed Denial of Service (DDoS) attack, but
+with different stealth levels. In both scenarios, the attacker
+breaks into a host by exploiting the vulnerability of Solaris
+sadmind RPC service. The attacker then installs trojan
+mstream DDoS software and launches a DDoS attack at an
+off-site server from the compromised host. The main
+difference between 2.0.2 and 1.0 is that in 2.0.2 the
+attacker probes for host, platform, operating system by
+doing DNS HINFO queries, rather than sweeping IP's and
+RPC ports, and that they break into one host_rst, then fan
+out from there, rather than attack each host individually.
+The LLDDoS1.0 has five steps and takes about three
+hours, the phases are outlined in DARPA website [7]. The
+RealSecure generates the alerts shown in table 2 for each
+phase of both LLDoS 1.0 and LLDoS 2.0.2.
+
+According to Figure 1, the probability of occurrences
+of a subsequence s={ ABRACADABRA} is:
+P(s) = P(A).P(B|A).P(R|AB).P(A|ABR).P(C|ABRA)
+…..P(A|ABRACADABR)
+= ϓroot(A).ϓA(B).ϓroot(R).ϓr(A).ϓBRA(C)……
+……ϓroot(A)
+= (0.2) (0.5) (0.2) (0.6) (0.35) (0.2) (0.4) (0.2)
+(0.5) (0.2) (0.6) = 4.32-10
+To predict the following symbol to a subsequence
+“RA”, we compute the probability distribution associated
+with the subsequence “RA” to be: {0.05, 0.25, 0.4, 0.25,
+and 0.1} for symbols {A, B, C, D, and R} respectively.
+Thus, the following symbol to subsequence “RA” is “C”
+because it has the largest probability, 0.4.
+B. The Implementation of the Prediction Model
+The basic idea underlying our proposed prediction
+model is to employee a VMM to track the evolution of the
+
+528
+
+IV.
+
+Table 3 compares between the prediction time of both
+the proposed model using the VMM with PST and the
+other existing model that uses the HMM. The experiments
+run using only the data of the LLDDoS 1.0 scenario
+because the HMM model was not applied to
+LLDDoS2.0.2.
+
+EXPERIMENTAL RESULTS
+
+Let On = {o1, o2, o3, . . . , on} be the new observation
+sequence of the attacks captured by IDSs where oi is the
+alert name. A prediction set Sk includes the likely future
+classes of k attacks where Sk = {α1,α2 . . . ,αk}, where αi is a
+predicted attack name, computed for each On.
+A prediction performance rate R can be defined as
+given in (4)
+
+
+
+
+TABLE 3. A COMPARISON BETWEEN THE PREDICTION TIME OF VMM AND
+HMM (IN MINUTES)
+
+Attack Scenario
+
+
+
+LLDOS 1.0
+LLDOS 2.0.2
+
+For comparison purpose, we use the same naming scheme
+of one of the recent related works (Fava et al. [14]). The
+performance rates are given in terms of top-n sequence,
+where n = |Sk| is the prediction set size. Here we use n
+={1, 2, 3} meaning that we compute the top-1, top-2 and
+top-3 sets for each Oi.
+For LLDoS1.0 and LLDoS 2.0.2, RealSecure alerts are
+processed and mapped into alphabetic characters. After
+that, we select the main alerts in each step for both
+scenarios as shown in Table 4. The performance rate of
+the prediction approach in both attach scenarios is shown
+in Table 2.
+
+V.
+
+LLDoS1.0
+82.75%
+
+LLDoS2.0.2
+88.46%
+
+Top-2 Rate(%)
+
+78.42%
+
+85.22%
+
+Top-3 Rate(%)
+
+76.03%
+
+83.60%
+
+Improvment
+(minutes)
+19.364
+
+CONCLUSION AND FUTURE WORK
+
+In this paper, we have introduced a new intrusion
+prediction model that works with our Autonomous Cloud
+based Intrusion Detection Framework, ACIDF. The
+presented prediction model uses the VMM to predict
+attacks before they are obvious. We used DARPA 2000 to
+evaluate system performance and accuracy. The practical
+implementation of the presented model proved promising
+results. It fires the early warning alerts 19.364 minutes
+before the HMM prediction model does. The presented
+model has the following advantages: (1) the integration
+between the VMM and PST reduces the size of the inputs
+and simplifies the design of the model. This results in low
+memory consumption and computational overhead, (2)
+the prediction component does not require any knowledge
+of the network topology, system vulnerabilities, and
+system configurations. Unlike the HMM based model that
+usually relies on a predefined attack plan library, VMM
+can perform in the absence of such information, (3) the
+prediction component performs high-level prediction.
+Hence the model is more robust against over-fitting. In
+contrast, other plan recognition methods try to predict
+exactly the attacker’s next action.
+For the future work, we plan to link the prediction
+model with the autonomic response system, attached with
+ACIDF, to consider the goals of the attack and the
+possible spread of the intrusion. This helps in deciding the
+most appropriate response actions and protection method
+to protect the cloud system against potential attacks.
+
+TABLE 2. PREDICTION PERFORMANCE RATE FOR LLDOS1.0 AND
+LLDOS2.0.2
+
+Top-1 Rate(%)
+
+Prediction (minutes)
+HMM
+VMM
+39.616
+58.98
+43.93
+
+Figure 3 shows that the proposed system can
+efficiently predict the attacker’s next action and fire early
+warning alerts before the launching of the LLDDoS1.0
+attack by 58.983 minutes.
+The proposed VMM proved a high accuracy when it is
+applied to LLDDoS2.0.2. It fires the early warning alerts
+by 43.93 minutes before the Launching phase starts, see
+Figure 5.
+In [8] we introduced a finite state Hidden Markov
+prediction model that is currently applied in ACIDF, see
+Fig. 4. This model predicts any possible multi step attacks
+before they compromise the system. It is also able to
+predict the non-completed multistage attacks that repeat
+their attempts. The proposed prediction model uses: (1) the
+impact of the alert on the system assets in a specific
+system state and (2) the observation probability of that
+alert, the probability of having that alert in a specific
+system state. This HMM model fires the early warning
+alerts before the launching of the LLDDOS1.0 attack by
+39 minutes plus 37 seconds. However, the computational
+overhead of the HMM model is high because of the large
+training dataset required. Furthermore, the prediction
+accuracy is still lower than that required for the practical
+deployment in large scale systems such as cloud systems.
+
+ACKNOWLEDGMENT
+This work was made possible by NPRP grant # 09778-2-299 from the Qatar National Research Fund (a
+member of Qatar Foundation). The statements made herein
+are solely the responsibility of the authors.
+REFERENCES
+[1] I. Foster, Y. Zhao, I. Raicu, and S. Lu, “Cloud Computing
+and Grid Computing 360-Degree Compared,” 2008 Grid
+Comput. Environ. Work., pp. 1–10, Nov. 2008.
+[2] Y. Chen, V. Paxson, and R. Katz, “What’s new about cloud
+computing security,” … California, Berkeley Rep. No.
+UCB/ …, 2010.
+
+529
+
+[3] H. A. Kholidy, F. Baiardi, S. Hariri, E. M. Elhariri, A. M.
+Yousof, and S. A. Shehata, “A Hierarchical Cloud Intrusion
+Detection System: Design and Evaluation,” Int. J. Cloud
+Comput. Serv. Archit., vol. 2, no. 6, pp. 1–24, 2012.
+[4] S. H. Hisham A. Kholidy, Fabrizio Baiardi, “DDSGA: A
+Data-Driven Semi-Global Alignment Approach for
+Detecting Masquerade Attacks,” IEEE Trans. Dependable
+Secur. Comput.
+[5] J. Rissanen, “A universal data compression system,” IEEE
+Transactions on Information Theory, vol. 29. pp. 656–664,
+1983.
+[6] D. Ron, Y. Singer, and N. Tishby, “Learning probabilistic
+automata with variable memory length,” Proc. seventh
+Annu. Conf. Comput. Learn. theory - COLT ’94, pp. 35–46,
+1994.
+[7] M. L. Laboratory, “MIT Lincoln Laboratory:
+Communication Systems and Cyber Security: Cyber
+Systems and Technology: DARPA Intrusion Detection
+Evaluation,” 2000.
+[8] A. A. Hisham A. Kholidy, Abdelkarim Erradi, Sherif
+Abdelwahed, “A Finite State Hidden Markov Model for
+Predicting Multistage Attacks in Cloud Systems,” 2014.
+[9] H. Farhadi, M. AmirHaeri, and M. Khansari, “Alert
+Correlation and Prediction Using Data Mining and HMM.,”
+ISeCure, 2011.
+[10] D. Ron, Y. Singer, and N. Tishby, “The power of amnesia:
+Learning probabilistic automata with variable memory
+length,” Machine Learning, vol. 25. pp. 117–149, 1997.
+
+[11] U. Nagaraj and N. Kadam, “Study Of Statistical Models
+For Route Prediction Algorithms In VANET,” J. Inf. Eng.
+…, vol. 1, no. 4, pp. 28–34, 2011.
+[12] D. Yu and D. Frincke, “Improving the quality of alerts and
+predicting intruder’s next goal with Hidden Colored PetriNet,” Comput. Networks, vol. 51, pp. 632–654, 2007.
+[13] K. Haslum, M. E. G. Moe, and S. J. Knapskog, “Real-time
+intrusion prevention and security analysis of networks
+using HMMs,” in Proceedings - Conference on Local
+Computer Networks, LCN, 2008, pp. 927–934.
+[14] D. S. Fava, S. R. Byers, and S. J. Yang, “Projecting Cyber
+Attacks Through Variable Length Markov Models,” pp. 1–
+10.
+[15] F. B. Hisham A. Kholidy, Abdelkarim Erradi, Sherif
+Abdelwahed, “A hierarchical, autonomous, and forecasting
+cloud IDS,” … Identif. Control …, 2013.
+
+TABLE 4. ALERTS ARISEN IN LLDOS 1.0 AND LLDOS 2.0.2 ATTACK STEPS AND THERE SYMBOL MAPPING
+Step
+Name
+
+RealSecure Reaction
+
+IP sweep
+Probing
+
+RealSecure ignores ICMP ping
+Probing sadmind service
+
+Exploiting
+
+Exploiting sadmind vulnerability
+
+Installing
+
+Installing DDoS
+
+Distributin
+g
+
+Distributing DDoS Trojan
+
+Launching
+
+Launching DDos attack
+
+LLDOS 1.0
+
+LLDOS 2.0.2
+
+Alert Name
+
+Ω
+
+Alert Name
+
+Ω
+
+No Alerts
+Sadmind_Ping
+Sadmind_Amslveri
+fy_Overflow
+Admind
+Rsh
+MStream_ Zombie
+Stream_DoS
+
+K
+
+No Alerts
+Sadmind_Amslverify_
+Overflow
+Admind
+FTP_PUT
+
+Q
+
+MStream_Zombie
+
+M
+
+Stream_DoS
+
+U
+
+530
+
+N
+J
+O
+P
+V
+
+R
+S
+
+Figure 3. The top chart represents the Actual Risk for LLDDoS 1.0 scenario dataset. The bottom chart represents the Predicted Risk using the proposed
+prediction model.
+
+Prediction Risk (%)
+
+Actual Risk (%)
+
+Figure 4. The top chart represents the actual total assessed risk for LLDDoS 1.0 scenario dataset. The bottom chart represents the predicted risk using the
+HMM model.
+
+Figure 5. The top chart represents the actual risk for LLDDoS 2.0.2 scenario dataset and the attacks steps. The bottom chart represents the predicted alert risk
+computed by the proposed model.
+
+531
+
+

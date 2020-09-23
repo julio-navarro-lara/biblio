@@ -1,0 +1,368 @@
+Learning
+
+attack strategies through attack sequence mining method
+Wang Li Li Zhi-tang Fan Jun Computer Science Department Huazhong University of Science and Technology Hubei, Wuhan, China wtwlghust.edu.cn leeyingghust.edu.cn odbc@tom.com
+
+Abstract-Since security audit data increased so dramatically, management and analysis of these security data become a challenge issue. In our system SATA (Security Alerts and Threat Analysis), we proposed a new method of learning multi-stage attack strategies through attack sequence mining method to recognize attacker's high-level strategies and predicting upcoming attack intentions. We first apply an attack sequence mining algorithm to mine attack behavior sequence patterns from alarm database. We then correlate the attack behaviors matched with certain attack sequence pattern to identify potential attack intentions. Our technique is easy to implement and it can be used to detect novel multi-stage attack strategies. The primary experiments show that our approach is effective and practical.
+
+AN OVERVIEW OF SATA SATA (Security alerts and Threats analysis) is a security event management system designed by ourselves. It helps security manager to rank the alerts with alert-rank algorithm, aggregate redundant alerts using quantitative method, filter out unrelated attacks, correlate attack behaviors to construct final attack scenarios and help security managers to predict future attack behaviors.
+II.
+~-I os l
+
+RiRsk Assessmnent Repoi-t-------Alert
+
+z
+
+Netwoi-k Scann
+
+Ranking) Repor
+
+--------------------
+
+0
+
+.JelIntel {ace (I, 111)
+A le
+
+I.
+
+INTRODUCTION
+
+Large volume of security data which are the output of different security sensors can overwhelm security managers and keep them from performing effective analysis and initiating timely response. Therefore, it is important to develop an advanced alert correlation system that can reduce alert redundancy, intelligently correlate security alerts and detect attack strategies. Up to now, there have been several proposed techniques to analyze attack scenarios from security alerts. However, most of these approaches depend on complex correlation rules definition and hard-coded domain knowledge that lead to their difficult implementation and limited capabilities of detecting new attack strategies. In addition, these approaches focus more on analysis of raw alerts, and constructing low-level attack scenarios [ 1]. This paper focuses on discovering attack strategies via attack sequence pattern mining method which is elicited by the method introduced in [2]. [2] proposed a method of mining sequential patterns in customer transactions database. In customer transaction database, each customer id corresponds to an ordered list of itemsets which is a sequence defined by them. So it is very different from the attack sequence proposed by us. Traditional data mining methods without any revision are not suitable for the problems in security event management, so we propose a renovated sequential pattern mining algorithm to mine attack sequence pattern from alarm database in order to construct multi-stage attack behaviours model.
+
+Q<
+v ~
+
+_
+
+<ankin,g,
+
+R1UtC
+
+M
+
+Agg"g =t
+tien
+
+fi, ItcJ=
+
+otrrc \ elaiiI
+1l
+In,in
+
+Manugci
+
+Security
+
+"et asset valucc-
+
+Figure 1. Framework of SATA.
+
+Fig. 1 shows the architecture of SATA. It has five major functions including: alert ranking, aggregation, correlation, false positive reduction and risk assessment. All the reports of these five correlation procedures are outputted through SATA web user interface, implemented by PHP.
+III.
+
+PROBLEM STATEMENT
+
+After alert-ranking and alert aggregation process, the number of alerts reduced largely and the quality of alerts improved highly compared with raw alerts. We call the database of such high level alerts as alarm database D. The problem of mining attack behaviors pattern we introduce in this paper is on database D . An attackset I is the set of all attack behavior types. I describes the number of elements in I. Then I /=I is the sum of known attack types. Usually I is the universal set, the attacks in which IDS can report and detect. Without loss of generality, we assume that I is mapped to a set of integers which are attack signature identifiers corresponding to different attack behavior types in signature database.
+
+2005ABA25
+
+Supported by Hubei Province Science Fundation (HPSF)
+
+Therefore,
+
+we
+
+denote the attackset I
+
+by
+
+(i1,i2
+
+......
+
+in which
+
+ij (1 < j < 1) is the signature-id of the attack.
+An attack sequence is
+We denote
+an
+
+an
+
+ordered list of attack behaviors.
+as
+
+attack sequence
+
+by
+
+<
+
+a1,a2
+
+...... I
+
+an
+
+>,
+
+where
+
+ai (1< i < n) is an element of attackset
+An
+
+I.
+an
+>
+
+attack
+
+sequence
+
+<
+
+al,a2
+
+...
+
+is
+
+contained
+if
+
+in
+
+attacks, the attacker has to install DDOS daemon programs in vulnerable hosts before he can instruct the daemons to launch an attack. In other words, an attacker has to reach a certain state before he can carry out next attack steps. The steps of the attacker have certain behavior pattern and are in certain order. We split the problem of mining attack sequence patterns into the following phases.
+A. Sort Phase All the alarms generated by different sensors and processed after alert ranking and aggregation phases are stored in alarm database. The database is sorted with alarm-id as the major key. This step implicitly converts the original alarm database D into a global attack sequence.
+Start Time
+06-01-06-C9:27:23 06- 01 -06-C9:51:16 06-01 06- 10:50:43 06-01-06- 11:13:06 06-01-06-12:20:11
+
+another
+
+sequence
+<
+
+<bl,b2 I
+
+......
+
+bm
+
+>
+
+I
+
+(m>n)
+
+there
+
+exist
+
+=bl,a2=b an =bin For example, the sequence 5 12, 8> is contained in <5, 14, 12, 17, 8, 2> since it satisfies the first element of former sequence equals the first element of the latter one and Notice here we don't define the , an = bi a2 =b.i , an = bin condition like but a1 = bil, a2 =b.i2
+integers i2
+
+......in
+
+such that
+
+a
+
+........
+
+<
+
+,
+
+Alert ID
+1
+
+Signature ID
+19
+
+Other attributes
+...
+... ... ...
+
+between neighbor sequences for the particularity of the problem. To avoid repeated computing especially when we count the support of an attack sequence, we define sequence containing in this way. In a set of attack sequences, an attack sequence as is maximal if as is not contained in any other sequence. All the sorted alarms in alarm database D can be viewed together as a global attack sequence. We use the attack scenarios time window to divide the long global attack sequence into candidate attack sequences as described in section iv. We believe multi-stage attack behaviors hide in these candidate attack sequences. If as is contained in a candidate attack sequence c, we describe c supports as. The support for an attack sequence is defined as the fraction of total candidate attack sequences who support this attack sequence. We call an attack sequence satisfying the minimum support constraint a large attack
+sequence.
+
+which means the first elements of the two sequences must be equal. Because you will see that the attack sequences defined in section iv have overlap parts
+a1 =
+,
+
+b1, a2
+
+=b.i2
+
+an
+
+bi
+
+2
+3 4 7
+
+3
+8 14 16 7
+
+...
+... ...
+
+06-01-06- 11:56:16 06-01-06-12:1:01
+
+5
+6
+
+Figure 2. Segment of the global alarm sequence
+
+Given a database of alarms D, the problem of mining attack sequence patterns is to find the maximal attack sequences among all candidate attack sequences that have a certain user-specified minimum support. Each such maximal attack sequence represents an attack sequential pattern. The length of an attack sequence is the number of elements in the sequence. An attack sequence of length k is called a k
+-
+
+Since alarm-id is generated by the centralized security management system once it receives the corresponding alert from certain IDS sensor, the sequence sorted according to the alarm-id is slightly different from the actual security events occurrence order. So we use start time attribute of the alarm to sort the alarms in order to form the global attack sequence. Fig. 2 gives an example of part of the sorted alarm sequence with start time attribute. We map all the alarms to their signature-id attributes to get the global attack sequence. So the mapping result of the sorted alarm sequence in fig. 2 is <19, 3, 8, 14, 16, 7, 5> which is part of the global attack sequence. The reason why we map the alarms to contiguous integers is that in the following phases we only concentrate on the attack behavior type attributes of the alarms and it can save the time of string matching to improve the efficiency of the mining algorithm.
+B. Transformation Phase In this phase, we transform the global attack sequence into a database of candidate attack sequences. We proposed the definition of attack scenarios time window to describe the time interval between the start time of the first attack step to the end time of the last step in a common attack scenarios. We use W to represent the attack scenarios time window. We acquire the candidate attack sequences from global attack sequence with Wt. The time window W starts from the earliest occurrence attack behavior and slides to the next one orderly. Those attacks which fall
+
+The lattackset is the set of attack behavior types which are frequent attack behaviors appeared in the alarm database.
+IV. ATTACK SEQUENCE PATTERN MINING The idea of mining attack sequential patterns comes out from the observation that among all those high level alarms, most are intended attacks and are of the steps taken by attackers with certain attack intent. Multi-stage attack strategy taken by the attacker usually has relatively fixed attack pattern and happens in a confined time span. For example, in DDOS
+
+sequence.
+
+into the same attack scenarios time window form a candidate attack sequence [1]. After transformation phase, we get candidate attack sequence database. Fig. 3 shows a set of candidate attack sequences after transformation. In the example given in fig. 3, with minimum support set to 20%, i.e., sequence < 3, 9, 8 > is maximal among those satisfying the support constraint, and is the desired sequential patterns. The attack sequence <3, 9, 8 > is supported by candidate attack sequences 2 and 7. Candidate attack sequences 1 and 6 also have all the elements of < 3, 9, 8 > with same order in them, but according to our definition given in section 3, the first element of 1 and 6 doesn't equal to the first element of <3, 9, 8 >, so they don't contribute to the support of attack sequence <3, 9, 8> The attack sequences < 3, 9 > and < 3, 8>, though having minimum support, are not in the answer because they are not maximal.
+sequence id
+
+In each pass, we start with a seed set of large attack sequences. We use the seed set for generating new potentially large attack sequences, called candidate large attack sequences. We find the support for these candidate large attack sequences during the pass over the candidate attack sequences database. At the end of the pass, we determine which of the candidate large sequences will become the seed for the next pass. In the first pass, all 1-sequences with minimum support form the seed set. Fig. 4 shows the MASP algorithm. In this algorithm Lk denotes the set of all large k-sequences, and Ck denotes the set of candidate large k-sequences.
+
+Candidate attack sequence
+
+E. Maximalphase We find the maximal attack sequences among the set of large attack sequences in this phase. Having found the set of all large sequences S in phase D, the following algorithm can be used for finding maximal sequences. for (k=n; k>1; k--)
+foreach k-sequences S do
+
+1 2
+3 4 5 6 7
+
+<2, 3, 9, 8, 17, 3> <3, 9, 8, 17, 3> <9,8, 17, 3,2> <8, 17, 14,3,2,9> <17, 14,3,2,9,8>
+
+delete from S all subsequences of St;
+
+<3, 2, 9, 8, 14, 5>
+
+<14,3,2,9,8, 14,5>
+
+Let the length of the longest sequence be n. Then this algorithm is used for finding maximal attack sequences from the set of large attack sequences.
+V. CANDIDATE LARGE ATTACK SEQUENCES GENERATING
+
+Figure 3. Candidate attack sequences database after transformation phase
+
+input
+
+Lk,I = {11I
+
+. .......
+
+12
+
+},1; all large k-sequences
+.
+
+D. Attack sequence pattern phase In this phase, we first find the set of all Lattacksets L . We are simultaneously finding the set of all large 1-sequences. The support for an attack behavior a is defined as the fraction of a in global attack sequence. Thus the attack a and 1sequence < a > have the same support. An attack behavior with minimum support is called a large attack behavior. All the large attack behaviors form lattackset. Hence, any large attack sequence can be deduced from lattackset. we then mine attack sequence pattern with the algorithm of MASP (Mining Attack Sequences Pattern) in this phase. input LI {large 1-sequence};
+begin
+for (k=2; Lk_ 0; k ++) do begin Ck = New candidate large attack sequences generated from Lk-1I; Halgorithm given in section V foreach c in candidate attack sequence DB do increment the count of all sequences in Ckthat are contained in c. Lk= large attack sequences in Ck with minimum support; end Hend for
+
+lattackset
+
+j, i,{
+
+2
+
+begin for (h = 1; h < m; h ++) begin for 0 = 1;j < n;j ++) join i with /I insert the result into S;
+end delete all subsequences s E S such that some (k-1)-sequence of s is not in Lk_1
+Ck end output
+
+im }S H all attacks with minimum support
+.
+
+=S;
+
+Ck
+
+Figure 5. Algorithm for generating candidate large attack sequences
+
+end Output = Maximal sequences in Yk Lk
+
+Figure 4. Algorithm of MASP
+
+The algorithm for generating candidate large attack is described in Fig. 5. The algorithm takes Lk-l as input, the set of all large (k-1)-attack_sequences. First join each element of lattackset into each large (k-i)attack-sequence in LkI This step generates all possible kattack-sequences. Then insert the result into sequence set S. Delete all subsequences s E S such that some (k-i)attack-sequence of s is not in LkI This step is to prune those sequences in S which are not large attack sequences. The rest of S form the answer Ck sequences
+
+The general structure of the algorithm is that we make multiple passes over the candidate attack sequences database.
+
+RECOGNIZING MULTI-STAGE ATTACK BEHAVIOR We mine frequent attack sequence patterns from history data. These attack sequence patterns reflect attack behaviors occurrence regularity to some extent, but they don't involve the correlationship between contextual attack behaviors. So we calculate the correlativity between contextual attack behaviors which are matched with certain attack sequence pattern and give the security warning report according to the result of matching and correlativity calculation. The concept of correlativity is first proposed by us in [1]. The correlativity between two alarms is mainly determined by the weighted sum of their attibute correlativities. The alarm correlativity describes the correlation-ship of the two alarms. The larger the alarm correlativity is, with more possibility they belong to the same scenarios. VII. EXPERIMENT
+250
+
+VI.
+
+Fig. 7 shows one attack sequence pattern we have mined and the correlativity between contextual nodes in a matched alarm sequence. Table 1 gives the value of correlativity between pair nodes in attack sequence pattern. The pair attack behaviors with correlativity more than 0.64 is considered as correlated attack behaviors. The solid lines in fig. 7 indicate the strong relationship between two attack behaviors. These attacks construct a multi-stage attack. Therefore the result of the judgment is proved to be correct by the real attack behavior we carried out. The method is showed to be effective with the result of the experiment.
+Table 1. Correlativity between pair nodes in a matched alarm sequence
+First attack i IpSweep
+
+SadminPing SadminExploit Daemonlnstalled
+
+-
+
+SadminPing SadminExploit Daemonlnstalled DDosAttack
+
+Second attack j
+
+correlativity 0.81 0.86 0.73 0.68
+
+200
+
++ 0.03 0.02 0.01
+
+150
+
+100
+
+2
+
+4 6 8 10 Attack scenarios time window (hour)
+
+12
+
+Figure 6. execution times of MASP
+
+To evaluate the effectiveness of our methods of mining attack sequence patterns and constructing attack scenarios, we applied our algorithm to DARPA 2000 benchmark repository, scenario-specific datasets [3]. DARPA 2000 datasets consist of two intrusion scenarios, LLDDOS1.0 and LLDDOS2.0.2 [MIT Lincoln Lab 2000]. We use playback technique (Open source tool Netpoke [4]) to induct the workflow to the sensors integrated in our system. We first performed the experiment that persisted for 4 weeks to collect history data for MASP algorithm. Then we continue our experiment for 2 weeks to evaluate our method of constructing attack scenarios. Fig. 6 shows the relative execution times of MASP for different setting of minimum support as attack scenarios time window varies from 2 hours to 10 hours. As expected, the execution times increases as the minimum support decreases from 0.3 to 0.1 and as the time windows expands. The reason is that smaller minimum support means larger number of large attack sequences, and long time windows means long candidate attack sequences to be processed.
+J l7swveen
+
+upcoming attack intentions. We use a reformative Apriori algorithm MASP to mine frequent attack sequence patterns from candidate attack sequences database transformed from alarms database. We also consider the logical correlationship between different attack behaviors and use correlativity to correlate the attack behaviors and identify potential attack intentions. The idea is easy to implement and it can be used to detect novel multistage attack strategies compared with most existing techniques. Experiments show that our approach can effectively construct attack scenarios model and can accordingly predict next possible attack behavior.
+REFERENCES
+[1] Wang Li, Li Zhi-tang, Wang Qi-hong, "A novel technique of recognizing multi-stage attack behavior", IEEE International Workshop on Networking, Architecture and Storages. pp. 188, 2006. [2] R. Agrawal and R. Srikant, "Mining sequential patterns," Research Report RJ 9910, IBM Almaden Research Center, San Jose, California, October 1994. [3] MIT Lincoln Lab. 2000 DARPA Intrusion Detection Scenario Specific Data Sets.
+
+VIII. CONCLUSION AND FUTURE WORK In our centralized network security event management and analysis system SATA, we address the challenges of recognizing attacker's high-level strategies and predicting
+
+http://www.ll.mit.edu/IST/ideval/data/2000/2000_data_index.html
+Lincoln Lab.
+
+[4] MIT
+
+Tcpdump
+
+File
+
+Replay
+
+Utility.
+
+[5] Xinzhou Qin, "A Probabilistic-Based Framework for INFOSEC Alert Correlation", College of Computing Georgia Institute of Technology, Aug. 2005.
+
+sadmind \ 0.73 C.81 ~'\sadmind ,. b C.86 /
+
+.<Daemon Instal
+
+C.68
+
+;
+
+DDOA
+
+Figure 7. Example of correlativity and attack sequence
+
+

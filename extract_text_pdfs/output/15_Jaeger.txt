@@ -1,0 +1,1265 @@
+2015 IEEE 2nd International Conference on Cyber Security and Cloud Computing
+
+Multi-Step Attack Pattern Detection on Normalized Event Logs
+David Jaeger, Martin Ussath, Feng Cheng, Christoph Meinel∗
+Hasso Plattner Institut
+Potsdam, Germany
+{david.jaeger, martin.ussath, feng.cheng, meinel}@hpi.de
+example HP ArcSight ESM1 , Splunk2 and RSA Security
+Analytics3 . However, whereas simple attack attempts,
+such as an SQL Injection, can be detected by such
+systems from a single log event of an IDS system,
+more complex attacks, which span over multiple network
+nodes or even simpler over multiple log events, mostly
+remain undetected.
+An established method for ﬁnding common attacks is
+misuse detection by means of so called attack signatures.
+A signature speciﬁes an attack pattern and is then
+used during monitoring to identify occurrences of the
+pattern[3]. A concrete signature language deﬁnes how
+the signatures are expressed. There are many approaches
+on how to eﬃciently express and implement attack
+signatures in software products and research, but many
+of them suﬀer from the following limitations.
+
+Abstract—Looking at recent cyber-attacks in the
+news, a growing complexity and sophistication of
+attack techniques can be observed. Many of these
+attacks are performed in multiple steps to reach
+the core of the targeted network. Existing signature
+detection solutions are focused on the detection of a
+single step of an attack, but they do not see the big
+picture. Furthermore, current signature languages
+cannot integrate valuable external threat intelligence,
+which would simplify the creation of complex signatures and enables the detection of malicious activities
+seen by other targets. We extend an existing multistep signature language to support attack detection
+on normalized log events, which were collected from
+various applications and devices. Additionally, the
+extended language supports the integration of external threat intelligence and allows us to reference
+current threat indicators. With this approach, we can
+create generic signatures that stay up-to-date. Using
+our language, we could detect various login bruteforce attempts on multiple applications with only one
+generic signature.
+
+•
+
+Keywords-pattern detection; attack signature;
+multi-step attack; event logs; normalization; threat
+intelligence
+
+•
+
+•
+
+I. Introduction
+•
+
+The number of large-scale attacks on companies, organizations and public authorities is dramatically rising in the recent years. Only looking at the time of
+2013-2014, there were major attacks on Sony Pictures
+Entertainment[1] and Target[2]. Many of these campaigns have a high attack complexity and sophistication.
+The time of attacks that are only performed on a single
+internet-faced host are over, rather attackers ﬁnd their
+way through the network to the core of the infrastructure
+by using multi-step attacks.
+Major parts of the previously mentioned attacks could
+have been detected by analyzing system logs and alerts
+from Intrusion Detection Systems (IDS). There are software systems, so called Security Information and Event
+Management (SIEM) systems, that focus on the task
+of collecting logs from various systems and try to ﬁnd
+attacks in these. Popular solutions in this area are for
+978-1-4673-9300-3/15 $31.00 © 2015 IEEE
+DOI 10.1109/CSCloud.2015.26
+
+•
+
+The signature language can only describe simplestep attacks, but lacks in the description of complex multi-step attacks (e.g. Snort rules[4], modsecurity4 ).
+The signatures are focused on a single type of
+indicator, such as network-based (e.g. Snort rules)
+or host-based indicators (e.g. Yara[5]).
+The signatures are limited to the capabilities of a
+concrete product (mod-security) or to a small set of
+monitored applications (e.g. EDL[6]).
+The signature language was theoretically described
+but is not widely used in production. (e.g. CybOX5 ,
+LAMBDA[7])
+The signature language is not able to easily incorporate externally provided threat information in form
+of cyber threat intelligence (CTI)
+
+In this paper, we propose to extend the existing multistep signature language Event Description Language
+(EDL) to overcome the above-mentioned limitations
+in signature languages. We present our results in the
+1 http://www8.hp.com/us/en/software-solutions/
+enterprise-security.html
+2 http://www.splunk.com/en_us/products/splunk-enterprise.
+html
+3 http://www.emc.com/security/security-analytics/
+security-analytics.htm
+4 https://www.modsecurity.org
+5 http://cybox.mitre.org/language/version2.1/
+
+390
+
+following structure. Section II gives a short overview of
+related work to event log normalization, attack signatures and threat intelligence. In Section III, diﬀerent
+signature detection approaches are reviewed and the
+main idea of extending EDL is introduced. The following
+two sections IV and V show concrete extensions that
+allows us to deﬁne attack signatures for normalized log
+events in the OLF-log format[8] and integrate cyber
+threat intelligence[9]. In Section VI, we demonstrate a
+concrete implementation of our approaches for the RealTime Event Analysis and Monitoring System (REAMS)6
+and show how they can be used to detect login bruteforce attacks and verify a successful web attack. The
+last Section VII ﬁnishes with a conclusion and ideas for
+further research.
+
+the MITRE Corporation or OpenIOC by Mandiant. An
+overview of these and other formats can be found by
+Casey et al.[14].
+However, same as with the variety of log formats, the
+formats are either not widely used or have limitations in
+their expressiveness. A concrete integration of CTI with
+log data has been introduced by Amann et al.[15] as
+an extension for the Bro-IDS. Furthermore, many big
+SIEM-solutions, like AlientVault or IBM QRadar are
+already integrating CTI into their products. Nonetheless, looking a bit closer at these implementations, it
+turns out that only simple factors like IP addresses, DNS
+names or URLs can be checked but complex relationships between multiple factors are not supported. One
+reason for this could be the scarcity of more complex
+CTI.
+
+II. Related Work
+A. Event Log Normalization
+There are several eﬀorts to normalize log events and
+simplify the interpretation by machines. There are log
+formats that represent common event-related information and there are mechanisms to parse and store log
+events into these formats. We have created an overview
+of existing formats and normalization mechanisms in
+our papers[10], [11] about log normalization. Based on
+limitations of these existing formats, we proposed the
+comprehensive Object Log Format (OLF)[8]. We have
+implemented log event normalization for OLF using normalization rules with regular expressions in our REAMS.
+
+III. Signature Detection Approach
+To better understand the context of our work, we
+shortly introduce the signature detection approach as it
+is proposed by Meier[6].
+A. Multi-step IDSs and Event Description Language
+Attacks can be distinguished into single-step and
+multi-step attacks. Single-step attacks describe attacks
+that can be detected by only analyzing a single security
+event. On the other hand, multi-step attacks can only
+be detected by analyzing and correlating multiple security events. According to these two types, IDSs can be
+distinguished into single-step IDS and multi-step IDS.
+While single-step IDSs are widely adopted, they have the
+disadvantage of producing many false-positives, because
+they cannot verify the applicability of a single event, and
+are limited in the detection of attacks going over multiple
+hosts.
+In order to detect attacks from security events, IDS
+systems rely on attack patterns that manifest themselves
+in the events. Once a pattern is detected, an IDS assumes
+that a concrete instance of the detected attack is ongoing
+and raises a security alert.
+Meier proposes the EDL signature language for multistep IDSs. It is based on the representation of attack
+signatures in a colored Petri net, where places represent
+the system or signature state and transitions are based
+on occurring system events. An example signature can
+be seen in Figure 1.
+In this example, Start represents the start state,
+Suspicious Access represents an end state and the remaining failed and successful login attempts are intermediate states. The transition between these states is
+triggered by the occurrence of account login and ﬁle
+access events, as they could be produced by Linux’
+auditing functionality. The concrete conditions for the
+
+B. Multi-Step Pattern Detection
+The detection of attacks through patterns is widely
+covered in research. Meier[12] has created an overview
+of many existing complex attack pattern languages and
+proposes a categorization for these languages and their
+capabilities, such as event languages, correlation languages and detection languages. As detection languages,
+they are referring to attack languages like LAMBDA[7]
+or rule-based languages like P-BEST.
+Meier et al. is also proposing their own complex
+pattern detection language with the goal to overcome
+the limitations of the existing languages. They ﬁrst came
+up with SHEDEL and later improve this same language
+in their EDL-language[13].
+C. Cyber Threat Intelligence
+Eﬀective intrusion detection does not only rely on
+local log data or traﬃc analysis, but also on externally
+provided information about cyber threats. As a result,
+this externally provided information is coming into focus
+of the research community.
+There are multiple formats that have been proposed
+to share threat intelligence, such as STIX/CybOX by
+6 https://sec.hpi.de/reams
+
+391
+
+Successful
+Login
+
+Start
+
+beginning, two places are deﬁned. Init is the start place
+of the Petri net and acts as the default state of the
+system. LoggedIn is the end place of the Petri net and
+is reached when a user has logged in. Below the place
+deﬁnitions, the transitions of the signature are described.
+In our case, a transition from the start place to the
+LoggedIn is performed, whenever a Windows audit event
+of type 4624 has occurred. To allow multiple instances
+of the same signature, the transition is marked as nonconsuming (indicated with plus sign). This means, that
+while a normal transition would move a token from the
+Init to the LoggedIn place, a non-consuming transition
+would copy the token from Init and would place the
+copy into LoggedIn. As a result, there will always be a
+token in Init. Within in the transition, there are the
+following four important deﬁnitions.
+1) TYPE of events that triggers the transition.
+2) CONDITIONS under which an event of the speciﬁed
+type triggers the transition.
+3) MAPPINGS assign values to the features of a place.
+4) ACTIONS specify additional operations to be performed when the transition is triggered.
+A more detailed description of the concepts of EDL
+can be found in Meier’s book[6] or in his research
+papers[13], [12].
+
+t4
+
++
+Action == ‘login’
+
+Action == ‘access’
+
+Status == ‘failed’
+
+Object == ‘file’
+
+$Actor = Username
+
+Filename == ‘/etc/passwd’
+
+Username == $Actor
+
+t1
+
+t3
+
+Failed First
+Login
+
+Action == ‘login’
+
+Action == ‘login’
+
+Status == ‘failed’
+
+Status == ‘success’
+
+Username == $Actor
+
+Username == $User
+
+Failed Second
+Login
+
+t2
+
+Suspicious
+Access
+
+Intra-Event
+Inter-Event
+Mappings
+
+Figure 1. Example for a simple signature for a brute-forced attack
+with /etc/passwd access in the EDL language
+
+Listing 1.
+
+Example for a simple EDL signature
+
+EVENT UserLogin
+{
+PLACES
+Init {
+TYPE INITIAL
+}
+LoggedIn {
+TYPE EXIT
+FEATURES
+STRING username
+}
+
+B. SAM Implementation
+Meier has implemented a signature detection prototype based on EDL in his Signature Analysis Module
+(SAM). This solution is capable of interpreting events of
+a selected number of log formats and then analysis these
+events for manifestations of attack patterns deﬁned in
+EDL. At the moment, there is an implementation in the
+C++ (SAM) and Java (jSAM)7 programming language.
+
+TRANSITIONS
+Init(+) LoggedIn {
+TYPE NT_AUDIT_EVENT_4624
+CONDITIONS
+(True)
+MAPPINGS
+[LoggedIn].username=AccountName
+ACTIONS
+warnln("User "+AccountName+" successfully logged in")
+}
+}
+
+IV. Supporting Normalized Event Logs for
+jSAM
+Meier et al. have shown in their work that their
+Signature Analysis Module has a high expressiveness
+for attacks signatures and can eﬃciently detect manifestations of these attacks in events. At the moment,
+their SAM library can only import events from a small
+selected number of log formats.
+Because of this limitation to a few log formats, only
+attacks that manifest themselves in these formats can
+be detected. As an example, a directory traversal attack
+on an Apache Web server cannot be detected, because
+the Common Log Format, which is used by the Apache
+server to log web requests, is not supported. Additionally, popular log formats and protocols like Syslog are
+not supported, either.
+
+transitions are written in the tabular boxes being connected to the transition boxes. In these tabular boxes,
+three diﬀerent types of entries can be distinguished, as
+indicated in the legend on the right-hand side. Intraevent conditions refer to properties of the currently
+checked event and constant values. Inter-event conditions refer to conditions between the currently checked
+event and a previously checked event. Mappings make
+properties from the currently matched event available
+to future checks and therefore enable the evaluation of
+inter-event conditions.
+Listing 1 shows a concrete instance of an EDL signature, called UserLogin, for a simple login onto a Windows
+system. From this signature, the typical structuring of
+EDL with places and transitions becomes visible. At the
+
+7 jSAM
+Source
+jsam-project/
+
+392
+
+Code
+
+-
+
+http://sourceforge.net/projects/
+
+Listing 3.
+
+IDMEF
+Alert
+NT
+Audit
+
+jSAM
+
+Failed password for
+ssh2
+
+Alert
+
+Listing 5.
+
+Login attempt logs from Windows
+
+#Successful login
+An account was successfully logged on.
+log on.
+Subject:
+...
+Logon Type: 3
+Impersonation Level: Impersonation
+Logon Failed:
+New Logon:
+SID
+Security ID: HOME\attacker$
+attacker
+Account Name: attacker$
+Account Domain: HOME
+Logon ID: ...
+Unknown user name or bad password.
+...
+Network Information:
+Workstation Name:
+Source Network Address: 192.168.1.2
+Address: 192.168.1.2
+...
+
+Bro
+DNS
+
+Workﬂow for current jSAM only analyzing speciﬁc log
+
+To make jSAM capable of detecting complex attacks
+through all kind of logs, we propose to extend the jSAM
+library with our OLF log format. In fact, we integrate
+jSAM into our REAMS solution, a SIEM system that
+receives log events in various formats and over various
+channels and then normalizes them into OLF events.
+Figure 2 and 3 show the idea of our approach. Therefore,
+jSAM only has to support one log format and does not
+need to support various protocols, such as Syslog or
+Windows Event Log.
+
+#Failed login
+An account failed to
+Subject:
+...
+Logon Type: 3
+Account For Which
+Security ID:
+
+NULL
+
+Account Name:
+Account Domain:
+Failure Information:
+Failure Reason:
+Network Information:
+...
+Source Network
+...
+
+Following logs in Listings 2, 3, 4 and 5 could be
+extracted from attacks against our environment.
+
+Log Files
+
+NT
+Audit
+
+Listing 2.
+
+Web
+Logs
+
+REAMS (SIEM)
+REA
+SIEM)
+REAMS
+Core
+
+OLF
+
+jSAM
+
+Other SIEMs
+
+Failed login attempt log from MySQL
+
+#Failed login
+8:30:44 39 Connect Access denied for user: ’attacker@192
+.168.1.2’ (Using password: YES)
+
+...
+
+By default, MySQL only produces logs for failed logins and does not directly report successful connections.
+However, successful connections manifest themselves as
+successful queries on the server. The source of a failed
+login is recorded in the log, so that an attacker can be
+traced.
+
+!
+Alert
+
+Splunk
+Graylog
+
+Figure 3.
+Events
+
+Accepted password for
+ssh2
+
+!
+
+Solaris
+Audit
+
+Figure 2.
+formats
+
+Login attempt logs from SSH
+
+#Successful login
+Jun 22 08:37:12 target-server sshd[2402]:
+attacker from 192.168.1.2 port 47246
+#Failed login
+Jun 22 08:36:55 target-server sshd[2403]:
+attacker from 192.168.1.2 port 47245
+
+CWS
+Syscall
+
+Workﬂow for new jSAM analyzing normalized Log
+
+Listing 4.
+
+Login attempt logs from ProFTPd
+
+#Successful login
+Jun 22 09:51:33 target-server proftpd[2431] target-server
+(192.168.1.2[192.168.1.2]) - USER attacker: Login successful
+#Failed login
+Jun 22 09:51:00 target-server proftpd[2426] target-server
+(192.168.1.2[192.168.1.2]) - USER attacker (Login failed):
+Incorrect password.
+
+The following subsections show how we integrate
+jSAM into our REAMS.
+A. Example Scenario: Login Brute-Force
+To better demonstrate the idea of normalization, we
+make use of a concrete attack scenario that we want to
+detect with the help of jSAM.
+We assume there is a variety of login-brute force
+attacks that are targeting diﬀerent applications, i.e. SSH,
+PostgreSQL, Windows and FTP, in our environment.
+jSAM would be able to detect an attack for Windows,
+but would fail to detect attacks for the other services.
+
+OpenSSH and ProFTPd both produce logs for successful and failed logins and give an indication of the
+source host that tried to do the login.
+Windows Logs are extremely detailed and therefore we
+only show an excerpt from a successful and failed login
+attempt. There are various types for login events, where
+type 3 stands for a network login, which is usually used
+for performing a brute-force attack.
+
+393
+
+B. Normalizing Events into OLF
+
+Listing 7.
+
+The ﬁrst step to make the previously listed events
+available to jSAM is to transform them into OLF events.
+This transformation of events is performed with the help
+of our REAMS solution. REAMS is based on normalization rules, which are composed of a named-group regular
+expression (NGRE) and some attached metadata. The
+NGREs are used to match and detect an event type and
+then extract event ﬁelds from the deﬁned groups in the
+regular expression. All information that is not explicitly
+speciﬁed in the log text, such as a categorization of
+the performed action or its outcome, is taken from the
+additional metadata. The detailed description of this
+extraction process can be found in our paper[16].
+Listing 6 shows a possible normalization rule for the
+successful login event in SSH.
+Listing 6.
+
+EDL Transition for failed login in Windows
+
+TRANSITIONS
+Init(+) FailedLogin
+{
+TYPE
+NT_AUDIT_EVENT_4625
+CONDITIONS
+(True)
+MAPPINGS
+[FailedLogin].username=AccountName,
+[FailedLogin].sourceIP=SourceNetworkAddress,
+[FailedLogin].target=WorkstationName
+ACTIONS
+warnln("User "+AccountName+" has failed login on host:
+"+WorkstationName)
+}
+
+Listing 8.
+
+EDL Transition for failed login as OLF event
+
+TRANSITIONS
+FailedLogin(-) FailedLogin
+{
+TYPE
+OLF
+CONDITIONS
+tag.action=="login",
+tag.status=="failure",
+[FailedLogin].username==[FailedLogin].username,
+[FailedLogin].sourceIP==[FailedLogin].sourceIP,
+[FailedLogin].target==[FailedLogin].target,
+[FailedLogin].app==[FailedLogin].app
+MAPPINGS
+[FailedLogin].count=[FailedLogin].count+1
+ACTIONS
+warnln("User "+[FailedLogin].username+" has another
+failed login on host: "+[FailedLogin].target)
+}
+
+Normalization rule for SSH failed login attempt
+
+{
+"program-name": "cpe:/a:openbsd:openssh",
+"parent": "syslog",
+"static_fields": [
+{ "key": "tag.status", "value": "failure" },
+{ "key": "tag.action", "value": "login" },
+{ "key": "tag.service", "value": "shell" }
+],
+"pattern": "^Failed␣password␣for␣(?<targetUser_username>.*?)␣
+from␣(?<network_srcIpv4>(?:[0-9]{1,3}\\.){3}[0-9]{1,3})␣port
+␣(?<network_srcPort>\\d+)␣(?<application_proto>.*)$"
+}
+
+Based on such normalization rules, concrete OLF
+events are derived. Figure 4 shows these OLF events
+with the properties relevant for the detection of password
+brute-force attacks.
+In the next step, these normalized events are passed
+to our extended jSAM library.
+
+new component OLFEventTypeReader, which is based on
+BaseTypeReader, but additionally loads the OLF event
+deﬁnition from REAMS.
+On top of the event type deﬁnition, each event type
+also needs an EventLoader to transform an event into
+the event format of jSAM. We have added a component
+called OLFEventLoader, which is able to receive events
+from REAMS and transforms them into jSAM’s internal
+format. Listing 8 shows the event from Listing 7 as OLF
+event transition.
+In comparison to the previous audit event, this transition would be able to cover all failed login events from
+Figure 4 and not only the Windows event. It is even
+the case that any kind of failed login event from any
+application could be matched by this transition. As a
+result, brute-force attacks can be detected for any kind
+of application that logs failed login attempts.
+
+C. Integration of OLF events into jSAM
+jSAM supports state transitions for event types that
+have been previously speciﬁed in a dedicated conﬁguration ﬁle, called AuditBaseTypes.xml. The transitions are
+expressed in the EDL language. An exemplary transition
+for a conﬁdential ﬁle access under Windows is shown in
+Listing 7.
+In
+this
+transition,
+an
+event
+type
+of
+NT_AUDIT_EVENT_4625 (Subject: An account failed to log
+on) is required, where the concrete event signiﬁes a
+failed login, for example because of an invalid username
+or password. Once the condition is met, a warning
+message is printed informing about the detected login.
+We extend jSAM with our own event type OLF by
+adding a corresponding type deﬁnition. In jSAM, the
+deﬁnitions of event types are processed by a component called BaseTypeReader, which reads deﬁnitions from
+AuditBaseTypes.xml into the jSAM module. Because
+we want to dynamically read the deﬁnition of OLF
+from the current deﬁnition on REAMS, we provide a
+
+D. Passing Alerts to REAMS
+The result of a matched EDL signature is usually
+an alert that can be seen as a report of an observed
+suspicious activity. To make this valuable information
+available for further analysis, integration into all occurred events is crucial. jSAM itself can already reference
+
+394
+
+Failure
+
+SSHd
+
+ProFTPd
+
+Windows
+
+time: 2015-06-22 08:30:44
+producer.appname: mysql
+user.username: attacker
+network.srcIpv4: 192.168.1.2
+network.dstHost: target-server
+tag.action: login
+tag.status: failure
+
+time: 2015-06-22 08:36:55
+producer.appname: sshd
+user.username: attacker
+network.srcIpv4: 192.168.1.2
+network.dstHost: target-server
+tag.action: login
+tag.status: failure
+
+time: 2015-06-22 08:51:00
+producer.appname: proftpd
+user.username: attacker
+network.srcIpv4: 192.168.1.2
+network.dstHost: target-server
+tag.action: login
+tag.status: failure
+
+time: 2015-06-22 10:23:14
+producer.appname: Windows
+user.username: attacker
+network.srcIpv4: 192.168.1.2
+network.dstHost: target-server
+tag.action: login
+tag.status: failure
+
+time: 2015-06-22 08:37:12
+producer.appname: sshd
+user.username: attacker
+network.srcIpv4: 192.168.1.2
+network.dstHost: target-server
+tag.action: login
+tag.status: success
+
+time: 2015-06-22 08:51:33
+producer.appname: proftpd
+user.username: attacker
+network.srcIpv4: 192.168.1.2
+network.dstHost: target-server
+tag.action: login
+tag.status: success
+
+time: 2015-06-22 10:23:14
+producer.appname: Windows
+user.username: attacker
+network.srcIpv4: 192.168.1.2
+network.dstHost: target-server
+tag.action: login
+tag.status: success
+
+Success
+
+MySQL
+
+Figure 4.
+
+Listing 9.
+
+Normalized events with relevant properties for Log Events from Listing 2, 3, 4 and 5
+
+reused by other potential targets to detect the same or a
+similar attack. For example details about the command
+and control infrastructure, used malware or tools and
+utilized methods can be shared with this approach. Due
+to the high number of new attacks it is also necessary
+that the CTI information can be processed in an automatic way. Therefore diﬀerent formats were proposed
+that can be used to describe diﬀerent details of an attack
+and these formats also allow the automatic processing of
+the shared indicators.
+
+Final transition reporting an alert
+
+TRANSITIONS
+FailedLogin TenTimesFailedLogin
+{
+TYPE SPONTANEOUS
+CONDITIONS
+[FailedLogin].count>=10
+ACTIONS
+report_alert(
+"LoginBruteForce",
+[FailedLogin].eventList,
+"Brute Force is ongoing on "+[FailedLogin].target,
+[FailedLogin].properties
+)
+}
+
+At the moment the most commonly used CTI formats
+are YARA, OpenIOC and STIX (including CybOX).
+The general development is that new formats are more
+ﬂexible and can describe more indicators with a higher
+level of detail. This is also the reason why it is possible to embed YARA as well as OpenIOC indicators
+within STIX, which is the newest and also the most
+comprehensive format at the moment. One disadvantage
+of this development is that the formats get more and
+more complex and the human-readability decreases.
+
+previous alerts in its signatures, but does not pass events
+outside. We created a small extension to jSAM that
+allows us to export alerts as OLF events to REAMS and
+so making alerts accessible for further analysis by human
+operators or advanced intrusion detection algorithms.
+Additionally, alerts that have been passed to REAMS are
+also forwarded to jSAM as OLF event and can therefore
+be part of a higher-level signature. A transition that
+reports an alert for our scenario is shown in Listing 9.
+The transition is triggered spontaneously anytime the
+condition of 10 consecutive failed logins is fulﬁlled. If
+the condition is met, an alert is reported with our
+report_alert function. report_alert has four parameters: Identiﬁer, Event List, Description, Event Properties.
+
+The STIX format is very ﬂexible and oﬀers various
+possibilities to describe for example indicators, campaigns, incidents and adversary tactics, techniques and
+procedures. For describing these details STIX uses the
+CybOX format to describe the basic events and objects
+that are required to characterize a more high level and
+abstract part of an attack. Although STIX and CybOX
+can be used to describe diﬀerent attack related objects
+and indicators in a detailed and comprehensive way,
+most of the publicly shared information, which uses
+theses formats, only contains atomic indicators like IP
+addresses, malware hashes and DNS names. Further context information or the relations between the diﬀerent
+indicators are normally not provided. It is not clear if
+this additional information should not be known to the
+public or if the investigation of the attack could not
+
+V. Integrating Threat Intelligence into
+Attack Signatures
+A. Relevance of Threat Intelligence for Complex Signatures
+The sharing of CTI information is a relatively new approach to support the detection of attacks. The general
+concept is to share details about an attack that could be
+
+395
+
+stix
+
+reveal all details. Due to the missing context information
+it is not possible to create precise detection signatures
+only with the help of the CTI information. As already
+mentioned STIX can convey YARA rules, OpenIOC
+indicators and Snort rules, but these signatures do not
+use the shared indicators directly.
+Due to the fact that the creation of a detection
+signature is often quite a slow process compared to the
+sharing of new CTI, we propose to make use of shared
+indicators to create more precise signatures easier.
+
+Alerts
+
+jSAM
+
+Figure 6.
+
+VI. Evaluation
+Based on the above concepts, we have implemented a
+concrete signature for detecting brute-force attacks on
+a selected number of productive hosts. The signature
+is solely based on OLF events and is therefore able
+to detect brute-force attacks for all applications that
+indicate failed login attempts in a log event. A full graph
+of the EDL is drawn in Figure 8.
+There are ﬁve places in this graph. init is the start
+place in the graph and shows that no login has happened. A ﬁrst failed login attempt is represented with
+first_login and all important properties like source IP
+and application are stored. So far, the user is not yet
+suspicious, because a failed login can happen to anyone.
+With a new failed login, the signature state moves on to
+ongoing and all variables are passed to this place. Within
+ongoing, the number of any kind of login, i.e. successful
+and failed, is counted. Once a number of more than 10
+logins is reached, the signature goes to the exit place
+and the incident is reported. Based on previously happened successful logins, the report can indicate whether
+a successful brute-force was performed. For all places
+in the graph, a constraint of less than 10 seconds for
+consecutive logins is checked. If the constraint does not
+match, then the signature state switches to the escape
+place.
+With the help of this signature, we could identify
+various brute-force attacks against our infrastructure
+
+EDL
+Signatures
+with STIX
+
+FireEye
+
+STIX
+Indicators
+AlienVault
+
+...
+
+Figure 5.
+
+Properties in STIX_INDICATOR event type
+
+group of incidents. All these properties are a part of
+the stix:IncidentType in the STIX schema. Listing 10
+and 11 give two examples for EDL transitions where
+one matches with a single incident and the other with a
+group of incidents.
+In the second example, instead of referring to a very
+speciﬁc indicator, all indicators that hint to a malicious
+IP are used for the transition. Such a condition would
+be impossible to express with the traditional jSAM.
+The olf sub-property has the same structure as the
+previously described OLF event type. This information
+can be used to refer to properties that are important to
+ﬁlter the found incidents. In our examples, we use the
+additional OLF information to limit the incidents to the
+sshd application and to extract the IP of the attacking
+host.
+
+STIX-Mo dule
+
+Hail a
+Taxii
+
+...
+...
+
+REAMS (SIEM)
+OLF
+
+network
+user
+
+impact
+confidence
+
+We propose to make CTI information in the STIX
+format available in EDL signatures, because STIX is
+able to convey many sub-formats and EDL comprehensively describes complex attacks. In our case, we make
+this implementation a part of our REAMS solution. In
+the following, we describe the steps necessary for the
+integration.
+In the ﬁrst step, STIX indicators have to be collected
+from a variety of CTI providers and then be stored in
+the REAMS database. These indicators can then be
+referenced in the EDL signatures provided to jSAM.
+jSAM then reads all referenced indicators from these signatures and can ask its STIX module whether an event
+matches the referenced indicator. Once an event has
+matched a referenced signature, the event together with
+the matched event is made available to the signature.
+Figure 5 is a schematic representation of the described
+workﬂow.
+
+REAMS
+Core
+
+producer
+
+idref
+type
+
+B. Implementing Threat Intelligence for EDL
+
+Raw Events
+
+olf
+
+STIX_INDICATOR
+
+Integration of Threat Intelligence in REAMS
+
+STIX can be integrated into EDL as a special
+event type for transitions. We call this event type
+STIX_INDICATOR and select a number of properties that
+are important for ﬁltering, referencing and analyzing
+observed indicators. Figure 6 shows the structure of the
+STIX_INDICATOR event type.
+There are two sub-properties in this event type for the
+observed STIX indicator (stix) and for the associated
+event (olf). stix has four properties, where idref can
+be used to refer to a concrete observed incident and
+type, impact and confidence can be used to refer to a
+
+396
+
+Listing 10.
+
+Transition matching a single STIX indicator
+
+Listing 11.
+
+TRANSITIONS
+Init(+) MaliciousIP {
+TYPE STIX_INDICATOR
+CONDITIONS
+stix.idref="68a41d9b-95e4-43cb-88ee-00cf3228829b",
+olf.producer.appname="sshd"
+MAPPINGS
+[MaliciousIP].suspect=olf.network.srcIpv4
+ACTIONS
+warnln("Malicious IP connected to "+olf.producer.host)
+}
+
+Figure 7.
+
+Transition matching a group of STIX indicators
+
+TRANSITIONS
+Init(+) MaliciousIP {
+TYPE STIX_INDICATOR
+CONDITIONS
+stix.type="IP Watchlist",
+olf.producer.appname="sshd"
+MAPPINGS
+[MaliciousIP].suspect=olf.network.srcIpv4
+ACTIONS
+warnln("Malicious IP connected to "+olf.producer.host)
+}
+
+Transitions matching diﬀerent number of STIX indicators
+
+OLF
+
+init
+
+OLF
+
+tag.action == ‘login’
+
+tag.action == ‘login’
+
+tag.status == ‘failure’
+
+tag.status == ‘failure’
+
+[first_login].count = 1
+
++
+
+[first_login].source =
+network.srcIpv4
+
+[first_login].source ==
+network.srcIpv4
+[first_login].app ==
+producer.appname
+
+t1
+
+[first_login].app =
+producer.appname
+
+[ongoing].ltime = time
+
+[first_login].ltime = time
+
+[ongoing].count =
+[first_login].count + 1
+[ongoing].reported = false
+
+TimerEvent
+
+[ongoing].success = false
+
+now-[first_login].ltime >
+10s
+
+first_login
+SPONTANEOUS
+[ongoing].count == 10
+
+not([ongoing].reported)
+
+t9
+
+[ongoing].reported = true
+
+t4
+t3
+t2
+
+escape
+
+OLF
+
++
+
+tag.action == ‘login’
+tag.status == ‘failure’
+
+[ongoing].source ==
+network.srcIpv4
+
+t8
+
+SPONTANEOUS
+
+t5
+
+[first_login].source ==
+[ongoing].source
+
+[ongoing].app ==
+producer.appname
+time-[ongoing].ltime < 10s
+
+[first_login].app ==
+[ongoing].app
+
+ongoing
+
+[ongoing].ltime = time
+[ongoing].count =
+[ongoing].count + 1
+
+TimerEvent
+now-[ongoing].ltime > 10s
+
+t6
+
+[ongoing].count <= 10
+
+OLF
+tag.action == ‘login’
+tag.status == ‘success’
+
+t7
+
+[ongoing].source ==
+network.srcIpv4
+[ongoing].app ==
+producer.appname
+
+TimerEvent
+
+time-[ongoing].ltime < 10s
+
+now-[first_login].ltime >
+10s
+
+time-[ongoing].count > 10
+
+[ongoing].ltime = time
+
+[ongoing].count > 10
+
+exit
+
+[ongoing].count =
+[ongoing].count + 1
+[ongoing].success = true
+
+Figure 8.
+
+EDL-Signature Graph for login brute-force attacks
+
+397
+
+facing the Internet. We have services like Web servers,
+SSH servers and SMTP services and analyzed their
+logs with our normalization and signature detection. As
+a result, we can now see multiple brute-force attacks
+within one week. Mostly, these attacks are performed
+in regular intervals, pointing out to automated scanning
+tools or botnets, respectively.
+As a second evaluation, we have created a simple
+signature for the Shellshock vulnerability. This signature
+works for all kind of web log events converted to the
+OLF. While running this signature in parallel with the
+brute-force login signature, we successfully identiﬁed
+daily exploitation attempts against our Web servers.
+
+[2]
+
+[3]
+
+[4]
+[5]
+[6]
+[7]
+
+VII. Conclusion and Future Work
+In our paper, we have shown that multi-step attacks
+can be described and detected with multi-step signatures
+using the EDL signature language. In comparison to
+existing approaches, we were able to describe signatures
+based on normalized events and therefore allow the
+deﬁnition of attack patterns independently of concrete
+software and their used log formats. Additionally, we
+have proposed a way to incorporate external knowledge
+in form of cyber threat intelligence into the deﬁnition
+of attack signatures. As a result, signatures can refer to
+common threat information and do not have to be updated with upcoming threats. To show the applicability
+of our approach, we have implemented a prototypical
+signature matching for events in the Object Log Format as part of our REAMS platform. By running this
+prototype in our network environment, we were able to
+detect daily login brute-force attempts and ShellShock
+exploitation against our infrastructure.
+We have multiple directions to continue our research
+on multi-step signature detection. One direction is the
+improvement of signature matching. At the moment,
+every event is passed to jSAM and checked for conditions
+in various signatures. While this works well for a stream
+of incoming events, there can be performance issues
+when large amounts of historic data is analyzed. One
+idea to overcome this issue is to check the conditions
+of signatures over database queries, because database
+systems are highly optimized for checking large amounts
+of data for certain conditions.
+Another direction to go is the implementation of
+an eﬀective matching of STIX indicators against OLFevents, which would be performed by the STIX module
+we proposed for jSAM. To support this, diﬀerent types
+of indicators, i.e., CyBOX, YARA, OpenIOC and Snort,
+have to be interpreted and applied against OLF.
+
+[8]
+
+[9]
+[10]
+
+[11]
+
+[12]
+
+[13]
+
+[14]
+
+[15]
+
+[16]
+
+References
+[1] K. Zetter. (2014, Dec.) Sony Got Hacked Hard:
+What We Know and Don’t Know So Far. Wired
+
+398
+
+Magazine. [Online]. Available: http://www.wired.com/
+2014/12/sony-hack-what-we-know/
+B. Krebs. (2013, Dec.) Sources: Target Investigating Data Breach. Krebs on Security.
+[Online]. Available: http://krebsonsecurity.com/2013/
+12/sources-target-investigating-data-breach/
+S. Kumar and E. H. Spaﬀord, “A Pattern Matching
+Model for Misuse Intrusion Detection,” Purdue University, Tech. Rep., 1994.
+Cisco Systems, Sourceﬁre, Inc., The Snort Project, Snort
+Users Manual, 2nd ed., Web Site, Oct. 2014.
+V. M. Álvarez, yara Documentation, 3rd ed., Feb. 2015.
+M. Meier, Intrusion Detection eﬀektiv!: Modellierung
+und Analyse von Angriﬀsmustern. Springer, 2007.
+F. Cuppens and R. Ortalo, “LAMBDA: A Language to
+Model a Database for Detection of Attacks,” in Recent
+Advances in Intrusion Detection. Springer, 2000, vol.
+1907, pp. 197–216.
+A. Sapegin, D. Jaeger, A. Azodi, M. Gawron, F. Cheng,
+and C. Meinel, “Hierarchical Object Log Format for
+Normalisation of Security Events,” in Proceedings of the
+9th International Conference on Information Assurance
+and Security (IAS2013), Dec. 2013, pp. 25–30.
+Ernst & Young, “Cyber Threat Intelligence? How to Get
+Ahead of Cybercrime,” Tech. Rep., Nov. 2014.
+D. Jaeger, A. Azodi, F. Cheng, and C. Meinel, “Normalizing Security Events with a Hierarchical Knowledge
+Base,” in Proceedings of the 9th International Conference on Information Security Theory and Practice
+(WISTP’15), vol. 9311, no. 1, 2015, pp. 238–248.
+A. Azodi, D. Jaeger, F. Cheng, and C. Meinel, “A New
+Approach to Building a Multi-Tier Direct Access Knowledge Base For IDS/SIEM Systems,” in Proceedings of
+the 11th IEEE International Conference on Dependable,
+Autonomic and Secure Computing (DASC2013), Dec.
+2013.
+M. Meier, “A Model for the Semantics of Attack Signatures in Misuse Detection Systems,” in Information
+Security. Springer, 2004, vol. 3225, pp. 158–169.
+U. Flegel and M. Meier, “Modeling and Describing
+Misuse Scenarios Using Signature-Nets and Event Description Language,” it - Information Technology, no. 2,
+pp. 71–81, Mar. 2012.
+E. Casey, G. Back, and S. Barnum, “Leveraging CybOX
+to Standardize Representation and Exchange of Digital Forensic Information,” Digital Investigation, vol. 12,
+Supplement 1, pp. 102 –110, 2015.
+B. Amann, R. Sommer, A. Sharma, and S. Hall, “A Lone
+Wolf No More: Supporting Network Intrusion Detection
+with Real-Time Intelligence,” in Research in Attacks,
+Intrusions, and Defenses, vol. 7462, 2012, pp. 314–333.
+A. Azodi, D. Jaeger, F. Cheng, and C. Meinel, “Pushing
+the Limits in Event Normalisation to Improve Attack
+Detection in IDS/SIEM Systems,” in Proceedings of the
+First Internation Conference on Advanced Cloud and Big
+Data (CBD2013), Dec. 2013.
+
+

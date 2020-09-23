@@ -1,0 +1,939 @@
+12th International Conference on Information Fusion
+Seattle, WA, USA, July 6-9, 2009
+
+Toward Unsupervised Classification of Non-uniform
+Cyber Attack Tracks
+Haitao Du, Christopher Murphy, Jordan Bean, Shanchieh Jay Yang
+Department of Computer Engineering
+Rochester Institute of Technology
+Rochester, NY, USA
+Abstract - As adversary activities move into cyber
+domains, attacks are not necessarily associated with
+physical entities. As a result, observations of an enemy’s
+Course of Action (eCoA) may be sporadic, or non-uniform,
+with potentially more missing and noisy data. Traditional
+classification methods, in this case, can become ineffective
+to differentiate correlated observations or attack tracks.
+This paper formalizes this new challenge and discusses
+three solution approaches from seemingly unrelated fields.
+This attempt sheds new light to the problem of classifying
+unknown types of non-uniform cyber attack tracks.
+Keywords: cyber fusion, subsequence matching, Fourier
+analysis, social computing.
+
+1
+
+Introduction
+
+Observing virtual attacks is challenging because there is no
+physical target to detect or track. Malicious activities can
+only be observed when evidence surfaces, which can be
+sporadic over time and induce relatively larger evidence
+correlation errors. While recent research [1]-[7] has
+attempted to correlate and predict cyber attacks, very little
+has been focused on classifying or characterizing correlated
+attack tracks. As in traditional fusion problems,
+classification enables a more focused understanding of
+group behavior, which can be used for more precise
+prediction of future activities.
+The race between advancing Intrusion Detection
+Systems (IDS) and hacker capabilities has put tremendous
+pressure for the need of out-of-box thinking. Cyber fusion
+is termed to utilize advances in the information fusion
+community to tackle the cyber security problem. Recent
+advances on IDS alert correlation [1]-[5], threat projection
+[6, 7] and impact assessment [8, 9] are examples of cyber
+fusion work. Correlated or tracked IDS alerts form
+multistage virtual attacks. These attack tracks, either formed
+in an online or offline manner, become the basis for
+prediction of future activities, or threat projection. In their
+current forms, cyber threat projection techniques either
+match attack tracks to pre-defined attack models [7], which
+is not scalable, or perform some forms of machine learning
+based on all previously observed attack tracks [10], which
+could lead to unnecessarily misleading predictions. In order
+to fill the void, this work tackles the problem of classifying
+attack tracks that have sporadic evidences and no reference
+ground truth of attack track types.
+978-0-9824438-0-4 ©2009 ISIF
+
+Multistage cyber attack tracks are formed by
+correlating IDS alerts; such processes can potentially miss
+stealthy attack steps, mis-associate evidences, and, even
+with the ideal IDS and alert correlation technique, suffer
+from non-uniform track observations. By non-uniform, we
+mean that the track length and the time interval between
+two observations can be very different, potentially by orders
+of magnitude. These differences, along with the various
+other uncharted features of cyber attack tracks present an
+exciting and critical new challenge. This paper will first
+illustrate the non-uniformity and cyber track features, as
+well as the pros and cons of the traditional K-means
+clustering algorithm [11] in Section 2. Sections 3 to 5 will
+discuss three approaches from seemingly unrelated fields to
+tackle this unsupervised classification problem. Preliminary
+results will be presented in comparison to K-means
+clustering, followed by our conclusion given in Section 6.
+
+2
+2.1
+
+Preliminaries
+Non-uniform observation
+
+Cyber attack tracks consist of IDS alerts observed over
+time. Malicious cyber activities can happen in a fast or slow
+pace, as well as last for a long or short period of time. The
+resulting time sequence becomes non-uniform, in which the
+time intervals between consecutive observations, the
+number of observations, and the time duration of the entire
+attack can be very different. Figure 1 shows two example
+attack tracks over time. The y-axis corresponds to the
+severity of the attack steps, extracted from the IDS alerts.
+
+1919
+
+Figure 1. Non-uniform attacks with different lengths
+
+For the examples shown in Figure 1, the shortest time
+duration between two adjacent alerts in the attack sequence
+is 4 milliseconds and the longest is 642 milliseconds; the
+total number of observations, or track lengths are more than
+30 steps and 5 steps, respectively. This non-uniformity
+presents challenges to analyze the attack tracks as it is
+unclear what characteristics or features of attack tracks can
+be used for classification.
+In order to define attack track features, one should
+determine the critical domain specific alert attributes. In the
+cyber domain, IDS alerts typically provide source and target
+IP addresses and a signature describing the attack event.
+The cyber attack signatures may be grouped into different
+attack categories. In an effort to view the attack tracks as a
+time sequence (recall Figure 1), critical IDS alert attributes
+need to be converted to meaningful numerical values. We
+convert the cyber attack category to numerical values
+representing the severity of the attack step. The conversion
+is in a categorical manner and Table 1 shows 5 main
+categories and the range of values used for each. Further
+differentiations are made for specific sub-categories of the
+alert signatures. One can see the increasing value for more
+severe types of attacks. This attack category numerical
+mapping is an essential enabler in attack track
+classification. Target IP addresses are also considered as a
+critical alert attribute and is numerical.
+Table 1. Category Mapping Table
+Category
+Reconnaissance
+Misc
+Escalation
+Intrusion
+Goal
+
+Mapping Range
+[1,8]
+[11,15]
+[22,28]
+[30,38]
+[40,44]
+
+By recognizing the critical alert attributes, one may
+deduce statistical information of the attack tracks. Table 2
+shows a set of metrics that could be used to differentiate
+cyber attack tracks. Among them, Features A, B, and C are
+generic for all application domains. Features D, E, and F are
+defined based on the attack category defined earlier. F, G,
+and H are defined in terms of the target IP address.
+Different combinations of the listed features comprise
+multidimensional instances which are used for
+classification.
+
+2.2
+
+Classical clustering algorithm
+
+Classification is well studied in pattern recognition,
+machine learning, and the broad field of artificial
+intelligence. Cyber attack sequence classification needs to
+be unsupervised as there is no ground truth of attack
+sequence types. In fact, even expert analysts may not
+differentiate one attack track from the other clearly. It is a
+largely uncharted area where the understanding of feature
+sets is also lacking.
+
+Table 2. Possible Features
+Feature
+Symbol
+A
+B
+C
+D
+E
+F
+G
+H
+I
+
+Description
+Average time between attack steps
+Track length
+Attack Time duration
+Number of attack categories
+% Transitions of categories
+Ratio of categories divided by length
+Number of attack targets
+% Transitions of targets
+Ratio of targets divided by length
+
+Once numerical features of attack track are
+established, there are many mature unsupervised learning
+algorithms for attack track classification. The classical Kmeans clustering algorithm [11] has been commonly used
+for many applications. The algorithm aims at minimizing
+the squared error cost function, as shown in (1).
+1
+The term
+is a chosen distance measure between
+a data point
+and the cluster center . After sufficient
+iterations, the centroids no longer move, and typically a
+separation of the data points into groups is achieved.
+K-means clustering, like many other classical
+clustering techniques, may not fit for the cyber attack
+sequence classification. This is because they highly depend
+on the mapped numerical values (Table 1) to determine the
+distance measures in (1). For cyber attacks and some other
+non-traditional domains, the contextual meaning may not be
+mapped to specific values where distance measure can be
+dependable. For example, we map Intrusion Root to 30 and
+Reconnaissance Scan to 5; this by no means indicates that
+Intrusion Root is 6 times more severe than Reconnaissance
+Scan, or the distance of 25 is equivalent to another 25 from
+the mapping. In addition, these cluster algorithms are
+sensitive to noisy and missing data points, which is inherent
+in the cyber domain. Essentially, while traditional clustering
+can still be a good choice, yet requiring much further study,
+it will be interesting to investigate other potential solution
+approaches to the problem of unsupervised classification of
+non-uniform attack tracks.
+
+2.3
+
+Experimental dataset
+
+Instead of modeling cyber attacks at the packet level, Kuhl
+et al. [12] developed a simulator that can generate attack
+tracks that consist of correlated malicious activities. We
+utilize the simulator and created an experiment dataset for
+the network shown in Figure 2. The network contains 4
+subnets, 11 servers, 5 routers and 4 host clusters. The
+generated dataset has a total of 100 attack tracks, composed
+
+1920
+
+of 859 alerts. The efficiency factor and stealth factor used
+for attack generation are 0.2 and 0.4, respectively.
+
+Figure 2. Experiment Network
+The K-means clustering algorithm is used to generate
+baseline clusters for our discussion in the subsequent
+sections. Different combinations of features listed in Table
+2 are used, and the K-means algorithm is set to generate 10
+clusters for the 100 tracks.
+
+3
+
+Subsequence matching
+
+In the spatial domain, a single attack track can be treated as
+a trajectory, where its individual data points are defined by
+the alert data contained within the track. The various
+features of each alert can be used to define its position in a
+Euclidian space. Due to the limits of numerical and visual
+interpretation, trajectories defined by a single alert feature
+over time are presented. Two such trajectories are depicted
+in Figure 3. By finding the common subsequence we can
+classify these two tracks into one group.
+
+Figure 3. Similar attack track trajectories containing
+different numbers of samples.
+Interpretation of attack tracks in a spatial domain
+allows for the application of a data comparison algorithm
+know as the Longest Common Subsequence (LCS)
+algorithm. The problem of finding the longest common
+subsequence often arises in text-based comparison,
+recognition and prediction problems, as well as gesture and
+motion identification problems [14] [18]. The majority of
+
+text based applications that use LCS focus on computing
+the difference of a file or performing data compression [18].
+The LCS is also used to recognize gestures and movements
+in Air Marshal signals [14], and perform predictions on the
+‘movements’ between webpage’s that a user visits while
+surfing the internet [15].
+Consider cyber attack tracks shown in Figure 3. The
+LCS algorithm is adopted to perform similarity
+comparisons. The basic idea is to compare the data points of
+two data sequences and determine the maximum number of
+similar points that occur consecutively. Two points are
+considered to be similar if the magnitude of their difference
+is within a predefined threshold. Let LCSα(T1,T2) be the
+maximum number of similar data points given the threshold
+α. Two data points T1[i] and T2[j] are consider similar if
+|T1[i]-T2[j]| ≤ α.
+The basic LCS algorithm assumes a uniform
+distribution of data points. The cyber attacks, however,
+have data points generally scattered over time in a nonuniform manner. The two trajectories shown in Figure 3,
+while visually similar, will not be recognized as similar by
+the basic LCS algorithm if the time tags of the data points
+are ignored and treated as uniform samples over time.
+The unevenly spaced sampling problem can be solved
+by adopting a time windowing system. The implemented
+system will look for point to point similarity matches within
+a time window of length w. Consider the example of T1[i]
+≈ T2[j]. T1[i+1] can be compared against not just T2[j+1]
+but also points up to T2[j+w] to determine LCSα(T1,T2).
+In addition to the absolute number of maximum
+similar points, one can also consider a normalized metric –
+the similarity measure [16] shown in (2).
+S α (T 1, T 2) =
+
+LCS α (T 1, T 2)
+Min(| T 1 |, | T 2 |)
+
+(2)
+
+where |T| is the track length, or the total number of data
+points in an attack tract T.
+We experimented with the windowed LCS algorithm
+using the data set discussed in Section 2.3. The attack
+trajectory is formed by considering the numerically mapped
+attack category values discussed in Section 2.1. The results
+of using both LCSα(T1,T2) and Sα(T1,T2) were analyzed.
+Track comparisons that resulted in fewer than 6 similar
+points or that fell below a similarity value of 0.6 were
+removed. Table 3 shows a sample of the sequence matching
+results from our experiment.
+Note that the choices of 6 points and 0.6 similarity
+measures do not, and should not, give exactly the same
+results. Considering Track 25, Figure 4 depicts some of the
+similar tracks from both cases and helps provide a visual
+assistance to explain the track similarities.
+As can be seen in Figure 4, tracks 25, 80, and 88 all
+contain a similar ‘U’ shape in their graphical
+representations. These three tracks were also found to have
+a high number of similar points, larger than 6. Similarly, a
+characteristic ‘V’ shape can be seen in both tracks 25 and
+84. This requires the use of similarity value (S), and could
+
+1921
+
+not be found using the absolute number of similar points.
+Further study is needed to quantitatively differentiate the
+benefits of using the point based and similarity-measure
+based subsequence matching algorithms.
+Table 3. Selected LCS results
+Track No.
+Track 14
+Track 25
+
+Tracks With More
+Than 6 Similar Points
+32, 42, 91, 92
+11, 17, 26, 27, 31, 37,
+41, 42, 48, 57, 58, 67,
+68, 71, 75, 76, 78, 80,
+81, 87, 88, 91, 92, 94
+
+Track 37
+
+67
+
+Track 68
+
+57, 67, 76
+
+Tracks With Similarity
+Value Above 0.6
+2, 5, 7, 30, 52, 82, 83, 84
+2, 4, 5, 7, 10, 11, 12, 16,
+21, 30, 33, 35, 36, 40, 41,
+43, 47, 48, 50, 51, 52, 56,
+58, 61, 70, 71, 76, 81, 82,
+83, 84, 98
+7, 23, 30, 40, 47, 51, 56,
+84, 98
+7, 21, 30, 51, 76, 83, 84
+
+4
+
+Fourier analysis of attack tracks
+
+The previous section considers attack tracks as time
+sequences and utilizes subsequence matching techniques to
+find similar tracks. In addition to analyzing these sequences
+in the time domain, it is also of our interests to conduct a
+frequency analysis. It has been shown in many applications
+that frequency analysis offers insights to features that may
+not be obvious in the time domain. In fact, small
+quantization noise (on the y-axis) or sampling noise (on the
+x-axis) may be filtered through Fourier analysis. This
+property fits well for our attack track signal where the
+numerical representation of contextual meanings of category
+may present quantization errors and the reporting time of
+malicious activities may not be accurate or critical.
+
+4.1
+
+Interpolation
+
+Cyber attack sequences do not have periodical observations
+as in traditional discrete signals. For non-uniform
+observations, interpolation seems to be a logical solution
+approach to create a uniform data sequence while keeping
+time information of the malicious activities. Linear
+interpolation is used as a first attempt, and Figure 5 shows
+examples of a short attack track (top) and a long attack track
+(bottom). The middle column of Figure 5 shows the
+resulting time sequences of the two attack tracks after
+inserting data points with linear interpolation. The column
+on the right of Figure 5 shows the frequency response of the
+linearly interpolated data signal.
+
+Figure 4. Graphical interpretation of attack category data
+The results obtained using LCS were also compared to
+those using the K-means clustering method with the
+features A, D, E, and F in Table 2. One of the clusters
+identified by the K-means algorithm includes the tracks: 4,
+5, 7, 12, 25, 37, 40, 45, 51, 88, and 93. The LCS algorithm,
+using both the absolute point method and the similarity
+measure, identifies that track 25 is similar to all those other
+tracks in the K-means cluster except 45 and 93. More
+interestingly, the K-means does not find Tracks 80 and 84
+in the same cluster as Track 25. However, these two tracks
+exhibit partial similarity to Track 25 (the ‘U’ and ‘V’
+shapes), and Track 25 can be indicative to the future
+activities of Tracks 80 and 84.
+The subsequence matching technique offers a different
+perspective than the K-means clustering does. It identifies
+attack sequences that are similar partially and in a
+trajectory sense. This non-obvious feature is useful to
+identify similar subsequences of activities and can be used
+to project future activities of ongoing attacks.
+
+Figure 5. Liner interpolation and frequency response
+As can be seen on the two frequency responses, this
+interpolation approach works well for the short sequence as
+the frequency response shows clear frequency components.
+However, for long sequences, especially those with diverse
+time between attack steps, the frequency response is
+dominated by low frequency components. Consider an
+example where the shortest time gap is 1 ms and the whole
+attack last for 2 seconds, interpolation means inserting
+roughly 2000 points. These excessive additions lead to the
+large low frequency component no matter what the original
+attack track may look like. Thus, one will not be able to
+differentiate tracks with diverse time between attack steps,
+which often happen for long attack tracks.
+
+1922
+
+4.2
+
+Ignoring time tag
+
+An alternative to create time signals with uniform data
+points is to ignore the time tags of the alerts. In other words,
+incrementing integer indices are used instead of the actual
+time the malicious activities are reported. In this case, the
+sampling rate is the attack time duration divided by the track
+length. In spite of losing time information, this approach is
+effective in differentiating attack tracks. Figure 7 shows an
+example of a non-uniform attack track (left) being
+considered as a uniformly sampled time signal (middle), and
+the corresponding frequency response (right). The attack
+track chosen is a long one with diverse time between attack
+steps, and, yet, the frequency response clearly shows both
+low and high frequency components.
+
+matrix represents the number of times that a service is
+visited by each attack track. We used the term ‘visit’ as
+some cyber attack steps may not involve intrusion or
+compromise of the service, e.g., scanning activity; yet, they
+still reflect the attack track’s interest in the target service.
+Given our test dataset, the resulting attack-service
+matrix has 100 rows of tracks and 14 columns of targeted
+services. Table 4 shows a small subsection of this matrix. A
+manual and qualitative analysis of the 5 tracks shown in
+Table 4 reveals that Telnet is a common service of interest
+because the number of times it was visited by each track
+dominates each row. On the other hand, Telnet may not be
+of much significance in differentiating the attack tracks
+because it is of everyone’s interest. The question then, is
+how to formalize the comparison of the rows and columns
+of the attack-service matrix so that an algorithmic and
+quantitative approach can be taken to determine the
+significance of the values in the matrix, and, consequently,
+used to group the attack tracks.
+Table 4. Part of the Attack-service matrix
+
+5
+
+Finding community structure of
+attack tracks
+
+Both the subsequence matching approach and the Fourier
+analysis approach are based on the numerical category
+metric and consider the attack track as a time sequence. In
+this section, a social network approach [20] is applied to
+group the attack tracks based on the network services
+attacked in each track. Social network approaches are
+typically used to find community structure based on, e.g.,
+email exchanges or scientific paper collaborations. The idea
+here is to identify the similarity between the attack tracks
+based on the attacked services. Attack tracks that have high
+service-similarity can be considered as neighbors in a
+cluster. Just as friends of friends are included in social
+circles, two attack tracks that are similar to a third attack
+track can be said to be within the same community of attack
+tracks.
+A problem arises when considering how to specifically
+map the attack tracks into a social network. An attack track
+consists of attack steps targeting on one or more network
+services. A matrix can be used to represent this attackservice relationship as shown in Table 4. Each value in this
+
+POP3 Server
+
+HTTP Server
+
+Service A
+
+Service B
+
+NetBIOS Server
+
+RPC Server
+
+IMAP Server
+
+DNS Server
+
+Telnet
+
+SSH
+
+AIM
+
+SQL
+
+Attack
+Track 42
+Attack
+Track 47
+Attack
+Track 54
+Attack
+Track 84
+Attack
+Track 96
+
+SMTP Server
+
+The 64 bit Fast Fourier Transform (FFT) is developed
+to analyze cyber attack tracks. According to the
+characteristic of FFT, the results are symmetrical in the
+position of point 32, which denotes the highest frequency
+component. One may classify attack tracks by comparing
+these frequency components. By manually checking the
+frequency components of 20 tracks in the dataset, we
+compare the grouping results with those using K-means
+clustering. Out of the 20 tracks, 15 are compatible with the
+clusters produced by K-means, when the features B, C, D,
+and G are chosen.
+
+FTP Server
+
+Figure 7. Ignoring time tag and frequency response
+
+6
+
+2
+
+2
+
+8
+
+1
+
+0
+
+2
+
+2
+
+2
+
+0
+
+6
+
+0
+
+0
+
+0
+
+4
+
+5
+
+0
+
+2
+
+3
+
+0
+
+9
+
+5
+
+0
+
+0
+
+8
+
+0
+
+0
+
+0
+
+1
+
+2
+
+0
+
+3
+
+1
+
+0
+
+6
+
+2
+
+1
+
+0
+
+7
+
+0
+
+0
+
+0
+
+2
+
+1
+
+1
+
+7
+
+2
+
+1
+
+3
+
+0
+
+0
+
+0
+
+11
+
+2
+
+1
+
+1
+
+7
+
+4
+
+3
+
+5
+
+2
+
+0
+
+1
+
+1
+
+2
+
+0
+
+6
+
+0
+
+0
+
+1
+
+Since the attack tracks have different numbers of total
+steps, a significance value needs to be calculated by
+converting the absolute visitation counts in the attackservice matrix. Let m represent the attack-service matrix and
+z be the new significance matrix. Each element in z can be
+calculated based on (3)
+
+zi, j =
+
+( s + a ) mi , j
+s
+
+a
+
+x =0
+
+y =0
+
+(3)
+
+a ∑ m x , j + s ∑ mi , y
+
+where s is the number of services and a is the number of
+attack tracks. Note that the element mi,j is counted twice
+with both weight constants s and a.
+A service i is considered to be significant to the attack
+track j if zi,j > β. Two attack tracks are considered to be
+neighbors if they share at least one significant service. We
+use a graph to represent this neighboring relationship. A
+graph G(N,E) has a set of nodes representing the attack
+tracks and an edge exists between two nodes if the two
+attacks share at least one significant service. The edge will
+have the attribute containing the common significant
+
+1923
+
+service(s). If an attack track has no significant service, then
+it will be an isolated node in the graph.
+Once the graph is formed, we apply the social network
+technique described in [20] to find the community structure,
+or clusters, embedded in G(N,E). The algorithm utilizes a
+notion of betweenness, defined as the “the number of
+shortest paths between pairs of other vertices that run
+through it [19].” An edge is removed from the graph if it has
+the largest betweenness value in each iteration. After an
+edge is removed, the betweenness is recalculated for the
+next iteration. The algorithm continues until all edges are
+removed and all the intermediate graphs will be compared
+using a modularity measure as defined in [20]. Intuitively,
+the higher the modularity is of a graph, the better it is to
+divide the nodes into clusters.
+Figure 8 shows the resulting clustered graph of our
+dataset. Four clusters are identified. Two clusters, C and D,
+contain the majority of the attack track nodes. The nodes in
+Cluster C focus on the FTP and HTTP services, which are
+very common targeted services in our dataset. The nodes in
+Cluster B are common in that, in addition to FTP and
+HTTP, the attack tracks also attack DNS and Telnet. Attack
+tracks 23, 45, and 95 belong to a small cluster because they
+are the only ones attacking IMAP. Attack tracks 36 and 39
+are isolated because they have short track lengths and lack
+commonality with the other clusters.
+
+required by the K-means or other clustering algorithms pose
+problems for attributes that do not have measurable values.
+For example, one cannot differentiate the distance between
+Telnet and SSH from that between Telnet and FTP. By
+identifying the common targeted services (or other attributes
+of malicious activities), the social network approach can be
+used to find the community ongoing attack tracks belong to
+and predict the services threatened by them.
+Table 5. Results of the Social Network Analysis
+Social Network Analysis Cluster
+Cluster A
+Cluster B
+Cluster C
+
+Cluster D
+
+Attack Track 36
+Attack Track 39
+
+A
+
+B
+
+6
+C
+
+D
+Figure 8. The created social network of attack tracks
+The social network based clustering results were compared
+with the results of the K-means clustering using the features
+A, G, H, and I in Table 2. Table 5 shows how the individual
+attack tracks identified in the five social network groups
+match to the 10 clusters identified by the K-means.
+Interestingly, Cluster C covers half of the Clusters 3 and 5
+created by the K-means. Eight out of the sixteen tracks in
+Clusters 3 and 5 are present in Cluster C. Also, Clusters 0,
+2, 4, 7, and 8 are mostly contained in Cluster A.
+While the closeness to the K-means result is interesting,
+the real advantage of the social network approach is that it
+identifies explicitly the attack tracks’ common interests in
+the targeted services, without needing to map the services to
+measurable numerical values. The distance measure
+
+Which corresponding K-means
+clustering
+Cluster 3: 14,34
+Cluster 6: 6
+Cluster 8: 53
+Cluster 2: 45
+Cluster 7: 23,95
+Cluster 3: 54,84,42
+Cluster 4: 80
+Cluster 5: 96,47,48,9,13
+Cluster 8: 89
+Cluster 0: 1,71,64,75,74,83
+Cluster 1: 62
+Cluster 2: 43,77,32,63
+Cluster 3: 24,92,31
+Cluster 4: 15,55,85,18,78
+Cluster 5: 27,57
+Cluster 6: 41,94
+Cluster 7: 16,97,86,100
+Cluster 8: 29,69,73,58
+Cluster 9: 10,98
+Cluster 7: 36
+Cluster 2: 39
+
+Conclusions
+
+This paper identifies and formulates the unsupervised
+classification problem for non-uniform attack tracks.
+Traditional clustering algorithms, while useful when
+distance measures exist, lack in supporting or deducing
+insights for attributes that are syntactic or semantic but not
+numeric. We discuss three approaches that each gives
+distinct perspective in grouping non-uniform cyber attack
+tracks. The subsequence matching technique identifies
+partial similarity in attack trajectories, which may not be
+found through a clustering algorithm. The Fourier analysis
+provides a unique understand of attack sequence in the
+frequency domain. The social network approach finds the
+common interests of attack tracks, without the need to
+define distance measures. These three seemingly unrelated
+approaches show promise to characterize and classify attack
+tracks that may not be achievable through classical
+classification algorithms.
+
+References
+[1] S. King and M. Mao, “Enriching intrusion alerts
+through multi-host causality,” In Proceedings of the
+Network and Distributed Systems Security Symposium, Vol
+4, Issue 2, pp. 137-150 , 2005
+
+1924
+
+[2] P. Ning and Y. Cui, “Analyzing intensive intrusion
+alerts via correlation,” In Proceedings of the 9th ACM
+Conference on Computer & Communications Security,
+2002.
+[3] A. Stotz and M. Sudit, “INformation Fusion Engine
+for Realtime Decision making (INFERD): A perceptual
+system for cyber attack tracking,” In Proceedings of the
+International Conference on Information Fusion, 2007.
+[4] A. Valdes and K. Skinner, “Probabilistic alert
+correlation,” In Proceedings of the 4th International
+Symposium on Recent Advances in Intrusion Detection
+(RAID), Vol 2212, pp. 54–68, 2001.
+[5] F. Valeur and G. Vigna, “A comprehensive approach
+to intrusion detection alert correlation,” IEEE Transactions
+on Dependable and Secure Computing, Vol 01, No. 3, pp.
+146–169, 2004.
+
+Workshop on Web Mining, SIAM Conference on Data
+Mining, 2001.
+[14] C. Choi, and J. Ahn, “Visual Recognition of Aircraft
+Marshalling Signals Using Gesture Phrase Analysis”. 2008
+IEEE Intelligent Vehicles Symposium, Jun., 2008.
+[15] M. Jalali, and N. Mustapha, “A new classification
+model for online predicting users’ future movements”,
+International Symposium on Information Technology, Vol
+4, Issue 26-28, pp. 1 - 72008, Aug. 2008.
+[16] M. Vlachos, and G. Kollios, “Discovering Similar
+Multidimesional
+Trajectories,”
+18th
+International
+Conference on Data Engineering, San Jose, California,
+USA, 2002.
+[17] R. Greenberg, “Bounds on the Number of Longest
+Common Subsequences”, Aug., 2003.
+
+[6] Z. Li and J. Lei, “Assessing attack threat by the
+probability of following attacks,” In Proceedings of the
+International Conference on Networking, Architecture, &
+Storage, pp. 91–100, 2007.
+
+[18] S. Shyu and C. Tsai, “Finding the longest common
+subsequence for multiple biological sequences by ant
+colony optimization” Computers and Operations Research,
+Vol 36, Issue 1, pp. 73-91, Jan., 2009.
+
+[7] X. Qin and W. Lee. “Attack plan recognition and
+prediction using causal networks,” In Proceedings of the
+20th Annual Computer Security Applications Conference,
+pp. 370–379, 2004.
+
+[19] M. Girvan and M. Newman, “Community structure in
+social and biological networks,” Proceedings of the
+National Academy of Sciences, Vol 99, pp. 7821 – 7826,
+2002.
+
+[8] B. Argauer, and S. Yang, “VTAC: virtual terrain
+assisted impact assessment for cyber attacks,” In
+Proceedings of SPIE Security and Defense Symposium,
+Data Mining, Intrusion Detection, Information Assurance,
+and Data Networks Security Conference, 2008.
+
+[20] A. Clauset, and M. Newman, “Finding community
+structure in very large networks,” Physical Review E, Vol
+70, 2004.
+
+[9] S. Vidalis, and A. Jones, “Using vulnerability trees for
+decision making in threat assessment,” Technical Report
+CS-03-2, University of Glamorgan, School of Computing,
+June 2003.
+[10] D. Fava, and S. Byers, “Projecting Cyber Attacks
+through Variable Length Markov Models,” IEEE
+Transactions on Information Forensics and Security, Vol.
+3, Issue 3, Sept. 2008.
+[11] J. MacQueen, “Some Methods for classification and
+Analysis of Multivariate Observations”, Proceedings of 5-th
+Berkeley Symposium on Mathematical Statistics and
+Probability, 1967.
+[12] M. Kuhl, and J. Kistner, “Cyber Attack Modeling and
+Simulation for Network Security Analysis”, Simulation
+Conference, Washington, DC, 2007.
+[13] A. Banerjee, and J. Ghosh, “Clustering using weighted
+longest common subsequences”, In proceedings of the
+
+1925
+
+

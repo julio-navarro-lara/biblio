@@ -1,0 +1,516 @@
+Multi-Stage Intrusion Detection System Using Hidden Markov Model Algorithm
+Do-hyeon Lee, Doo-young Kim, Jae-il Jung
+Division of Electrical and Computer Engineering, Hanyang University
+17 Haengdang-dong, Sungdong-gu, Seoul, 133-791, Korea
+{dohyeon,dykim}@mnlab.hanyang.ac.kr, jijung@hanyang.ac.kr
+Abstract
+Intrusion detection systems are the basis of system pro-
+tection from network attacks. However, intrusions are in-
+creasingly taking multi-stage procedures to attack a system,
+and cannot be detected by existing single stage intrusion
+detection systems. This paper proposes a multi-stage in-
+trusion detection system architecture using Hidden Markov
+Model Algorithm. This system considers every stage used
+by recent intrusions and applies them to the HiddenMarkov
+Model algorithm to determine which intrusion is used in the
+audit data. This architecture reduces overheads of intrusion
+agents and raises efficiency of the whole system.
+1. Introduction
+There are several ways to protect systems including direct
+network establishment, virtual private network establishment,
+intrusion detection system, intrusion prevention
+system, firewall, encryption, and authentication [1]. Among
+these, intrusion detection system is an important part that is
+the basis of network security and widespread research is being
+performed.
+A number of intrusion detection techniques have been
+developed and the classification of these techniques are diverse
+[2, 3, 4]. Generally intrusion detection systems are
+classified into host-based intrusion detection systems and
+network-based intrusion detection systems by the location
+of information collection, which is basis of intrusion determination
+[5]. Host-based intrusion detection systems determine
+intrusion occurs by analysis of the information generated
+inside the system. Network-based intrusion detection
+systems determine intrusion by analysis of the amount of
+network traffic or the packet headers or contents that are
+passing by. Network-based detection techniques have been
+used in many recent intrusion detection systems because
+one intrusion detection system is needed in one network
+segment, and it does not lower capacity of host system.
+Recent intrusion techniques do the attack through several
+stages so that it makes accurate detection and pursuit of
+the attack difficult [6]. Even automatic attack tools are developed
+and easily obtainable so that almost anyone can do
+the attack. Therefore, the detection of attacks is difficult because
+the number of attackers is increasing, and the means
+and targets of attacks are diversified.
+This paper proposes the architecture of an intrusion detection
+system that raises the accuracy rate and can easily
+detect the variation of intrusion technique. This system has
+a detection agent which takes charge of each stage, and each
+agent performs independent detection function. The detection
+signals which were detected by each agent are analyzed
+synthetically with application of Hidden Markov Model algorithm
+which is studied in the speech recognition field.
+The organization of this paper is as follows. In Section 2 we
+analyze the intrusion detection techniques used by existing
+intrusion detection systems and introduce Hidden Markov
+Model algorithm. In Section 3 we propose the architecture
+of multi-stage intrusion detection system which determines
+intrusion by Hidden Markov Model algorithm, and we propose
+the roles of agents and detection agent and the architecture
+of detection agent and determination agent. In Section
+4 we show the experiment and the result of the proposed
+system. In Section 5 we conclude the paper.
+2. Hidden Markov Model Algorithm
+Consider a system which may be described at any time
+as being in one of a set of N distinct states S1, S2, · · · , SN.
+At regularly spaced discrete times, the system undergoes a
+change of state (possibly back to the same state) according
+to a set of probabilities associated with the state. We
+denote the time instants associated with state changes as
+t = 1, 2, · · · , and we denote the actual state at time t as qt.
+A full probabilistic description of the above system would,
+in general, require specification of the current state (at time
+t), as well as all the predecessor states. For the special case
+of a discrete, first order,Markov chain, this probabilistic description
+is truncated to just the current and the predecessor
+2008 International Conference on Information Science and Security
+0-7695-3080-X/08 $25.00 © 2008 IEEE
+DOI 10.1109/ICISS.2008.22
+72
+state, i.e.,
+P [qt = Sj |qt−1 = Si, qt−2 = Sk, · · · ]
+=P [qt = Sj |qt−1 = Si] . (1)
+We define the set of state transition probabilities of the form
+aij = P [qt = Sj |qt−1 = Si] , 1  i, j  N (2)
+aij  0
+XN
+j=1
+aij = 1.
+The above stochastic process could be called an observable
+Markov model since the output of the process is the set of
+states at each instant of time, where each state corresponds
+to a physical (observable) event [7]. However, there are so
+many cases in which each state does not correspond to a
+observable event. In those cases, we should conjecture actual
+states by observed result using probabilistic method.
+Hidden Hidden Markov Model algorithm is the enhanced
+Markov model to establish actual state by stochastic relationship
+of the observed results and the states. Hidden
+Markov Model is characterized by the following: [8]
+1. N : The number of states in the model.
+2. M : The number of distinct observation symbols per
+state. We denote the individual symbols as V =
+{v1, v2, · · · , vM}.
+3. A = {aij} : The state transition probability distribution
+where
+aij = P [at+1 = Sj |qt = Si] , 1  i, j  N. (3)
+4. B = {bj(k)} : The observation symbol probability
+distribution in state j where
+bj(k) = P [vk at t|qt = Sj ] , 1  j  N, 1  k  M.
+(4)
+5.  = {i} : The initial state distribution where
+i = P [q1 = Si] , 1  i  N. (5)
+Given appropriate values of N, M, A, B, and , the Hidden
+Markov Model can be used as a generator to give an
+observation sequence O = O1O2 · · ·OT (where each observation
+Ot is one of the symbols from V , and T is the
+number of observations in the sequence) as follows:
+1. Choose an initial state q1 = Si according to the initial
+state distribution .
+2. Set t = 1.
+3. Choose Ot = vk according to the symbol probability
+distribution in state Si, i.e., bi(k).
+4. Transit to a new state qt+1 = Sj according to the state
+transition probability distribution for state Si, i.e., aij .
+5. Set t = t + 1; return to step 3 if t < T ; otherwise
+terminate the procedure.
+For convenience, we use the compact notation  =
+(A,B, ) to indicate the complete parameter set of the
+model [9]. Using the symbol , we can estimate whether
+the model represents well the observation sequence. And
+also, we can find the optimal state sequence which best explains
+the observations.
+3. Multi-Stage Intrusion Detection System Using
+Hidden Markov Model Algorithm
+3.1. Basic Principle
+The purpose of an intrusion is to acquire the right of use
+for a system and use the system illegally, or to modify or
+flow out the private information stored in the system, or
+to make system unusable state. To reach the purpose, attackers
+try to intrude through several stages using diverse
+techniques in each stage. Even if there is not a principle, intrusions
+are generally classified into a reconnaissance stage,
+a weakness analysis stage, an invasion stage, a control program
+installation stage, a data stealth stage, and a spread
+stage.
+Each stage in the intrusion is necessary to prepare to acquire
+needed or to modify the system configuration or to install
+control program for the next stage. Actions at primary
+stages are inevitably necessary for the next stages. General
+intrusion detection systems determine intrusion by detecting
+particular features of well-known intrusion techniques
+without consideration of the stages, so that there appear the
+cases such that it estimates the normal behavior as the intrusion
+or the skillfully disguised intrusion action as the normal
+behavior.
+This paper presents a method to determine intrusion by
+estimation features appearing at each stage of intrusion synthetically,
+and proposes a novel architecture of the intrusion
+detection system. The intrusion techniques used at each
+stage can be detected with characteristic intrusion signals.
+The proposed system considers every well-known signal as
+an individual state, and considers the intrusion processes
+used by well-known intrusion techniques as each individual
+Hidden Markov Model, and applies each model to the
+model variable, and stores them. Then, for the object for
+detection, it finds the observation sequence by applying the
+intrusion signals of every stage to the observation variables,
+and calculates the probability of this sequence about the
+73
+stored models. Then the model that has the most probability
+is determined to be the intrusion technique used in the
+object.
+This intrusion detection method has low risk of false
+alarm since it performs synthetic determination through
+multiple stages. Furthermore, it determines attack with HiddenMarkovModel
+algorithmthat is estimated as efficient in
+the signal recognition area, so that it could do more efficient
+determination.
+3.2. System Architecture
+3.2.1 System Framework
+System framework is composed of detection agents that detect
+intrusion signal at each intrusion stage, and the determination
+agent that synthesizes the signals and determines
+intrusion. The framework scheme of entire system is illustrated
+in Figure 1.
+Determination
+Agent
+Stage 1 Stage 2 Stage T
+Detection Agents
+Audit
+Data
+Network Line
+Figure 1. Intrusion detection system structure
+Detection agents analyze audit data collected from network
+line to recognize signals that are known to be intrusions.
+And then, at the determination agent, the signal sequence
+detected by the detection agents are synthesized and
+adapted the Hidden Markov Model algorithm to determine
+whether it matches the intrusion sequence.
+3.2.2 Detection Agent
+There exists one detection agent at every intrusion stage individually.
+Detection agent at each stage detects defined intrusion
+signal and transmits the detection report to the determination
+agent. The structure of the detection is composed
+of, as shown in Figure 2, communication module between
+agents, intrusion signal detection module, intrusion signal
+Audit
+Data
+Intrusion Signal
+Detection Module
+Intrusion
+Signal DB
+Detection
+Log
+Communication
+Module
+Figure 2. Detection agent structure
+database, and detection log.
+Intrusion signal database includes the data to be used by the
+detection agent to detect the intrusion signal. Each of entry
+has the following structure.
+struct SigRecord {
+int SigId; // signal identification
+char *SigChar; // signal pattern
+};
+struct SigRecord SignalDB[];
+Detection agent detects the signal using the intrusion signal
+detection module with referring to the intrusion signal data
+stored in the intrusion database. Detected intrusion signal
+are stored in the detection log for the next detection. When
+the detection log is stored it is separated by the intrusion
+signal types and the each entry of the log has the following
+structure.
+struct SigLog {
+int SigId; // Signal Identification
+long Time; // Detection Time
+char *msg; // Detection Content
+};
+Signal Identification is the same value and it is the discrimination
+letter to identify the intrusion signal. When the intrusion
+signal is detected, detected time ”Time” and the content
+of intrusion signal message ”msg” are stored. Whenever the
+intrusion signal is detected the message to be sent to the determination
+agent is created. The structure of message is the
+following.
+struct SigMsg {
+int SigId; // Sinal Identification
+long Time; // Detection Time
+};
+Through the message creation process as shown above,
+the intrusion signal is modified to the form that is able to
+be communicated, and it is transmitted to the determination
+module through the communication module between
+agents.
+74
+3.2.3 Determination Agent
+Determination agent receives the message from the detection
+agent of each stages and estimate intrusion using intrusion
+detection technique, which will be explained, at the
+section 3.3. The structure of the determination agent is illustrated
+in Figure 3. Intrusion signal sequence database
+Signal
+Data
+Communication
+Module
+Intrusion
+Sequence DB
+Determination
+Module
+Figure 3. Determination agent structure
+include the sequence data of well-known intrusion techniques.
+Determination module compares the sequence of
+the intrusion signals sent from the detection agents of each
+stage with data of database to determinate intrusion.
+The entry of the intrusion signal sequence database has the
+following structure.
+struct SigSeqRecord {
+int SigSeqId; // Sequence Identification
+char *SigSeqPattern; // Sequence Pattern
+};
+struct SigSeqRecord SequenceDB[];
+3.2.4 Messages between Agents
+Agents may be in same node or different nodes. Each agent
+communicate by the message transmission method and the
+message is defined as follows.
+ADD IS <SigId, SigPattern>
+DEL IS <SigId>
+REQ INTR <>
+INFORM INTR <SigMsg>
+ADD IS message is for the user interface agent to transmit
+to the detection agent, which is used to add new intrusion
+signal “SigId” to the intrusion signal database. DEL IS
+message is used to delete the intrusion signal “SigId” from
+the intrusion signal database and it is transmitted to the detection
+agent by the user interface. Whenever the intrusion
+signal is detected, detection agent informs the signal message
+by the message “INFORM INTR” to request determination.
+This message and the message “REQ INTR” is
+used between the user interface agent and the determination
+agent. If the user interface agent requests to determinate
+the signal message the determination agent reply to the user
+interface agent by the message “INFORM INTR”.
+3.3. Intrusion Detection Technique
+One intrusion technique goes through several stages.
+The intrusion signal used by each stage is defined as state
+Si and the number of stages passed by intrusion technique
+is defined as T . Then variables A,B,  are obtained which
+denote the intrusion procedure as a model . The definitions
+necessary to detection technique are as follows.
+1. N : The number of states in the model.
+2. M : The number of distinct observation symbols per
+state. We denote the individual symbols as V =
+{v1, v2, · · · , vM}.
+3. A = {aij} : The state transition probability distribution
+where
+aij = P [qt+1 = Sj |qt = Si] , 1  i, j  N. (6)
+4. B = {bj(k)} : The observation symbol probability
+distribution in state j where
+bj(k) = P [vk at t|qt = Sj ] , 1  j  N, 1  k  M.
+(7)
+5.  = {i} : The initial state distribution where
+i = P [q1 = Si] , 1  i  N. (8)
+We denote the observed signals of each intrusion stage
+as Ot, 1  t  T and define the probability t(i) which is
+state Si at stage t, given the model  where
+t(i) = P (O1O2 · · ·Ot, qt = Si|) . (9)
+Then the initial condition at t = 1 is the following,
+1(i) = ibi(O1), 1  i  N. (10)
+The relation between the probability t(i) of state Si at
+stage t and the probability t+1(j) of state Sj at stage t+1
+is the following,
+t+1(j) =
+"
+XN
+i=1
+t(i)aij
+#
+bj(Ot+1), (11)
+1  t  T − 1, 1  j  N.
+Therefore the probability P(O|) of the observation sequence
+O, given the model , is calculated by summing up
+all the state, where
+P(O|) =
+XN
+i=1
+T (i). (12)
+Since this is the probability of the intrusion signal sequence
+for the model of an intrusion technique, we can determinewhich
+intrusion technique is used if we calculate the
+probabilities of the intrusion signal sequences of detection
+object about the models of well-known intrusion techniques
+and select the model with the highest probability.
+75
+4. Experiments
+4.1. System Prototype
+System prototype includes the detection agent and the
+determination agent, and the user interface agent is designed
+to have text interface. Each agent in the system has independent
+processes and is located in individual computers. Communication
+between agents is performed by stream socket
+of Internet domain. The intrusion signal detection technique
+of each stage implemented by the detection function
+of snort. Snort which operates with independent processes
+is connected by intrusion signal detection task (isd task) and
+unix domain socket. The isd task creates the rule file of
+snort by the patterns of each signal and operate snort by setting
+the output mode as alert unixsock. When snort detects
+a signal of given pattern it sends that to the unix domain
+socket named ”dev/snort alert”. The isd task receives the
+intrusion signal report through this socket and records it in
+log and creates the signal.
+4.2. Experiment and Result
+Implemented prototype is experimented with using the
+first experiment data of DARPA 2000 intrusion detection
+system evaluation data. This data are entire data about the
+5 stages intrusion which is provided by tcpdump formatted
+file. The intrusion scenario of DARPA 2000 in composed
+of the 5 stages as following.
+• Stage 1 : Attacker does IPsweep using ICMP about
+1024 consecutive IP addresses. The intrusion signal of
+this stage is the ICMP Echo Request packet.
+• Stage 2 : Among the detected host at previous stage,
+attacker probes of live IP’s to look for the sadmind daemon
+running on the hosts. The intrusion signal of this
+stage is the RPC sadmind port request through UDP
+port mapper.
+• Stage 3 : Attacker breaks in the sadmind tool by the
+remote buffer overflow attack and makes an account
+named ”hacket2” having an administrator authority.
+The intrusion signal of this stage is the buffer overflow
+packet through the RPC sadmind port.
+• Stage 4 : Attacker does log-in in telnet as the hacket2
+and installs the trojan mstream DDoS attack software
+using rcp and rsh. The intrusion signal of this stage is
+an access to the rcp or rsh port.
+• Stage 5 : Attacker log-in in telnet again and launches
+the DDoS attack. DDoS attack is transmitting packets
+to the randomly selected target IP at maximum transmission
+rate. The intrusion signal of this stage is the
+spoofed IP address.
+Table 1. Detection rate at different hosts
+Host Number 1 2 3 4 5
+Detectio Rate 97% 99% 97% 95% 96%
+0
+10
+20
+30
+40
+50
+60
+70
+80
+90
+100
+1 2 3 4 5
+Host Number
+Detection Rate (%)
+Figure 4. Detection rate at different hosts
+Table 2. Duration time at different hosts
+Host Number 1 2 3 4 5
+Duration Time 21ms 29ms 25ms 30ms 22ms
+0
+5
+10
+15
+20
+25
+30
+35
+1 2 3 4 5
+Host Number
+Duration Time( ms)
+Figure 5. Duration time at different hosts
+76
+Experiment carried out by inputting the provided data
+file to the detection agent as offline input. To verify that this
+architecture of multi-stage detection system is efficient, we
+examined detection rate by running 20 times at five different
+hosts. And we calculated the detection duration from data
+input to intrusion alert. The results about the detection rate
+are shown in Table 1 and Figure 4. The results about the
+duration time are shown in Table 2 and Figure 5.
+Even if the detection rates are not 100%, the results are
+higher than 90%percents. And the duration times are below
+30ms. We can say that this architecture shows very effective
+performance.
+5. Conclusions
+This paper proposed architecture of the intrusion detection
+system that detects intrusion through multiple stages
+and analyzes entire detection sequences synthetically using
+Hidden Markov Model algorithm to raise the detection accuracy
+and enable efficient detection. Existing intrusion detection
+systems have cases to consider normal behavior, not
+intrusion, as intrusion. Proposed system detects characteristic
+intrusion signals of each intrusion stage that constitute
+one intrusion procedure and estimate overall intrusion by
+their sequence. This system structure has low probability
+of error; the overload of the system is reduced since the
+intrusion signal detections of each stage are performed by
+independent agents.
+This paper uses the HiddenMarkovModel algorithm for
+intrusion detection by misuse detection method, which has
+a problem that it cannot detect new or modified intrusion
+techniques. Because the Hidden Markov Model algorithm
+can be applied to the anomaly detection method, we could
+complement this defect if we use the HiddenMarkovModel
+algorithm by analyzing events occurring at kernel of the operating
+system and considering the operation beneath normal
+event sequence as abnormal.
+Acknowledgements
+This research was supported by theMIC (Ministry of Information
+and Communication),Korea, under the ITRC (Information
+Technology Research Center) support program
+supervised by the IITA (Institute of Information Technology
+Assessment) (IITA-2007-(C1090-0701-0016)).
+References
+[1] Xin Xu, Xuening Wang, “An adaptive network intrusion
+detection method based on PCA and support vector
+machines”, ADMA 2005, LNAI 3584, pp.696-703,
+2005
+[2] R.A. Kemmerer, G. Vigna, “Intrusion detection: a brief
+history and overview”, Computer, Volume 35, Issue 4,
+Part Supplement, pp.27-30, April 2002
+[3] Nong Ye, Xiangyang Li, Qiang Chen, Emran, S.M.,
+Mingming Xu, “Probabilistic techniques for intrusion
+detection based on computer audit data”, Systems,Man
+and Cybernetics, Part A, IEEE Transactions, Volume
+31, Issue 4, pp.266-274, July 2001
+[4] Zhuowei Li, Das, A., Jianying Zhou, “Theoretical basis
+for intrusion detection”, Systems, Man and Cybernetics
+(SMC) Information Assurance Workshop, 2005. Proceedings
+from the Sixth Annual IEEE, 15-17, pp.184-
+192, June 2005
+[5] Biswanath Mukherjee, L Todd Heberlein, Karl Levitt,
+“Network Intrusion Detection”, IEEE Network, Volume
+8, Issue 3, pp.26-41,May 1995
+[6] Jerald Dawkins, John Hale, “A systematic approach to
+multi-stage network attack analysis”, Proceedings of
+the Second IEEE International Information Assurance
+Workshop, 2004, Proceedings. Second IEEE International,
+pp.48-56, 2004
+[7] L. R. Rabiner, B. H. Juang, S. E. Levinson, and M. M.
+Sondhi, “Some properties of continuous hiddenMarkov
+model representations,” AT&T Tech. J., vol. 64, no. 6,
+pp. 1251-1270, July-Aug. 1985
+[8] L. R. Rabiner and B. H. Juang, “An introduction to hidden
+Markov models,” IEEE ASSP Mag., vol. 3, no. 1,
+pp.4-16, 1986
+[9] Lawrence R. Rabiner, “A tutorial on Hidden Markov
+Models and selected applications in speech recognition”,
+Proceedings of the IEEE, Volume 77, No. 2,
+pp.257-286, 1989
+77

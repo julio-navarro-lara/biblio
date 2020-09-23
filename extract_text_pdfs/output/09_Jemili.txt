@@ -1,0 +1,928 @@
+Attack Prediction based on “Hybrid”
+Propagation in Bayesian Networks
+Farah Jemili
+
+Montaceur Zaghdoud
+
+Mohamed Ben Ahmed
+
+Laboratoire RIADI, ENSI
+Manouba University
+Manouba 2010, Tunisia
+Jmili_farah@yahoo.fr
+
+Laboratoire RIADI, ENSI
+Manouba University
+Manouba 2010, Tunisia
+Montaceur.zaghdoud@ensi.rnu.tn
+
+Laboratoire RIADI, ENSI
+Manouba University
+Manouba 2010, Tunisia
+Mohamed.benahmed@riadi.rnu.tn
+
+Abstract─ Correlating security alerts and discovering attack strategies are important and challenging tasks for security
+analysts. Recently, there have been several proposals of attack plans recognition. Most of the proposed approaches focus
+on the aggregation and analysis of raw security alerts, and build basic or low level attack scenarios. However, in security
+context, we cannot always observe all of the attacker’s activities, and often can only detect incomplete attack steps due to
+the limitation or deployment of security sensors. Therefore, the attack plan recognition system should have the capability
+of dealing with partial order and unobserved activities. In this paper we propose an approach based on Bayesian
+reasoning to correlate attack scenarios and identify their relationship. Based on the correlation results, we further apply
+inference to recognize the attack plans and predict upcoming attacks. The goal of this work is to propose a method to
+propagate both the stochastic and the epistemic uncertainties, coming respectively from the uncertain and imprecise
+character of information, through the bayesian model, in an attack prediction context.
+Keywords- attack correlation, attack prediction, bayesian network, hybrid propagation, junction tree inference
+
+I.
+
+INTRODUCTION
+
+The proliferation of Internet access to every network
+device, the use of distributed rather than centralized
+computing resources, and the introduction of
+network-enabled applications has rendered traditional
+network-based security infrastructures vulnerable to
+serious attacks.
+The term attack can be defined as a combination of
+actions performed by a malicious adversary to violate
+the security policy of a target computer system or a
+network domain [1]. Generally, an attack starts with
+an intrusion to some corporate network through a
+vulnerable resource and then launching further
+actions on the network itself. Therefore, we can
+define the attack prediction process as the sequence
+of elementary actions that should be performed in
+order to recognise the attack strategy.
+The use of distributed and coordinated techniques in
+attacks makes their detection more difficult. Different
+events and specific information must be gathered
+from all sources and combined in order to identify the
+attack plan. Therefore, it is necessary to develop an
+advanced attack strategies prediction system that can
+detect attack strategies so that appropriate responses
+and actions can be taken in advance to minimize the
+damages and avoid potential attacks.
+Recently, there have been several proposals of attack
+plans recognition. Most of the proposed approaches
+focus on the aggregation and analysis of raw security
+
+alerts, and build basic or low level attack scenarios
+[2]. However, in security context, we cannot always
+observe all of the attacker’s activities, and often can
+only detect incomplete attack steps due to the
+limitation or deployment of security sensors.
+Therefore, the attack plan recognition system should
+have the capability of dealing with partial order and
+unobserved activities.
+In this paper we propose a plan recognition system
+which recognizes the attacker’s attack plan and
+intentions. In our approach, we apply graph
+techniques based on bayesian reasoning to correlate
+attack scenarios and identify their relationship. Based
+on the correlation results, we further apply inference
+to recognize the attack plans and predict upcoming
+attacks. The inference process is based on “hybrid”
+propagation that takes into account both the uncertain
+and imprecise character of information.
+This paper is organized as follows. Section 2
+discusses the related work. In Section 3 and 4, we
+introduce respectively bayesian networks and
+junction tree inference algorithm upon which we
+build our new contribution. In Section 5, we
+introduce the “hybrid” propagation process. Section 6
+describes our attack correlation approach and
+prediction system. We report our experiment and
+results in Section 7. Section 8 concludes this paper
+and discusses some future research directions.
+
+II.
+
+RELATED WORK
+
+Recently, there have been several proposed
+techniques of alert correlation and attack scenario
+prediction.
+Valdes and Skinner [3] use probabilistic-based
+reasoning to correlate alerts by measuring and
+evaluating the similarities of alert attributes. Alert
+aggregation and scenario construction are conducted
+by enhancing or relaxing the similarity requirements
+in some attribute fields.
+Porras et al. design a « mission-impact-based »
+correlation system with a focus on the attack impacts
+on the protected domains [4]. The system uses
+clustering algorithms to aggregate and correlate
+alerts. Security incidents are ranked based on the
+security interests and the relevance of attack to the
+protected networks and systems.
+Debar and Wespi [5] apply backward and forward
+reasoning techniques to correlate alerts with duplicate
+and consequence relationship. They use clustering
+algorithms to detect attack scenarios and situations.
+This approach predefines consequences of attacks in a
+configuration file.
+Morin and Debar [6] apply chronicle formalism to
+aggregate and correlate alerts. The approach performs
+attack scenario pattern recognition based on known
+malicious event sequences. Therefore, this approach
+is similar to misuse detection and cannot detect new
+attack sequences.
+Ning et al. [7], Cuppens and Miège [8] and Cheung et
+al. [9] build alert correlation systems based on
+matching the pre/post conditions of individual alerts.
+The idea of this approach is that prior attack steps
+prepare for later ones. Therefore, the consequences of
+earlier attacks correspond to the prerequisites of later
+attacks. The correlation engine searches alert pairs
+that have a consequence and prerequisite matching.
+Further correlation graphs can be built with such alert
+pairs [7]. One challenge to this approach is that a new
+attack cannot be paired with any other attacks because
+its prerequisites and consequences are not defined.
+Recently, Ning et al. [10] have extended the pre/post
+condition-based correlation technique to correlate
+some isolated attack scenarios by hypothesizing
+missed attack steps.
+Our approach differs from other work in the
+following aspects. First, our approach integrates two
+complementary types of attacks: attacks that are
+directly related because an earlier attack enables or
+positively affects the later one, based on security
+alerts of systems and networks, and attacks that have
+temporal and statistical patterns eventhough they do
+not have obvious or direct relationship in terms of
+security and performances measures. Second, we
+apply “hybrid” propagation in bayesian networks to
+predict the attack plans. Our approach combines
+
+probability and possibility and can especially deal
+with missing information and therefore can be used to
+discover new attack strategies.
+III.
+
+BAYESIAN NETWORKS
+
+A Bayesian network is a graphical modeling tool used
+to model decision problems containing uncertainty. It
+is a directed acyclic graph where each node represents
+a discrete random variable of interest. Each node
+contains the states of the random variable that it
+represents and a conditional probability table (CPT)
+which give conditional probabilities of this variable
+such as realization of other connected variables, based
+upon Bayes rule:
+P(B|A)=P(A|B)P(B)/P(A)
+The CPT of a node contains probabilities of the node
+being in a specific state given the states of its parents.
+The parent-child relationship between nodes in a
+Bayesian network indicates the direction of causality
+between the corresponding variables. That is, the
+variable represented by the child node is causally
+dependent on the ones represented by its parents
+[11][30].
+Several researchers have been interested by using
+Bayesian network to develop intrusion detection
+systems. Axelsson in [12] wrote a well-known paper
+that uses the Bayesian rule of conditional probability
+to point out the implications of the base-rate fallacy
+for intrusion detection. It clearly demonstrates the
+difficulty and necessity of dealing with false alerts.
+Kruegel in [1] presented a model that simulates an
+intelligent attacker using Bayesian techniques to
+create a plan of goal-directed actions. An event
+classification scheme is proposed based on Bayesian
+networks. Bayesian networks improve the
+aggregation of different model outputs and allow one
+to seamlessly incorporate additional information.
+Johansen in [13] suggested that a Bayesian system
+which provides a solid mathematical foundation for
+simplifying a seemingly difficult and monstrous
+problem that today’s Network IDS fail to solve. He
+added that Bayesian Network IDS should
+differentiate between attacks and the normal network
+activity by comparing metrics of each network traffic
+sample.
+A. Bayesian Network Learning Algorithm
+Methods for learning Bayesian graphical models can
+be partitioned into at least two general classes of
+methods: constraint-based search and Bayesian
+methods.
+The constraint-based approaches [14][15] search the
+data for conditional independence relations from
+which it is in principle possible to deduce the Markov
+equivalence class of the underlying causal graph. Two
+notable constraint based algorithms are the PC
+
+algorithm which assumes that no hidden variables are
+present and the FCI algorithm which is capable of
+learning something about the causal relationships
+even assuming there are latent variables present in the
+data [14].
+Bayesian methods [16] utilize a search-and-score
+procedure to search the space of DAGs, and use the
+posterior density as a scoring function. There are
+many variations on Bayesian methods, however, most
+research has focused on the application of greedy
+heuristics, combined with techniques to avoid local
+maxima in the posterior density (e.g., greedy search
+with random restarts or best first searches). Both
+constraint-based and Bayesian approaches have
+advantages and disadvantages. Constraint-based
+approaches are relatively quick and possess the ability
+to deal with latent variables. However, constraintbased approaches rely on an arbitrary significance
+level to decide independencies.
+Bayesian methods can be applied even with very little
+data where conditional independence tests are likely
+to break down. Both approaches have the ability to
+incorporate background knowledge in the form of
+temporal ordering, or forbidden or forced arcs. Also,
+Bayesian approaches are capable of dealing with
+incomplete records in the database. The most serious
+drawback to the Bayesian approaches is the fact that
+they are relatively slow.
+In this paper, we are dealing with incomplete records
+in the database so we opted for the Bayesian approach
+and particularly for the K2 algorithm.
+K2 learning algorithm showed high performance in
+many research works. The principle of K2 algorithm,
+proposed by Cooper and Herskovits, is to define a
+database of variables: X1,..., Xn, and to build an
+acyclic graph directed (DAG) based on the
+calculation of local score [17]. Variables constitute
+network nodes. Arcs represent “causal” relationships
+between variables.
+Algorithm K2 used in learning step needs:
+ A given order between variables
+ and the number of parents, u of the node.
+K2 algorithm proceeds by starting with a single node
+(the first variable in the defined order) and then
+incrementally adds connection with other nodes
+which can increase the whole probability of network
+structure, calculated using the g function. A requested
+new parent which does not increase node probability
+can not be added to the node parent set.
+qi
+
+g ( xi , pai ( xi )) = ∏
+j =1
+
+ri
+(ri − 1)!
+C N ijk !
+( N ij + ri − 1)! k =1
+
+where, for each variable xi; ri is the number of
+possible instantiations; N is the number of cases in
+the database; wij is the j-th instantiation of pai in the
+database; qi is the number of possible instantiations
+
+for pai; Nijk is the number of cases in D for which xi
+takes the value xik with pai instantiated to wij ; Nij is
+the sum of Nijk for all values of k.
+Execution time is in the order O(Nu2n2r) with r being
+the maximum value for ri [17].
+K2 Algorithm
+Input: A set of variables x1,…, xn, a given order
+among them, an upper limit u on the number of
+parents for a node, a database on x1,…, xn .
+Output: a DAG with oriented arcs.
+For i := 1 to n do
+pai(xi) = Ø ; OK : = true ;
+Pold := g(xi, pai(xi)) ;
+While OK and |pai(xi)| < u do
+Let z be the node in the set of predecessors of xi that does
+not belong to pai(xi) which maximizes g(xi,pai(xi) ∪ {z}) ;
+Pnew := g(xi, pai(xi) ∪ {z});
+If Pnew > Pold Then
+Pold := Pnew ;
+pai(xi) := pai(xi) ∪ {z};
+Else OK := false ;
+
+IV.
+
+JUNCTION TREE INFERENCE ALGORITHM
+
+The most common method to perform discrete exact
+inference is the Junction Tree algorithm developed by
+Jensen [18]. The idea of this procedure is to construct
+a data structure called a junction tree which can be
+used to calculate any query through message passing
+on the tree.
+The first step of JT algorithm creates an undirected
+graph from an input DAG through a procedure called
+moralization. Moralization keeps the same edges, but
+drops the direction, and then connects the parents of
+every child. Junction tree construction follows four
+steps:
+ JT Inference Step1: Choose a node ordering.
+Note that node ordering will make a difference in the
+topology of the generated tree. An optimal node
+ordering with respect to the junction tree is NP-hard
+to find.
+ JT Inference Step2: Loop through the nodes in
+the ordering. For each node Xi, create a set Si of all its
+neighbours. Delete the node Xi from the moralized
+graph.
+ JT Inference Step3: Build a graph by letting each
+Si be a node. Connect the nodes with weighted
+undirected edges. The weight of an edge going from
+Si to Sj is |Si ∩ Sj |.
+ JT Inference Step4: Let the junction tree be the
+maximal-weight spanning tree of the cluster graph.
+V.
+
+“HYBRID” PROPAGATION
+
+The mechanism of propagation is based on bayesian
+model. Therefore, the junction tree algorithm is used
+
+for the inference in the bayesian network. The
+"Hybrid" calculation combining probabilities and
+possibilities, permits to propagate both the variability
+(uncertain information) and the imprecision
+(imprecise information).
+A. Variable Transformation from Probability to
+Possibility (TV)
+Let's consider the probability distribution p = (p1,...,pi
+,...,pn) ordered as follows: p1>p2>…>pn. The
+possibility distribution π = (π1,…,πi,…,πn) according to
+the transformation (p→π) proposed in [31] is
+π1> π2> …> πn. Every possibility is defined by:
+∀ i =1,2,…,n
+Where k1=1,
+
+, ∀ i =2,3,…,n
+
+ The classic probabilistic propagation of stochastic
+uncertainties in junction tree through message passing
+on the tree, and
+ The possibilistic propagation of epistemic
+uncertainties in the junction tree. Possibilistic
+propagation in junction tree is a direct adaptation of
+the classic probabilistic propagation.
+Therefore, The proposed propagation method:
+1. Preserves the power of modeling of bayesian
+networks (permits the modeling of relationships
+between variables),
+2. This method is adapted to both stochastic and
+epistemic uncertainties,
+3. The result is a probability described by an interval
+delimited by possibility and necessity measures.
+VI.
+
+B. Probability Measure and Possibility Distribution
+Let's consider a probabilistic space (Ω,A,P). For all
+measurable whole A⊆Ω, we can define its high
+probability and its low probability. In other terms the
+value of the probability P(A) is imprecise:
+∀ A⊆Ω, N(A) ≤ P(A) ≤ Π(A) where N(A) = 1-Π( )
+Each couple of necessity/possibility measures (N,Π)
+can be considered as the lower and higher probability
+measures induced by a probability measure. The gap
+between these two measures reflects the imprecise
+character of the information.
+It is about defining a possibility distribution on a
+probability measure. This possibility distribution
+reflects the imprecise character of the true probability
+of the event.
+A probability measure is more reliable and
+informative when the gap between her two upper and
+lower terminals is reduced, ie imprecision on the
+value of the variable is reduced, as opposed to a
+measure of probability in a confidence interval
+relatively large, this probability is risky and not very
+informative.
+C. “Hybrid” Propagation Process
+The “hybrid” propagation proceeds in three steps:
+1. Substitute probability distributions of each
+variable in the graph by probability distributions
+framed by measures of possibility and necessity,
+using the variable transformation from probability to
+possibility TV (see section 5.1), applied to probability
+distributions of each variable in the graph. The gap
+between the necessity and possibility measures
+reflects the imprecise character of the true probability
+associated to the variable.
+2. Transformation of the initial graph to a junction
+tree (see section 4).
+3. Uncertain and imprecise uncertainty propagation
+which consists in both :
+
+ATTACK CORRELATION AND PREDICTION
+SYSTEM
+
+In this section, we introduce our correlation
+mechanism based on bayesian reasoning technique. In
+particular, we apply the K2 algorithm for correlation
+and the “hybrid” propagation for inference.
+In our approach, we first conduct attack aggregation
+and clustering in order to reduce the redundancy of
+attacks while retaining important attributes such as
+source IP, destination IP and port(s). The
+corresponding algorithm for attack aggregation and
+clustering can be found in [21].
+A. Attack Correlation
+The notion of attack correlation as the process of
+aggregating attacks related to the same event has been
+studied in [22], [23], and [24]. They define a
+similarity relationship between attack attributes to
+aggregate attacks. The second main approach of
+attack correlation as the process of detecting
+scenarios of attacks has been discussed in [25], [26],
+and [27]. In our proposal we use the latter approach,
+introducing the notion of attack correlation as the
+process of finding a set of attacks in the stream of
+intrusion detection alerts organized into a scenario. In
+practice, we observe that when a host is compromised
+by an attacker, it usually becomes the target of further
+attacks or a stepping-stone for launching attacks
+against other systems. Therefore, the consequences of
+an attack on a compromised host can be used to
+reason about a possible matching with the goals of
+another attack. It is possible to address this
+correlation by defining pre-/post-conditions of
+individual attacks and applying condition matching.
+However, it is infeasible to enumerate and precisely
+encode all possible attack consequences and goals
+into pre-/post-conditions. Therefore, we apply
+bayesian reasoning to attack correlation by
+incorporating
+system
+indicators
+of
+attack
+consequences and prior knowledge of attack
+
+transitions. In this section, we discuss how to apply
+bayesian reasoning to attack consequences and goals
+in order to discover the subtle relationships between
+attack steps in an attack scenario.
+B. Attack Correlation Using Bayesian Networks
+In our approach, we correlate two complementary
+types of attacks. First we correlate attacks that are
+directly related because an earlier attack enables or
+positively affects the later one [28]. For example, a
+port scan may be followed by a buffer overflow
+attack on a scanned service port. We apply bayesianbased correlation mechanism to reason and correlate
+attacks based on security states of systems and
+networks. Second, we correlate attacks that have
+temporal and statistical patterns even though they do
+not have obvious or direct relationship in terms of
+security and performance measures [29]. We apply
+bayesian-based correlation mechanism to detect the
+“causal” relationships between attacks.
+For an attack pair (Ai,Aj), if its correlation value
+computed by the bayesian-based model, denoted
+p(Ai,Aj), is larger than a pre-defined threshold, then
+we say that attack Aj is “caused” by attack Ai .
+A correlation graph can be constructed based on pairs
+of correlated attacks. A correlation graph is defined as
+a directed graph where each edge Eij represents a
+“causal” relationship from attack Ai to attack Aj.
+Attacks with “causal” relationships compose the
+nodes in the correlation graph. We denote the node
+corresponding to the “causal” attack as causal node,
+and the node corresponding to the “effected” attack as
+effected node. A threshold t is pre-defined and attack
+Ai is considered to be “caused” by attack Aj only
+when p(Ai,Aj) > t. In constructing correlation graphs,
+we only include the correlated attack pairs whose
+probabilistic correlation values are over the threshold.
+In a correlation graph, each edge is associated with a
+correlation probability from causal node to effected
+node. Therefore, we can perform quantitative analysis
+on the attack strategies. Each path in the graph is
+potentially a subsequence of an attack scenario.
+Therefore, based on the probability associated with
+each edge, for any two nodes in the graph that are
+connected by multiple paths, we can compute the
+overall
+probability
+of
+each
+path
+by
+p(A1,An)=⊗p(Ai|pai), where pai represents direct
+parents of Ai [11]. We can also compute the overall
+possibility of each path by π(A1,A2…,An) =
+
+capable of adapting to new evidence and knowledge
+by belief updates through network propagation.
+C. Attack Plan Prediction
+Given a stream of alerts, we first analyze one or more
+features of alerts and output results as evidences to
+the inference process. The inference process based on
+junction tree algorithm consists in propagating both
+the variability (uncertain information) and the
+imprecision (imprecise information) within the
+bayesian network. Each path in the graph is
+potentially a subsequence of an attack scenario.
+Therefore, based on the probability degree and the
+gap between the necessity and the possibility degrees
+associated with each edge, we can perform
+quantitative analysis on the attack strategies.
+The advantage of our approach is that we do not
+require a complete ordered attack sequence for
+inference. Due to bayesian networks and the “hybrid”
+propagation, we have the capability of handling
+partial order and unobserved activity evidence sets. In
+practice, we cannot always observe all of the
+attacker’s activities, and can often only detect partial
+order of attack steps due to the limitation or
+deployment of security sensors. For example, security
+sensors such as IDS can miss detecting intrusions and
+thus result in an incomplete alert stream.
+In the final selection of possible future goal or attack
+steps, we can either select the node(s) who has the
+maximum informative probability value(s) or the
+one(s) whose informative probability value(s) is (are)
+above a threshold.
+An informative probability is a probability delimited
+by two confidence measures where the gap between
+them is under a threshold.
+Figure 1 presents architecture for our system:
+Attack
+scenarios
+
+Correlation
+(K2 algorithm)
+
+Bayesian
+Network
+
+Assesment
+alerts
+
+« hybrid »
+propagation
+
+Attack plan
+prediction
+
+Figure 1. Attack correlation and prediction system
+
+Attack correlation with bayesian networks has several
+advantages. First, it can incorporate prior knowledge
+and expertise by populating the CPTs. It is also
+convenient to introduce partial evidence and find the
+probability of unobserved variables. Second, it is
+
+VII.
+
+EXPERIMENTATION
+
+To evaluate the effectiveness and validity of our
+attack correlation and prediction system, we applied
+our algorithms to one of the datasets of the Grand
+
+Challenge Problem (GCP) version 3.1 provided by
+DARPA’s Cyber Panel program [19, 20], Scenario I.
+GCP version 3.1 includes two innovative worm attack
+scenarios to specifically evaluate attack correlation.
+In GCP, multiple heterogeneous security systems,
+e.g., network-based IDSs, host-based IDSs, firewalls,
+and network management systems, are deployed in
+several network enclaves. Therefore, GCP attacks are
+from both security systems and network management
+system.
+In the GCP Scenario I, there are multiple network
+enclaves in which attacks are conducted separately.
+We select a network enclave as an example to show
+the correlation process (Figure 2).
+In scenario I, there are a little more than 25,000 attack
+scenarios output by heterogeneous security devices in
+all enclaves. After attack fusion and clustering, we
+
+Plan_Loki
+DB_NewClient_Target
+
+Plan_NewClient
+
+have around 2,300 attacks. In our example network
+enclave, there are 320 attacks after aggregation.
+When applying HCS learning algorithm, we correlate
+each attack with its « causal » attacks. Figure 2
+shows the resulting correlation graph, where
+DB_FTP_Globbing_Attack represents a buffer over
+flow attack against the database server,
+DB_NewClient_Target indicates a suspicious
+incoming connection to the database server from
+another server, DB_Illegal_File_Access represents
+the illegal access (write or read) to the database
+server, DB_NewClient indicates a suspicious
+outbound connection from database to an external
+host, and Loki means a suspicious data export via
+covert
+channel.
+
+DB_FTP_Globbing_Attack
+
+DB_IllegalFileAccess
+Mail_NewClient
+Loki
+
+Plan_HostStatus
+
+Mail_RootShareMounted
+DB_NewClient
+
+Plan_RootShareMounted
+Mail_IllegalFileAccess
+Plan_IllegalFileAccess
+
+WS1_NewClient
+
+Figure 2. Correlation graph based on bayesian network
+
+As discussed in Section 5.2, for any two nodes in the
+correlation graph that are connected on multiple
+paths, we can compute the probability and the
+possibility of attack transition along each path. For
+example, from node DB_ FTP_ Globbing_ Attack to
+node DB_NewClient in the graph shown in Figure 2,
+there are 6 paths that connect these two nodes. Based
+on the probability and the possibility associated on
+the edge, we can compute the value of each path. For
+example, the overall probability for the attack path
+DB_FTP_Globbing_Attack→Loki→DB_NewClient is
+p(DB_FTP_Globbing_Attack,Loki,DB_NewClient)=
+p(DB_FTP_Globbing_Attack)*p(Loki|DB_FTP_Glo
+bbing_Attack)*p(DB_NewClient|Loki). And the
+overall possibility for the same attack path is:
+
+π(DB_FTP_Globbing_Attack,Loki,DB_New Client)=
+π(DB_FTP_Globbing_Attack)*π(Loki|DB_FTP_Glo
+bbing_Attack)*π(DB_NewClient|Loki).
+Table 1 shows the ordered multi-paths according to
+the corresponding path values. From the table, we can
+see
+that
+the
+probability
+of
+the
+path
+(DB_FTP_Globbing_Attack→Loki→DB_NewClient)
+is more informative than the probability of the path
+(DB_FTP_Globbing_Attack→DB_ NewClient) so
+although the probability of the later one is higher than
+the first one, it is more confident to say that the
+attacker is more likely to launch FTP_Globbing_
+Attack against the Database Server, then Loki attack,
+then New Client attack from the Database Server that
+denotes a suspicious connection to an external site.
+
+TABLE I. RANKING OF PATHS FROM NODE DB_FTP_GLOBBING_ATTACK TO NODE DB_NEWCLIENT.
+Transition
+Score
+0.34≤0.63≤0.87
+DB_FTP_Globbing_Attack→DB_ NewClient
+DB_FTP_Globbing_Attack→Loki→DB_NewClient
+
+0.32≤0.61≤0.62
+
+DB_FTP_Globbing_Attack→DB_NewClient_Target→DB_ NewClient
+
+0.28≤0.43≤0.53
+
+DB_FTP_Globbing_Attack→DB_IllegalFileAccess→DB_NewClient
+DB_FTP_Globbing_Attack→DB_NewClient_Target→Loki→DB_NewClient
+DB_FTP_Globbing_Attack→DB_NewClient_Target→DB_IllegalFileAccess→DB_NewClient
+
+0.22≤0.41≤0.48
+0.18≤0.37≤0.41
+0.09≤0.18≤0.23
+
+A. Experimentation Results
+The correlation rate can be defined as the rate of
+attacks correctly correlated by our system. False
+positive correlation rate is the rate of attacks
+correlated by the system when no relationship exists
+between them. False negative correlation rate is the
+rate of attacks having in fact relationship but the
+system fails to identify them as correlated attacks.
+Table 2 shows experimentation results measured by
+our system:
+TABLE II. EXPERIMENTATION RESULTS
+Correlation
+rate
+
+False positive
+correlation rate
+
+False negative
+correlation rate
+
+94.5 %
+
+4.5 %
+
+4.3 %
+
+Table 2 shows high performance of our system in
+attack correlation and prediction. The use of “hybrid”
+propagation in bayesian networks was especially
+useful, because we have deal with a lot of missing
+information.
+
+practical and has the potential to provide security
+operators a way to automatically correlate attack
+scenarios and predict future attacks based on the
+observed evidence and networks under protection.
+VIII.
+
+CONCLUSION
+
+In this paper, we presented an approach to identify
+attack plans and predict upcoming attacks. We
+developed a bayesian network based system to
+correlate attack scenarios based on their relationships.
+We conducted inference to evaluate the likelihood of
+attack goal(s) and predict potential upcoming attacks
+based on the “hybrid” propagation of uncertainties.
+Our system demonstrates high performance when
+correlating and predicting attacks. This is due to the
+use of bayesian networks and the “hybrid”
+propagation within bayesian networks which is
+especially useful when dealing with missing
+information.
+There are still some challenges in attack plan
+recognition. First, we will apply our algorithms to
+alert streams collected from live networks to improve
+our work. Second, our system can be improved by
+integrating an expert system which is able to provide
+recommendations based on attack scenarios
+prediction.
+REFERENCES
+[1]
+
+Figure 3. Experimentation results
+
+B. Discussion
+Applying our algorithms of scenario correlation and
+attack prediction to the GCP data set, we correlate
+attack scenarios and make correct prediction on the
+upcoming type of attack.
+In our approach, attack scenarios dataset is the basis
+for automatically correlating attack scenarios at a
+higher level and conducting inference for attack
+prediction. We argue that, in practice, the attack
+scenarios dataset can be defined as comprehensively
+as possible by security experts with their knowledge
+of attacks and attack strategies, as well as the
+understanding of networks and systems under
+protection and the mission goals.
+The attack scenarios dataset can be expanded or redefined with the new knowledge of attacks or attack
+scenarios. Therefore, we believe that our approach is
+
+[2]
+
+[3]
+
+[4]
+
+[5]
+
+[6]
+
+[7]
+
+F. Cuppens and R. Ortalo. LAMBDA: A language to model
+a database for detection of attacks. In Third International
+Workshop on the Recent Advances in Intrusion Detection
+(RAID’2000), Toulouse, France, 2000.
+X. Qin andW. Lee. Discovering novel attack strategies from
+INFOSEC alerts. In Proceedings of the 9th European
+Symposium on Research in Computer Security, Sophia
+Antipolis, France, September 2004.
+A. Valdes and K. Skinner. Probabilistic alert correlation. In
+Proceedings of the 4th International Symposium on Recent
+Advances in Intrusion Detection (RAID), October 2001.
+P. A. Porras, M. W. Fong, and A. Valdes. A MissionImpact-Based approach to INFOSEC alarm correlation. In
+Proceedings of the 5th International Symposium on Recent
+Advances in Intrusion Detection (RAID), October 2002.
+H. Debar and A. Wespi. The intrusion-detection console
+correlation mechanism. In 4th International Symposium on
+Recent Advances in Intrusion Detection (RAID), October
+2001.
+B. Morin and H. Debar. Correlation of intrusion symptoms:
+an application of chronicles. In Proceedings of the 6th
+International Symposium on Recent Advances in Intrusion
+Detection (RAID 2003), Pittsburgh, PA, September 2003.
+P. Ning, Y. Cui, and D.S. Reeves. Constructing attack
+scenarios through correlation of intrusion alerts. In 9th ACM
+Conference on Computer and Communications Security,
+November 2002.
+
+[8]
+
+F. Cuppens and A. Mi`ege. Alert correlation in a
+cooperative intrusion detection framework. In Proceedings
+of the 2002 IEEE Symposium on Security and Privacy,
+pages 202–215, Oakland, CA, May 2002.
+[9]
+S. Cheung, U. Lindqvist, and M. W. Fong. Modeling
+multistep cyber attacks for scenario
+recognition. In Proceedings of the Third DARPA Information
+Survivability Conference and Exposition (DISCEX III),
+Washington, D.C., April 2003.
+[10] P. Ning, D. Xu, C. G. Healey, and R. A. Amant. Building
+attack scenarios through integration of complementary alert
+correlation methods. In Proceedings of the 11th Annual
+Network and Distributed System Security Symposium
+(NDSS’04), San Diego, CA, February 2004.
+[11] Jensen F. Bayesian Networks and Decision Graphs.
+Springer, New York, USA, 2001.
+[12]
+
+Axelsson S. The Base-Rate Fallacy and its Implications for
+the Difficulty of Intrusion Detection. In 6th ACM
+Conference on Computer and Communications Security,
+1999.
+
+[13]
+
+Johansen Krister and Lee Stephen. Network Security:
+Bayesian Network Intrusion Detection (BNIDS) May 3,
+2003.
+
+[14]
+
+Peter Spirtes, Clark Glymour, and Richard Scheines.
+Causation, Prediction, and Search. Springer Verlag, New
+York, 1993.
+
+[15]
+
+Thomas S. Verma and Judea Pearl. Equivalence and
+synthesis of causal models. In P.P. Bonissone, M. Henrion,
+L.N. Kanal, and J.F. Lemmer, editors, Uncertainty in
+Artificial Intelligence 6, pages 255-268. Elsevier Science
+Publishers B.V. (North Holland), 1991.
+[16] Gregory F. Cooper and Edward Herskovits. A Bayesian
+method for the induction of probabilistic networks from
+data. Machine Learning, 1992.
+[17] Sanguesa R., Cortes U. Learning causal networks from data:
+a survey and a new algorithm for recovering possibilistic
+causal networks. AI Communications 10, 31–61, 1997.
+[18] Frank Jensen, Finn V. Jensen and Soren L. Dittmer. From
+influence diagrams to junction trees. Proceedings of UAI,
+1994.
+[19] DAPRA Cyber Panel Program. DARPA cyber panel
+program grand challenge problem
+(GCP). http://www.grandchallengeproblem.net/, 2003.
+[20] J. Haines, D. K. Ryder, L. Tinnel, and S. Taylor. Validation
+of sensor alert correlators. IEEE Security & Privacy
+Magazine, January/February, 2003.
+[21] X. Qin and W. Lee. Statistical causality analysis of infosec
+alert data. In Proceedings of the 6th International
+Symposium on Recent Advances in Intrusion Detection
+(RAID 2003), Pittsburgh, PA, September 2003.
+[22] H. Debar and A. Wespi. Aggregation and Correlation of
+Intrusion-Detection Alerts. In Fourth International
+Workshop on the Recent Advances in Intrusion Detection
+(RAID’2001), Davis, USA, October 2001.
+[23] A. Valdes and K. Skinner. Probabilistic alert correlation. In
+Fourth International Symposium on Recent Advances in
+Intrusion Detection (RAID2001), pages 58–68, Davis, CA,
+USA, October 2001.
+[24] F. Cuppens. Managing Alerts in a Multi-Intrusion Detection
+Environment. In 17th Annual Computer Security
+Applications Conference New-Orleans, New-Orleans, USA,
+December 2001.
+[25] P. Ning, Y. Cui, and D. Reeves. Constructing Attack
+Scenarios Through Correlation of Intrusion Alerts. In
+proceedings of the 9th ACM conference on Computer and
+
+communication security, pages 245–254, Washington DC,
+USA, 2002.
+[26] F. Cuppens, F. Autrel, A. Mi`ege, and S. Benferhat.
+Recognizing malicious intention in an intrusion detection
+process. In Second International Conference on Hybrid
+Intelligent Systems (HIS’2002), pages 806–817, Santiago,
+Chile, October 2002.
+[27] S. Benferhat, F. Autrel, and F. Cuppens. Enhanced
+correlation in an intrusion detection process. In
+Mathematical Methods, Models and Architecture for
+Computer Network Security (MMM-ACNS 2003), St
+Petersburg, Russia, September 2003.
+[28] X. Qin andW. Lee. Discovering novel attack strategies from
+INFOSEC alerts. In Proceedings of the 9th European
+Symposium on Research in Computer Security, Sophia
+Antipolis, France, September 2004.
+[29] X. Qin and W. Lee. Statistical causality analysis of
+INFOSEC alert data. In Proceedings of the 6th International
+Symposium on Recent Advances in Intrusion Detection
+(RAID 2003), Pittsburgh, PA, September 2003.
+[30] Peter Spirtes, Thomas Richard-son, and Christopher Meek.
+Learning Bayesian networks with discrete variables from
+data. In Proceedings of the First International Conference on
+Knowledge Discovery and Data Mining, pages 294-299,
+1995.
+[31] M. Sayed Mouchaweh, P. Bilaudel and B. Riera. “Variable
+ProbabilityPossibility Transformation”, 25th European
+Annual Conference on Human Decision-Making and
+Manual Control (EAM'06), September 27-29,Valenciennes,
+France, 2006.
+
+

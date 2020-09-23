@@ -1,0 +1,56 @@
+\documentclass{article}
+\usepackage{pgfplots}
+\usepackage{filecontents}
+
+\tikzset{>=latex}
+
+\pgfrealjobname{plottemporal} %Be careful, we cannot put here the same name than in beginpgfgraphicnamed
+
+
+\begin{document}
+
+\beginpgfgraphicnamed{papers_per_year}
+\begin{tikzpicture}
+\begin{axis}[
+	ybar,
+	%title={Hola}
+	%ymin = 0, ymax=4000,
+	%xmin = 0, xmax=25,
+	%ylabel = {\%},
+	xlabel = {Year},
+	ylabel = {Number of Papers},
+%	yticklabel={\pgfmathparse{\tick*100}\pgfmathprintnumber{\pgfmathresult}\%},
+	%xticklabel style={
+	%	/pgf/number format/fixed,
+        	%	/pgf/number format/precision=2
+	%},
+	%ylabel style = {at={(axis description cs:0.08,.5)}},
+	%scaled x ticks=false,
+	%scaled y ticks = base 10:-3,
+	grid=major,
+	minor xtick = data,
+	xtick align=outside,
+	ytick align=outside,
+	xtick pos = left,
+	ytick pos = left,
+	%legend entries = {\small Increment,\small Decrement, \small Classic},
+	%legend style={at={(0.02,0.74)},anchor=south west},
+	%every axis plot/.append style={ultra thick},
+	/pgf/number format/.cd,
+        use comma,
+        1000 sep={}
+	]
+\addplot+[] table [col sep=comma] {papers_per_year.csv};
+%\addplot+[mark=none, dashed] table [col sep=comma] {pheromones_decrement.csv};
+%\addplot+[mark=none, smooth, dotted] table [col sep=comma] {pheromones_classic.csv};
+%\addplot+[mark repeat={1}] table [col sep=comma] {raterealdet.csv};
+%\addplot+[mark=o, mark repeat={500}] table [col sep=comma] {ratefp_noph.csv};
+%\addplot+[mark repeat={500}] table [col sep=comma] {raterealdet_noph.csv};
+\end{axis}
+\end{tikzpicture}
+
+\endpgfgraphicnamed
+
+\end{document}
+
+

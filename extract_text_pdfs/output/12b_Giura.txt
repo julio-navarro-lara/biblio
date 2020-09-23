@@ -1,0 +1,288 @@
+Using Large Scale Distributed Computing to Unveil Advanced Persistent Threats
+Paul Giura AT&T Security Research Center, New York, NY paulgiura@att.com ABSTRACT Besides a large set of malware categories such as worms and Trojan horses, Advanced Persistent Threat (APT) is another more sophisticated and highly targeted attack emerging in the cyber threats environment. In this paper we propose a model of the APT detection problem as well as a methodology to implement it on a generic organization network. The method suggests to closely monitor the possible targets and to use a large scale distributed computing framework, such as MapReduce to consider all possible events and to process all the possible contexts where the attack could take place. Our results show that this approach is feasible to process very large data sets and is flexible enough to accommodate any context processing algorithm, even to detect sophisticated attacks such as APT. I INTRODUCTION Wei Wang AT&T Security Research Center, New York, NY wei.wang.2@att.com that makes the detection task to look like searching the needle in the haystack. This suggests that traditional network perimeter defense system can become ineffective in detecting targeted attacks, they are not scalable to the increasing size of organization networks, therefore a new approach is required. Even though the attack itself is not a large scale exploit, the detection method should use large scale methods and close to target monitoring algorithms in order to be effective and to cover all possible attack paths. In this work we propose a framework for the APT detection problem and a methodology to implement it in a generic organization network. We introduce a conceptual attack model, called the attack pyramid, starting from the attack tree concept [6, 7]. The attack pyramid has the possible attack goal (e.g. sensitive data) at the top, and the lateral planes representing the environments where the events associated with an attack can be recorded. The proposed detection scheme groups into contexts all the events recorded in an organization that can potentially be relevant for security and then uses various algorithms to detect possible malicious activities within each contexts and across contexts, in parallel, using a MapReduce paradigm [8]. There is no doubt that the data used as evidence for attacks is growing in both volume and variety and is increasingly difficult to detect "the needle in the haystack" type of attacks. Moreover, in the cases of APTs there is no "known bad" item that an IDS could pick up or that could be found in a traditional information retrieval systems or a databases. We believe that exploring the use of large scale distributed systems has the potential to help in analyzing more data at once, to cover more attack paths and possible targets that were unthought before, and maybe to reveal the "unknown bad" in a context closer to the target. With this paper we make the following key contributions: ˇ We present a comprehensive definition of the attack based on well documented cases, then we propose a conceptual model of an APT starting from the attack tree concept. In our model the attack goal is placed at the top of the pyramid,
+Page 1 of 13 c ASE 2012
+
+Advanced Persistent Threats (APTs) are some of the most fast growing information security threats that organizations face today [1]. They are operated by very skilled and well funded attackers targeting sensitive information from specific organizations. In the past, APTs were mostly directed at political and military targets [2]. However, over the past few years, attackers increasingly use APTs to strike enterprise targets for financial gains [3, 4]. In these cases, the ultimate goal is to steal intellectual property (IP) created from expensive research, to gain access to sensitive customers data or to access strategic business information that could be used for illegal trading or to disrupt organizations business. APTs have become very sophisticated and diverse in the methods and technologies used, particularly in the ability to use organizations' own employees to penetrate the IT systems [1]. The data breach investigation report presented in [5] concludes that, in 86% of the cases, evidence about the data breach was recorded in the organization logs but the detection mechanisms failed to raise security alarms. One of the major challenges in detecting APTs is the ever increasing number of logs that have to be audited,
+
+and the lateral planes as the various environ- victim's computer the attackers establish a Command ments where the events are recorded (e.g. phys- & Control (C&C) channel and have full control of the ical, user, network, application planes, etc.). machine over the Remote Desktop Protocol (RDP) protocol [13]. In Figure 1 labels represent the action ˇ We provide the description and the imple- description on the upper part on the arrow and on the mentation guidelines of the scalable detection lower part the scenario in which the action is used. framework using the recorded events, the map- For scenario 1 we assume the goal is to steal files ping and detection rules for each context (e.g. with information located on the targeted employee important employees, data servers, services, im- work station (1B). For scenario 2 we assume the goal portant assets etc.) that are processed in paral- is to steal information accessible remotely from the lel using a prototype multiprocess MapReduce targeted employee. First the attackers have to comimplementation. promise the employee machine and then connect remotely to a database server (2C, 2D). For scenario 3 the first targeted employee is a proxy to reach a The rest of the paper is organized as follows. In second employee, maybe an administrator, that has Section II we provide a comprehensive definition of access to the targeted remote data. The second emthe APT concept and in Section III we introduce the ployee can be targeted with another spear phishing threat model. In Section IV we propose an APT deemail or with a spear phishing message using SMS tection framework and in Section V we present the service or other Instant Messaging (IM) application implementation guidelines. In Section VI we show the used by organization employees (3B), then, once the preliminary evaluation results, Section VII summasecond user workstation is compromised the attacker rizes the related work and in Section VIII we present creates a C&C channel, pulls the data from the reour conclusions. mote server (3C, 3D) and exfiltrates the data (3E). In reality the attacks might be more complex but they tend to converge to one of these scenarios. II WHAT EXACTLY IS APT? APT can best be defined using the words deriving the acronym. Advanced (A) means that attackers are well trained, organized, well funded and utilize a full spectrum of network intrusion technologies, crafting their own tools if needed. Persistent (P) refers to the persistence of the attack over long periods of time. Attackers give high priority to a specific task, rather than opportunistically seeking immediate gain, and maintain a prolonged presence in the targeted organization networks. Threat (T) refers to the attackers intention to inflict damage and create loss by disrupting services or stealing proprietary data. APTs are characterized as "low and slow" advanced operations, "low" for maintaining a low profile in the networks and "slow" for long execution time. Figure 1 shows three possible APT operation scenarios based on the cases presented in [1­3]. For all three scenarios the APT operators exploit a vulnerability in one or more internet servers and for all cases [1­3, 9­11] it is assumed that the attack starts with a spear-phishing email 1 to an employee of the targeted organization (1A, 2A, 3A). The spear phishing email contains a malicious attachment representing a file with a Remote Access Toolkit (RAT) embedded, such as Poison Ivy [12], or a URL from where the victim can download the file. After the RAT is executed on the
+1A
+
+Analyses of specific APT instances conclude that each attack is unique and highly customized for each target [1­3, 9­11]. However, across many attacks the stages of the APTs are similar and they differentiate mostly in the specific methods used to pass each stage. Figure 2 shows these stages in the order in which they are typically executed. Reconnaissance: In this stage attackers gather information about the target organization resources, employees and relationships with other entities that can be leveraged to reach the target [2]. They scan the network to search for open network services, what network perimeter defense systems are used and what employees have access to the targeted information. Next, attackers build profiles for each targeted employee using public social networks information that employees might be members of (e.g. LinkedIn, Facebook etc). Delivery: This stage involves the preparation of a spear phishing email using information gathered in the reconnaissance stage that will be sent from a compromised internet facing server [1, 2, 9]. The phishing email might contain invitation to an event scheduled by an organization that the targeted employee
+
+phishing email targeted at a specific employee, operation is sometimes called whaling if the targeted employee is a privileged user.
+
+Page 2 of 13 c ASE 2012
+
+APT Operator
+
+Exploit Establish vulnerability C&C channel Compromised Server
+
+Compromised User 1
+
+il ma ge hin phis A, 3A ta r a Spe 1A, 2 ate da e) tr ot xfil (rem D C, E C& cal), 2 lo ( B 1
+
+C&C
+
+, Ex filtr at 3E e data
+
+Compromised User 2
+
+Re q
+
+Spear phishing message (IM, SMS, email) 3B
+
+ue
+
+re Pu ll r 2 mo te em B da o ta 2C te d at a
+
+st
+
+Data Server
+
+ta da ote m e r te C ta 3 es da qu ote Re m e ll r 3D Pu
+
+Intranet
+
+Figure 1: Three APT scenarios 1A  1B, 2A  2B  2C  2D, 3A  3B  3C  3D  3E trusts [2] with an URL from where the invitee can download a file, or an attachment representing the event agenda that has embedded a RAT. Email is the most common entry vector for a compromising malware but other channels can be used as well (i.e. SMS, IM, etc). Exploitation: Once the RAT [11] makes its way into the organization network to the targeted employee, it is eventually installed and activated. Next, it creates a C&C connection from the victim machine to the remote master. Once the attackers secure a C&C connection to the victim's computer, they stealthily continue to collect information about the machine's security configurations, related system information, sniff passwords, collect user emails to support future attacks, gather network usernames and directory listings of network shared folders. Operation: This stage involves persistent presence in the organization network over long periods of time. Attackers move horizontally in the network and identify the servers storing the sensitive information, users having the right access privileges and create the strategy to collect end export the targeted information. Often, operators target the privileged users with new spear-phishing emails, and, if exploits succeed, they elevate their privileges to access the sensitive data.
+
+Figure 2: Typical stages of an APT. justments in the organization security configurations. Similarly, once the targeted information is accessed, redundant copies are created on one or more internal servers that act as "staging points" where the information is segmented, compressed and encrypted before being exfiltrated. Exfiltration: In this stage the information gathered and carefully packaged in the staging servers is transferred over encrypted channels to multiple external servers that act as drop points. The use of multiple drop point servers is an obfuscation strategy to prevent investigators from finding the final destination of the data. III ATTACK MODEL
+
+In this section we describe the attack tree concept and then we introduce a new APT model, the attack pyramid. 1 ATTACK TREE
+
+A threat tree is a method to represent a threat in a tree structure, first introduced by Edward Amoroso in [6], and later popularized by Bruce Schneier in [7] as an attack tree. An attack tree is built as follows: the attack goal is placed as the root and different Data Collection: In this stage operators use the ways to reach the goal are represented as children. privileged users credentials harvested in the previ- Each two children nodes can be AND (marked with ous stage to get access to the targeted data. Attack- an arc between edges) or OR nodes, representing if ers often use sophisticated tools to create redundant both (AND) or each (OR) have to happen to reach C&C channels that can be used in cases of sudden ad- the root. Then, each child node can be treated as
+Page 3 of 13 c ASE 2012
+
+SOURCE CODE
+
+(5c) (5b)
+STEAL SERVER REPOSITORY USER
+
+(2)
+
+INSIDER
+
+(5a)
+ENTER BUILDING SERVERS
+
+(3)
+C&C SPEAR-PHISHING EXPLOIT BRIBE BLACKMAIL
+
+(6)
+
+(4)
+
+PhysicalPlane
+
+NetworkPlane
+
+(1)
+
+UserPlane
+
+Figure 3: The attack tree of an APT aimed at source code data. a goal and new sub-trees can be built having it as root. Creating the possible attack trees gives the organization's information security administrators a way to detect the possible vulnerable elements in the path to the targeted data. However, it is impossible to enumerate all the APT scenarios and to build all possible attack trees because attackers might use a path that was not covered by the initial attack tree model. Figure 3 shows a simple example of an attack tree targeted at the product source code of an organization and a possible path that APT can follow over a long period of time. Root's children nodes are four possible ways to access the source code: to steal server with source code OR to download directly from repository OR from user machine OR to get it from an insider. In an APT, first an employee might be targeted with a spear-phishing email (1). After some time, the malware code is executed and attackers take control of the user machine (2). They create a C&C channel (3) to one of the network servers that employee has access to, and is closer to the source code (4). Repository server is accessed (5a), source code is pulled from the repository (5b), data is stored on temporary servers (5c) and finally is exfiltrated (6). term events across planes and determining they are part of a coherent attack. 2 ATTACK PYRAMID
+
+We propose to model an APT as an attack pyramid and we designed the detection framework based on this model. The goal of the attack is placed at the top of the pyramid, and the lateral planes represent the environments where the attack evolves (e.g. physical plane, user plane, network plane, application plane, etc.). Figure 4 shows an intuitive mapping between the attack pyramid concept and the APT stages described in Section II. Pyramid planes are dependent on the specifics of each organization and are defined based on the environments where the events are recorded. Assume that an organization can provide a comprehensive understanding of all the candidate planes that provide facilities to reach the targeted goal G. In order to reach the goal G, the attackers can explore the vulnerabilities and approach the goal by "crawling" from one or multiple planes. Therefore, in the end, a detected APT looks like an attack tree that spans multiple planes. Figure 5 provides an intuitive view of an APT attack tree. The pyramid The nodes on the left occur in the physical plane planes are unfolded to provide the planar view of the when someone is actually breaking into a building attack. The small points represent recorded events and stealing a server. While the nodes on the right in the planes and the colored connected events repreoccur in the network plane and user plane. There are sent correlated events representing a possible attack. two primary issues related to APTs. First, detection Path 1 represents correlated events in physical plane, and alerting may be very good within a plane, but Path 2 and Path 3 represent correlated events spanthey are usually not correlated across planes. Sec- ning multiple planes. ond, even within a plane, detection is not usually correlated over a very long period of time such as weeks, months or even years. This insight led to the 3 EVENTS creation of another APT model called the attack pyramid. So the attack pyramid still looks similar to the We propose to use all events recorded in an enterstandard attack tree, but now it is clearly delineated prise environment to detect advanced cyber attacks, that an attack path may go across planes. An at- not only the events that represent security alerts. The tack may take the circuitous path shown on figure reasoning is that, before the real security incident is following the stages presented in Section II. Now the detected, an analyst does not know where to look for challenge becomes one of correlating possibly long- something bad or relevant for security decision. In
+
+Page 4 of 13 c ASE 2012
+
+Time line G
+
+Exfiltration Data Collection Operation Exploitation Delivery Reconnaissance
+
+Figure 5: The unfolded attack pyramid. Figure 4: The attack pyramid. general, we identified three types of possible events that can be recorded in an enterprise. are generated in multiple planes. The most common examples of pyramid planes are the physical plane, the user plane, the network plane and the application plane. Table 1 lists the possible event sources in each plane.
+
+1) Candidate Events: All the events recorded by an organization logging mechanisms in any form. For example, network flow events represent a type of candidate events because they don't necessarily represent Physical plane: Records all the events that assoattack activity, but can potentially include flow traces ciate possible targets with physical devices or workgenerated by an APT. ing locations. Events in this plane can be correlated with events from other planes that contain the same 2) Suspicious Events: Events reported by the se- users, devices and working location attributes. In curity mechanisms as suspicious, or represent events most cases physical plane events are used as evidences associated with abnormal or unexpected activity. For that the traffic originated from a device in a working example, an event corresponding to the upload of a location is indeed generated by the claimed user. Adlarge file from an internal host, that was not engaged ditionally, events in this plane record the creation of in a similar activity in the recent past, can be suspi- organization assets that can be the goals of the atcious. tacks, such as the start of a new source code repository in a specific physical working location. 3) Attack Events: Events that traditional security systems aim to detect with regard to a specific attack User plane: Captures the social engineering proactivity (e.g. antivirus signatures, etc.). In general, cess that happens in APTs. At the initial stage, attack events reported by the security mechanisms. users who have direct access to the possible APT For example, a DNS request to a known malicious goals with privileges to access the sensitive data will domain, or a packet containing a known malware bi- be closely monitored and all events associated with nary code. sensitive data access will be recorded. Additionally, there will be recorded both host based events and network events related to privileged users and their 4 PLANES possible social ties. There is rarely the same way to reach the goal by applying the same sequence of techniques because attackers tend to avoid repeating the same pattern to not be caught. It is often the case that correlated events that lead to the detection of the attack events Network plane: All the events recorded by network flow sensors, firewalls, routers, VPN access, intrusion detection and prevention systems will be recorded in this plane. We expect that this plane to hold the
+
+Page 5 of 13 c ASE 2012
+
+Planes Physical User Network Application
+
+Event sources building entry logs, hiring events, assets status logs, etc. hierarchy updates, contact updates, affiliation updates, etc. firewall logs, IPS/IDS logs, netflow logs, etc. authentication logs, DNS logs, email logs, http logs, etc.
+
+Table 1: Possible pyramid planes with the event sources in each plane.
+
+largest number of events. These events can be used evaluating the detection rules, the confidence level to establish the volumetric baseline for network traffic for each context is updated and the thresholds are checked. Next action is determined based on the risk or to correlate with events in other planes. and confidence evaluation. If the risk and confidence Application plane: Application gateways (such as parameters are in the alarm zone then an alarm is http, SIP, RTP, DNS, email, p2p, SSH, ftp, telnet, triggered and the APT incident response is initiated. DHCP, etc.), server and end host application logs If the alert system raises an alert, then the security will be recorded in this plane. It is often the case analyst is notified to start investigating the alert. At that attackers will use spear-phishing on employees this point the analyst has four options: 1) to raise an inside the network to start the malware delivery, alarm and confirm the reported alert needs immediwhich might be recorded by the email gateway, or ate attention, 2) to hold the investigation until more a SMS/MMS message containing a malicious URL, evidence is collected about the context in the alert which might be blocked at the SMSC message cen- system, 3) to start context investigation by looking ter. at the data source that generated the alert, or 4) to discard the alert in the case of a false positive. Note Other planes: Organizations can easily expand the that, for both scenarios when an alert is upgraded attack pyramid model by adding other interesting to an alarm, the signatures database is updated with planes. A simple extension can be to consider events information about the detected attack so that oncaptured not only by the network layer tools, but going contexts can benefit from the newly detected also by the application level rules and policies such incident. as database denied accesses, blocked URLs, etc. IV 1 DETECTION FRAMEWORK DETECTION FRAMEWORK DESIGN 2 PYRAMIDS AND GOALS
+
+Figure 6 shows the proposed APT detection framework. The mapping to the attack model is as follows. F1 to Fn represent the data feeds with the collected events in the organization, multiple feeds can generate events in the same pyramid plane (e.g. IDS/IPS and flow records in the network plane). First, profiles of potential APT targets are defined (i.e. important employee IDs, data base servers IPs, service ports, etc) and they are used to group collected events into contexts. Then, events from each context are processed using any detection algorithm to identify potential attack activity related to the target over the period of time when the events were recorded, that can be hours, days, months or more. The alert system applies the detection rules for each context by using the signature database with "known bad" information whenever requested. Based on
+
+Attack pyramids can be represented more formally as follows. Suppose we consider a set of g goals to protect G = {G1 , . . . , Gg }. Then for each goal, we build a pyramid with the goal as the top and the lateral planes representing the environments where events are recorded. Therefore we can identify a goal i with a set of n planes Gi = {P1 , . . . , Pn }. Different pyramids with different goals can share one or more planes. 3 PLANES AND EVENTS
+
+We assume a plane Pi is defined by a set of events j ki Pi = {e1 i , . . . , ei , . . . }, and an event ei generated in plane Pi has the format ej i = (t, id, a1 , . . . , ami ), where j is the event index in the plane Pi , t the time when event was recorded, id the event identifier in the pyramid, and a1 , . . . , ami the attributes for all the events in plane Pi .
+
+Page 6 of 13 c ASE 2012
+
+PROFILES
+(emp, srv, asset)
+
+DETECTION RULES
+(signature, profile, policy)
+ALA RM
+
+TAKE ACTION
+ALARM
+LD
+
+F1 F2
+COLLECTED DATA
+
+CONTEXTS
+
+ALERT SYSTEM
+UPDATE
+
+HO ALE
+
+SIGNATURE
+
+RT
+
+Fn-1 Fn
+Signatures DB
+CONTEXT INVESTIGATION UPDATE DISCARD
+
+Analyst
+
+Figure 6: Advanced attack detection framework. 4 MAPPING RULES
+
+Figure 7: The relation of risk level L and confidence indicator C . order to be effective, the signatures database should be constantly updated. 2) Anomaly detection rules: Require checking the observed profile and behavior of the monitored entity (e.g. users activity, services metrics, etc) with profile and behavior baselines. The parameters are changing with the observation time window: hour, day, month or more. For example to detect users that suddenly send out more data than in the recent past. 3) Policy based rules: Are the static rules based on the organization policies. The rules are updated when new policies are in effect. These rules can use parameters from the signature databases or variables from the profiling systems. For example to detect users that overload VPN connections with traffic on the public sites that are accessible from outside the firewall. CONTEXT
+
+After collecting the events from various sensors feeds, one important problem is to put together the events relevant to an attack context. For this we define a set of mapping rules that will group events across many planes. A rule r is defined as a function of the events in plane Pi and Pj to the set {0, 1} as follows:
+j i r(ek i , ej ) =
+
+k
+
+1, 0,
+
+j i if F (a(ek i ), a(ej )) = TRUE, otherwise.
+
+k
+
+ki i where a(ek i ) represents the attributes of ei . Essentially, if we consider the events as points in pyramid planes, a mapping rule creates an edge between events if a boolean function, the mapping function F , computed over the attributes of both events resolves to TRUE. For example, given two events e1 i  Pi 1 and e1  P , such that e = ( t , 1 , a , . . . , ami ), j 1 1 j i ) a mapping rule can be dee1 = ( t , 2 , b , . . . , b 2 1 mj j fined as: 6 1 r(e1 i , ej ) =
+
+We define a context Aj as a set of events grouped from across multiple planes corresponding to the possible target, along with specific context variables. For example, a context can represent events recorded representing, for example, events that relate to the about privileged users having access to the sensisame user ID = a1 = b1 received from multiple data tive information, internal servers hosting the sensifeeds. tive data, or critical resources considered essential to run organization business. A formal representation of a context is Aj = {E, R, W, H, C, L, G}, where 5 DETECTION RULES ki 1 E = {ek 1 , . . . , ei , . . . } represents the set of events We identified three major types of detection rules that are relevant for the advanced attack with goal G, R the correlation rules set for the context, W the time based on the data source for creating them: window when the context is active (e.g. hours, days, 1) Signature based rules: Require checking the months, etc), H the historical information about connew observed events and behavior against known at- text , C is the attack confidence indicator and L is tacks and malicious behavior. For example, to detect the risk level of the attack. The risk level and the an employee workstation attempting to connect to an confidence indicator are used to quantitatively evalAPT blacklisted domain, or a user that opens a sus- uate the threats to the goal. For example, the attack picious URL immediately after receiving an email. In
+Page 7 of 13 c ASE 2012
+
+1, 0,
+
+if a1 = b1 otherwise.
+
+Suppose that we consider the attack pyramid model for each possible target and we place the target as C= ci ˇ wi , wi = 1, i = 1, . . . , n (1) the top of the pyramid. We correlate events from different planes (i.e. data sources) based on the relation of each event with the goal. For example, if where ci represents the detection confidence and wi we assume an attack model targeted at a user data, the weight of an attack event in plane i. Essentially, we group together all the events that have the user ci values represent the confidence indicators for var- attribute related to the specified user. In the same ious algorithms run on the events within a context. manner we correlate all the events that have a relaIn our model, an APT incident is detected when a tion with other entities that can be targeted such as set of observed events makes the attack confidence services, data servers or enterprises assets. In genindicator C and a risk level L raise above specific eral, for events exported from multiple data sources thresholds C0 and L0 respectively. If the risk level L the context grouping is defined by the mapping rules reaches L0 , with confidence above C0 , then an APT presented in Section IV. alarm will be triggered. The thresholds are parameters specific to each organization environment. The confidence indicator is intended to provide a mea- 3 TIME CORRELATION sure of the expected false positive parameter. The risk level, L, is intended to quantify the severity of Time correlation captures the correlation of events the possible attack. Figure 7 shows the possible rela- grouped in a context over a period of time. Such tionship between the risk level L and the confidence correlation can be determined, for example, by using indicator C in real and ideal cases. When both pa- methods that take into account the feature distriburameters are low (LL), the attack is not clear and tions observed for the context over a predefined pemost likely no action is taken. When the risk level is riod of time W . Because in many cases of APTs there high and the confidence is low (HL), then the attack in no definition of "known bad", one can assume that succeeded without being detected. Immediate action for time window W the data set contains only "known is required and the detection rules do not properly good" and seek to define a set of normal features that capture the correlation between relevant events in or- will detect anomalous values. In a working environder to detect the attack with high confidence. In the ment the behavior of a benign user, whose workstacase when both the risk level and the confidence are tion is not compromised, can be approximated with high (HH), then the attack is probably detected in respect to the list of co-workers that he communicates late stages with some damage to the organization. with over email/IM/SMS, the list of servers that he The final and ideal case is when the risk is low and accesses regularly, the expected amount of data send the confidence indicator is high (LH). In this case the out of the network, the list of external servers conattack is detected with high confidence in early at- tacted, etc. The data captured in time window W tack stages, and most likely the organization is not can then be partitioned into training and testing in order to set reasonable parameters. This approach is compromised. common in many anomaly detection applications and usually takes a long time for the model to converge V IMPLEMENTATION to the optimal set of parameters for each context. 1 METHODOLOGY
+
+confidence can be defined as the weighted attack confidence across the planes because not all the attacks in each plane might be of equal value to the detection of APT. For instance, the detection of a brute force attempt in the user plane might have less weight than the detection of a connection to a known drop server. In the latter case the APT is in exfiltration stage, while in the first case the attack might be in the reconnaissance stage still out of the network perimeter. C is computed as follows:
+
+misuse behavior, to identify possible anomalies generated by attack activities, signs of known malware behavior and actions that do not comply with organization policies. In this section we present a possible implementation of our proposed method using a large scale computing framework. 2 PLANES CORRELATION
+
+Once the events are correlated in contexts, one can apply for each context various algorithms to detect
+Page 8 of 13 c ASE 2012
+
+1. Event Sources
+
+2. Events Storage
+
+3. Planes Correlation
+Map Users U
+
+4. Time Correlation
+U U
+Red u
+
+5. APT Detection
+
+F1 F2
+
+ce
+
+Map Devices D
+
+D D
+
+Reduce
+
+ALERT SYSTEM
+
+Fn-1
+Map Assets A A A
+
+Fn
+
+c Redu
+
+e
+
+Figure 8: MapReduce distributed computation. 4 LARGE SCALE DISTRIBUTED COMPUTING a goal and the set of all the events belonging to the context of that goal. Finally, the last reduce operation, reduce2 is applied for each goal and the set of events belonging to its context and its output is a list with the goal and all the alerts descriptions found by running the algorithm for detection the malicious activity. The output of the last reduce operation is sent to the ALERT SYSTEM which ultimately decides to trigger an alarm or not. Operations map and reduce1 represent the context construction step in the large scale computation. All the detection algorithms that work with context events are processed in reduce2 operation. Note that this modular approach is flexible enough to accommodate any detection algorithm that takes as input all the elements of a context. More specifically, operation reduce2 can be replaced by any algorithm that performs context anomaly detection, volumetric analysis, signature matching, policy checking, event sequence analysis, etc. 5 map(sensor, event)  list(goal, event) reduce1 (list(goal, event))  list(goal, set(event)) reduce2 (goal, set(event))  list(goal, alert desc) Figure 8 shows a high level representation of using MapReduce. In first step, events are collected from all the sources such as network sensors, systems logging mechanisms, perimeter security systems, etc. and they are mapped to a list of goals and events that belong to the context of the goal. If the processing platform cannot keep up with the event generation rate, the events are stored for a predefined amount of time and then feed into the MapReduce computation. The next operation, reduce1 takes as input a list with (goal, event) pairs and outputs a list with NEAR-REAL TIME DETECTION
+
+Given the increasing number of possible security relevant events collected in enterprises today and the large set of possible targets to protect, any efficient methodology should be scalable to hundreds of Gigabytes of data and hundreds of millions of events per day. We propose to use the MapReduce framework [8] to address the scalability challenge. The underlying idea behind MapReduce is to use a large cluster of machines, called workers, to perform simple computation tasks in parallel using only Map and Reduce operations. The first step is to partition the input data in small chunks, then, in parallel process each chunk by a different worker in the Map phase. In the Reduce phase a subset of the workers performs the Reduce operation on the input received from the workers that finished executing the Map operation. The following are the map and reduce operations performed by our framework.
+
+The proposed implementation can be used as an online detection method when the most recent events are processed in a batch (i.e. last 24 hours of reported events). The plane correlation phase decides in which context the new event should be included. The time correlation phase decides if, in the most recent time window considered, any attack was detected by various algorithms. Finally the ALERT SYSTEM decides if an attack was detected with the processing of the new events or a false positive was reported. By using a large scale distributed computation the newest events are processed in parallel using complex detection algorithms for each context, having the potential to achieve shorter reaction time, thus near-real time detection. Moreover, the overall processing framework has the potential to sustain a
+
+Page 9 of 13 c ASE 2012
+
+high number of events corresponding to a large time window of days or weeks dependent on the number of workers available. 6 OFF-LINE DETECTION AND FORENSICS
+
+reduces the time to read in parallel all the input partitions. Nevertheless, we believe that a large intercommunication overhead is avoided by running the MapReduce simulation using multiprocessing on the same physical device. 2 DATA
+
+The implementation can also be used off-line in the cases when the new events are not available to be processed on-line or when the on-line system cannot keep up with the generation of the new events. In this case the off-line stored data can be replayed to the processing framework by using a sliding time window for time correlation. The framework can also be slightly changed to support post-mortem forensic investigation by storing in the history for each context a digest of the past activity. One can use distributed queries to trace down a recently discovered malicious activity or a payload excerpt known to be involved in APTs, such as a spear phishing email content that was not known at the initial context processing. More specifically one can store digests of packet capture for all the traffic to and from a potential target in a Bloom filter, as suggested in [14], and then use a payload attribution system to query in parallel, in the Reduce phase, all the contexts for a suspicious payload excerpt that might be involved in an APT operation. VI PRELIMINARY EVALUATION
+
+We used the data collected from several security feeds over a period of one day in order to illustrate how the proposed framework can be implemented. We used events recorded in the network plane (VPN logs, IDS logs and firewall logs) and application plane (authentication logs and Internet proxy logs). The raw event data size is about 74 GB representing about 144 million events collected over a 24 hour period from 20 different feeds. The following table summarizes data characteristics. Attribute Value data size 74 GB time window 24 hours # of feeds 20 # of events 144,113,718 # of contexts 111,260 Data characteristics. 3 MAPPING RULES AND CONTEXTS
+
+We attempted to built contexts for users that are reported in the events collected. First, all the events 1 SETUP from all the sources were normalized to the format in Section IV. Then, we mapped all the events into We tested the feasibility of our method by attempt- contexts, one context for each user ID. We used the ing to build user contexts using data collected in a simple mapping rule in the example from Section IV. large enterprise, with the goal to identify possible at- That is, we created a context for each user ID that tacks within contexts. The evaluation is rather illus- contains all the events that have the ID attribute trative and we implemented the MapReduce frame- equal with the user ID. Using the simple ID mapwork using a multiprocessing approach. For all ex- ping rule we constructed 111,260 contexts. Figure 9 periments we used a 16 core machine with 128 GB of show the distribution of number of events per conmain memory, 1TB disk space, running an instance texts. The x-axis shows the number of contexts and of Linux OS. At all times we maintained one main the y-axis represents the number of events per context process running, the master process that distributes in log scale. As expected, there are few context (i.e. jobs to workers [8], and we assigned a worker to each 19 contexts) that have a very large number of events available process running on one of the remaining 15 (10000+) and many contexts (i.e. 104,548 contexts) cores. Thus, our prototype using single machine mul- that have only few events (i.e. maximum 10). tiprocessing MapReduce implementation could handle maximum 15 workers and one master without adding overhead from the possible workers CPU con- 4 DETECTION ALGORITHMS tention. However, even though the input data is split into number or workers partitions, our test machine We consider three basic detection algorithms for each had only one hard drive controller that ultimately context that will represent the second reduce operaPage 10 of 13 c ASE 2012
+
+20
+
+log (number of events)
+
+1500 15
+
+10
+
+time(seconds)
+0 10000 20000 30000 40000 50000
+
+900 750
+
+5
+
+0 1 8 15
+
+number of contexts
+Figure 9: Distribution of events per contexts. Workers Context Creation 1 1,408 8 828 15 665 Suspicious Contexts Detected
+
+number of workers
+Figure 10: Total detection time using MapReduce. Signature 4 6 5 2,189 Anomaly 78 55 67 26,850 Policy 4 6 5 1
+
+Table 2: Running times in seconds for different jobs and different number of workers. Number of suspicious contexts detected for each algorithm.
+
+tion, reduce2 , in the MapReduce execution pipeline. Suspicious event sequence: This algorithm processes the events in each context and reports all context that have any sequence of events matching the signature sequence. For our experiment we look after users that authenticated with the intranet but didn't establish a VPN session. This sequence of events can indicate a successful password crack. Anomaly detection: This algorithm detects anomalous activity in each context and reports the context and events that generated the anomaly. For simplicity we consider anomaly when the number of events reporting failed authentications attempts is larger than a threshold, in our case 5 attempts, used largely in practice. Policy checking: This algorithm detects what are the entities responsible for large VPN bandwidth consumption generated by web browsing and by accessing other servers on the web when tunneling in the organization intranet. We detected the suspected contexts and reported all events that successfully established a VPN session followed by an HTTP request to the public internet coming from the same user ID.
+
+5
+
+PRELIMINARY RESULTS
+
+We run our multiprocess implementation of MapReduce on the multi-core server using one master and 1 worker, 8 workers and 15 workers respectively. Table 2 shows the runtimes for the contexts creation jobs and the three simple detection algorithms as "Signature" for suspicious event sequence, "Anomaly" for anomaly detection and "Policy" for policy checking, along with the number of suspicious contexts for each case. As expected, when using multiple cores, the context creation runtime is smaller when more workers are used to perform the task. The running times for only the detection algorithms, after the contexts are created, remain almost the same for different number of workers. For signature and policy checking this is due to the simplicity of the detection algorithms used that don't require complex computation. However, for anomaly detection that maintains a state with the authentication attempts counts for each context, the instances with more workers perform better. Using 8 workers seems to perform better than using 15 workers for our implementation of anomaly jobs. This is due to the fact that processing too many small contexts, with only few events, is cheaper in the 8 workers case than switching conPage 11 of 13 c ASE 2012
+
+text between some of the idle remaining processes in the 15 workers case. This inconsistency could be fixed with a proper load balancing technique among processes, by assigning contexts more evenly among processes based on the estimated processing times. This small optimization part is left as future work. Finally, Figure 10 shows the total running time for the multiprocessing MapReduce implementation that completes all the steps: Context Creation, Signature, Anomaly and Policy. In the figure are represented three points, on the x-axis is represented the number of workers and on the y-axis the running times. As expected, the trend is to obtain better running times as more workers are added to the processing framework. However, in our current implementation, the performance gain is sub linear in the number of workers because we simulated MapReduce on a single physical machine with only one hard drive and all workers contend on the HDD I/O read/write data. We expect to obtain better results when running a MapReduce instance on a cluster of commodity machines with their own HDD.
+
+attack pyramid, is intended to be more comprehensive and to aim correlating nodes of the tree based on more flexible rules. In this way we are guaranteed that, regardless of the attack vector used, if a presumably benign event is recorded, based on the correlation with other events we might be able to discover if the event represents an attack activity that was not reported initially. In [18] authors introduce the concept of enhanced monitoring using historical data. In their approach whenever an event is recorded, a historical database is queried for the context of the event, and all similar events are returned as the result of the query. Our approach is different in that we explicitly store and process each context that is relevant for each monitored entity rather than defining a general correlation function for the context definition across all events recorded.
+
+MapReduce is a large scale distributed computation framework meant to be used on large clusters of commodity machines, first introduced in [8]. We address the scalability problem by proposing an implementation of the MapReduce framework, to process, in parVII RELATED WORK allel many contexts created around monitored entities within the organization network. In the map phase In the last recent years there was an increasing re- all the events are grouped into context based on the search interest towards efficient complex event pro- mapping rules, and in the reduce phase all the events cessing and how this concept can fit in the security in a context are mined to reveal possible anomalies, research efforts. The system presented in [15] pro- known malicious behavior or non-compliance with orvides a method to process multiple streams of events ganization policies. The output of the reduce phase by using a query language that implements specific is reported to a special module, called ALERT SYSoperators using finite state machines. Similarly the TEM, that ultimately decides if the possible maligeneral architecture proposed by IBM in [16] is in- cious activity/entity represents indeed a targeted attended to serve the aggregation and correlation of tack directed at the goal of the context. We are multiple streams of events. These systems can be currently researching more efficient algorithms and used to process real-time streams of events but the to deploy our prototype implementation on a larger detection of an advanced security attack spanning for cluster of networked machines using the MapReduce long periods of time is not their primary goal. open source implementation, Hadoop. There are several sources that document known cases of APTs such as [1, 2, 9­11]. However, they don't address the APT problem formalization. From our knowledge, our effort is among the first steps to model this sophisticated attack, and to formalize the problem in specific terms. Nevertheless, our assumptions about the attacks are based on publicly reported cases in [1­3, 5, 9] disclosed at the time of writing this article. In defining the APT model we used the threat tree approach introduced by Edward Amoroso in [6], later popularized by Bruce Schneier in [7] as attack trees and, more recently, used in [17] to describe probabilistic complex attacks. Our final model, the VIII CONCLUSION
+
+Data used as evidence for attacks is growing in volume, velocity and diversity and is increasingly difficult to detect sophisticated attacks. Moreover, in the cases of APTs there is no item to search for that could be picked up by an IDS or could be found in a traditional information retrieval systems or a databases. We believe that exploring new large scale distributed systems as a processing platform has the potential to help in analyzing more data at once, to cover more attack paths and possible targets that were unthought
+
+Page 12 of 13 c ASE 2012
+
+before, and maybe to detect sophisticated attacks in a context closer to the target. In this work we provide a comprehensive definition of an APT, we propose an attack model for the detection problem as well as a methodology to implement the detection system on a generic organization network by using a prototype multiprocess implementation of MapReduce. We introduce the attack pyramid model, starting from the attack trees and provide an APT detection framework that takes into account all the events in an organization. We propose a methodology to correlate in parallel all the relevant events across all the pyramid planes into contexts, then to run various algorithms in parallel for each context using the MapReduce large scale computing framework. Our prototype MapReduce implementation achieves better performance when multiple workers are used in parallel and provides flexibility to use any detection algorithm for a context that could also be run in parallel. We believe, that by using a powerful large scale distributed computation framework more informed security decisions could be made that could take into account more data and have the potential to discover more sophisticated attacks. As our future work we plan to investigate using the open source implementation of MapReduce, namely Hadoop, to test the execution of more complex detection algorithms. References [1]
+
+[6] E. G. Amoroso, Fundamentals of computer security technology. Upper Saddle River, NJ, USA: Prentice-Hall, Inc., 1994. [7] B. Schneier, "Attack Trees - Modeling Security Threats," Dr. Dobb's Journal, December 1999. [8] J. Dean and S. Ghemawat, "Mapreduce: simplified data processing on large clusters," in Proceedings of the 6th conference on Symposium on Operarting Systems Design & Implementation Volume 6. Berkeley, CA, USA: USENIX Association, 2004, pp. 10­10. [9] Damballa, "The Command Structure of the Aurora Botnet," http://www.damballa.com/research/aurora/, March 2010. [10] Richard Bejtlich, "Understanding the advanced persistent threat," http://bit.ly/TLW41a, 2011. [11] Dmitri Alperovitch, "Revealed: Operation Shady RAT," http://bit.ly/r555RE, 2011. [12] Poison Ivy Contributor, "Poison ivy remote administration tool," http://www.poisonivy-rat.com/index.php, 2008. [13] Microsoft, "Microsoft Remote Desktop Protocol (RDP)," http://bit.ly/UGGZCy, 2011.
+
+[2]
+
+[3]
+
+[4]
+
+[5]
+
+[14] M. Ponec, P. Giura, J. Wein, and H. Br¨ onnimann, "New payload attribution methods for network forensic investigations," ACM TransRSA, "RSA Security Brief: Mobilizing Intelactions on Information and System Security, ligent Security Operations for Advanced Pervol. 13, 2010. sistent Threats," http://bit.ly/gaf8hj, February 2011. [15] L. Brenna, A. Demers, J. Gehrke, M. Hong, J. Ossher, B. Panda, M. Riedewald, M. Thatte, B. Krekel, G. Bakos, and C. Barnett, "Capaand W. White, "Cayuga: a high-performance bility of the People's Republic of China to conevent processing engine," in Proceedings of the duct cyber warfare and computer network ex2007 ACM International Conference on Manploitation," The US­China Economic and Secuagement of Data, ser. SIGMOD '07, 2007. rity Review Commission, Washington, DC, Research Report, 2009. [16] IBM, "A Conceptual Model for Event Processing Systems," http://ibm.co/cv8MoE, February SANS Technology Institute, "Assessing Out2010. bound Traffic to Uncover Advanced Persistent [17] S. A. Camtepe and B. Yener, "Modeling and Threat," http://bit.ly/mnBuTc, May 2011. Detection of Complex Attacks," in 3rd InterMcAfee Labs and McAfee Foundstone Profesnational Conference on Security and Privacy in sional Services., "Protecting Your Critical AsCommunication Networks, September 2007. sets: Lessons Learned from "Operation Au[18] M. Balazinska, Y. Kwon, N. Kuchta, and D. Lee, rora"," http://bit.ly/x5DUXE, July 2010. "Moirae: History-Enhanced Monitoring," in Verizon, "2010 Data Breach Investigations ReCIDR, 2007. port," http://vz.to/cGCuf0, July 2010.
+Page 13 of 13 c ASE 2012
+
+

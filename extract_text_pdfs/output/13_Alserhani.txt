@@ -1,0 +1,742 @@
+A Framework for Multi-stage Attack Detection
+Faeiz Alserhani
+Communication and Information Security Department
+King Fahd Security College
+sarhanif@kfsc.edu.sa
+Abstract— Network Intrusion Detection Systems (NIDS) are
+considered as essential mechanisms to ensure reliable security. In
+an intrusion detection context, none of the main detection
+approaches (signature-based and anomaly-based) are fully
+satisfactory. False positives (detected non-attacks) and false
+negatives (non-detected attacks) are the major limitations of such
+systems. The generated alerts are elementary and in huge
+numbers. Hence, alert correlation techniques are used to provide
+a complementary analysis to link elementary alerts and provide a
+more global intrusion view. We propose an alert correlation and
+aggregation framework based on requires/provides model. The
+objective is to discover the logical relationships between atomic
+alerts potentially incorporated in multi-stage attacks. The
+obtained results illustrate that the proposed system can
+effectively detect coordinated attack with minimum false
+positives.
+Keywords-Network intrusion detection systems; Alerts
+correlation; multi-stage attack;.
+I. INTRODUCTION
+Malicious attacks by intruders and hackers exploit flaws
+and weaknesses in the deployed systems. This is done by
+several sophisticated techniques cannot be prevented by
+traditional measures. Hackers are shifting their focus from
+looking for fame and advertised attacks to profit-oriented
+activities. The current trends in cyber attacks are hidden, slowand-
+low, and coordinated. NIDS are considered to be
+important security tools to defend against such threats. The
+effectiveness of any NIDS depends on its ability to recognize
+different variations of cyber attacks. The current
+implementation of intrusion detection systems (commercial
+and open-source) is employing signature-based detection in
+addition to few simple techniques for statistical analysis. The
+main task of signature-based systems is to inspect the network
+traffic and perform pattern matching to detect attacks and
+generate alerts. A huge number of alerts are generated every
+day stressing the administrator; this may oversight an actual
+threat. Quality of these alerts is debatable particularly if the
+majority is false positives. For this reason, high-level and realtime
+analysis techniques are needed. This can be achieved by
+discovering the logical connections between the isolated alerts.
+It has been practically identified that most of attacker activities
+consists of multiple steps (attack scenario) and occur in a
+certain time (attack window). Identification of such strategy
+can lead to the recognition of attack intensions and also
+prediction of unknown attacks. Some simple analysis tools
+have been developed to generalize these alerts based on attack
+classes [1].
+In recent years, alerts clustering and correlation techniques
+have been employed to provide a global view of attacker’s
+behavior by analyzing low-level alerts produced by the IDS
+sensors. The main objective of alerts correlation is to build an
+abstract modeling of alerts by generalizing the detected events
+instead of the current specific modeling. The constructed
+inference will progress even in case of unforeseen attacks.
+Different approaches have been utilized to build the
+correlation models, and can be categorized into three main
+disciplines: probabilistic approaches, scenario-based
+approaches and pre/post conditions approaches. The
+probabilistic approaches are inspired from anomaly-based
+intrusion detection systems where prior knowledge is not
+required. In this category, relations between incurred events
+are computed statistically providing automatic knowledge
+acquisition. Data mining, clustering, association rules
+techniques are examples of these approaches. [2] presented a
+probabilistic approach to provide unified mathematical
+framework that perform a partial matching of features.
+Features are extracted and minimum similarities are computed
+and weighted. [3] proposed alarm clustering to discover the
+root causes of different alarms. The aim was to reduce the
+volume of alarms to manageable size. Even though, these
+methods are useful for alert fusion and statistical purposes but
+they fail to discover the causal connection between alerts.
+Recently, [4] and [5] employed different data mining
+algorithms for real-time correlation to discover multi-stage
+attacks. Off-line attack graph is constructed using manual or
+automatic knowledge acquisition and then attack scenarios are
+recognized by correlating the collected alerts in real-time. The
+incoming step of an attack can be predicted after detection of
+few steps of attack in progress. In [4] association rule mining
+algorithm is used to generate the attack graph from different
+attack classes based on historical data. “Candidate attack
+sequences” are determined using a sliding window. In [6]
+AprioriAll algorithm which is a sequential pattern matching
+technique is used to generate correlation rules based on
+temporal and content constraints. [6] adopted a classical
+sequential mining method GSP[7] to find the maximal alerts
+sequence and then to discover the attack strategy. The
+limitation of their work is the use of only attack class and
+temporal as features.
+On the other hand, scenario-based modeling is based on
+manual knowledge acquisition that specifies intrusion steps by
+experts. Scenario libraries are used to build the model and to
+discover the logical connections between alerts. LAMBDA [8]
+is an intrusion specification language to describe the
+978-1-4673-6195-8/13/$31.00 ©2013 IEEE
+conditions and effects of an intrusion in connection to the
+variable state of the victim system. Similarly, in STATL [9]
+language, sequence of events conducted by the attacker can
+described to express multi-stage attack. However, these
+approaches need a manual description of possible attacker’s
+behavior and if a single step is missed the whole behavior go
+undetected.
+The third category is the pre/post conditions techniques
+which are based on the notion that the older alerts prepare for
+the later ones. These approaches require specifying the
+criterion used to discover the relations between alerts and the
+weights of such relations. Early, [10] proposed a require/
+provide capabilities model using attack specification language
+“JIGSAW”. However, the exact matching between require and
+provide conditions is employed causing different variation of
+the same behavior is not detected. [11] proposed MIRADOR
+correlation approach for alert clustering, merging and then
+correlation. Explicit correlation of events based on security
+experts is used to express the logical or topologic links
+between events. Attack is specified using five fields and based
+on the language of LAMBDA [8]. Partial matching techniques
+are adopted to build the model. In addition to explicit
+correlation, implicit correlation is used to overcome possibly
+missing events.
+Authors in [12,13] proposed alert correlation model based
+on prerequisites and consequences of individual detected
+alerts. A knowledge database “Hyper-alert Type Dictionary”
+contains rules that describe the conditions where prior
+behaviors prepare for later ones. Attack strategy is represented
+as a Directed Attack Graph(DAG) with constraints on the
+attack attributes considering the temporal order of the
+occurring alerts. The nodes of the DAG represent attacks and
+the edges represent causal and temporal relations. Similarities
+between these strategies are measured to reduce the
+redundancy. A technique of hypothesizing and reasoning
+about missing attacks by IDS is presented to predict attribute
+values of such attacks. The significance of their work is the
+reduction of the huge number of security incidents and to
+report a high-level view for the administrator. However, the
+proposed system is useful as a forensic tool where it perform
+offline analysis. In addition, building the knowledge database
+containing rules of the applied conditions is a burdensome.
+However, authors have not provided a mechanism to build the
+Hyper Alert dictionary. Also, the generated graph is huge even
+with medium size datasets.
+In other respect, [14,15] proposes a combination of
+statistical and knowledgebase correlation techniques. Three
+algorithms are integrated based on assumption that some
+attack stages have statistical and temporal relations even
+though direct reasoning link is not existent. Bayesian-based
+correlation engine is used to identify the direct relations
+among alerts based on prior knowledge. In contrast to previous
+approaches, knowledge of attack steps incorporates as a
+constraint to probabilistic inference to avoid the exact
+matching of pre and post conditions. Causal Discovery
+Theory-based engine is developed to discover the statistical of
+one-way dependence among alerts. In addition, Granger-
+Causality-based algorithm is used by applying statistical and
+temporal correlation, to identify mutual dependency. However,
+the problem of selection time window for temporal correlation
+is still an open problem. Attackers can exploit the slow-andlow
+attack to avoid detection. Attack prediction also relies on
+prior knowledge where zero-day attack is not detected.
+Although the past techniques dealt with reducing the
+massive number of collected data by NIDS, however there are
+many limitations. First, the analysis of attack strategy
+recognition is too complex especially if the task broadens to
+predict the unknown steps. Knowledge-based approaches are
+more accurate due to rules matching mechanism which are
+built based on experts’ knowledge, but it needs more efforts to
+provide precise rules. Statistical and temporal analysis
+techniques are unable to detect causal relations among events,
+but they don’t require prior defined rules. Adoption of such
+systems in real-time is still an open question, where most
+proposed systems have been tested in offline fashion or in a
+low volume traffic environment. The huge number of detected
+events leads to graph explosion as in [12,13]. Moreover,
+missing attacks by the IDS can result in separate scenarios
+related to the same attack. Attackers also exploit the attack
+sliding window used in most approaches by performing slowand-
+low attack.
+The rest of this paper is organized as follows: section 2
+explains the proposed framework. Section 3 gives a
+description of the Requires/Provides model and Section 4
+presents the knowledge-based model. In section 5 we present
+the experimental results, and then we conclude in section 6.
+II. MULTI-STAGE ATTACK RECOGNITION SYSTEM (MARS)
+FRAMEWORK
+The MARS framework is a logical framework supported
+by various components for alert correlation, aggregation,
+reduction and multi-stage attack recognition, as shown in
+Figure 1. Despite the differences between alert correlation
+approaches, they require some common modelling. A
+knowledge-base that contains attack characteristics is
+either abstracted or using actual attack details. Information
+acquisition for a knowledge base is based on the model
+employed (e.g. expert systems, artificial intelligence). The
+main drawback of the previous approaches is that they do
+not provide knowledge representation in a systematic way.
+For instance, requires/provides is a general alarm
+management model that has been used widely in the alert
+correlation field, but most of the proposed paradigms are
+based on ad hoc methods of knowledge representation. In
+our framework, knowledge elements are designed using a
+formal knowledge formalization exploiting available
+information provided by IDSs, vulnerability scanners and
+environment configurations. It also allows interactive
+communication between the administrator and the core
+system engine. Generated events reflecting the detected
+security situation are produced after a series of processing
+functions to reduce the data size.
+Figure 1. Multi-stage Attack Recognition System (M
+Figure 1 gives a graphical represe
+framework components that implemen
+system. The first task is performed on al
+from the IDS sensor e.g. Snort[18]. A
+contains normalized alerts presented in
+format that are understood by all correlat
+Also, a pre-processing function is carried
+all required alert attributes such as time sta
+destination addresses. The final results of
+stored in Alert Collection which represen
+input for the MARS engine. MARS engine
+components: 1) Alert Verification 2)
+Aggregation and 4) Event generation. T
+Verification component is to take a s
+determine the success of the attack that co
+alert. Failed attack should be assigned a
+importance. However, these failed attacks
+and saved in the database which can be use
+support other correlation instances. T
+component is responsible for combining
+that refer to attacks related to the same act
+produces number of alerts corresponding to
+which are conducted at the same time. S
+aggregated and a representative alert is ass
+temporal relationship. These aggregated al
+the aggregation collection and are used to
+stage attack events. The main task of
+component is identifying the logical con
+received alerts based on the used correlat
+any link between two alerts is recog
+correlated and stored in a temporary col
+transferred to the correlation collection
+the aggregation process. The task of the E
+component is identifying and construc
+attack patterns which are composed of
+individual alerts. A new event is generate
+alerts are correlated and then the gener
+stored in the Events collection.
+Two knowledge bases are used by M
+support the correlation process: 1) Capabi
+MARS) framework.
+entation of the
+nted in MARS
+ll received alerts
+Alert Collection
+n a standardized
+tion components.
+out to normalize
+amp, source, and
+f this process are
+nts the main data
+e consists of four
+Correlation 3)
+he task of Alert
+single alert and
+orresponds to this
+s a low level of
+s are not ignored
+ed as evidence to
+The Aggregation
+a series of alerts
+tivity. IDS sensor
+o the same attack
+Similar alerts are
+signed based on a
+lerts are saved in
+o generate multithe
+Correlation
+nnection between
+tion algorithm. If
+gnized, they are
+llection and then
+after performing
+Event Generation
+cting multi-stage
+f a sequence of
+ed if at least two
+rated events are
+MARS engine to
+lities Knowledge
+base and 2) Vulnerabilities
+capabilities database contains
+relationships between different
+post conditions of each modell
+are used in the current implem
+extended to include attack defin
+Vulnerabilities database cont
+configuration of the protected
+detected vulnerability informatio
+The initial task executed b
+obtaining alerts from the alert c
+encoded capabilities correspon
+attributes and the informatio
+capabilities knowledge base are
+capabilities collection. Thus, the
+produce the initial correlation
+stored in the Temporary Correla
+collection contains atomic log
+alerts which are consequently
+aggregated collection. The gen
+attack instances) are constructe
+alerts in order to minimize the re
+III. REQUIRES/PRO
+This model is a general atta
+proposed by [10] and is inspired f
+systems to deal with network f
+described according to two compon
+concepts. The idea behind this
+intrusions consist of a sequence
+attacker, and that the later steps are
+The target system information colle
+mapping are advantages acquired a
+which exploit can be successful. Att
+of abstract concepts and each
+capabilities (conditions) to occur
+used by another concept. Capabili
+descriptions of the conditions requ
+stage of the intrusion i.e. the system
+in order to launch an attack. For in
+injection requires particular services
+system and the presence of certain v
+Formally, capabilities are a
+abstraction that specifies the syste
+attempt. The attacker uses the cap
+some of its early actions to genera
+The system state is incorporate
+instances of concepts have matched
+conditions.
+The capability model proposed
+requires/provides model for logica
+the authors used different propertie
+model was presented to build block
+layer fashion and with more exp
+have employed a requires/provides
+predicates, which are similar to capa
+s knowledge base. The
+modelled attacks and the
+attacks based on pre and
+led attack. Snort signatures
+mentation and this can be
+nitions from other sources.
+tains network and host
+system in addition to the
+on by the available scanner.
+by the MARS engine is
+collection and then creating
+nding to each alert. Alerts
+on supplied by the used
+e used to build the encoded
+e encoded data is utilized to
+information and then it is
+ated Alerts collection. This
+gical connections between
+aggregated to obtain the
+nerated events (Multi-stage
+ed based on the aggregated
+esulting graph.
+VIDES MODEL
+ack model that has been
+from network management
+faults. A cyber attack is
+nents: 1) capabilities, and 2)
+model is that multi-stage
+of steps performed by an
+prepared by the early ones.
+ected from scanning or port
+and used in order to choose
+tacks are modelled in terms
+concept requires certain
+and provides others to be
+ties are defined as general
+uired or provided by each
+m state that must be satisfied
+nstance, a successful Trojan
+s to be running in the target
+vulnerabilities.
+higher level of intrusion
+em state after each attack
+pabilities acquired through
+ate certain new capabilities.
+ed in attack scenarios if
+d “required” and “provided”
+d by[16] is also based on a
+al alert correlation, though
+es of capabilities. An attack
+ks of capabilities in a multipressive
+definition. [12,11]
+model using the concept of
+abilities.
+Both models mentioned above are reasoning models that
+aim to discover the causal relationships between elementary
+alerts. Attacker states are abstracted to describe the gained
+privileges and what level of access is obtained. Moreover, the
+system states are modelled into a higher level of abstraction to
+specify the impact of the attack. Relationships between these
+states are defined to generate rules that determine the
+dependency between alerts.
+Requires/provides model has been selected because it fits
+our purpose to correlate alerts in the same intrusion. It has
+some advantages over other models:
+1- Ability to uncover the causal relationships between alerts
+and it is not restricted to known attack scenarios.
+2- Ability to characterize complex scenarios or to generalize to
+unknown attacks.
+3- Attack is represented as a set of capabilities that provides
+support for the abstract attack concepts.
+4- Flexibility and extensibility as the abstract attack concept
+are defined locally.
+5- It does not require a priori knowledge of a particular
+scenario.
+6- Numerous attacks can be described implicitly and unknown
+attack can be defined by generalisation.
+Our approach is a variation of the requires/provides model,
+but differs in the following aspects:
+• Different definitions for capabilities and concepts are
+employed to overcome the limitations expressed in other
+approaches. The work in [10] used a very detailed
+specification language called JIGSAW to describe attack
+scenarios. A complete satisfaction of “required” and
+“provided” conditions is necessary to correlate two alerts,
+which will fail in case of broken scenarios. However, the
+authors in [12] have adopted a partial satisfaction technique
+which is also implemented into our framework. The main
+concern with their approach is the high rate of false
+positives, and the possibility of a huge graph being created.
+We have managed to overcome this limitation by using
+certain techniques: hierarchical multi-layer capabilities,
+accumulated aggregation, alert verification and alert
+maintenance.
+• A near real-time processing approach for correlation,
+aggregation and event generation. The security officer can
+monitor the attack progress which is displayed as an
+intrusion graph. An event is triggered once at the minimum
+of two alerts being correlated, and any additional related
+alert based on its attributes will join the same event.
+• Online and offline graph reduction algorithms during the
+correlation process in addition to alert aggregation in order
+to provide a smaller manageable graph.
+• We have modelled IDS signatures as abstracted attack
+concepts instead of defining new concepts locally. In
+requires/provides models, IDS signatures are considered
+complementary external concepts.
+• Separation of the concepts and their capabilities from other
+dynamic information. Two different types of capabilities
+have been used: internal and external. The first type denotes
+abstract attack modelling consisting of IDS signatures and
+associated capabilities. The second type refers to dynamic
+details, including system configuration, services and
+vulnerabilities. This provides more flexibility to the model
+whilst at the same time allowing utilization of other
+knowledge resources.
+• Capabilities modelling has been made using a hierarchical
+methodology based on attack classes and inheritance
+between these classes.
+Our approach is based on the assumption that the attack
+scenario consists of a sequence of related actions and that
+early stages can incorporate later ones. The link between these
+stages is determined using five factors:
+1- Temporal relationships (e.g. alert timestamps).
+2- Spatial relationships (e.g. source IP addresses,
+destination IP addresses and port numbers).
+3- Pre- and post-conditions of each attack.
+4- Vulnerability assessment of the target system.
+5- Target system configuration.
+Capabilities are formalized in term of pre- and postconditions
+by grouping conditions that share similar
+characteristics into a broad definition. Knowledge about
+elementary alerts is mapped to instantiate the attacker and the
+system states according to their temporal characteristics:
+- Pre-conditions: are logical capabilities that characterize
+the system state to be satisfied in order to launch an attack.
+These capabilities are derived from the attack description. A
+hierarchical approach is adopted based on an attack
+classification to provide coarse-grained definitions of different
+alerts related to the same behaviour.
+- Post-conditions: are logical capabilities that characterize
+the system state after the attack succeeds. In other words,
+specifications of the effects of intrusions on the system, such
+as the knowledge gained and the access level of the attacker.
+Moreover, attack classification incorporates the definitions of
+these capabilities in a hierarchical manner.
+To formulize the capability sets as pre- and post-conditions
+of higher quality, certain requirements must be satisfied:
+1- Capabilities must be expressive in order to achieve a
+true logical relationship.
+2- Avoidance of ambiguity in defining capabilities.
+3- Use of multi-layers of abstraction to achieve
+scalability.
+4- Reduction of the number of elements in the capability
+sets without affecting attack coverage.
+5- Inference rules should be separated from the
+capability set.
+6- The set should also be constant and independent of
+variable information such as vulnerability and
+system-configuration knowledge.
+Hence, capabilities are formulized based on two criteria:
+1) Level of abstraction
+1- Generic capabilities which illustrate a broad aspect of
+a certain attacks, such as access, local access and
+remote access.
+2- Capabilities which illustrate a lower level of attack
+abstraction, but not a specific one, such as server
+buffer overflow or client upload file.
+3- Specific capabilities for each single alert in IDSs,
+such as TFTP Get.
+2) Properties of the system and the attacker state
+1- Access level of the attacker (remote, local, user or
+administrator).
+2- Impact of the intrusion upon the victim machine, such
+as DOS and implementation of the system
+commands.
+3- Knowledge gained by the attacker, such as disclosure
+of host or of service.
+The elements in the two criteria above are mutually
+inclusive; for instance, disclosure of host is considered as a
+generic capability and at the same time is a system state
+description. In addition, attack classification, which will be
+presented in the next section, is also involved in defining
+capabilities.
+Example: generic capabilities are mainly a description of
+the intrusion's general objective, such as:
+- Disclosure of host
+- Disclosure of running service
+- Disclosure of port number
+- Access
+- Read or write files
+However, a buffer overflow attack is a general attack that
+can target the server, the Web server and the client, and the
+required and provided conditions are not the same for each
+category. The capability client access attempt is a specific
+capability for client attacks, because some attacks are client
+specific, such as ActiveX attacks. Snort documentation
+contains a description for each signature, including the attack
+class type, the affected system, and the impact of the attack.
+This information is valuable in defining attack capabilities if
+other sources of intrusion analysis are considered.
+IV. KNOWLEDGE-BASE MODELLING
+Two knowledge bases are used, one for attack concepts
+and the other for vulnerability details. In the attack knowledge
+base, IDS signatures (e.g. Snort) are modelled to the attack
+abstractions and their defined capabilities. The knowledge
+library specifies the relationship between low-level alerts and
+the attack abstraction. Thus, a knowledge base can be
+considered a broad template and each element can be
+instantiated to instances of specific conditions. A
+generalization mechanism has been used to specify a higher
+level of specification of attack concepts and capabilities.
+The proposed model for the attack knowledge base consists
+of three sets:
+1) Capability C: This specifies a higher level of abstraction
+of the “required” and “provided” conditions of the intrusion
+model. Intrusion attempts are expressed in terms of a set of
+“required” or “provided” conditions, and vulnerability
+constraints of a given alert where:
+- Required conditions R are a set of pre-conditions
+specified in the form of capabilities with variable arguments.
+- Provided conditions P is a set of post-conditions specified
+in the form of capabilities with variable arguments.
+- Vulnerability V is a description of the state of the target
+host or network with variable arguments.
+2) Attack concept AC specifies the constructor of a given
+attack and its related capabilities. “required” and “provided”
+conditions for each attack are coded in a language of
+capabilities.
+3) Arguments [r1 ,r2 ,…ri ]→r are a set of associated
+attributes such as source IP addresses, destination IP addresses
+and port numbers.
+Definition 1: Attack concept AC is an abstraction of
+elementary alerts generated by the IDS, defined by a set of
+arguments, required conditions and provided conditions.
+Definition 2: An attack instance ai is defined as a set of
+instances of attack concept AC by substituting the associated
+values in arguments tuple considering the time constraints
+(start-time and end-time).
+Definition 3: Given an attack concept AC, the R(AC),
+P(AC) and V(AC) sets are the sets of all capabilities C. Given
+an attack instance a, the R(a), P(a) and V(a) sets are the
+capabilities by mapping the values to the corresponding
+arguments in AC considering the time constraints.
+A vulnerability knowledge base is maintained to store the
+vulnerability situation of each element of the protected
+network based on the collecting agent (e.g. Nessus[19]). The
+scanner will also gather the network configuration details such
+as IP addresses of live hosts and running services, so manual
+configuration is not considered. In this respect, vulnerability
+information is considered as external capabilities. The
+complete algorithm of alert verification using vulnerability
+knowledge is shown in Figure 2.
+Algorithm :Alert verification
+Input: elementary alerts generated by IDS A(IP,SV,VR)
+Host vulnerability information generated by scanner
+VN(IP,OS,SV,VR)
+Output: Vulnerable host VH(IP,V,P)
+Methods:
+// IP: IP address, SV: service, VR: vulnerability, OS operating system
+for i←0 to length[VN]
+do
+if A.IP = VN[i].IP get VN(IP,OS,SV,VR)
+in case of
+A.VR=VN.VR and A.SV=VN.SV then VH.V←true , VH.P←high
+A.VR=VN.VR and A.SV≠VN.SV then VH.V←true ,VH.P←low
+A.VR≠VN.VR then VH.V←false , VH.P←unknown
+Figure 2. Alert verification algorithm.
+V. EXPERIMENTAL RESULTS
+DARPA 2000 datasets[17], including LLDDOS 1.0 and
+LLDDOS 2.0 [55], are often used to evaluate IDSs and alert
+correlation systems for their available ground truth to assess
+our correlation approach and to compare our results with those
+of other researchers. They consist of two multi-stage attack
+scenarios to launch Distributed Denial of Service attacks
+(DDoS). An interval of approximately three hours of traffic is
+analyzed by Snort using our test-bench, and alerts are sent to
+the MARS server where the database is located. The detected
+events evolve over time instead of by batch analysis. The
+results obtained are shown in Table 1, both with and without
+the alert verification mechanism.
+Table.1 Functional test results, DE: detected events, RA: related alerts,
+CRBAG: Correlation Rate Before Aggregation, CRAAG:
+Correlation Rate After Aggregation.
+Dataset Alert verification disabled Alert verification enabled
+D E RA CRBAG CRAAG D E RA CRBAG CRAAG
+INSIDE1.0 10 325 2164 84 3 91 661 48
+DMZ1.0 18 984 1464 138 3 91 439 52
+INSIDE2.0 2 16 24 16 2 16 16 16
+DMZ2.0 1 8 12 8 1 8 8 12
+The number of detected events are shown in Figure 3, and it
+is clear that this number is reduced using the verification
+techniques. Three events are associated with the intended
+multi-stage attack and they are identified ignoring the unrelated
+events.
+Figure 3. Detected events in the functional test
+VI. CONCLUSION
+We have proposed a correlation framework to achieve high
+quality multistage attack recognition and to provide the
+security operator with a global view of the security
+perspective. The pre- and post- condition approach is used to
+identify the logical relations among low level alerts. The alerts
+are aggregated, verified using vulnerability modelling, and
+correlated to construct multi-stage attacks.The results show
+that our approach can effectively detect multi-stage attacks.
+The false positive rates are reduced due to implementation of
+the vulnerability and target host information
+For future work, statistical engine will be used to provide a
+probabilistic inference for alert clustering. Prediction of
+incoming events which is beyond the predefined rules can be
+achieved using a cooperation between the two engines
+(statistical and knowledge). Hypothesizing of unknown attacks
+can be identified based on attributes similarities. However,
+there are still few more challenges will also be addressed such
+as distinction between single and cooperated attack, automatic
+generation of knowledge dictionary.
+REFERENCES
+[1]. Basic Analysis and Security Engine; http://base.secureideas.net/
+[2]. A. Valdes and K. Skinner. Probabilistic alert correlation. Lecture Notes
+in Computer Science, 2212:54-68, 2001
+[3]. K. Julisch. Clustering intrusion detection alarms to support root cause
+analysis. ACM Trans. Inf. Syst.Secur., 6(4):443-471, 2003.
+[4]. Zhi-tang Li, Jie Lei, Li Wang, Dong Li, "A Data Mining Approach to
+Generating Network Attack Graph for Intrusion Prediction," Fuzzy
+Systems and Knowledge Discovery, Fourth International Conference
+on, vol. 4, pp. 307-311, Fourth International Conference on Fuzzy
+Systems and Knowledge Discovery (FSKD 2007) Vol.4, 2007.
+[5]. Jie Ma, Zhi-tang Li, Wei-ming Li, "Real-Time Alert Stream Clustering
+and Correlation for Discovering Attack Strategies," Fuzzy Systems and
+Knowledge Discovery, Fourth International Conference on, vol. 4, pp.
+379-384, 2008 Fifth International Conference on Fuzzy Systems and
+Knowledge Discovery, 2008.
+[6]. Li, Z., A. Zhang, et al. Real-Time Correlation of Network Security
+Alerts. Proceedings of the IEEE International Conference on e-Business
+Engineering, IEEE Computer Society, 2007
+[7]. R. Agrawal and R. Srikant: Mining sequential patterns. In: Research
+Report RJ 9910, IBM Almaden Research Center, San Jose, California,
+October 1994.
+[8]. F. Cuppens and R. Ortalo. Lambda: A language to model a database
+for detection of attacks. In RAID '00: Proceedings of the Third
+International Workshop on Recent Advances in Intrusion Detection,
+pages197-216, London, UK, 2000. Springer-Verlag.
+[9]. S. Eckmann, G. Vigna, and R. Kemmerer. Statl: An attack language for
+state-based intrusion detection, 2002.
+[10]. S. J. Templeton and K. Levitt. A requires/provides model for computer
+attacks. In NSPW '00: Proceedings of the 2000 workshop on New
+security paradigms, pages 31-38, New York, NY, USA, 2000. ACM
+Press.
+[11]. F. Cuppens. Managing alerts in a multi-intrusion detection
+environment. In 17th Annual Computer Security Applications
+Conference New-Orleans, New-Orleans, USA, December 2001.
+[12]. Peng Ning, Yun Cui, Douglas Reeves, and Dingbang Xu, "Tools and
+Techniques for Analyzing Intrusion Alerts," in ACM Transactions on
+Information and System Security, Vol. 7, No. 2, pages 273--318, May
+2004.
+[13]. Peng Ning, Yun Cui, Douglas S. Reeves, "Constructing Attack
+Scenarios through Correlation of Intrusion Alerts," in Proceedings of
+the 9th ACM Conference on Computer & Communications Security,
+pages 245--254, Washington D.C., November 2002.
+[14]. X. Qin. A Probabilistic-Based Framework for INFOSEC Alert
+Correlation. PhD thesis, Georgia Institute of Technology, 2005.
+[15]. X. Qin and W. Lee. Attack plan recognition and prediction using causal
+networks. In ACSAC '04: Proceedings of the 20th Annual Computer
+Security Applications Conference (ACSAC'04), pages 370-379,
+Washington, DC, USA, 2004. IEEE Computer Society.
+[16]. J. Zhou, M. Heckman, B. Reynolds, A. Carlson and M. Bishop,
+“Modeling network intrusion detection alerts for correlation,” ACM
+Transactions on Information and System Security (TISSEC), vol. 10,
+no. 1, 2007, pp. 4-es.
+[17]. Lincoln Labs Information Systems Technology,
+http://www.ll.mit.edu/mission/communications/ist/corpora/ideval/data/i
+ndex.html
+[18]. Snort: A free lightweight network intrusion detection system for UNIX
+and Windows; http://www.snort.org/
+[19]. Nessus: Security Scanner; http://www.nessus.org
+0
+5
+10
+15
+20
+DMZ
+1.0
+INSIDE
+1.0
+DMZ
+2.0
+INSIDE
+2.0
+Number of detected
+events
+Data sets
+# Events (Alert
+verfication disabled)
+#Events(Alert
+verfication enabled)

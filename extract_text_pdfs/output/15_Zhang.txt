@@ -1,0 +1,264 @@
+Poster: An Automatic Multi-Step Attack Pattern
+Mining Approach for Massive WAF Alert Data
+Yang Zhang1,2 , Tingwen Liu1,2 , Jinqiao Shi1,2 , Panpan Zhang1,2 , Haoliang Zhang1,2 , Jing Ya1,2
+1
+
+Institute of Information Engineering, Chinese Academy of Sciences, Beijing, China
+National Engineering Laboratory for Information Security Technologies, Beijing, China
+Email: {zhangyang, liutingwen, shijinqiao, zhangpanpan, zhanghaoliang, yajing}@iie.ac.cn
+2
+
+Abstract—This paper introduce a three-stage approach that
+can automatically mining multi-step attack patterns from massive
+alert data of web application firewalls. The first stage extracts
+attack sequences, and the second stage clusters similar attack
+sequences. At the last stage we recognize an attack pattern for
+each cluster. We conducted our experiments on real-world WAF
+alert data obtained from a famous Chinese ISP. Experimental
+results show that different attackers using the same attack pattern
+may have the same “attack background”.
+
+I. I NTRODUCTION
+WAF (Web Application Firewall), as an appliance to identify
+common attacks, such as cross-site scripting and structured
+query language injection, is widely used in web application
+protection. WAF work depending on well-designed rules customized to the protected web applications. However, it is not
+easy to configuring and maintaining these customized rules.
+Once hackers launch a multi-step attack and other advanced
+attacks, it’s difficult to extract attack sequences and further
+recognize attack patterns from massive WAF alert data. In
+reality, we have lots of different sequences, but we do not know
+the rules hidden in these disordered attacks. Therefore, mining
+multi-step attack patterns is an important and significant task
+in WAF alert data analysis.
+In this study, we propose a novel three-stage approach that
+can automatically mining multi-step attack patterns from massive WAF alerts. The main idea is to cluster attack sequences
+that are generated automatically, and then recognize an attack
+pattern from each attack sequence cluster. Different from prior
+approaches [1], [2], [3], our proposed approach does not need
+any additional information except WAF alerts. Moreover, it is
+can be implemented easily.
+We evaluate our proposed approach on WAF alerts that are
+collected from one real-world system. Experimental results
+show that some seemingly unrelated alerts may have the same
+“attack background” and other similar information in common.
+This conclusion is manually verified by offline tracking the IP
+addresses used by different attackers in our experiments. Thus,
+our approach could make sense in analysis of massive WAF
+alert data.
+II. O UR A PPROACH
+To mine multi-step attack patterns from massive WAF alert
+data, there are three open problems needed to be addressed.
+The first open problem is how to extract attack sequences,
+
+which is defined as all the alerts that are trigged by the same
+attack. The second open problem is how to put the similar
+attack sequences together and constitute a cluster. At last,
+we need to address the problem of recognizing the inherent
+attack pattern from multiple similar attack sequences. Each
+stage of our approach addresses one of the above problems
+respectively, as described in detail in the following part.
+Extract Attack Sequence: a WAF alert mainly consists of
+alert time, attacked domain name, attacker IP address and
+alert type (indicating the specific step during the process of
+an attack). Each attack step may trigger many WAF alerts
+of the same alert type. For WAF applications, we make a
+reasonable assumption that each attacker IP address is involved
+in every step of a multi-step attack, namely all the steps are
+not launched sequentially with different IP addresses. Then
+we can get many attack sequences with attacker IP address
+and attacked domain name together as the primary keys1 . As
+a attack does not last for ever, we think two continues WAF
+alerts of the same attacker IP address and attacked domain
+name belong to different attacks if the time interval between
+their alert times is over 12 hours. Then a long attack sequence
+is split into several short but rational attack sequences.
+Cluster Attack Sequence: to complete the clustering operation, we should first give a tool to measure the distance of two
+different attack sequences, which is the sum of the distance
+of their attacker IP addresses, the distance of their attacked
+domain names and the distance of their alert type sequences in
+this paper. Regarding each IP address (domain name or alert
+type sequence) as a string, we design an improved levenshtein
+distance, referred to θLD hereafter, to measure its distance
+with another IP address (domain name or alert type sequence).
+Different from the classical levenshtein distance that gives
+the same weight for differences at any position, θLD gives
+different weights. In this paper we define θLD as follows:
+θLD(x[1,i] , y[1,j] ) = θ × min(r, s, t)
+
+r = θLD(x[1,i−1] , y[1,j] ) + 1
+
+
+
+s = θLD(x , y
+[1,i] [1,j−1] ) + 1 (
+where
+
+0
+
+
+t = θLD(x[1,i−1] , y[1,j−1] ) +
+1
+1 Continuous
+
+if xi 6= yj
+if xi = yj
+
+WAF alerts of the same alert type are merged into one alert.
+
+2
+
+TABLE I
+P RIMARY INFORMATION OF WAF ALERTS USED IN THIS PAPER
+# of WAF Alerts
+
+TABLE II
+D ISTRIBUTION OF ALERT TYPES
+
+75670
+
+# of Attack Sequences
+# of Effective Attack Sequences
+# of Alert Typess
+Duration
+
+patterns of the most frequently used in Table III.
+
+2574
+
+Rank
+
+368
+
+1
+2
+3
+4
+5
+6
+7
+
+13
+3 days (2014/12/19-2014/11/21)
+
+Obviously we can get θLD based on the idea of dynamic
+programming. Parameter θ measures the weight ratio between
+two adjacent positions in a string. Smaller θ means that the
+rearward position takes much more weights. For IP address,
+domain name and alert type sequence, we do not use the
+same θ. The θ for IP address (denoted as θip ) should be
+more than 1, as two IP addresses with the same prefix is
+more similar than two IP addresses with the same suffix of
+the prefix’s length. The θ for alert type sequence (denoted as
+θats ) should be 1, as alert types in different positions play
+the same importance. The θ for domain name (denoted as
+θdn ) should be less than 1, the primary reason is opposite to
+that of IP address. We set the θdn = θ1ip in this paper. Note
+that the same θLD implies different meanings for string pairs
+of different lengths. Thus, we normalize θLD in this paper,
+θLD(x[1,i] ,y[1,j] )
+namely we use
+as the distance of two strings
+max(i,j)
+x[1,i] and y[1,j] . Note that max(i, j) is the maximum value
+of θLD(x[1,i] , y[1,j] ). A threshold η is introduced to limit the
+distance of two attack sequences in the same cluster.
+We argue that, in addition to WAF alerts, our approach does
+not need any additional information to complete the clustering
+operation.
+Recognize Attack Pattern: multi-step attack patterns in a
+attack sequence cluster are automatically discovered by the
+longest common alert type subsequence extraction algorithm
+based on the idea of dynamic programming.
+III. E VALUATION
+We evaluate our multi-step attack pattern mining approach,
+in terms of the effectiveness of attack patterns, using realworld WAF alert data obtained from a famous Chinese ISP,
+as outlined in Table I. We get 2574 different attack sequences
+in total from obtained WAF alerts. As some multi-step attacks
+are incomplete, we remove these attack sequences of only one
+alert type, and get 368 effective active sequences.
+Table II shows the distribution of alert types in our WAF
+4
+= 30%) take
+alerts. We can find that top 4 alert types ( 13
+more than 90% WAF alerts.
+Figure 1 shows the change of the number of clusters with
+the increase of η. We know the distance of any two attack
+sequences is no more than 3. From Figure 1 we can find that
+the number of clusters decreases with the increase of η, and
+we can only get one cluster when η ≥ 1.8.
+We use θip = 1.5 and η = 0.8 in our experiments. Under
+these values we get 24 clusters, and we show several attack
+
+Alert Type
+
+Number
+
+Ratio
+
+43123
+14636
+6650
+4514
+3320
+1656
+1771
+
+56.99%
+19.34%
+8.79%
+5.97%
+4.39%
+2.19%
+2.34%
+
+SQL Injection
+Vulnerability Protection
+Protocol Violations
+Scanning
+Cross-Site Scripting
+Restricted Files
+Others
+
+Fig. 1. Change of the number of clusters with η
+TABLE III
+D ISTRIBUTION OF ALERT TYPES
+No.
+1
+2
+3
+4
+5
+
+Attack Pattern
+hVulnerability Protection, SQL Injectioni, and repeats
+hVulnerability Protection, Scanningi
+hRestricted Files, Protocol Violationsi
+hSQL Injection, Protocol Violationsi, and repeats
+hCross-Site Scripting, Protocol Violationsi, and repeats
+
+We gather these IP addresses that attack the same domain
+name with the same attack pattern in a very small time
+window. We find that some IP addresses are parters to launch
+an attack although they seem not to be, which is confirmed by
+our offline investigations. This case verifies the effectiveness
+of our multi-step attack pattern mining approach.
+IV. C ONCLUSION
+In this paper, we proposed a novel three-stage approach
+to mine multi-step attack patterns. We also introduced a new
+tool to measure the distance of any two attack sequences. Experiments on real-world WAF alerts and offline investigations
+show that different attackers with the same pattern may have
+the same “attack background”, which verifies the effectiveness
+of our approach.
+R EFERENCES
+[1] L. Wang, A. Ghorbani, and Y. Li, “Automatic Multi-Step Attack Pattern
+Discovering,” International Journal of Network Security, vol. 10, no. 2,
+pp. 142–152, 2010.
+[2] B.-C. Cheng, G.-T. Liao, C.-C. Huang, and M.-T. Yu, “A Novel Probabilistic Matching Algorithm for Multi-Stage Attack Forecasts,” IEEE
+Journal on Selected Areas in Communications (JSAC), vol. 29, no. 7, pp.
+1438–1448, 2011.
+[3] Z. Liu, C. Wang, and S. Chen, “Correlating Multi-Step Attack and
+Constructing Attack Scenarios based on Attack Pattern Modeling,” in
+Proc. of Information Security and Assurance (ISA), 2008, pp. 214–219.
+
+

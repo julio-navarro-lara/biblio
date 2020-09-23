@@ -1,0 +1,784 @@
+A novel technique of recognizing multi-stage attack behaviour
+Wang Li Li Zhi-tang Wang Qi-hong
+Computer school
+Huazhong university of science and technology, Hubei Wuhan 430074, China
+{wtwl, leeying, qhwang}@hust.edu.cn
+
+Abstract
+Since security audit data increased so dramatically,
+management and analysis of these security data
+become a critical and challenge issue. SATA (Security
+Alerts and Threat Analysis project) aims at analyzing
+the security events and detecting the security threat. In
+this paper, we proposed a novel method of
+constructing attack scenarios model in order to
+recognize multi-stage attack behaviour and predict
+potential attack steps of the attacker. Our method
+based on statistical method using the feature of time
+consecution association of contextual attack steps.
+Besides, we proposed a new method of computing the
+correlativity between two contextual attacks which
+enhances the correlation-ship of the attack scenarios
+model and ensures the accuracy of the final correlation
+result. The idea is easy to implement and it can be used
+to detect novel multi-stage attacks. Experiment shows
+that our method is effective and feasible.
+
+1. Introduction
+The amount of security application products
+connected to the Internet increased so dramatically that
+they usually generate huge volumes of security audit
+data. Especially IDS, firewalls, routers and other
+security devices are guilty of producing vast oceans of
+security data. Management and analysis of the security
+data become a critical and challenge issue.
+The research work on security alerts analysis and
+management can be divided into several classes:
+format standardization, alert aggregation, alert
+verification, risk evaluation, attack scenarios
+recognition. The work introduced in this paper mainly
+concentrates on constructing multi-stage attack
+scenarios model based on high-level alerts which are
+generated from the raw alerts after normalization,
+aggregation and verification phases.
+
+The novel contribution of this paper is threefold:
+first, we use a new mining algorithm based on
+statistical method to mine attack scenarios; second, we
+presented some new concepts such as hypo-attack-link,
+correlativity to stress the logical association of the
+contextual attack steps in multi-step attacks; finally, we
+show that the method can be easily implement and can
+be used to recognize new multi-stage attacks.
+The remainder of this paper is organized as follows.
+The next section discusses related work. Section 3
+introduces the architecture of SATA and the previous
+work we have done on SATA. Section 4 presents the
+novel attack scenarios constructing algorithm SFA.
+Section 5 reports our experiments with the 2000
+DARPA intrusion detection scenario specific datasets.
+Section 6 concludes this paper and outlines future
+work.
+
+2. Related work
+With the rapid growth of the usage of security
+application products like IDS, research on security
+alerts analysis and correlation has been rather active
+these years. There have been several proposed
+approaches to alert correlation and attack scenario
+analysis. The most representative work is described as
+follows:
+[1] correlates alerts if the prerequisites of some
+later alerts are satisfied by the consequences of some
+earlier alerts in MIRADOR correlation method. The
+attack base was specified in LAMBDA and was
+analyzed to generate correlation rules to be used to
+construct attack scenarios. [2] and [3] use the similar
+method with MIRADOR. They construct attack
+scenarios through alert correlation, using prerequisites
+and consequences of attacks in TIAA correlation
+method. Both approaches are based on the observation
+that in a series of attacks, the attacks were usually not
+isolated, but related as different stages, with the earlier
+stages preparing for the later ones. Such methods can
+
+potentially uncover the causal relationship between
+alerts, but they need to define the specification of
+attacks and the attack plan recognition results rely on
+the precision of the correlation rules. Such limitations
+make the methods difficult and complex to implement.
+IBM researchers also have made some efforts in
+this field. [3] presents a method of mining correlation
+rules from hand-labeled training examples by using
+rule wizard and rule editor. It is integrated in the IBM
+Tivoli Event Console (TEC). It enables automatic
+creation of rules, which helps operators by providing a
+simple way to create rules based on observed events,
+but it relies on the expertise knowledge and manual
+configuration. [5] and [6] introduce the concept of root
+cause and propose an alarm clustering method to
+support the discovery of root cause which can help
+remove most of the redundant alarms that can be
+attributed to a small number of root causes. This
+method also need expertise knowledge and can not
+solve the problem of false negative.
+[7] and [8] proposed a GCT-based and Bayesianbased correlation approach to identifying new alert
+relationship without depending on prior knowledge of
+attack transition patterns. The method originates from
+the idea that attack steps are directly related because an
+earlier attack enables or positively affects the later one
+which is similar with our method. But our method uses
+correlativity and hypo-attack-link to construct attack
+scenarios that distinguishes our method from their.
+
+this database and prioritizes the alerts according to the
+alert-rank algorithm. The results are sent to alert
+aggregation module. The alert aggregation further
+analyzes the ranked alerts to remove repetitious and
+redundant alerts in order to provide more synthetic
+information to security manager and the following
+modules. After the alert aggregation process the
+number of alerts reduced largely. The alert verification
+module then analyzes the alerts with background
+knowledge provided by network tools such as Ntop
+and Nessus to generate high-level alerts which are
+considered as the alerts that could really threaten the
+network. The multi-stage attack scenarios recognition
+module which will be stressed in this paper takes the
+result of alert verification function and analyzes the
+high-level alerts using the SF algorithm to generate
+attack scenarios model. Then with the attack scenarios
+models the function can recognize the intension of the
+attacker or even predict the next step the attacker will
+take.
+As mentioned in the introduction, we shall only
+present in this paper our approach of attack scenarios
+construction. Other functions in SATA will not be
+presented in this paper. We will discuss them in our
+follow-up papers.
+
+3. About SATA
+
+The alerts to be mentioned in this section all refer
+to high-level alerts, which are the alerts generated after
+aggregation and verification process. The number of
+alerts reduced largely and the quality of alerts
+improved highly contrast with the raw alerts. The SF
+(Statistical Filtering) algorithm is presented based on
+hypothesis that the alerts being processed are highlevel alerts.
+The idea of SF is that a series of the attacker’s
+actions has time consecutive association. Specifically,
+an earlier attack enables or positively affects the later
+one. We can predict the next most possible step when
+one attack achieved successfully according to analysis
+of the statistical probability of the large number of
+foregoing attack actions. In addition, this contextual
+attack time association has timeliness. For example, an
+IP sweep from a remote site may be followed by
+SadmindPing attack against a scanned Solaris host.
+The result of IPSweep is the condition of
+SadmindPing. Therefore, it will be meaningless if the
+result go beyond the time limit.
+As the algorithm analysis object is high-level alert,
+which ensures that the alerts being processed are
+validated, this provides the requirement of the
+implementation of the algorithm. Among all these
+
+The project SATA (Security alerts & Threats
+analysis) that we are implementing now aims at
+building an integrated platform of security event
+management and analysis. The main function of it
+includes: alert collection, alert aggregation, alert
+verification and attack plan recognition. Figure 1
+shows the architecture of SATA.
+
+Figure 1. Architecture of SATA
+
+Figure 1 shows there are five major functions in
+SATA. The collector module receives the alerts and
+log generated by different security application devices
+and stores them into the alert database after the
+normalization and format standardization procedure.
+The alert ranking function can then have an access to
+
+4. Multi-stage attack recognition
+4.1. The background of SF algorithm
+
+validated alerts, most are intended attacks and are of
+the steps taken by specifically attack intent whereas
+these attacks are hidden by other scattered and sporadic
+attack actions. The SF algorithm uses statistical
+method to filter the interferential items and find out
+correlated series of attacks from the filtered alerts.
+
+long time interval will make it possible for the security
+manager to predict the next possible attack steps and
+take the corresponding countermeasures. We use δ to
+represent the value of WT in the following paper.
+
+4.3. Candidate attack scenarios sequence
+4.2. Attack association time window WT
+
+Partition alert sequence A =< A1 , A2 ,......, An >
+
+Sort all the received alerts by the happen time
+attribute of the alert and get the sequence
+A =< A1 , A2 ,......, An > , in which Ai (1 ≤ i ≤ n)
+
+to get candidate attack sequence set S composed by
+candidate attack scenarios sequence using WT = δ .
+
+represents the ith alert received in-order. Suppose
+some attack scenarios implied in the sequence. Since
+the attack actions of the attacker have time limit, we
+define time window WT to describe the time interval
+between the begin time of the first attack step to the
+finish time of the last attack.
+Definition 1. Attack scenarios time window.
+Consider that a1 and al are the alerts generated by the
+first attack step and the last attack step taken by the
+attacker in a possible attack scenarios as respectively.
+ai (1 < i < l ) is any alert besides a1 and al in as ,
+
+Given alert set A =< A1 , A2 ,......, An > , n is the
+
+that is as =< a1 ,..., ai ,..., a l > (1 < i < l ) . Then
+define WT = as.end _ time − as.begin _ time , and
+for ∀as and a1 , a 2 , al ⊆ as , it satisfies following
+inequation:
+
+Min(ai .happen _ time − a1 .happen _ time) ≤ WT
+≤ Max(al .happen _ time − a1 .happen _ time)
+The value of WT needs to be specified carefully. If
+it is chosen too large exceeding the time interval of
+general attack scenarios, it will lead to large number of
+candidate sequence to be analyzed and the algorithm
+efficiency will be affected. If it is chosen too small, the
+time interval can’t contain a complete attack scenarios
+or even less than the interval between two contextual
+attack steps, the results will be fragmentary and can’t
+reflect the complete scenarios implement by the
+attacker. Although the parameter basically has to be
+defined heuristically, it can be set without too much
+difficulty for two reasons. The minimum of WT is
+easy to evaluate, but the maximum value
+corresponding to attack scenarios time interval relates
+to the special actions taken by the attacker.
+Considering most of the intent attack steps are
+happened in a relatively stable time intervals, although
+there are some beyond the general time interval, the
+
+Definition 2. Candidate attack sequence set S .
+total number of alerts generated, partition A into
+candidate attack sequence Si using attack scenarios
+time window WT . S i =< Ai , Ai +1 ,...... Ai + m > ,
+
+S i ∈ S , (1 ≤ i ≤ n) ,
+and they satisfy:
+( Ai + m .happen _ time − Ai .happen _ time ≤ δ ) ∨
+
+( Ai + m +1 .happen _ time − Ai .happen _ time > δ )
+The time interval of the last alert Ai + m and the first
+alert Ai is no more than δ in Si . For different Si ,
+m is different, for the interval of alert happen time is
+inconstant. m alerts after each Ai (1 ≤ i ≤ n) fall
+into the same attack scenarios time window WT and
+form the candidate attack sequence Si . We call set S
+composed of all Si as candidate attack scenarios
+sequence set, and we have S = {S1 , S 2 ,......, S n } .
+4.4. Attack happen probability matrix
+We want to find out the next most possible attack
+behavior after one successful attack action in WT . So
+we use the statistical method to count the attack type
+distribution in sequence set S .
+Let T be the set of all kinds of attack type. The
+element of T will increase incessant with the
+development of hacker technology. We assume
+T = {T1 , T2 ,......, TL ,......} , L is the sum of the
+known attack type.
+For each a ⊆ A , we can represent a by a duple:
+
+a = {( S id , S od )} . Sid and S od identifies attack
+scenarios sequence id and the order of alert a in
+sequence Sid respectively. For the same alert may
+
+belong to different sequences, the element of a maybe
+more than one, | a |≥ 1 .
+Definition 3. Set A j with element attack type T j .
+Therefore,
+
+Aj
+
+satisfies:
+
+A j = {( S id , S od ) | ∀a = A j : a.attack _ type = T j }
+, (1 ≤ j ≤ L) .
+Definition 4. Set S (T j ) with initial element attack
+type
+
+Tj
+
+.
+
+S (T j ) = {( S id ,0) | ∀a ∈ S (T j ) : a.attack _ type
+= T j }, (1 ≤ j ≤ L).
+Definition 5. Attack occurrence matrix S (T j , Tk ) ,
+
+(1 ≤ j , k ≤ L) . The set shows the attack occurrence
+after one specific attack in δ time interval.
+S (T j , Tk ) = {( S id , S od ) | ∀b ∈ S (T j , Tk ) :
+S b.sid (0).attack _ type = T j ∧ b.attack _ type = Tk }
+, (1 ≤ j , k ≤ L) .
+
+We set Pjk ( k = 1,2,......, L) with value no less
+than
+
+σ
+
+together to get the set K j .
+
+value
+
+I k = {S id | S id
+
+σ
+
+is the threshold
+
+predefined.
+⊆ S (T j , TK ), k ∈ K j } represents
+
+the sequence id set which has the head element attack
+type T j and posterior element attack type Tk . I is the
+set composed of all I k .
+Definition 7. Frequent attack sequence set S ′( j ) .
+All the candidate attack scenarios sequences in I k
+compose S ′( j ) .
+Some of the sequences in I k include more than
+one frequent attack while some include single frequent
+attack after T j . We will find out the sequences with
+series of frequent attack for further analysis.
+Definition 8. Hypo-attack-link Lk .
+Let
+
+J k = {S od | ( S id , S od ) ⊆ S (T j , Tk ),
+k ∈ K j ∧ S id ⊆ S ' }
+
+According to definition 4 and 5, | S (T j ) | is the
+
+represents the set of the order of Tk in frequent
+
+sum of elements in S (T j ) . It describes the number of
+
+sequence. N
+䯴 J k䯵 means the average value of the
+
+candidate sequences with the initial element attack
+type T j . | S (T j , Tk ) | represents the number of
+
+element in J k . It shows the average position of Tk
+
+sequences with the initial element attack T j and the
+
+after T j .
+
+final element attack Tk in S
+Definition 6. Attack happen probability matrix.
+We use Pj k to describe the probability of the
+
+Tk (k ∈ K j ) with the value of N ( J k ) to get the
+
+δ
+
+occurrence of Tk after attack T j in
+then we have: Pjk =
+
+F ( S (T j , Tk ))
+F ( S (T j ))
+
+time interval,
+
+.
+
+F ( S ) denotes the amount of element in S .
+F ( S (T j , Tk )) =| S (T j , Tk ) | , F ( S (T j )) =| S (T j ) | ,
+( j , k = 1,2......L) .
+Then we get attack happen probability matrix
+
+§ p11 ! p1L ·
+¨
+¸
+P( J , K ) = ¨ # % # ¸ .
+¨p
+¸
+© L1 " aLL ¹
+4.5. Frequent attack sequences
+
+N (J k ) =
+
+¦s
+
+i
+
+| Jk |
+
+,
+
+si ∈ J k . Sort
+
+sequential representation of hypo-attack-link Lk .
+
+Lk shows the attack correlation-ship on time,
+sequence and statistics aspects. But if we want to
+construct more accurate attack scenarios model we
+should also consider the correlation-ship of real alerts.
+
+4.6. Calculate the correlativity
+Definition 9. Alert correlativity Cor ( X , Y ) .
+Alert X is described by p attributes: x1 , x 2 ......x p ,
+
+X , Y ⊆ A . Then we have X = ( x1 , x 2 ,......, x p ) ,
+Y = ( y1 , y 2 ...... y p ) . The correlativity of X and
+
+Y
+
+is
+
+described
+
+as:
+
+Step3: Calculate the attack happen probability of
+
+p
+
+Cor ( X , Y ) =
+
+¦Wij Cor ( xi , y j )
+
+i , j =1
+
+Tk after T j
+.
+
+p
+
+¦W
+
+ij
+
+i , j =1
+
+X\Y
+AttackType
+
+AttackType
+
+0.6
+
+SrcIP
+
+DstIP
+
+SrcPort
+
+0
+
+0
+
+0
+
+0.1
+
+DstPort TimeStamp Priority
+
+0.4
+
+0
+
+0
+
+0.3
+
+0
+
+0
+
+0.9
+
+0.1
+
+0.2
+
+0
+
+0.4
+
+0
+
+0
+
+0.1
+
+0.1
+
+0
+
+0
+0.2
+
+SrcIP
+
+0
+
+0.8
+
+DstIP
+
+0
+
+0.6
+
+SrcPort
+
+0
+
+DstPort
+
+0.3
+
+0
+
+0.3
+
+0.2
+
+0.4
+
+0
+
+TimeStamp
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0.8
+
+Priority
+
+0.1
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0.1
+
+0
+0.7
+
+in
+
+δ
+
+:
+
+Pjk =
+
+F ( S (T j , Tk ))
+F (S (T j ))
+
+,
+
+(k = 1,2......L) .
+Step4: If Pjk ≥ σ , then put k into set K j .
+Step5: Find out frequent sequences S ′( j ) in
+< I1 , I 2 ,......I k ...... >
+,
+in
+which
+I k =< S id | S id ⊆ S (T j , Tk ), k ∈ K j > .
+N (J k )
+J k =< S od | (S id , S od ) ⊆ S (T j , Tk ),
+Step6:
+
+Calculate
+
+k ∈ K j ∧ S id ⊆ S ′ >
+
+,
+
+.
+
+Figure 2. Weight matrix of alert attributes
+
+Step7: Sort Tk according to N ( J k ) to get Lk .
+
+correlativity
+
+Step8: Compute the average Cor ( X , Y ) in Lk , if
+the result exceed the threshold, put the two nodes into
+attack scenarios model set.
+Step9: j + + , If j > L , end the program, else
+turn to step 3.
+
+For the same intent in an attack scenario, there is
+correlation-ship existing between two attack steps
+besides time association. For example, the attacker
+takes the IPSweep action first and then inquires about
+the vulnerability. The source IP or other attributes of
+the two steps maybe uniform or may have relationship
+more or less. The alert association describes the
+correlation-ship of the two alerts. The larger the alert
+correlativity is, the more possibility their belonging to
+the same scenarios is. In addition, for X is earlier
+than Y , the formula is not symmetrical. Figure 2
+shows the weight matrix of different alert attributes
+correlativity. The weight values are set by experiences
+and can be tuned in practice. About the computation of
+correlativity of attributes, we don’t give unnecessary
+details here.
+
+5. The SF(Statistical Filtering)algorithm
+The idea of the algorithm is to sum up the alerts
+according to the attack type attributes to get the attack
+happen probability matrix, and mine the next attack
+action most likely to happen after one specific attack.
+Thus the attack scenarios model will be educed
+through computing the attack correlativity in hypoattack-link. The steps of the algorithm are showed
+below:
+Step1: Partition the alert sequence to get candidate
+attack sequence set S using WT = δ .
+Step2: Construct attack occurrence matrix
+R( J , K ) . R( j , k ) = S (T j , Tk ) , (1 ≤ j , k ≤ L) .
+Set the initial value j = 1 .
+
+6. Experiment
+In our research, we use the DARPA 2000
+benchmark repository, scenario-specific datasets in [9].
+It consists of two intrusion scenarios, LLDDOS1.0 and
+LLDDOS2.0.2 [MIT Lincoln Lab 2000]. LLDOS 1.0
+contains a series of attacks in which an attacker probes,
+breaks in, installs the components necessary to launch
+a DDoS attack, and actually launches a DDoS attack
+against an off-site server.
+Playback technique ([10], Open source tool
+Netpoke) is used in the test to induct the workflow to
+the sensors integrated in SATA. The attack scenarios
+implement in 3 hours. The experiment persisted for 4
+weeks. Table 1 shows one of the experiment multistage attacks happened during the period.
+Table 1. Example description of one attack
+scenarios.
+Phase
+
+Attack
+
+Happen time
+
+1
+
+IPsweep
+
+06-01-03-9:39:16
+
+2
+
+SadmindPing
+
+06-01-03-10:14:17
+
+3
+
+SadmindExploit
+
+06-01-03-10:52:13
+
+4
+
+DaemonInstalled
+
+06-01-03-11:20:11
+
+5
+
+DDosAttack
+
+06-01-03-12:05:15
+
+During four weeks test, our system received large
+quantity of alerts. The number reduced from 66579 to
+5814 after the process of aggregation and verification
+from the original alerts to high-level alerts, reduced
+91.3% totally. Figure 3 shows one attack scenarios
+model we got finally and the correlativity of each pair
+of nodes in hypo-attack-link using SF mining
+algorithm.
+
+benchmark repository to test our system and the results
+we obtained were satisfactory. Currently, we plan to
+collect the network data flow from CERNET
+Huazhong area center to further test our system. We
+will mention it in follow-up papers.
+
+8. References
+[1] Fre´de´ric Cuppens, Alexandre Mie`ge. Alert
+correlation in a cooperative intrusion detection framework.
+In: Proceedings of the 2002 IEEE symposium on security and
+privacy; 2002. p. 202e15.
+[2] P. Ning, Y. Cui, and D. S. Reeves, "Constructing attack
+scenarios through correlation of intrusion alerts," presented at
+Proceedings of the 9th ACM Conference on Computer and
+Communications Security, Nov 18-22 2002, Washington,
+DC, United States, 2002.
+
+Figure 3. Example of hypo-attack-link and
+attack correlativity.
+The result shows nodes in hypo-attack-link
+construct the attack steps of attack scenarios model.
+The correlativity of attack pair reflects the correlationship of two attack actions. We set the threshold as
+0.54, and the result of the judgment is proved to be
+correct by the real attack behavior we carried out. The
+method is showed to be effective with the result of the
+experiment.
+
+7. Conclusion and future work
+In this paper, we propose a novel attack scenarios
+construction approach based on statistical of attack
+behavior. The idea is enlightened by the time
+contextual feature of the attack actions made by the
+attacker. Using statistics of the attack behavior we can
+filter out the suspicious attack link. Then we construct
+the scenarios model from attack link with the help of
+the computing the correlativity of different attack
+actions. The main contribution of the paper is
+proposing a novel SF mining algorithm, and some new
+concepts such as hypo-attack-link and correlativity.
+The technique solved the problem of complex
+definition and the construction of unknown attack
+scenarios.
+Our method proves to be effective and practicable
+through experiments. We use the DARPA 2000
+
+[3] P. Ning, Y. Cui, D. S. Reeves, and D. Xu, "Techniques
+and tools for analyzing intrusion alerts," ACM Transactions
+on Information and System Security, vol. 7, pp. 274, 2004.
+[4] C. Araujo, A. Biazetti, A. Bussani, J. Dinger, M.
+Feridun, and A. Tanner, "Simplifying correlation rule
+creation for effective systems monitoring," presented at
+Utility Computing. 15th IFIP/IEEE International Workshop
+on Distributed Systems: Operations and Management,
+DSOM 2004. Proceedings, 15-17 Nov. 2004, Davis, CA,
+USA, 2004.
+[5] K. Julisch, "Clustering intrusion detection alarms to
+support root cause analysis," Edmonton, Alta, Canada, 2003.
+[6] K. Julisch, "Mining alarm clusters to improve alarm
+handling efficiency," New Orleans, LA, USA, 2001.
+[7] W. Lee and X. Qin, "Statistical Causality Analysis of
+INFOSEC Alert Data," presented at RAID2003.
+[8] Q. Xinzhou and L. Wenke, "Discovering novel attack
+strategies from INFOSEC alerts," Sophia Antipolis, France,
+2004.
+[9] MIT Lincoln Lab. 2000 DARPA Intrusion Detection
+Scenario
+Specific
+Data
+Sets.
+http://www.ll.mit.edu/IST/ideval/data/2000/2000_data_index
+.html
+[10] MIT Lincoln Lab. Tcpdump File Replay Utility.
+http://ideval.ll.mit.edu/IST/ideval/tools/tools_index.html
+
+

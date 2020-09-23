@@ -1,0 +1,12 @@
+\documentclass{article}
+\usepackage{pgfplots}
+\usepackage{filecontents}
+\usepackage{pgf-pie}
+\tikzset{>=latex}
+\pgfrealjobname{plottemporal}
+\begin{document}
+\beginpgfgraphicnamed{pie_type_data}
+\begin{tikzpicture}\pie{87/alerts,13/events}
+\end{tikzpicture}
+\endpgfgraphicnamed
+\end{document}

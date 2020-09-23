@@ -1,0 +1,800 @@
+A GA-based Solution to an NP-hard Problem of
+Clustering Security
+Jianxin Wang,
+School of Information,
+Beijing Forestry University,
+Beijing, China, 100083
+wangjxWbjfu.edu.cn
+
+Hongzhou Wang,
+Department of Mathematics,
+Beijing Institute of Technology
+Beijing, China, 100081
+wanghongzhouWbit.edu.cn
+
+Abstract-The clustering approach forwarded by Klaus Julisch
+is considerably effectual in eliminating false positives and
+finding root causes among huge amount of security events. But
+the clustering problem was proved to be unfortunately an NPhard one. In this paper, a GA-based algorithm is forwarded,
+which is much more effective than the original approximation
+algorithm by Julisch. The coding scheme and genetic
+operations including selection, crossover, and mutation are
+discussed in detail. To validate the quality of the newlyforwarded approach, a tree-version apriori is given, which is
+quite time-consuming but able to produce absolutely accurate
+solution used for comparison in a feasible period of time. The
+results show that the GA-based algorithm is valid and efficient
+and can find the optimal clusters that are very similar to the
+absolutely accurate ones.
+I.
+
+INTRODUCTION
+
+Intrusion detection systems (IDS), as a new and potent
+approach to protect computer systems, are increasingly
+deployed in response to attacks against enterprise networks
+[1]. However, there appears another difficult problem with
+the use of IDS: A great number of alarm messages are
+generally triggered which turn out to be a burden of the
+human operator. It is common for an IDS to trigger
+thousands of alarms per day, up to 9900 of which are false
+positives [2].
+Much work has been done to help human operators
+eliminate false positives and finding root causes among the
+security events triggered by IDS, as well as those by
+firewalls and exchangers. Claus Julisch and his cooperators
+used a clustering approach to identify the root cause [3, 4, 5,
+6]. His work should be emphasized here with respect to the
+effect of their clustering method. In fact, his work was
+assimilated into a new computer language, TTT Language,
+which is used for security log analysis [7].
+In order to extract meaningful clusters from great amount
+of security events, Julisch defined an objective distance
+between two node vectors in a forest. The distance definition
+works well in most cases, except when the human operators
+hold intensive biases towards the data newly triggered. A
+
+Geng Zhao,
+The Key Laboratory,
+Beijing Electronic Scienc&Tech Inst.,
+Beijing, China
+zg(besti.edu.cn
+
+subjective distance was forwarded to cover the gap between
+the nature of the data and what human operators think the
+data to be [8].
+Theoretically, we can exhaust all the node vectors to
+search the best solution to the clustering problem by Julisch,
+if given enough time. Unfortunately, the problem is an NPhard one and cannot be solved in a feasible period of time.
+The proof about the NP-completeness was specified in his
+early work [4].
+An expedient algorithm was selected, which is able
+produce approximation solution to the clustering problem [4].
+As is tested later in this paper, the solutions are generally of
+low quality, mostly because the algorithm has no potency of
+global optimizing.
+Genetic algorithm (GA) is a global optimization
+technique that mimics the natural process of evolution in
+which the fittest solutions survive after numerous
+generations of heredity, variation and natural selection [9].
+Usually, an unknown variable in a solution is represented as
+a gene, and a solution with many variables is represented as a
+chromosome (also called individual). On the other hand,
+chromosome can be interpreted as a solution with many
+variables. This process is called encoding and decoding.
+Fitness is defined to measure the goodness of each individual.
+During the optimization process, GA keeps a group of
+candidate individuals (solutions) in each generation. Through
+genetic operations, such as selection, crossover and mutation,
+those individuals with better fitness will be propagated to the
+next generation while those with worse fitness will be
+eliminated with higher probability. After a number of
+generations, the individual with the best fitness among the
+last population is chosen as the optimal solution.
+The operation of encoding and decoding is usually
+different from problem to problem. To get more precise
+expression, a chromosome can be segmented into pieces [11].
+In the application of GA in this paper, chromosomes are
+segmented into pieces for better expression, too, with each
+piece representing a node in a tree.
+
+Supported by the National High-Tech Research and Development Plan
+of China under Grant No. 2003AA148020
+
+0-7803-9584-0/06/$20.00(2006 IEEE.
+
+Events
+
+2093
+
+Ordinarily, only an approximate solution can be obtained
+with GA. Whether it is a best solution or how good it is
+cannot be determined. So a best solution is required, in
+experiments, to measure the goodness of the solution
+obtained with the GA optimization technique. In the
+experiments, A tree-version of apriori is built which can
+produce best solution to evaluate that obtained with GA.
+Apriori is an efficient algorithm for mining association rules
+over basket data [10]. Apriori works on the base of the
+simple observation: in a relational database, if the number of
+records satisfying small set of conditions does not exceed a
+given threshold, the number of records satisfying a super set
+of conditions can not exceed the threshold, either. With an
+apriori, the solution space is generally greatly trimmed and
+thus time expense can be usually remarkably reduced.
+But the purpose here is to find a best cluster, not
+association rules. The apriori is transformed into a treeversion one that can help to search the best cluster so that the
+GA-based clustering algorithm can be well evaluated in the
+experiments.
+II.
+
+x is called a generalization ofy, if Ti contains a one-way path
+from x to y (in symbols: xocy). If x is a parent of y, then x
+certainly is the generation of y. Finally, x cx is trivially
+satisfied. These definitions can be illustrated with the
+hierarchical tree in figure l(a). Node "ANY-IP" is a parent
+of node "DMZ" while "DMZ" is a child of "ANY-IP". And
+"ANY-IP" is a generalization of "ANY-IP", "DMZ", and
+"ip1", respectively.
+ANY-IP
+
+FIIrvWALL p32Wkt/FTP
+ipl
+
+ip2
+
+SiT
+
+1
+
+...
+
+80
+
+ip5
+
+(a)
+
+SN
+
+..
+
+NON-PRIV
+1024
+
+1025
+
+...
+
+65535
+
+ANY-DAY-OF-MONTH
+
+ANY-DAY-OF-WEEK
+
+hO ...h23
+
+A. Objective distance
+To cluster the events, a distance between two events
+must be defined in advance. In practice, distance is easy to
+define for numerical attributes, but categories, time, or string
+attributes give rise a problem when being defined the
+distance of. Unfortunately, alarm messages can contain all of
+these attribute types.
+In Julisch's work, dissimilarity or distance can be defined
+in a uniform manner using hierarchical trees. By way of
+illustration, figure 1 shows how hierarchical trees of the IP
+address, port, and time attribute can be obtained. The
+hierarchical trees play a basic role in the clustering method.
+It can be seen in Figure 1 (c, d) that the hierarchical tree of
+the attribute time can be constructed in two ways. In fact, the
+domain of almost every attribute can be classified this way.
+Let Ai be an alarm attribute, alarms are defined as tuples
+over the Cartesian product II ,il-ndom(Ai). A tree Ti is called
+a hierarchical tree if it is the taxonomy on the elements of
+domain(A1). There are 4 examples of taxonomy trees in
+figure 1. For two nodes x, y in Ti, x is called a parent of y,
+and y a child of x if there is an edge x - y in T. Furthermore,
+
+ip4
+
+ip6 ip7.
+
+PRIVATE
+(b)
+
+AWEEKDAY
+
+WEKND
+
+THE CLUSTERING PROBLEM
+
+The great amount of events triggered by an IDS or a
+firewall often frustrated their human operators. If the events
+are arranged in meaningful clusters, the operators can easily
+understand what are happening in the networks and know
+what really cause the events to happen. One of the most
+important preconditions for clustering is to define distance.
+Julisch defined a useful objective distance for measuring the
+dissimilarity of two events [3, 4]. The author of this paper
+and other co-operators improved the distance definition by
+assimilating a subjective distance [8]. Both the objective
+distance and the subjective one, together with the clustering
+problem definition, will be discussed in this section.
+
+ANY-PORT
+EXTERN
+
+MON
+
+hO ...h23
+
+FRI
+
+BEGINNING
+1 ... 10
+
+MIDDLE
+11 ... 20
+
+ND
+21 ...
+
+31
+
+(d)
+
+(c)
+
+Figure 1. Taxonomy of several kinds of attributes
+
+Based on the definition "generalization", the distance
+between two nodes in a hierarchical tree can be defined. The
+distance between x and y is the number of edges between x
+andy, if x is a generation of y, or if y is a generation of x. But
+the distance between two nodes is undefined if the
+generalization-specification relationship does not exist
+between them.
+A vector, every element of which is a node from the
+corresponding hierarchical tree, is also called an alarm. It is
+different from an ordinary alarm, for its elements are
+probably not taken from its attribute domain. A cover of a set
+of alarms (y1, y2,
+, Yn) is an alarm x, which is a
+generalization, but as special as possible, of each alarm in the
+set. The example is also from figure 1(a, b). Given a set of 3
+alarms (DMZ, 80), (ip3, 80), and (FIREWALL, PRIVATE),
+then the cover of the set is (DMZ, PRIVATE). Although the
+alarm (ANY-IP, ANY-PORT) is the generalization of each
+alarm in the set, it is not the cover of the set because it is not
+special enough. So the distance of a set of alarms is defined
+as the average distance between its cover alarm and each of
+its member alarm. The distance of the alarm set just
+mentioned with three members is: (1Â±+2+1)/3 = 4/3.
+B. Subjective distance
+Though Julisch's method of clustering with the distance
+defined by himself is effectual in eliminating false positives
+and forming an event overview, there is an inherent
+deficiency in the distance definition. If a generalization
+alarm is got as a cluster, it is then the representative of all the
+alarms it covers. If the proportion among the alarms does not
+match what it is considered to be, then the cluster tortures the
+
+2094
+
+nature of among the events with loss of information to some
+extent when presented to human operators.
+The subjective distance defines the dissimilarity of the
+nature of the data and what human operators think the data to
+be [8]. With subjective distance assimilated into the
+objective distance, the information that the human operators
+obtain from the clusters can be closer to the nature of the
+events.
+
+An alarm (each member of which is a node in the
+corresponding tree) can be encoded into a chromosome
+(made up of pieces each of which is a 0-1 sequence) while a
+chromosome can be decoded into an alarm. With the
+encoding and decoding operation, a problem of the clustering
+domain can be transformed into a problem of the GA domain.
+The chromosome and the alarm are mutually interpreted.
+They are in GA domain and clustering domain, respectively.
+010 0101 001
+
+C. The definition of the clustering problem
+The clustering problem forwarded by Claus Julisch can
+be now described as: finding a set of alarms in all the alarms
+triggered, satisfying that the number of the set members is
+greater than or equal to a given threshold whilst the distance
+of the set is minimal.
+This problem was proved to be NP-complete, which
+means that the accurate solution can not be obtained in a
+feasible period of time. An approximation algorithm was
+given by Julisch [4]. It is described as follows (see figure 2).
+Input: a set of events; a threshold T; a set of trees
+Output: an alarm H an abstract event
+select an arbitrary leaf vector A; H an alarm
+while (the number of events that A covers is less
+than T) {
+select an arbitrary member of A;
+replace the member with its direct parent
+
+(a) a chromosome
+AO
+
+BO
+
+A_
+
+AI
+
+IA4
+
+A3
+
+IBI
+
+IA5
+
+L6
+
+IB2
+
+C2
+
+IB3
+
+B4
+
+B5
+
+B7
+
+B8
+
+C3 ~C4 ~ C5
+
+(b) the nodes encoded into a chromosome
+
+Figure 3: encoding and decoding
+
+The fitness function is the combination of two factors:
+the size of the set that an individual covers and the degree of
+compactness of the set. The fitness value will be greater, if
+the similarity of the members in the set is more. On the other
+hand, given a fixed similarity, the fitness value will be
+greater if the size is larger.
+
+Hgeneralization
+
+}
+
+return the alarm A Han approximation solution
+Figure 2: an approximation clustering algorithm
+
+The algorithm described above is quite simple. It is likely
+that the algorithm leads the solution easily to local minimum,
+not the global one.
+III. THE GA-BASED ALGORITHM
+The approximation algorithm implemented by Julisch is
+not capable of global optimization, in which Genetic
+algorithm performs well. But first of all, the scheme of
+encoding and decoding, and the fitness function must be
+defined.
+A. Encoding and selection
+The purpose of the algorithm is to find an alarm
+satisfying a set of conditions. Each member of the alarm is a
+node in a tree (see figure 3 (b)). So a chromosome (or an
+individual) is made up of n pieces, each piece representing a
+node in a tree (see figure 3 (a)).
+It should be paid attention to that the length of each piece
+of a chromosome is not all the same according to the number
+of nodes in the corresponding tree.
+
+B. Crossover and mutation
+The operation of crossover makes two chromosomes
+exchange a part of each one, with two new chromosomes (of
+the next generation) produced. In the GA domain, all the
+chromosomes are 0-1 sequences. Two chromosomes of one
+generation can mate and produce another two chromosomes
+of the next generation. The operation of crossover and
+mutation are illustrated in figure 4, where the 3 hierarchical
+trees are shown in (c).
+010 0101 001
+110 1101 001
+110 1100 101 (a) crossover 010 0100 101
+010 0101 001
+A
+
+B
+
+e mutation
+= >
+(b)
+BO
+
+010 0100 001
+B
+
+(c) Hierarchical trees
+
+o
+
+Figure 4: crossover and mutation
+The crossover operation in this clustering problem is
+indicated by figure 4 (a). Two chromosomes (010 0101 001)
+and (1 10 1 100 101) mate and two new chromosomes of the
+next generation are produced: (1 10 1 101 001) and (010 0100
+101). This means, in the clustering problem domain (see
+
+2095
+
+figure 4 (c)), that two alarms (A2, B5, C1) and (A6, B12, C5)
+produce another two alarms (A6, B13, C1) and (A2, B4, C5).
+We would notice that all the nodes of an individual of
+the new generation can be found in the old generation,
+except for at most one node changed. In the case shown in
+figure 4 (a), only the middle node is new in each derived
+individual.
+The operation of mutation is simply to turn over one bit
+in an individual (a 0-1 sequence), by changing the bit from 1
+to 0 or from 0 to 1. As a result, the corresponding alarm is
+turned into another alarm, with at most one node changed.
+As is shown in figure 4 (b), the alarm (A2, B5, C1) is turned
+into another alarm (A2, B5, Cl), which is resulted from the
+mutation operation: the individual (010 0101 001) mutates to
+another individual (010 0100 001).
+As is well known, the probability of crossover is very
+large (it is set 100% in the algorithm of this case) while the
+probability of mutation is quite small (only 500 here).
+C. Local optimization
+GA is of great potency in global optimization while it is
+not powerful enough in local optimization. The solutions GA
+produces are often second-best ones. The strategy in this
+clustering case is that GA is used first for global optimization
+and the resulted solution is used for local optimization. The
+optimization algorithm is quite similar to that specified in
+figure 2, except that the node cannot be arbitrary chosen. The
+selection operation must maximize the combination of the
+size and compactness of the event set the new alarm covers.
+To explain how local optimization works, we need a
+definition first. A nearest neighbor of an alarm P is another
+alarm N, one of whose node is changed into the direct
+ancestor or direct offspring of the corresponding node in P,
+while all the other nodes of N remain the same as the
+corresponding ones of P. In figure 3, for instance, the nearest
+neighbors of the alarm P (A2, B5, C1) is (AO, B5, C1), (A4,
+B5, Cl), (A2, B2, Cl), and so on. But alarm (A2, BO, Cl) is
+not a nearest neighbor of P because Node BO is not the direct
+ancestor of Node B5. Neither is the alarm (A4, B2, CI),
+because there in it are two nodes that are different from the
+corresponding ones in the alarm P. With the definition
+nearest neighbor given, the local optimization algorithm is
+shown in figure 5.
+Input: an alarm P; a threshold T; a set of
+trees; a set of events
+Output: another alarm
+While (P can be optimized further){
+select the best one N among the nearest
+neighbors of P;
+if (N is not better than P) break;
+change the content of P into that of N;}
+return P;
+Figure 5: local optimization algorithm
+
+In the algorithm above, the solution goes to the final
+one step by step, and each step guarantees that the resulted
+alarm is better than the previous one.
+
+D. The optimization algorithm specification
+With both the global optimization and the local
+optimization specified, the whole optimization algorithm
+seems to be able to easily be obtained. For the first step, GA
+is applied and a second-best solution is got. And for the
+second step, local optimization technique is used and the
+final solution is obtained.
+The quality of GA is related to the size of the individual
+population, and the number of generations that the individual
+spend to evolve. For the clustering problem in this paper, we
+set the size of the group to 100 and the number of
+generations 50 (the number of generations can also be
+controlled by the fitness difference between two adjacent
+generations). If the amount of primitive events is very large,
+say, more than 150,000, then the size of the group should be
+set smaller. Otherwise, the time spent might be markedly
+longer.
+The best individual is selected after GA is applied, and
+this individual is used as an input in the second step of local
+optimization. But it is observed that sometimes a worse input
+can result in a better output after the application of local
+optimization. So several individuals, instead of one, are
+selected after GA is applied. Then, local optimization is
+applied to each individual, and the best output is selected as
+the ultimate solution. This technique guarantees that the
+ultimate solution is less likely to be a premature local
+extremum. The whole optimization process is shown in
+figure 6.
+Input: security events, a threshold
+Output: a solution
+create 100 individuals;
+while (the error is not small enough) {
+crossover with probability 100%;
+mutation with probability 5%;
+sorting the individuals;
+retain 100 best ones to the next generation;}
+choose 20 best individuals of the last generation;
+locally optimize every solution of the 20 ones;
+select the best result from the 20 output and return it;
+Figure 6: Optimization algorithm specification
+
+IV. TREE-VERSION APRIORI
+Up to now, most aspects of the newly forwarded
+optimization algorithm have been discussed. But its quality
+cannot be well validated until an accurate solution is
+obtained for comparison, although we can contrast it to the
+
+primitive approximation algorithm. Apriori is deployed here
+which is based on a simple but useful principle: if an alarm is
+not a solution, then any specification of the alarm can not be
+
+2096
+
+solution, either, simply because a specification covers less
+events than the abstract one does and thus can not satisfy the
+
+a
+
+constraint that the threshold specifies.
+For example in figure 1, suppose that the threshold is
+100. If the alarm (DMZ, PRIVATE, SAT, MIDDLE) covers
+90 events, then it is not a qualified alarm. Its specification
+(ipi, PRIVATE, SAT, 11) cannot be a qualified alarm, nor
+can its specification (FIREWALL, 80, SAT, 11).
+This way a lot of candidate alarms will be eliminated so
+that the best solution can be obtained in a feasible period of
+time. The tree-version apriori can be fulfilled with the aid of
+a stack that is able to trim the space to search as much as
+possible. But the specification of this tree-version apriori is
+omitted here.
+V.
+
+strict time-constraint. The second reason lies in the
+importance of less dissimilarity. If the events in a cluster are
+quite similar, the human operator will get a nice overview of
+all the events by looking up the single cluster. This is what
+we really want. Compared with cluster quality, the time
+aspect is less important, if the time spent does not make the
+human operator wait too long, as the tree-version apriori
+does in the case shown in table 1.
+means no
+
+dissimilarity
+
+r--",-
+
+EXPERIMENTS AND CONCLUSIONS
+
+11,000 events triggered by an IDS is analyzed in the
+experiments to test the GA-based algorithm (consisting
+global optimization and local optimization. 19 variables of
+the events are taken into account and reorganized in trees
+(see table 1)
+Table 1: comparison among 3 algorithms*
+
+1-
+
+0
+
+Number of trees
+considered
+
+1
+
+4
+
+7
+
+10
+
+13
+
+16
+
+19
+
+Julisch's
+algorithm
+
+time
+dissi
+
+0.17
+1.99
+
+0.45
+2.38
+
+0.94
+2.43
+
+1.32
+2.85
+
+1.69
+2.71
+
+1.96
+3.82
+
+2.19
+3.79
+
+GA-
+
+time
+
+1.14
+
+4.63
+
+7.5
+
+10.8
+
+14.22
+
+16.21
+
+17.96
+
+algorithm
+
+Tree-
+
+dissi
+time
+
+1.75
+6.76
+
+1.51
+1.55
+
+1.39
+29.83
+
+1.49
+108.9
+
+1.66
+452.5
+
+1.52
+1209
+
+[3]
+1.4
+2151.4
+
+apriori
+
+dissi
+
+1.75
+
+1.51
+
+1.39
+
+1.49
+
+1.63
+
+1.46
+
+1.37
+
+'clssil
+
+means
+
+based
+
+version
+-1
+
+GA
+.....
+
+ctissimiiarity
+
+With table 1, it can be seen that the GA-based
+
+optimization method is quite time-efficient. The time
+expense is only several times (the time period is reasonabel)
+that it takes Julisch's approximation algorithm.
+At the same time, the solutions are of high quality. The
+solution quality is quite close to that of the corresponding
+accurate ones, and some of them are as good as the
+corresponding best ones. Figure 7 shows the dissimilarity
+(distance of event set) of the solutions obtained by applying
+the three kinds of algorithms: Julisch's approximation
+algorithm, GA-based optimization algorithm (consisting of
+global optimization and local optimization), and the tree
+version apriori.
+It takes a considerably long period of time (about 18
+seconds in this case) when GA-based optimization algorithm
+is applied with many trees (19 trees here). But it is still
+useful for two reasons. Firstly, instead of real-time analysis,
+the clustering algorithm is used for historical analysis, which
+
+[1]
+[2]
+
+[4]
+[5]
+
+[6]
+[7]
+
+[8]
+[9]
+[10]
+
+_,_. -....-
+
+Apriorl
+II
+
+5
+
+IIIII
+
+10
+
+15
+
+IIII IIIII
+
+IIIII20
+
+N
+
+Figure 7: solution quality of 3 algorithms
+
+REFERENCES
+R. Bace. Intrusion Detection. Macmillan Technical Publishing, 2002.
+S. Manganaris et al. A Data Mining Analysis of RTID Alarms. In 2nd
+Workshop on Recent Advances in Intrusion Detection, 1999. http:
+//www.raid-symposium.org/raid99/index.html
+Klaus Julisch: Mining Alarm Clusters to Improve Alarm Handling
+Efficiency. 17th Annual Computer Security Applications Conference
+(ACSAC'01) December 10-14, 2001, New York.
+K. Julisch and M. Dacier: Mining Intrusion Detection Alarms for
+Actionable Knowledge. Proc. 8th ACM International Conference on
+Knowledge Discovery and Data Mining, Edmonton, July 2002.
+K. Julisch. Dealing with False Positives in Intrusion Detection. In 3rd
+Workshop on Recent Advances in Intrusion Detection, 2000. http:
+//www.raid-symposium.org/raid2000/program.html
+Klaus Julisch. Clustering Intrusion Detection Alarms to Support Root
+Cause Analysis. ACM Transactions on Information and System
+Security 6(4), November 2003
+Jianxin Wang, Geng Zhao, Wei Wei, Peng Ye. TTT Language and
+TTT Security Log Analyzer. ACNS2004, June 6 - 11, Huangshan,
+China.
+Jianxin Wang, Geng Zhao and Weidong Zhang. A Subjective
+Distance for Clustering Security Events. ICCCAS'05, Hongkong,
+China, May 27-30, 2005.
+J. H. Holland. Adaptation in Natural and Artificial System. University
+of Michigan Press, Ann Arbor, Mich, 1975.
+R. Agrawal, T. Imielinski, and A. Swami. Mining Association Rules
+between Sets of Items in Large databases. In Proc. of the ACM
+SIGMOD Conference on Management of Data, Washington, D.C.,
+May 1993.
+
+[11] Yongjie Li, Dezhang Yao, Jiancheng Zheng and Jonathan Yao. The
+Application of Genetic Algorithm for Beam Directions Optimization
+in Radiotherapy. ICCCAS'05, Hongkong, China, May 27-30, 2005.
+
+2097
+
+

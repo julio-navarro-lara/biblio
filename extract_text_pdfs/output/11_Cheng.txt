@@ -1,0 +1,1147 @@
+1438
+
+IEEE JOURNAL ON SELECTED AREAS IN COMMUNICATIONS, VOL. 29, NO. 7, AUGUST 2011
+
+A Novel Probabilistic Matching Algorithm for
+Multi-Stage Attack Forecasts
+Bo-Chao Cheng, Guo-Tan Liao, Chu-Chun Huang and Ming-Tse Yu
+
+Index Terms—network security, multi-stage attack, forensics,
+incident response, pattern matching, forecasting.
+
+circles, arcs, ellipses and rectangles, whereas the generalized
+Hough transform is also used to check the curves of shapes.
+Our proposed algorithm can portend the attacking target and
+possible attacking stages by comparing alert-link sets with
+training samples.
+The rest of the paper is organized as follows. Section II provides related work on multi-stage attack analyses. Section III
+introduces the system architecture and probabilistic matching
+model. Section IV presents the JEAN algorithm and provides
+an example that illustrates JEAN operations. Experimental
+results obtained using DARPA 2000[4] and DARPA GCP
+(Grand Challenge Problem) [5][6] datasets are presented in
+Section V, and finally, concluding remarks are presented in
+Section VI.
+
+I. I NTRODUCTION
+
+II. R ELATED W ORK
+
+S VARIOUS intrusions and attacks perpetrate the Internet, enterprises are beginning to use network intrusion
+detection systems (NIDS) and other network security devices
+to counteract these malicious behaviors. Typically, network
+administrators are responsible for managing network activities
+and interpreting the alerts from IDS to determine possible
+attacks. However, security devices at present analyze only
+single-stage attacks, making it difficult for network administrators to prevent a complete multi-stage attack. Network
+attackers generally adopt a type of stepping-stone method [1]
+to take over a target with their policies. The mode of attack
+policy that includes multiple steps is known as a multi-stage
+attack. It is difficult to defend against multi-stage attacks;
+network administrators utilizing immediate responses based on
+single-stage attack alerts to ensure network security are rarely
+effective. Therefore, the challenges preventing multi-stage
+attacks from being completely preventable include discovering
+the relationships between attacks through analyzing IDS alerts,
+predicting the likelihood of multi-stage attacks and obtaining
+an overview of the entire attack [2]. In this paper, we propose a
+novel algorithm, Judge Evaluation of Attack intensioN (JEAN)
+inspired by the generalized Hough transform [3], to forecast
+attacking skeletons by matching the list of collected alerts with
+a set of stored list of alerts to predict how close a multi-stage
+attack will come. The Hough transform is a method of picture
+processing that identifies geometric forms including lines,
+
+When we are securing a practical network, it is important to consider multi-stage and multi-host attacks because
+the attacker will try to penetrate the compromised systems.
+Due to the potential interactions between multiple hosts and
+components, the security hardening process becomes much
+more difficult and requires knowledge such as vulnerability,
+security policy and network topology. Current vulnerability
+assessment (VA) tools are designed to scan the enterprise
+network automatically and locate the weaknesses of individual
+systems (including applications and the operating system).
+However, these VA tools are unable to obtain the relationships
+between vulnerabilities in multi-stage and multi-host models.
+In other words, VA tools are not very useful for recognizing
+vulnerabilities that are most likely to be exploited or to put a
+critical mission at risk.
+At present, most research work has been focused on the
+relationship between alerts for network multi-stage attacks. In
+these works, a large amount of attack alerts are pre-classified
+by the relationship between alerts in order to discover the
+attacking strategies of intruders. One of the most common preprocessing steps done in the field of attack recognition is alert
+aggregation (fusion), whose main goal is to reduce the data
+dimensionality and properly represent the original data in alert
+space. Aggregation is the process to group alerts that are both
+close in time and have similar features (such as the location or
+attack signatures). This alert fusion technique has a problem
+with fusing variations (or mutations) of existing attacks. King
+and his colleagues [7] introduced bi-directional and multi-host
+causality to correlate distinct network and host IDS alerts. If
+noises (such as large number of alerts) exist in the causal
+graphs, mistakes in recognition may occur. On the other hand,
+Ning et al. [8] developed the prerequisites and consequences
+
+Abstract—Current intrusion detection systems (IDSs) can only
+discover single-step attacks but not complicated multi-stage
+attacks. Therefore, it is not only important, but also challenging
+for security managers to correlate security alerts with specific
+patterns to predict a multi-stage attack. In this paper, we propose
+Judge Evaluation of Attack intensioN (JEAN), which inspects
+the security alerts in the network and provides a probabilistic
+approach for the projection of the multi-stage attack by measuring the difference between the stored and the actual multi-stage
+attack session graphs (ASG). The experimental results show that
+JEAN is able to project possible attacks with more accuracy
+than Longest Common Subsequence (LCS) based approaches
+on DARPA 2000 and DARPA GCP (Grand Challenge Problem)
+specific attack scenario datasets.
+
+A
+
+Manuscript received 1 August, 2010; revised 1 January and 2 March 2011.
+This work was supported in part by the National Science Council of Taiwan,
+R.O.C. under grants NSC-99-2221-E-194-054 and NSC 100-2219-E-006-001.
+The authors are with Department of Communications Engineering, National
+Chung-Cheng University Chiayi 621, Taiwan (e-mail: bcheng@ccu.edu.tw;
+loboyoh@gmail.com; jean1l31l3@gmail.com; kent51234@hotmail.com).
+Digital Object Identifier 10.1109/JSAC.2011.110809.
+
+c 2011 IEEE
+0733-8716/11/$25.00 
+
+CHENG et al.: A NOVEL PROBABILISTIC MATCHING ALGORITHM FOR MULTI-STAGE ATTACK FORECASTS
+
+based approach to model each attack and resolve the noise
+problem where the intensive intrusions are mixed with actual
+alerts and false alerts. However, this approach is not feasible
+to be applied in practice because it requires a huge amount of
+prior knowledge to discover new attacks. Information Fusion
+Engine for Real-time Decision Making (INFERD) [9] has a
+data-alignment preprocessing component to provide common
+referencing and homogenizes alert messages produced by
+different types of IDSs.
+After the above alert pre-processing techniques are applied
+to reduce false alerts, the resulting alerts are correlated to
+build attacks scenarios or predict the next possible attacks.
+Dain and Cunningham [10] presented a fusion algorithm
+to classify new alerts from multiple heterogeneous intrusion
+detection systems into scenarios. Through the calculation of
+the probability of each alert at the time it occurs, the new alert
+is added to the most likely candidate scenario that produced
+the highest probability score. This fusion approach requires a
+threshold in order to determine whether the new alert joins
+any scenario or starts a new scenario. Valeur et al. [11]
+introduced a 10-step Comprehensive IDS Alert-Correlation
+(CIAC) system that uses exact feature similarity in two out
+of ten steps in their alert correlation system. Valdes et al.
+[12] also proposed a probabilistic alert correlation method to
+find similarities between alerts that match closely and cluster
+threaded alerts with meta-alerts. The above similarity-based
+correlation approaches can capture many previously known
+attack types based on carefully handcrafted similarity criteria.
+However, to our best knowledge, there is no widely accepted
+standard or metric for measuring the similarity.
+Qin and Lee [13] proposed a statistical-based correlation
+algorithm to predict novel attack strategies. This approach
+integrates two complementary alert correlation mechanisms:
+1) the correlation based on Bayesian inference with a broad
+range of indicators of attack impacts and 2) the correlation
+based on the Granger Causality Test (GCT). However, this
+algorithm cannot be used to predict composite attacks because
+of high false positive results. Zhu and Ghorbani [14] use
+the probabilistic output from two different neural network
+approaches, namely Multilayer Perceptron (MLP) and Support
+Vector Machine (SVM), to determine the correlation between
+the current alert and previous alerts. One distinguishing feature
+of that particular technique is that an Alert Correlation Matrix
+(ACM) is used to store correlation strengths of any given
+two types of alerts. The downside, however, is that sufficient
+practical experience is required to determine the relationship
+between attacks.
+For attack prediction, Qin and Lee [15] proposed an approach which applies Bayesian networks to IDS alerts in order
+to conduct probabilistic inference of attack sequences and to
+predict possible potential upcoming attacks. However, it also
+cannot be used to predict composite attacks. Fava et al. [16]
+proposed Variable Length Markov Models (VLMM), which is
+a framework for the characterization and prediction of cyber
+attack behavior. VLMM can predict the occurrence of a new
+attack, but VLMM is not capable of taking corresponding
+actions since it does not know what kind of attack it is.
+Based on a statistical method using the time consecution
+association with contextual attack steps, Wang et al. [17]
+
+1439
+
+proposed a new mining algorithm to use the correlativity
+between two contextual attacks to construct attack scenarios.
+This algorithm allows multi-stage attack behaviors to be
+recognized, and it also predicts the potential attack steps of
+the attacker. However, the threshold of the SF mining set
+needs sufficient practical experience. Conversely, Chung et
+al. [18] uses a modular approach and the Correlated Attack
+Modeling Language (CAML) for modeling multistep attack
+scenarios in a way that enables correlation engines to use
+these models to recognize attack scenarios. They validated
+their scenario recognition engine using an attack scenario from
+GCP (Grand Challenge Problem) version 2.0. The resulting
+CAML specification consists of 14 modules. However, it is not
+easy for this algorithm to model new variant attacks. Zhang et
+al. [19] uses the Forward and Viterbi algorithm based on HMM
+to recognize the attacker’s attack intention and forecasts the
+next possible attack for the multi-step attack. By the design
+of Finite State Machine (FSM) for forecasting attacks, the
+Forward algorithm is used to determine the most possible
+attacking scenario, and Viterbi algorithm is used to identify
+the attacker intension. However, it only obtains the intent for
+the immediately following stage in a high level view, and not
+the next step attack. Attack projection was presented in [20]
+where Du et al. proposed two ensemble approaches to project
+the likely future targets of ongoing multi-stage attacks instead
+of future attack stages.
+The Longest Common Subsequence (LCS) algorithm
+[21][22] can be used to interpret attack tracks in a spatial
+domain as the application of a data comparison. This new
+attempt is able to solve the problem of classifying unknown
+types of non-uniform cyber attack tracks because it identifies
+partial similarity in attack tracks, which may not be found
+through a scenario knowledge based correlation algorithms
+[10][11][12]. Taking the spirit of LCS and scenario knowledge
+based correlation algorithms into a totally new approach,
+JEAN aims to provide a reasonable projection for all given
+stored attack sequences and to do ”fuzzy” matching of inputs.
+This is opposed to LCS matching algorithm, which looks for
+exact matches in the input with pre-existing patterns.
+The related works described above are summarized in Table
+I. It can be noted that the various methods predict attacks
+either using 1) the relationship between intrusion alerts, 2)
+the computed probability of each attack stage, or 3) the time
+coherence and causality. Nevertheless, they are limited in
+terms of their ability to advance the prediction for multi-stage
+attacks. To resolve this issue, we propose JEAN to project
+which attacking model of the database is the most similar with
+the incoming alert information. Once it finds the most possible
+attacking model is in a progress of which stage, and then
+network security managers can fast address the problem of
+next stage in the multistage attack. This is done by using attack
+session graphs and the transformation of line correspondence
+to support projections for multi-stage attacks.
+III. S YSTEM A RCHITECTURE AND M ODEL
+Fig. 1 shows the components of JEAN architecture that
+implement probabilistic matching for multi-stage attacks. An
+intrusion detection system (IDS) is able to detect the protected
+network/host and generate intrusion alerts. Upon receiving
+
+1440
+
+IEEE JOURNAL ON SELECTED AREAS IN COMMUNICATIONS, VOL. 29, NO. 7, AUGUST 2011
+
+TABLE I
+C OMPARISON ANALYSIS OF RELATED WORKS
+
+Attack scenario composed by alerts
+Logical relation of alerts
+Identification of attack intention
+Identification of next stage attack
+Identification of next victim
+
+Alert Correlation
+[10] [13] [14]
+×
+
+Attack Prediction
+[15] [16] [17]
+×
+
+×
+×
+
+×
+×
+
+×
+
+HMM
+[19] [24]
+×
+
+Attack Projection
+[20]
+×
+
+×
+×
+
+×
+×
+
+×
+
+CAML [18]
+
+×
+
+JEAN &
+LCS [22]
+×
+×
+×
+×
+×
+
+TABLE II
+N OTATIONS USED IN THE PROPOSED JEAN SCHEME
+Notations
+SD
+ST
+Si,j
+Smin
+pi
+qj
+αk
+R
+Φ
+Fig. 1.
+
+JEAN architecture
+H(pk , qk )
+T (v)
+
+the alerts encoded in different formats from different IDS,
+the normalization process in Analyzer coverts the original
+alert format to Intrusion Detection Message Exchange Format
+(IDMEF). Each IDS alert is associated with several IDMEF
+attributes to describe the traffic which triggered the alert,
+and it can be denoted as A = (createTime, ID, duration,
+protocol, srcIP, srcPort, destIP, destPort) where createTime is
+the occurrence time, ID is the ID of the attack signature,
+duration is the session duration, protocol is the network
+protocol, srcIP is source IP address, destIP is destination IP
+address, srcPort is source port, and destPort is destination port.
+Through measuring the similarity between alert attributes,
+the aggregation process is able to discover the relationships
+among these alerts. We use a similarity measure [23] in
+our alert aggregation approach, J-Fusion, which orders each
+alert according to the effective time of the attack, and then
+establishes an attack session graph (ASG) based on their
+IDMEF attributes. ASG is a figure of the list of IDMEF-based
+alerts on the createTime-alertFusionID axis where each node
+stands for a fusion alert of a list of alerts, and each edge
+represents a time order of two consecutive alerts. We will
+detail the alert aggregation in the next subsection.
+Then, the JEAN processor matches the above attack session
+graph with the attack session graph database (ASG-DB) to obtain the predictive value for an attack forecast. For forecasting,
+the predictive value, which is between 0 and 1, represents
+the strength of similarity about two sets of attacking alerts.
+ASG-DB stores and provides data to the JEAN processor for
+matching the attack pattern of sample graphs (e.g., DARPA
+2000 LLDDoS scenarios of attack session graphs). Analyst
+
+εi,j
+ωs
+e
+l
+r
+ΩJ EAN
+ΩLCS
+
+Description
+A figure of the ASG-Database consists of pi . Define the
+number of pi as |SD | = m.
+An ASG target arises from IDS and Analyer, and it is
+a figure consisted of qj . Define the number of qj as
+|ST | = n.
+A set consists of all corresponding-point set αk , which
+is (pk , qk ), between SD and ST .
+Smin is a Si,j which holds εmin .
+An alert with Timestamp (x) and service ID (y) of SD
+is regarded as the coordinate of points, (x, y) = pi .
+An alert with Timestamp (x) and service ID (y) of ST
+is regarded as the coordinate of points, (x, y) = qj .
+A pairwise of coordinates of points as (pk , qk ) in
+Si,j , where pk and qk are the corresponding points or
+surrogates from pk and qk respectively.
+The longest length of a pair of points in SD , where the
+two points B1 and B2 are selected.
+The bounding box is the range of a circle, whose centre
+is the center between B1 and B2 , with the radius equal
+to R/2.
+The half of the distance between points pk and qk .
+Linear square distance transform for node v to project
+into a specific line.
+εi,j represents the dissimilarity of values between two
+figures, such as SD and ST , and εmin =min(εi,j ) where
+i, j are indexes of an array.
+The sum of all weights of the pairs of points in the
+corresponding-point set Smin .
+The relative root mean square error.
+
+for all k in
+The sum of distance between qk and qk+1
+Smin
+An arbitrary constant chosen for balancing.
+The predictive value for forecast by JEAN algorithm.
+The predictive value for forecast by LCS algorithm.
+
+Interface provides the matched results by the JEAN processor
+for projection as a reference for security mechanisms.
+Probabilistic matching of sets of polygonal curves is a
+class of pattern recognition algorithms which performs the
+novel matching and similarity evaluation method for planar
+geometric shapes. Probabilistic matching is introduced in this
+work because we can transform the multi-stage attack forecast
+problem domain into the probabilistic matching domain. To
+illustrate JEAN and its properties clearly, the notations used
+in JEAN are defined in Table II. For two given ASGs (SD ,
+ST ) represented by sets of polygonal curves in the createTimealertFusionID domain, we want to find a transformation t,
+which lets the transformed image of ST , T(ST ), match the
+best SD (in other words, the best maps for the most similar
+parts). Various possible classes of transformations are available
+in the previous study [24][25], including translations, homothetic transformations (scaling and translation), rigid motions
+(rotation and translation), similarities (rotation, scaling and
+translation) and general affine maps.
+
+CHENG et al.: A NOVEL PROBABILISTIC MATCHING ALGORITHM FOR MULTI-STAGE ATTACK FORECASTS
+
+1441
+
+TABLE III
+E XAMPLE FORMAT OF ALERT
+Date
+03/07/2000
+Source Port
+47496
+
+Time
+10:50:01
+Destination Port
+23
+
+Duration
+00:00:05
+Source IP
+202.077.162.213
+
+Protocol
+telnet
+Destination IP
+172.016.115.020
+
+As we have already mentioned earlier, our proposed system JEAN matches the attack intention represented by an
+ASG in the multi-step attack. According to the concept of
+curve matching, JEAN is able to perform complete-complete
+matching (matching the complete SD to the complete ST ),
+complete-partial matching (comparing the complete SD to
+some part of ST ) and partial-partial matching, which refers
+to matching some part of SD to some part of ST . By using
+this algorithm, alerts that are partially identified, or are false
+positives in every situation, may be inputted into JEAN to
+identify the attacker’s behavior, and then the result is used
+to predict the next possible attack steps. Security managers
+can use JEAN to address a network attack on problem points
+and develop appropriate mitigation methods to ensure network
+security when a multi-stage attack occurs.
+
+Fig. 2.
+
+Topology of DARPA 2000
+
+Zone 2 as host IPs in DMZ network (subnet 114), Zone 3 as
+host IPs in local network containing subnet 112 and subnet
+113, and Zone 4 as host IPs in local network containing subnet
+115 to subnet 118. The detailed network topology and zone
+assignment for DARPA 2000 is shown in Fig. 2. Through a
+A. J-Fusion
+three-digit number (A-B-C) operation, alertFusionID (J-Fusion
+J-Fusion, derived from [23], is an alert aggregation pro- ID) of the example alert is ”312” (A = 4−1 = 3; B = 1(TCP
+cedure for. JEAN uses the alertFusionID (J-Fusion ID) to session); C = |3 − 1| = 2).
+In the ASG domain, the X-axis represents the time steps
+represent alert fusion based on alert attributes, such as protocol, source port, destination port, source IP, and destination in ascending time sequence and the Y-axis represents the JIP. The alertFusionID uses a three-digit number (A-B-C) Fusion ID which is a transformation from multiple attributes
+containing the hundreds, tens and units positions to interpret of picked alerts. Then, we add an edge to link the victims
+the attack traffic. The hundreds position (A) indicates the zone of the same subnet based on the time step sequence. As
+distance between the destination IP and the source IP which shown in Fig. 3(a) (representing LLDDoS 1.0 attack scenario
+[4]), these sessions have been grouped into five attack stages,
+is expressed as:
+where the hash marks indicate the aggregated alerts triggered
+A = Zone(destIP ) − Zone(srcIP )
+(1) of a network session at the time of that corresponding JThe tens position (B) stands for the network protocol whose Fusion ID, and each edge is linked against victims of the
+same subnet. The detailed description of the five attack stages
+value was assigned as below:
+for the LLDDoS 1.0 attack scenario is depicted as follows:
+⎧
+0
+,
+in
+ICMP
+session
+⎪
+⎪
+S(1): The attacker performs a scripted IPsweep to determine
+⎨
+1 , in TCP session
+which hosts are ”up”. This stage contains alert 1.
+(2)
+B=
+2 , in UDP session
+⎪
+⎪
+S(2): The hosts discovered in the previous stage are probed
+⎩
+3 , otherwise
+to determine which hosts are running the ”sadmind”
+remote administration tool with the Solaris operating
+The units position (C) indicates the distance between port
+system. Two alerts, alert 2 and alert 3, are included in
+number clusters. We define 4 distinct clusters for TCP/UDP
+this stage.
+port numbers: port 0-512 of the well-known ports are aggregated to Cluster 1; port 513-1023 of the well-known ports S(3): The attacker then breaks into the hosts through a remote
+buffer-overflow attack. This stage encloses 5 alerts (from
+are grouped as Cluster 2, the registered ports from 1024 to
+alert 4 to alert 8).
+49151 are classified into Cluster 3, and the dynamic ports
+from 49152 to 65535 are assigned as Cluster 4. Therefore, C S(4): The attack script performs a telnet login and uses rcp
+to install the Trojan mstream DDoS software, which is
+can be expressed as:
+the mstream master. This stage consists of from alert 9
+C = |Cluster(destP ort) − Cluster(srcP ort)|
+(3)
+to alert 15.
+Suppose there is an alert associated with the attributes (as S(5): The attacker executes a telnet login to the victim in order
+to launch the DDoS attack manually. This stage has alert
+shown in Table III) which indicates the attack script perform16, alert 17 and alert 18.
+ing a telnet login from the TCP port 47496 of 202.077.162.213
+to TCP port 23 of 172.016.115.020. This alert is listed in
+As stated above, huge volumes of alerts can be reduced
+DARPA 2000 LLDDoS 1.0 dataset. Based on the security through J-Fusion which takes the result of aggregation that
+level, we configured Zone 1 as host IPs in outside network, the alert number is aggregated to 18 from 33907 in LLDDoS
+
+1442
+
+IEEE JOURNAL ON SELECTED AREAS IN COMMUNICATIONS, VOL. 29, NO. 7, AUGUST 2011
+
+Fig. 3. LLDDoS 1.0 ASGs for (a) attacking sequences in ASG-DB: LLDDoS
+1.0 115 (b) attacking sequences for the matching test: LLDDoS 1.0 112
+
+Fig. 5.
+
+Topology of GCP dataset
+
+Fig. 6.
+
+Pseudocode of JEAN algorithm
+
+Fig. 4. GCP ASGs for (a) attacking sequences in ASG-DB: GCP I (b)
+attacking sequences for the matching test: GCP II
+
+1.0 dataset. Furthermore, we establish another ASG shown in
+Fig.3(b) for the different victim of LLDDoS 1.0. The victim
+in Fig. 3(a) is 172.16.115.20, which is the mstream master.
+The attacker uses rsh to first startup the master, and then the
+servers, 172.16.112.50 and 172.16.112.10, which are victims
+in 112 subnet that are illustrated in Fig. 3(b).
+Similarly, we show the ASG of the five-stage theft attack
+scenario of the DARPA GCP (as shown in Fig. 4(a)), and we
+also describe how the attacker launches the five-stage attack
+as below.
+S(1): The attacker initiated a connection to a remote service
+that is considered an anomaly. This stage has alert 1.
+S(2): It is reported by the firewall when hosts within the
+enclaves attempt to access a resource to which the
+firewall denies their access based on its Access Control
+Lists (ACL’s). This stage consists of alert 2 and alert 3.
+S(3): The attacker launched an FTP Globbing buffer overflow
+attack against the database to obtain the root access. Two
+alerts, alert 4 and alert 5, are included in this stage.
+S(4): After obtaining the root access right, the attacker accessed both the critical system files and restricted
+database files. This stage contains alert 6.
+S(5): The data in the database had leaked through the Loki
+tunnel. This stage consists of alert 7 and alert 8.
+The scenario shown in Fig. 4(b) is another of GCP scenarios. It is also a data theft attack similar to Fig. 4(a), but the
+difference between these two scenarios is that the scenario in
+Fig. 4(b) occurred in another sub-network of organization (see
+Fig. 5). In this scenario, the attack stops on stage 3 since the
+
+attempt of FTP Globbing attack failed because there was no
+FTP service.
+IV. JEAN A LGORITHM
+We are able to derive a multi-stage attack forecast via
+the probabilistic matching scheme. Taking the spirit of the
+probabilistic matching scheme, a series of actions would be
+taken to obtain the predictive value for an attack forecast.
+There are three major processing steps involved: (1) Find the
+corresponding points from two ASGs and check the corresponding points in the maximum error tolerance. (2) Match
+two attack session graphs to compute the transformation. (3)
+Weigh the transformation to obtain the value of the quality of
+the match. Finally, obtain the predictive value to perform an
+assessment of the multi-step attack. The detailed pseudo code
+of JEAN was listed in Fig. 6. Now, we describe these three
+steps in details as follows:
+Step 1: Finding Correspondences (Line 6-11 in Fig. 6)
+The matching algorithm first tries to find corresponding coordinates of a point between the two sets, whereby it may also
+match the coordinates of a point without the corresponding
+point. Initially, the first pair of the matching points α1 =
+
+CHENG et al.: A NOVEL PROBABILISTIC MATCHING ALGORITHM FOR MULTI-STAGE ATTACK FORECASTS
+
+(pi , qj ) is added to the empty sample set Si,j (as shown at Line
+7 in Fig. 6). Next, the algorithm continues to search for the
+pairs of matching points and added into the set Si,j until the
+length of Si,j reaches m = |SD | (the length of the compared
+attacking pattern in ASG database). In each repeated step, the
+distance between the last pair of corresponding coordinates
+
+)) and the next pair of coordinates (e.g., (pk
+(e.g., (pk−1 , qk−1
+
+, qk )) added to the sample set Si,j are calculated. If the two
+
+,qk )) are nearly
+calculated distances (H(pk−1 ,pk ) and H(qk−1
+equal, then the next two coordinates of points are treated as a
+pair of corresponding points and added to the sample set Si,j .
+Otherwise, the matching ASG is created as a surrogate of the
+coordinates of the point with a larger distance. A surrogate
+must be within the bounding box (Φ), and it could replace the
+original point while it has an almost identical distance to the
+predecessor.
+Step 2: Calculating the Transformations. (Line 12 in Fig. 6)
+The transformation of the set Si,j is calculated based on a
+least squares approach. According to the characteristics of
+least squares, the most important application is data fitting,
+or minimizing the sum of the square of the errors. Even if
+it is not a complete-complete match of the two ASGs, this
+approach is still able to obtain the dissimilarity of values
+between the two sets by computing the transformation. εi,j
+represents the dissimilarity of values between the two figures.
+The transformation T is computed by minimizing εi,j , the sum
+of the weighted squared distances with H(pk , qk ) being half
+the length of the edges incident to the corresponding vertices
+pk and qk , as follows:
+εi,j =
+
+
+
+H(pk , qk )T (qk ) − T (pk )2
+
+(4)
+
+ )∈S
+(pk ,qk
+
+Step 3: Weighing the Transformations. (Line 16 in Fig. 6)
+In the transformation process, all possible cases of α1 are
+calculated, and then the minimal result among those εi,j is
+selected as the εmin , as shown in at Line 15 in Fig. 6. At
+the mean time, we find that the best match set Smin of
+corresponding points holds εmin .
+Weighing a transformation must take into account two factors: (1) the performance of the sample and (2) the quality of
+the match. The weight here is used mainly to judge a selected
+pair of corresponding points as to whether they are exactly
+the same coordinates for the points. The weights are used to
+measure the similarity of each pair of the corresponding points
+in the sample set Smin .
+
+m
+
+βi
+0 , if pi =qi in αi
+, where βi =
+ωs =
+(5)
+1 , if pi =qi in αi
+|SD |
+i=1
+
+Then, the relative root mean square error (e) is derived as
+follows:
+√
+e = ε · ωs /R
+(6)
+The result of the calculation yields a value representing the
+quality of the match. According to the above formulas, a
+matching score of weight of a transformation of the predictive
+
+1443
+
+value (ΩJEAN ) is computed.
+
+1
+, if e=0
+ΩJEAN =
+l/(1 + r · e) , otherwise
+
+(7)
+
+where r is an arbitrarily chosen constant for balancing out the
+impact of the length l and error e. Here, we define l as the
+
+sum of d(qk , qk+1
+) for all k in the set Smin , as follows.
+
+
+l=
+d(qk , qk+1
+)
+(8)
+k
+
+Briefly, the implementation of JEAN’s matching algorithm
+to judge attacks is described as follows: a sample set was
+chosen as pairs of corresponding points of coordinates from
+two ASGs. The sample set is repeated to find the corresponding points from the two ASGs, continuing until no more data
+is available. In the two ordered sets of point coordinates,
+the quality of the match is measured by the sum of the
+weighted squared distances between the corresponding pairs
+of coordinates. The transformation T is weighted with each
+pair of corresponding points of status in the sample set. The
+predictive value (ΩJEAN ) can be derived from Eq. (5)-(8).
+The value of ΩJEAN allows us to determine the assessment
+of the multi-step attack. In any case, the JEAN algorithm can
+provide a good quality matching of the prediction results.
+A. Complexity Analysis
+The various features of each alert can be used to define
+its J-fusion ID in a Euclidian space. In ASG-DB, each set
+of J-fusion ID for benchmark models (SD ) is used to be
+compared with the incoming alerts by JEAN. Assume there
+are ρ benchmark models in ASG-DB, and m is the largest
+length among all SD sets. Considering we compare a testing
+set (ST ) of length n with all SD as well as various situation
+of the first corresponding vertices, the time complexity by
+JEAN is O(ρm2 n). As shown in Table IV, we performed the
+complexity analysis for the proposed JEAN and simple LCS
+(Longest Common Subsequence) [21]. Through the abovementioned computation, JEAN requires memory to store the
+corresponding vertices in each recognition procedure, whose
+space complexity is O(mn) in practice.
+For LCS, a naive search of 2m subsequences is not efficient for the NP-hard problem. Hence, we discuss LCS
+by basic dynamic programming, and the time complexity of
+LCS is O(ρmn). The basic LCS algorithm requires memory
+to store the entire matrix values, whose space complexity
+is O(mn). The complexity analysis shows that JEAN has
+higher time complexity than that for the LCS because JEAN
+spends an extra amount of time, O(m), on the ”Finding
+Correspondences” task (as shown at line 8 through line 11
+in Fig. 6). The intuition behind that task is to find large
+consistent sequences of the corresponding points of two ASGs
+for the same transformation. In addition, the similarity of
+the match between two ASGs is measured by the weighted
+sum of quadratic distances between the corresponding points.
+Although LCS has less complexity, it does not work well
+in a realistic network environment. In practice, few attacks
+are launched exactly the same, or found in attack database
+with exactly the same properties. Attacks are usually launched
+at different network subnets, as well as with mutations. We
+
+1444
+
+IEEE JOURNAL ON SELECTED AREAS IN COMMUNICATIONS, VOL. 29, NO. 7, AUGUST 2011
+
+TABLE IV
+C OMPLEXITY ANALYSIS FOR JEAN AND LCS ALGORITHMS
+
+Time Complexity
+Space Complexity
+
+JEAN
+O(ρm2 n)
+O(mn)
+
+LCS[21]
+O(ρmn)
+O(mn)
+
+design our experiments to show that the proposed scheme
+would perform better than LCS in terms of network adaptivity
+and attack mutations.
+B. Example
+We will illustrate how the JEAN technique obtains the
+predictive value via the probabilistic matching theory. Lets
+consider two ASGs as shown in Fig. 7 where SD ={(0,4) ,
+(1,1) , (2,3) , (3,2) , (4,1)}; ST ={(0,4) , (2,1)}. Now, we
+demonstrate the example as follows. Line 3: Given SD and
+ST , we can derive m=|SD |=5 and n=|ST |=2. According to
+p1 = (0,4) and pm =(4,1), R = sqrt((4 − 0)2 + (1 − 4)2 ) = 5
+and the bounding box (Φ) is determined as a range of circle
+whose centre is (2, 2.5) with the radius equal to 2.5.
+Line 4-7: At the round (i=1, j=1), S1,1 ={α1 =((0,4), (0,4))}
+where α1 is the first pair wise of corresponding points (p1 and
+q1 ).
+Line 8-11: By simply assuming k=2, it has to find next
+corresponding points only once more. Initially by findCorrespondence function, p2 is (1,1) and q2 is (2,1). Firstly, it checks
+whether |d(p1 , p2 )−d(q1 , q2 )|≤1. As such, S1,1 ={((0,4),(0,4)),
+((1,1),(2,1))}.
+Line 12: We can find the linear square distance transform
+(T ) by all points of S1,1 for calculating εi,j based on Eq.(4).
+ε1,1 = 0 · 0 + (1/2) · 1 = 1/2.
+Line 15: We obtain εmin =ε1,1 =0.5.
+Line 16: Calculate ωs =1/5 based on Eq.(5). Calculate the
+mean error e = sqrt(0.5 · 0.2)/5 = 0.0632 based on Eq.(6).
+
+Moreover, based √
+on Eq.(7) and Eq.(8), l = sum(d(qi , qi+1
+)) =
+d((0, 4), (2, 1))= 13. For example, we set the parameter r as
+5000. Finally, we finish the
+√ computation of the predictive value
+ΩJEAN = l/(1+r·e) = 13/(1+5000·0.0632) = 0.011373.
+V. E XPERIMENTAL R ESULTS
+In our experiments, the performance metric in terms of the
+forecast error (E) was compared for JEAN and LCS algorithms. The forecast error E for the specific attack is defined as
+the absolute value of the difference between the observed value
+and the prediction value F, i.e., E = |Y − F |; E ∈ [0, 1]. Y is
+a binary value with a value of 1 representing the occurrence
+of the specific attack, and a value of zero representing its
+absence. The prediction value F falls in the range of [0,1],
+which represents the estimated probability of the attack. The
+predication value of the conventional Longest Common Subsequence (LCS) matching algorithm (ΩLCS ) is shown in Eq.
+(9)
+ΩLCS =
+
+LCS(SD , ST )
+|SD |
+
+(9)
+
+where LCS(SD , ST ) is the maximum number of the same
+data points between SD and ST . |SD | is the number of data
+points in SD .
+
+Fig. 7.
+
+The example of ΩJ EAN computation
+
+Since LCS matching algorithm looks for exact matches
+to the pre-existing patterns in ASG forensic database (ASGDB), the forecast error would be still high even if two
+similar ASGs are compared. LCS variants [22] relax the
+exact matching constraint using a noise margin parameter.
+Two points are considered to be similar if the magnitude
+of their difference is within a predefined margin parameter
+(α). Let LCS (α)=LCS(SD , ST ) be the maximum number
+of similar data points given the threshold α. The rationale
+behind this design is to capture the similar feature (rather
+than exact feature) when calculating the ASG prediction value.
+Two multi-stage attacking models were used as benchmarks in
+our study, including the LLDDoS 1.0 model [4] and the GCP
+model [5]. Using these two benchmarks, we compared the
+forecast errors for the proposed scheme JEAN and the wellknown LCS schemes (including the enhancements of LCS).
+To evaluate the effectiveness of the proposed matching
+algorithm JEAN, we used J-Fusion to extract 60 ASGs from
+DARPA 1999 (55 ASGs named with the prefix, Γ), DARPA
+2000 (3 ASGs including LLDDoS 1.0 115, LLDDoS 1.0 112
+and LLDDoS 2.0) and GCP (2 ASGs containing GCP 1 and
+GCP 2). Please note that all DARPA 1999 ASGs belong
+to the type of the single stage attack. However, a good
+prediction system should be able to distinguish those attacks
+no matter whether they are single stage or multistage attacks.
+The forensic database (ASG-DB) stores the above-described
+60 ASGs (attack patterns), which serve as the target ASGs
+for comparison with the incoming attack sequence in the
+prediction process.
+A. Network Adaptivity
+1) Performance Evaluation on Benchmark LLDDoS 1.0:
+Fig. 8(a) shows the top 5 ASGs with the highest prediction
+values ΩJEAN when comparing the attacking sequences of
+LLDDoS 1.0 112 with ASGs in ASG-DB. The LLDDoS
+1.0 115 ASG has the highest prediction value because they
+are the same LLDDoS 1.0 attacks but launched at different
+network subnets. Other four ASGs also have their own prediction values. Certainly, the system administrators can choose
+the ASG model with the highest score as the predicted attack
+model.
+
+CHENG et al.: A NOVEL PROBABILISTIC MATCHING ALGORITHM FOR MULTI-STAGE ATTACK FORECASTS
+
+1445
+
+(a)
+(a)
+
+(b)
+(b)
+
+(c)
+(c)
+Fig. 8. Multi-stage attack forecast in different targets for (a) benchmark
+LLDDoS 1.0 (b) Forecast Error (c) number of match against noise margin
+
+Fig. 8(b) shows the forecast error (E) of JEAN when
+compared with those of the LCS algorithm and its variants. We
+assumed that the LLDDoS 1.0 115 attack illustrated in Fig.
+3(a) was previously learned by the forensic database (ASGDB) and thus was used as a benchmark sequence, while the
+LLDDoS 1.0 112 attack illustrated in Fig. 3(b) was the attack
+for the matching test. As shown in Fig. 8(b), the forecast error
+
+Fig. 9. Multi-stage attack forecast in different targets for (a) benchmark
+GCP (b) Forecast Error (c) number of match against noise margin
+
+of JEAN is lower than that of LCS for different stage-spreads
+(i.e., stages 1-2, 1-3, 1-4 and 1-5 respectively). This result
+indicates that the proposed scheme JEAN provides higher
+network adaptivity because JEAN is capable of doing ”fuzzy”
+matching to all training attacks in the database, while the LCS
+looks for exact matching in pre-existing patterns. Results also
+show that with appropriate parameter setting (noise margin
+set to 80 or higher), the forecast accuracy of the LCS variants
+
+1446
+
+IEEE JOURNAL ON SELECTED AREAS IN COMMUNICATIONS, VOL. 29, NO. 7, AUGUST 2011
+
+TABLE V
+M UTATION OF LLDD O S 1.0 115 AND GCP I
+
+M(2)
+M(3)
+M(4)
+M(2)
+M(3)
+M(4)
+
+Mutation of Stages of LLDDoS 1.0
+Ping attack with port mutation
+Buffer overflow attack with port mutation
+Trojan attack with port mutation
+Mutation of Stages of GCP
+Firewall access control lists (ACL) intrusion with port mutation
+FTP globbing attack with port mutation
+Root access intrusion with port mutation
+
+(LCS ) can be increased. LCS schemes use a noise margin
+parameter to improve its forecast accuracy: the higher is the
+better. However, the side effect could be also introduced.
+Below is the impact of the noise margin parameter with respect
+to different settings.
+Fig. 8(c) shows the numbers of ASGs with full matching
+(i.e., ASGs with prediction value equal to 1) among all 60
+ASGs using LCS under various noise margins settings ranging
+from 1 to 450 for the LLDDoS 1.0 112 attack. Results show
+that with the increase of the noise margin, the number of
+matching results gets larger, which made it difficult to identify
+the correct attacking pattern. For example, LCS (100) has 33
+full matching ASGs but the similar attack ASG (LLDDoS
+1.0 115) has only the prediction value, ΩLCS  100 = 0.833. The
+prediction results have the forecast system in an error situation.
+We conclude that LCS scheme and its variants perform better
+only when a proper selection of the noise margin is given.
+2) Performance Evaluation on Benchmark GCP: The main
+focus for this study was to evaluate the forecast errors on
+the benchmark GCP for the proposed scheme JEAN and the
+well-known LCS schemes. Fig. 4 shows the ASG for two
+different attacks on the attacking benchmark GCP. These two
+ASGs are the same attack sequence launched in different
+network environments (Fig. 4(a) occurred at headquarter and
+(b) occurred on the ship). In this study, we again assumed that
+the GCP I attack illustrated in Fig. 4(a) was previously learned
+by the ASG-DB and thus was used as a target sequence for
+the prediction, while the GCP II attack illustrated in Fig. 4(b)
+was a new attack ASG for testing. Please note that GCP I and
+GCP II are the same attacks but launched at different places
+(the benchmark occurred at headquarter and the test sequence
+occurred on the ship).
+Similarly, Fig. 9(a) shows the top 5 ASGs with the highest
+predictive value ΩJEAN when comparing the GCP II attack
+with ASGs in the forensic database. Since GCP I has the highest matching score, JEAN successfully identify this multistage
+attack. Fig. 9(b) shows the forecast error (E) of JEAN when
+compared with the LCS algorithm and its variants. As shown
+in Fig. 9(b), JEAN also has lower forecast error than that of
+the LCS under a different network environment for the same
+GCP attack (Fig. 4(b)). Results indicate that JEAN has better
+network adaptivity while LCS algorithm and its variants lack
+the adaptability under various network environments.
+Fig. 9(c) shows the full matching number among all 60
+ASGs using LCS under various noise margins ranging from 1
+to 450 for GCP II attack. Similarly, results show that with the
+increase of the noise margin, the number of matching results
+gets larger. Although LCS can improve its forecast accuracy
+
+on GCP I with a high noise margin, it will cause the system
+to misrecognize other ASGs as its forecast decisions.
+B. Performance Evaluation on Attack Mutations
+Next, we conducted simulations to evaluate the performance on the prediction capability for mutation attacks, where
+the known instances of attacks are transformed into distinct
+instances. We used the basic mutation techniques (such as
+changing IP address, network protocol and TCP ports to target)
+to evaluate the performance of JEAN, LCS and three LCS
+variants (LCS (1), LCS (2) and LCS (3)).
+In Table V, we listed the mutation methods on the DARPA
+2000 and GCP benchmark respectively. The results were
+evaluated in terms of the previously defined forecast error E.
+The performance results for the JEAN and the LCS schemes
+were tested under benchmarks LLDDoS 1.0 115 and GCP I
+models. The results are discussed below.
+1) Performance Evaluation on Benchmark LLDDoS 1.0:
+Fig. 10(a) shows the forecast error for different mutation stage
+spreads (i.e., stage 4, stages 3-4, and stages 2-4 respectively)
+under the benchmark LLDDoS 1.0 115 model. In general,
+the forecast error decreases when multiple stage information
+became available gradually for the JEAN, LCS and the three
+LCS variants (LCS (1), LCS (2) and LCS (3)). Results showed
+that JEAN and LCS (3) provide better performance with lower
+forecast error for attack mutations. Results indicated that a
+proper selection of the noise margin of LCS can reduce the
+forecast error.
+2) Performance Evaluation on Benchmark GCP: Fig. 10(b)
+shows the forecast error for different mutation stage spreads
+(i.e., stage 4, stages 3-4, and stages 2-4 respectively) under
+the benchmark GCP I model. Similarly, the forecast error
+increases as the number of mutation stages increases for the
+JEAN, LCS and LCS variants.
+Results showed that JEAN algorithm adapts the selection
+of corresponding vertices and surrogates so that it could
+defeat the attack mutations. As the mutation has a similar
+pattern to the training attack, JEAN could still maintain good
+predictive accuracy in terms of low forecast error. Based
+on the performance tests we conducted, JEAN and LCS (3)
+can provide better prediction capability to attack mutations.
+Results also indicate that both JEAN and LCS (3) can provide
+better projection accuracy for multi-stage attack mutations.
+However, JEAN is more feasible to use in practice because
+the parameter tuning task of LCS is extremely labor-intensive
+and expensive, and it is not required for JEAN.
+Final remark: JEAN aims to provide a reasonable projection value for all possible stored attack sequences and to do
+the best-effort matching of inputs. This is opposed to LCS
+matching algorithm, which looks for exact matches in the
+input with pre-existing patterns. In this section, we conducted
+simulations to evaluate the performance in terms of network
+adaptivity and mutation attacks for the proposed scheme
+JEAN. Results showed that JEAN and LCS with a proper
+noise margin can provide better projection accuracy for multistage attack mutations. With the increase of the noise margin,
+the number of full matching numbers gets larger. LCS has a
+difficulty to project correctly because of the “false positive”
+
+CHENG et al.: A NOVEL PROBABILISTIC MATCHING ALGORITHM FOR MULTI-STAGE ATTACK FORECASTS
+
+1447
+
+this forensic analysis result as a reference to take measures to
+respond to multi-stage attacks.
+R EFERENCES
+[1] W. Yu, N. Zhang, X. Fu and W. Zhao, Self-Disciplinary Worms and
+Countermeasures: Modeling and Analysis, IEEE Trans. Parallel Distrib.
+Syst., August 2009.
+[2] N. Liao, S. Tian, T. Wang, Network forensics based on fuzzy logic and
+expert system, Computer Communications, Volume 32, Issue 17, pp.
+1881-1892, November 2009.
+[3] R. O. Duda and P. E. Hart,Use of the Hough transformation to detect
+lines and curves in pictures, Commun. ACM (15), No.1, pp. 11-15,
+January 1972.
+[4] MIT Lincoln Laboratory, 2000 Darpa Intrusion Detection Scenario
+Specific Data Sets, 2000. http://www.ll.mit.edu/mission/communications/
+ist/corpora/ideval/data/2000data.html
+
+(a)
+
+(b)
+Fig. 10. Forecast of multi-stage attack with mutation under (a) benchmark
+LLDDoS 1.0 and (b) benchmark GCP
+
+full matching score. A labor-intensive and expensive parameter
+tuning process is required to assure projection accuracy for
+LCS . To sum up, the proposed JEAN scheme, with good
+performance but without the process of parameter tuning, is
+more feasible in practice.
+VI. C ONCLUSION
+With the advent of the Internet, it is difficult to defend and
+forecast unknown multi-stage attacks. In this paper, we have
+proposed a novel algorithm to predict a multi-stage attack,
+known as Judge Evaluation of Attack intensioN (JEAN),
+which is inspired by the generalized Hough transform. JEAN
+matches two sets of attack session graphs (ASGs) through
+the best maps for the most similar parts, and then projects
+different possible attacks via determining a prediction value.
+The experiments performed show that our method provides
+an effective projection for multi-stage attacks, even when
+certain alerts were lost. With the help of JEAN, network
+administrators can predict the next possible attack and use
+
+[5] Y. Hu, TIAA: A Toolkit for Intrusion Alert Analysis, MS Thesis, North
+Carolina State University, December 2003.
+[6] Cyber Panel Grand Challenge Problem (GCP) release 3.2.
+http://www.grandchallengeproblem.net/
+[7] S. King, M. Mao, D. Lucchetti, and P. Chen, Enrichingintrusionalerts
+through multi-host causality, presented at the Network and Distributed
+Systems Security Symp., San Diego, CA, 2005.
+[8] P. Ning, Y. Cui and D. Reeves, Analyzing intensive intrusion alerts via
+correlation, presented at the 9th ACM Conf. Computer Communications
+Security, Washington, DC, 2002.
+[9] A. Stotz and M. Sudit, INformation fusion engine for real-time decision
+making (INFERD): A perceptual system for cyber attack tracking,
+presented at the Int. Conf. Information Fusion, Quebec, Canada, 2007.
+[10] O. Dain and R. K. Cunningham, Fusing a heterogeneous alert stream
+into scenarios, ACM Workshop Data Mining for Security Applications,
+Nov. 2001.
+[11] F. Valeur, G. Vigna, C. Kruegel and R. A. Kemmerer, A comprehensive
+approach to intrusion detection alert correlation, IEEE Trans. Dependable Secure Comput., vol. 1, no. 3, pp. 146169, Jul.Sep. 2004.
+[12] A. Valdes and K. Skinner, Probabilistic alert correlation, in Proc.4th
+Int. Symp. Recent Advances in Intrusion Detection, 2001, vol. 2212,
+pp. 5468.
+[13] X. Qin and W. Lee, Discovering novel attack strategies from INFOSEC
+alerts, in: Proc. 9th European Symposium on Research in Computer
+Security (ESORICS 2004), pp. 439-456, 2004.
+[14] B. Zhu and A. A. Ghorbani, Alert correlation for extracting attack
+strategies, International Journal of Network Security, Vol.3, No.3, pp.
+244-258, November 2006.
+[15] X. Qin and W. Lee, Attack plan recognition and prediction using causal
+networks, in Proc. 20th Annu. Computer Security Applications Conf.,
+2004, pp. 370379.
+[16] D. Fava, S. R. Byers, S. J. Yang, Projecting Cyber Attacks through
+Variable Length Markov Models, IEEE Trans. Inf. Forens. Security, Vol.
+3, Issue 3, September 2008.
+[17] L. Wang, Z. T. Li and Q. H. Wang, A novel technique of recognizing
+multi-stage attack behaviour, IEEE International Workshop on Networking, Architecture and Storages, pp. 188, 2006.
+[18] S. Cheung, U. Lindqvist and M. W. Fong, Modeling multistep cyber
+attacks for scenario recognition, In Proc. Third DARPA Information
+Survivability Conference and Exposition (DISCEX III), Washington,
+D.C., April 2003.
+[19] S. H. Zhang, Y. D. Wang and J. H. Han, Approach to forecasting multistep attack based on HMM, Computer Engineering, Vol.34, No.6, pp.
+131-133, Mar 2008.
+[20] H. Du, D. Liu, J. Holsopple, and S. J. Yang, Toward Ensemble
+Characterization and Projection of Multistage Cyber Attacks, in Proc.
+IEEE ICCCN10, Zurich, Switzerland, August 2-5, 2010.
+[21] C. Chen and Z. Qin, A systolic architecture with linear space complexity
+for longest common subsequence problem, ASICON ’09. IEEE 8th
+International Conference, pp. 33-36, Oct. 2009.
+[22] H. Du, C. Murphy, J. Bean, and S. J. Yang, Toward Unsupervised Classification of Non-uniform Cyber Attack Tracks, in Proc. 12th ISIF/IEEE
+International Conference on Information Fusion, Seattle, WA, July 6-9,
+2009.
+[23] S. Xiao and Y. G. Zhang, Alert Fusion Based on Cluster and Correlation
+Analysis, Proc. International Conference on Convergence and Hybrid
+Information Technology, IEEE CS, Daejeon, Korea, August 28th-29th,
+2008.
+
+1448
+
+IEEE JOURNAL ON SELECTED AREAS IN COMMUNICATIONS, VOL. 29, NO. 7, AUGUST 2011
+
+[24] H. Alt, L. Scharf and S. Scholz, Probabilistic matching and resemblance evaluation of shapes in trademark images, in: Proc. 6th ACM
+International Conference on Image and Video Retrieval, pp. 533-540,
+2007.
+[25] H. Alt, L. Scharf and S. Scholz, Probabilistic matching of sets of
+polygonal curves, In Proc. 22nd European Workshop on Computational
+Geometry (EWCG), pp. 107-110, Delphi, Greece, March 2006.
+
+Chu-Chun Huang received a B.S. degree in Information Technology and Communication from Shih
+Chien University, Taiwan, in 2008, and M.S. degree
+in Communications Engineering at National ChungCheng University in 2010. Her research interests
+include network security, wireless network and embedded system.
+
+Bo-Chao Cheng is an Associate Professor of Department of Communications Engineering at National Chung-Cheng University. Cheng received a
+PhD degree in CIS from New Jersey Institute of
+Technology in 1996. After graduations, he also
+worked for Transtech Network (2000-2002), Bellcore (1998-2000) and Racal DataCom (1996-1998)
+respectively. His broad interests include network
+security, network management and real-time embedded system design.
+
+Ming-Tse Yu received a B.S. degree in Electronics
+Engineering from Chung Yuan Christian University,
+Chungli, Taiwan, in 2007. He is currently pursuing
+the M.S. degree program in Communications Engineering at National Chung-Cheng University, ChiaYi, Taiwan. His research interests include network
+security and traffic management.
+
+Guo-Tan Liao received a B.S. degree in Information
+Engineering and Computer Science from Feng Chia
+University, Taichung, Taiwan, in 2003, and M.S.
+degree in Communications Engineering at National
+Chung-Cheng University in 2008. Currently, he is
+a Ph.D candidate in National Chung-Cheng University. His research interests include network security,
+WSN and MANET.
+
+

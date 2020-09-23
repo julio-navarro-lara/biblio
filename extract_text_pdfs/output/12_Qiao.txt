@@ -1,0 +1,1227 @@
+2012 IEEE
+201226th
+IEEE
+International
+26th International
+ParallelParallel
+and Distributed
+and Distributed
+Processing
+Processing
+Symposium
+Symposium
+Workshops
+Workshops
+& PhD Forum
+
+Mining of Attack Models in IDS Alerts from Network
+Backbone by a Two-stage Clustering Method
+Lin-Bo Qiao, Bo-Feng Zhang, Zhi-Quan Lai, Jin-Shu Su
+College of Computer
+National University of Defense Technology
+Changsha 410073, China
+{qiao.linbo, bfzhang, zhiquanlai, sjs}@nudt.edu.cn
+Abstract—There is a big difference between the IDS alerts from
+the network backbone and those from the lab. But there is little
+work has been done to mine attack models in IDS alerts from the
+network backbone. The contributions of this paper are three-fold.
+First, we propose an alert reduction method based on statistical
+redundancy (RMSR) to reduce the alert redundancy. Second, we
+propose a two-stage clustering algorithm to analyze the spatial
+and temporal relation of the network intrusion behaviors’ alert
+sequence. Third, we propose a novel approach, Loose Longest
+Common Subsequence (LLCS), to extract the attack models of
+network intrusion behaviors. The experiment result shows that
+the reduction approach reduces the IDS alerts redundancy
+efficiently, and the attack models generated have a strong logical
+relation.
+
+speaking, there are three classes of approaches. The first class
+approaches are based on the attack scenario knowledge
+pre-defined. (e.g., correlation methods based on ADELE [1],
+STATL [2] or LAMBDA [3]). The second class approaches are
+based on analyzing the causal relation between alerts, which
+correlate alerts according to the consequences of them. ( e.g.,
+the JIGSAW [4] proposed by Steven, et al.) The third class
+approaches are based on the similarities of alert attributes,
+which correlate alerts if the similarities between alert attributes
+meet the prerequisites. ( e.g., the EMERALD [5]) Additionally,
+most methods were experimented with the data set acquired in
+the lab environment, such as the DARPAǃDEFCON and LLS
+DDOS.
+
+Keywords- attack model extraction; network backbone; IDS
+alert correlation; data reduction; two-stage clustering; sequence
+analysis
+
+To the best of our knowledge, there is little contribution
+made to mine the attack models of IDS alerts from the network
+backbone. Compared to common network, there are some new
+characteristics of alerts from the network backbone:
+
+I.
+
+INTRODUCTION
+
+Nowadays, IDS is widely deployed in the Internet as one of
+the common security components. It's mainly used to detect
+network intrusion behaviors and to log the intrusion
+information into log files. The information helps the network
+administrator a lot to run the network in good condition.
+However, IDS faces a series of challenges while the Internet
+improved rapidly these years. The amount of IDS alert
+increases rapidly nowadays, which makes it much more
+difficult for the administrators to deal with these alerts, how to
+improve the IDS so that it could work with administrators in a
+better way. The methods of network intrusion behaviors have
+been improved a lot, these network intrusion behaviors become
+more and more complex, how to improve the IDS so that it
+could detect these complex network intrusion behaviors. The
+network intrusion behaviors upgrade frequently, how to
+improve the IDS so that it could detect the latest network
+intrusion behaviors. The impact of certain type of network
+intrusion behavior is much greater than ever before, how to
+improve the IDS so that it could work with other security
+components in a better way and alleviate the damage caused by
+these network intrusion behaviors.
+There are many techniques have been proposed to improve
+the IDS. A promising one is to provide a succinct and
+high-level perspective view of these concealed network
+intrusion behaviors by correlating the IDS alerts. Generally
+978-0-7695-4676-6/12 $26.00 © 2012 IEEE
+DOI 10.1109/IPDPSW.2012.146
+
+1.
+
+The amount of the alerts is significantly greater.
+Compared to the network environment in the lab, the
+network backbone is much more complex and covers a
+much wider IP space. There is huge amount of network
+traffic flows through the IDS on the network backbone,
+which contains a great deal of network intrusion
+behaviors. Accordingly, there are great many IDS alerts.
+
+2.
+
+There is high redundancy among IDS alerts. Through the
+redundancy of the IDS alert has always been existing, the
+colossal amount network traffic makes the redundancy a
+protrude problem. The redundancy will be extra high
+when certain types of network intrusion behaviors happen.
+For example, when a DDOS attack happens, the IP sweep
+action will cause tremendous redundancy.
+
+3.
+
+The sequences of different network intrusion behaviors
+are interlaced with each other. When the DARPA dataset
+generated, the researchers divided the network intrusion
+behaviors into several scenarios, and left time interval
+between each attack scenario, but there is no such pattern
+in the wild, and on the contrary, there are serials of
+network intrusion behaviors occurring at one time and the
+alerts from different network intrusion behavior come into
+one sequence.
+
+4.
+
+The alerts nearby more likely to be caused by different
+network intrusion behaviors. Yang, et al. [6] proposed
+
+1191
+1257
+1263
+
+that there is a probability over 85% of the alert and an
+alert in the next 5 steps to belong to a same network
+intrusion behavior. Nevertheless, this is no more a
+characteristic on the alert data from the network backbone.
+The alerts nearby are more likely to be caused by different
+network intrusion behaviors.
+To face the challenges illustrated above, this paper attempts
+to propose an effective method to correlate the IDS alerts from
+the network backbone, and to extract the attack models of
+network intrusion behaviors concealed in the huge amount of
+alerts. First, we propose an alert reduction approach to reduce
+the alert redundancy. Second, we propose a two-stage
+clustering algorithm to analyze the spatial and temporal
+relation of the network intrusion behaviors’ sequence. Third,
+we propose a novel approach, Loose Longest Common
+Subsequence (LLCS), to extract the attack models of network
+intrusion behaviors. The experiment result shows that the
+reduce procedure could reduce the alert redundancy effectively,
+and attack models extracted from alert data have a convincing
+logic relation.
+The reminder of this paper is organized as follows: the
+correlation methods history and the state of the art in Section 2.
+Section 3 presents the approaches proposed in this paper in
+detail, the alert reduction approach, the two-stage clustering
+approach, and the LLCS approach. Section 4 analyzes the data
+and presents the results of the experiment. Section 5 concludes
+this paper and discusses some points for future research.
+II.
+
+RELATED WORK
+
+In recent years, the focus on IDS alert research has been
+transformed from original low-level network traffic alert
+analysis to high-level network intrusion behavior alert analysis.
+The alert correlation has become a hot point in the security area.
+Valeur, et al. [7] proposed a comprehensive correlation
+approach and analyzed the importance of each component. Fig
+3.1 is a typical process of alert correlation in simplicity.
+Generally speaking, there are three classes of approaches. The
+first class approaches are based on the attack scenario
+knowledge pre-defined. e.g., correlation methods based on
+ADELE [1], STATL [2] or LAMBDA [3]. The second class
+approaches are based on analyzing the causal relation between
+alerts, which correlate alerts according to the consequences
+between them. e.g., the JIGSAW [4] proposed by Steven, et al.
+The third class approaches are based on the similarities of alert
+attributes, which correlate alerts if the similarities between alert
+attributes meet the prerequisites. e.g., the EMERALD [5]
+proposed by Valdes, et al.
+Alert
+Pre-Processing
+
+Alert
+Fusion
+
+Attack session
+reconstruction
+
+Multi-step attack
+reconstruction
+
+Attack Model
+generation
+
+Figure 1. An overview of the attack model mining
+
+There are a lot methods proposed to reduce the alert
+redundancy. Levera, et al. [8] proposed EXOLAP, in which
+they use a data cube and median polish procedure to reduce the
+false positive data, and they do an experiment with a sound
+result on DARPA99 Intrusion Detection Set. Xiao, et al. [9]
+proposed a reduction method based on similarities of alerts and
+reduce the redundancy by clustering. Ming XU, et al. [10] prior
+
+1264
+1258
+1192
+
+restricted conditions (PRC) to reduce the false positive alert.
+Considering the characteristic of the alert from the network
+backbone and the procedures followed by the reduction method.
+The reduction method proposed in this paper is based on
+statistic. It’s simple and effective.
+Vales, et al. [11] proposed a probabilistic method based on
+the similarities of alerts to correlate the alerts. They defined a
+set of alert attribute functions to measure the similarities of
+alerts, and acquire a higher level perspective of the network
+intrusion behaviors through a two phase analysis. Considering
+the characteristics of the IDS alert from the network backbone,
+the attribute set defined in this paper is small and the similarity
+functions are minimal. The clustering method has been used in
+correlation with different purposes. Porras, et al. [12] proposed
+a multilevel model of alert fusion, and they used a clustering
+method to construct accurate and complete attack sensors. Siraj,
+et al. [13] used clustering to strengthen the reliability of alerts
+fusion and used a causal knowledge based inference technique
+to cluster alerts. Zhang, et al. [14] used fuzzy clustering based
+on the similarity of attack attributes to generate a high level
+view of network intrusion behavior, and get a reliable result on
+LLS DDOS2.0. Peng, et al. [15] also used an improved
+clustering method to acquire the high level perspective of
+network intrusion behavior. What’s more, they used
+quantum-behaved particle swarm optimization algorithm to
+generate the parameters of the clustering method, which could
+make the result of the method on a specified data set or a
+certain environment much better. Then, their experiment on
+LLS DDOS1.0 proved the algorithm is applicable. In this paper,
+a two-stage clustering method is proposed to analyze the
+spatial and temporal correlation of IDS alerts.
+Ma, et al. [16] considered to extract the common attack
+models of network intrusion behaviors followed by the
+correlation step, and they used clustering method to acquire the
+attack models. Reza, et al. [17] used frequent pattern mining
+approach to acquire the attack models. In this paper, we
+combine these methods and propose the LLCS approach to
+extract the attack models of the network intrusion behaviors.
+III.
+
+THE TWO-STAGE CLUSTERING METHOD
+
+The mining of attack models in IDS alerts from the network
+backbone could provide a succinct and high-level perspective
+of the network intrusion behaviors happened on the network
+backbone. The scheme is shown in Fig. 2. The core step of the
+attack models mining process is a two-stage alert correlation
+method. The first stage is a spatial and temporal analysis of the
+network intrusion behaviors’ alert sequence. The second stage
+is an analysis of relation of the network intrusion behaviors.
+Considering the extreme redundancy of IDS alerts from the
+network backbone, there is an alert redundancy reduction
+procedure before the two-stage alert clustering procedure. The
+two-stage clustering alert correlation method transforms the
+alert from the original low-level alert to network intrusion
+behaviors clusters. And an attack model extraction method is
+followed by the two-stage clustering procedure to extract the
+attack models of the network intrusion behaviors. In the
+remaining part of this section, we will discuss the methods
+used in this paper in detail.
+
+Alert log
+
+Two-stage
+clustering
+Alert
+correlation
+
+Alert Reduction
+
+,… ,
+…
+
+IDS alert log
+
+,… ,
+,… ,
+,… ,
+,… ,
+,… ,
+
+…
+
+…
+Sequence
+clustering
+
+Attack Models
+extraction
+
+Attack Model
+
+,… ,
+,… ,
+,… ,
+,… ,
+,… ,
+Behaviors
+clustering
+
+Intrusion Attack
+Models
+
+Figure 2. The scheme of attack models mining
+
+The RMSR algorithm mainly consists of four steps. First, it
+gets the statistics number of the alert flows. Alert flow consists
+of alerts have the same source and destination IP addresses in
+the time sequence. Second, it gets the statistics vector of alert
+types in the alert flows with an enumerative ratio over the
+threshold εer. Then it chooses the alert types have a ratio over
+the thresholdεatr in the alert flow, and computes the redundancy
+value of these alert types. At last, it leaves the redundancy alert
+data out.
+
+We analyze the distribution of the original alert from the
+network backbone. The statistics result shows that there is an
+unbalanced alert amount distribution on alert types. The most
+amount of alert is distributed on a small portion of alert types.
+The cumulative distribution of alert amount on alert types is
+shown as below.
+The alert amount CDF
+1
+0.8
+
+Alert amount
+
+A. Alert reduction
+Compared to the well-known data sets, such as DARPA or
+DEFCON, the IDS alerts in the wild have atypical features. In
+the wild, the amount of background traffic is much huger than
+the amount of network intrusion behaviors. The background
+traffic causes a great many false positive alerts which are great
+redundancy and should be reduced. On the one hand, there is
+little or even no real attack information in these alerts were
+they false positive, to reduce this proportion of the alert will
+improve the quality of attack models or will not lower the
+quality at least. On the other hand, more alerts to process
+means more time and space needed for clustering, to reduce
+them will decrease the cost of the program. In this paper, a
+reduction method based on statistical redundancy (RMSR) is
+proposed to reduce the redundancy of the original IDS alerts
+from the network backbone.
+
+0.6
+0.4
+0.2
+0
+0
+
+50
+
+100
+
+150
+
+200
+
+250
+
+Alert type
+
+Figure 4. The cumulative distribution of the alert amount on alert types
+
+In the figure, the x axis is the ID number of alert types
+ordered by the alert amount, and the y axis is the cumulative
+amount of alert types. It shows that the amount of first five
+alert types is almost over the 91% amount of the whole alert
+types and there are only 242 alert types. It means that 2% alert
+types occupy over the 91% amount of the entire alert types.
+The amount of alert types is greatly unbalanced.
+However, most of these alert types contain very little useful
+information about network intrusion behaviors. The table
+below shows the amount of most five alert types. It’s a
+statistical result of the two-day alerts.
+TABLE I.
+
+THE MOST FIVE ALERT TYPES
+
+NO.1
+
+NO.2
+
+NO.3
+
+NO.4
+
+NO.5
+
+Alert-type
+
+119-19
+
+129-15
+
+2181
+
+119-14
+
+120-3
+
+Number
+
+7831054
+
+2706440
+
+2180560
+
+853179
+
+288602
+
+The alert type is either in form of “GID-SID” if the GID is
+not 1 or in form of “SID” if GID is 1. The table below shows
+the comments of these alert types given in the snort document.
+TABLE II.
+
+THE COMMENTS OF THESE ALERT TYPES
+
+Alert-type
+
+Comment in snort
+
+119-19
+
+This event is generated when the http_inspect preprocessor
+detects anomalous network traffic.
+
+Figure 3. The flow chart of the alert reduction
+
+2181
+
+This event is generated when network traffic that indicates
+BitTorrent is being used.
+
+In the third step, the redundancy value of each alert type is
+calculated by the formula
+
+119-14
+
+This event is generated when the pre-processor http_inspect
+detects network traffic that may constitute an attack.
+
+φj = (
+
+N
+
+) × ! Flowi × α ij ,
+
+Mj 5
+N
+
+i =1
+
+In the formula, N is the number of flows whose amount is over
+the threshold εer, and Mj is the number of alert flows in which
+the alert type j have a ratio over εatr in the previous N alert
+flows. The parameters are determined by the network
+environment, they change from network to network, so these
+parameters should be adjusted according to the environment.
+
+Through these alert types occupy over 91% amount, it’s
+obvious that these alert types contain very little information
+about what the network intrusion behaviors are in detail.
+Especially, the second most alert type here is just a normal P2P
+application that is widely used in Internet.
+
+1265
+1259
+1193
+
+And, what’s more, these 2% alert types have a similar
+distribution in the IP address space, and the distribution is
+shown in Fig. 5.
+
+network intrusion behaviors. Finally, in the reduction
+procedure, only the alert types that have a statistics
+characteristic of redundancy will be deleted.
+
+In the figure, these alert types distributed on the entire IP
+space and have a comparative range. The distribution is
+comparatively similar, and also the range is comparatively
+similar.
+
+B. Two-stage clustering Alert correlation
+The two-stage clustering alert correlation method is to
+analyze the spatial and temporal relativity of network intrusion
+behaviors’ alert sequence, and to analyze the relation of
+network intrusion behaviors. After the two-stage clustering
+analysis, there are clusters of network intrusion behaviors to
+extract the attack models of these network intrusion behaviors.
+
+The distribution of 119-19
+
+The distribution of 129-15
+3000
+Alert amount
+
+Alert amount
+
+3000
+2000
+1000
+0
+0
+
+1
+
+2
+3
+IP in integer
+
+2000
+
+0
+0
+
+4
+9
+
+2000
+
+2000
+
+1500
+
+1500
+
+Alert amount
+
+Alert amount
+
+x 10
+The distribution of 1-2181
+
+1000
+500
+0
+0
+
+1
+
+2
+3
+IP in integer
+
+4
+9
+
+x 10
+
+1) The spatial and temporal analysis
+In the first stage, there is a spatial and temporal analysis of
+the network intrusion behaviors’ alert sequence. At first, an
+alert is abstracted to a vector of attributes. When the clustering
+procedure is ongoing, whether the alerts will be correlated into
+one sequence is determined by the attributes similarity. The
+alerts belonged to one network intrusion behavior will
+automatically come into one sequence as the alerts in one
+behavior’s have a stronger relation in causality and so forth,
+and the alerts have a weaker relation will come into a discrete
+sequence. When the clustering procedure is over, one sequence
+represents one network intrusion behavior.
+
+1000
+
+1
+2
+3
+4
+9
+IP in integer
+x 10
+The distribution of 119-14
+
+1000
+500
+0
+0
+
+1
+
+2
+3
+IP in integer
+
+4
+9
+
+x 10
+
+The similarity of alerts a1 and a2 is related to three
+attributes: the IP addresses, the time interval and the alert types.
+The similarity function is a weighted sum of these three
+attribute similarity functions and is written as
+
+Figure 5. Distribution of most four alert types on IP space
+
+There is not much impact on the following procedures were
+these alert types deleted. On the one hand, these alert types,
+such as the alert type 119-19 and 1-2181, have an ambiguous
+meaning of a network intrusion behavior. When people use
+BitTorrent and an alert will be here, but it’s just a daily
+application, and there is no network intrusion behavior at all.
+On the other hand, some alerts were generated by a network
+intrusion behavior indeed, and if these alerts were deleted in
+the reduction procedure, a certain network intrusion behavior
+step will be ignored and the final attack models generated by
+the latter procedures will be incomplete. However, the
+incomplete attack models can still detect the network intrusion
+behaviors.
+
+sim(a1 , a2 ) =
+
+!
+
+i∈{ad,tm,at}
+
+wi * simi ( a1 , a2 ) .
+
+In the formula, ωL is the weight value, and the weight is
+environment related. simad , simtm and simat are the similarity
+function of IP addresses, time interval and the alert types
+respectively. simad , simtm and simat are relatively independent
+with different definitions. The similarity function of IP
+addresses is defined as
+
+Max { H ss + H dd , H sd + H ds }
+.
+64
+In the formulation, the subscript of Hss, Hdd, Hsd, Hds is either
+“s” or “d”, “s” is short for “source” and “d” is short for
+“destination”. Hsd means the longest prefix of the source IP
+address and the destination IP address of the two alerts, the
+others similarly. The similarity of IP addresses is defined as
+the length of the longest prefix of the combinations of source
+and destination IP addresses divided by the sum of IP address
+lengths. The definition ignores the direction of IP addresses,
+careless about whether the alert is from source to destination
+or the inverse direction. And the directionless is one of the
+characteristics of the alert from the network backbone. For
+instance, the worms will infect a host firstly, and then the host
+maybe will response to the hacker and may also download the
+code from a web server. These alerts are directionless or
+bidirectional during the communication. Compared to the
+definition with a direction, the directionless definition could
+correlate the sequence of the network intrusion behaviors
+simad (a1 , a2 ) =
+
+Them 1:
+
+The network intrusion behaviors can be detected by
+an attack model X can also be detected by the attack model Y,
+which lacks a certain step of X.
+The theorem is easy to be proven. A network intrusion
+behavior could be detected by an attack model X means that the
+sequence of the attack model X is a subsequence of the network
+intrusion behavior’s attack sequence. If an attack model Y is
+lack of a certain step of X, it means that Y is a subsequence of X,
+and that’s to say the attack model Y is a subsequence of the
+network intrusion behavior. So the network intrusion behavior
+could also be detected by attack model Y.
+There is still a problem need to be considered that the
+attack model Y could detect more network intrusion behaviors
+than the attack model X could. This would cause an increase in
+the false positive rate. Nonetheless, don’t worry about it.
+Firstly, the amount of these alert types is enormous, 2% alert
+types occupy over 91% amount and have an obscure meaning.
+Secondly, these alert types have a similar distribution on the
+entire IP address space. Thirdly, even if these alert types
+deleted, the attack models generated can also detect the
+
+1266
+1260
+1194
+
+the similarity of two sequences, especially when the sequences
+have a big difference in length.
+
+completely. Then the similarity function of the time interval is
+defined as
+
+C. Attack model extraction
+After the two-stage clustering analysis, the original alerts
+have been transformed into clusters of network intrusion
+behaviors. The attack model analysis is aiming at extracting
+the conjoint attack models of network intrusion behaviors in
+these clusters. A LLCS algorithm is proposed to extract the
+attack models. The LLCS is based on the longest common
+subsequences (LCS). However, the strict LCS extract the
+common subsequence of all the network intrusion behaviors
+in one cluster, but it works pool with the clustering method. In
+LLCS, attack models are a portion of LCS of these network
+intrusion behaviors in one cluster. In the algorithm, there is a
+ratio parameter αattached to each LCS, only the LCS with α
+over the threshold value εllcs could become attack models.
+
+"1, abs (t (a1 ) − t (a2 )) < ε
+#
+simtm (a1 , a2 ) = $
+ε
+.
+# abs(t (a ), t (a )) , else
+1
+2
+%
+The similarity value is 1 if the time interval between the alerts
+is less than the threshold εt. The alerts have a high similarity
+value if the time interval is small, and it will become lower and
+lower while the time interval becomes bigger and bigger. The
+similarity of alert types is defined as
+
+"1, alert (a1 ) = alert (a2 )
+simat (a1 , a2 ) = $
+.
+%0, else
+The similarity function of alert types is comparatively simple.
+The function value is 1 if the alert types are the same, or the
+value is 0 if they are different. The similarity function of alerts
+is the weighted sum of these attributes’ similarity functions. In
+the clustering procedure of first stage, a cluster is an incident
+sequence. The first incident is the first alert itself. After an alert
+come into clustering procedure, the first values to be computed
+is the similarities between the incidents and the alert itself, if
+the highest similarity is above the threshold and the alert types
+are different, then add the alert into the incident with the
+highest similarity or treat the alert as a new incident. The
+similarity of an incident and an alert is the highest similarity
+between the alerts in the incident and the alert. After the
+clustering in a first stage, the alerts transform into incidents. In
+every incident, there is a sequence of alerts which have a strong
+spatial and temporal relation, and the alerts in different
+incidents have weak ties.
+
+Input: Intrusion behaviors clusters C and threshold εllcs
+Output: The strategies of the Intrusion behaviors S
+1.
+2.
+3.
+4.
+5.
+6.
+7.
+8.
+
+Calculate theαof the new subsequences;
+While (exist (α>εllcs) )
+S ! longest subsequence in I;
+Figure 6. LLCS extraction algorithm
+
+IV.
+
+EXPERIMENT AND RESULT ANALYSIS
+
+The data set is from a node on the network backbone in
+China. The algorithm is coded in MATLAB language, and the
+version of MATLAB is 7.10. The computer is a HP desktop
+computer with i5 CPU and 4GB RAM, and the OS running on
+it is WIN7 X64.
+
+2) The behavior relativity analysis
+The second clustering is to analyze the behavior relation of
+the incidents generated by the first stage. In the second
+clustering, it’s the Edit Distance Ratio (EDR) to measure
+whether the two incidents should be clustered into one cluster
+or not. The EDR is defined as
+
+Dist ( s1 , s2 ) =
+
+I !∅
+Find Item In C with ratio over εllcs;
+Do
+Add new subsequence into item-set I;
+Generate new subsequences;
+
+A. Data set analysis
+The alert data is collected from IDS on the network
+backbone. Time duration is from 14-Nov-2011 16:56:19 to
+16-Nov-2011 18:33:57, about 50 hours. During the time, there
+is 15107782 alerts, 402 alert types, 4234104 source hosts,
+4695029 destination hosts, and 2050328 hosts appeared both in
+sources and destinations. The distribution of the alert amount is
+shown below.
+
+EditDist ( s1 , s2 )
+.
+len( s1 ) + len( s2 )
+
+In the formulation, the numerator is the edit distance of the
+sequences of incidents. The denominator is the sum of the
+sequence’s lengths, or value of the max edit distance between
+two sequences with the same lengths. The edit distance is
+defined as
+
+Alert distribution
+
+5
+
+6
+
+EditDist (s1 , s2 ) = min{len(OPs | OPs( s1 ) = s2 )} ,
+
+x 10
+
+Alert amount
+
+5
+
+where OP is either delete operation or insert operation. The
+edit distance between the sequence s1 and s2 is the minimal
+steps of simple operation to translate s1 to s2. Either an insert
+operation or a delete operation is a simple operation. The edit
+distance is length dependent. The same similarity value has a
+different meaning between the sequences with a long length
+and the sequences with a short length. Compared to edit
+distance, the EDR could be much more effective to measure
+
+4
+3
+2
+1
+0
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+Hours
+
+Figure 7. Alert distribution along with time
+
+1267
+1261
+1195
+
+B. Parameter adjustment
+The similarity function of alerts is the weighted sum of
+these attribute similarity functions. In the experiment, the
+weight values are ωDG=0.4, ωWP=0.3 and ωDW=0.3 respectively.
+The threshold εllcs takes a value of 0.6. The threshold εer is
+related to the sequence length. The lower the threshold εer is the
+greater the reduction is, and accordingly the shorter the
+sequence length is. The table below shows the relation between
+them in value.
+
+to overflow a buffer in the Microsoft SQL Server raiserror()
+function.
+In the Appendix, we give a list of attack models extracted
+in the two day duration alert data. The steps of these attack
+models have a strong relation in logic.
+V.
+
+As it shows below, the sequence length doesn’t change
+until the threshold εer decrease from 1.00 to 0.006. And the
+threshold εer takes the value of 0.006 in the subsequent
+experiment.
+TABLE III.
+
+THE THRESHOLD AND THE SEQUENCE LENGTH
+
+εer
+
+1.00
+
+0.10
+
+0.01
+
+length
+
+190
+
+190
+
+190
+
+0.007 0.006
+186
+
+186
+
+0.005
+
+But there is still considerable work to do. The data set used
+in the experiment is an exclusive one, and there is no
+knowledge about the attack actions really happened during the
+collecting. It’s a challenge to evaluate the experiment result on
+such kind of data set and that will be part of our future work.
+
+35
+
+The length of the sequence is time interval related similarly.
+And this parameter is taken 3 min, as the longest length of
+attack models will not change significantly while the εer
+increase after that point. The time duration of some network
+intrusion behaviors’ alert sequence is less than 1 second. The
+time interval is very small or even closely to zero. This
+phenomenon indicates that the network attack behaviors are
+more likely to be automatically executed by attack tools.
+TABLE IV.
+
+εt
+
+ACKNOWLEDGMENT
+The work was partially supported by the National Science
+Foundation of China (NSFC) under Grant No. 61003303,
+Program for Changjiang Scholar and Innovative Research
+Team in University (PCSIRT, No. IRT1012), Aid Program for
+Science and Innovative Research Team in Higher Education
+Institutions of Hunan Province: “network technology” and
+Hunan Provincial Natural Science Foundation of China under
+Grant No. 11JJ7003.
+
+TIME INTERVAL AND THE SEQUENCE LENGTH
+0.5 1.0
+
+length
+
+6
+
+20
+
+1.5
+
+2.0
+
+2.5
+
+3.0
+
+125
+
+186
+
+186
+
+186 186 186
+
+3.5 4.0
+
+REFERENCES
+[1]
+
+C. Result analysis
+The alert amount decreases a lot after the alert reduction
+procedure. There are only about 5.83% alerts left. The reduced
+ratio of our method (RMSR) is compared with several other
+methods such as HCPN[18], the average reduced ratio of the
+methods (AVG) in[7] and PRC[10] and the result is shown in
+Table V. The reduction method improves the generation of
+attack models a lot. On the one hand, the cost of time and space
+is much less, and on the other hand, the quality of attack
+models is heightened.
+TABLE V.
+
+[2]
+[3]
+
+[4]
+[5]
+
+REDUCING RATIO
+
+Method
+
+RMSR
+
+HCPN
+
+AVG
+
+PRC
+
+Reduced Ratio
+
+94.17%
+
+93.60%
+
+87.64%
+
+64.18%
+
+DISCUSSION
+
+In this paper, we put forward some features of the alert
+from the network backbone. Considering the huge amount
+alert from the network backbone, we propose a simple alert
+reduction method based on statistics. The experiment shows
+that the reduction method is efficient, and the alert reduction
+procedure improves the quality of attack models a lot. We also
+propose an alert correlation method based on two-stage
+clustering. And the attack models generated have a convincing
+logic relation.
+
+[6]
+[7]
+
+There are several attack models generated, and the steps of
+these attack models of have a strong logic relation. For
+example, there is an attack model shows an exploitation of the
+Microsoft SQL Server. The first step is to start a command
+shell in the SQL database, then a registry access command is
+issued to the SQL database, followed by a special command is
+issued to the SQL database, and afterward an attempt is made
+
+[8]
+
+[9]
+
+1268
+1262
+1196
+
+C. Michel and L. Me, "ADELE: An attack description language for
+knowledge-based intrusion detection," in Trusted Information: The New
+Decade Challenge. vol. 65 Norwell: Kluwer Academic Publishers, 2001,
+pp. 353-368.
+T. E. Steven, V. Giovanni, and A. K. Richard, "STATL: an attack
+language for state-based intrusion detection," J. Comput. Secur., vol. 10,
+pp. 71-103, 2002.
+F. Cuppens, R. Ortalo, H. Debar, L. Mé, and S. Wu, "LAMBDA: A
+Language to Model a Database for Detection of Attacks," in Recent
+Advances in Intrusion Detection. vol. 1907: Springer Berlin / Heidelberg,
+2000, pp. 197-216.
+J. T. Steven and L. Karl, "A requires/provides model for computer
+attacks," in Proceedings of the 2000 workshop on New security
+paradigms Ballycotton, County Cork, Ireland: ACM, 2000.
+A. Valdes, K. Skinner, W. Lee, L. Mé, and A. Wespi, "Probabilistic
+Alert Correlation," in Recent Advances in Intrusion Detection. vol. 2212:
+Springer Berlin / Heidelberg, 2001, pp. 54-68.
+W. Sheng, X. Yang, and Z. Wanlei, "A Lightweight Intrusion Alert
+Fusion System," in High Performance Computing and Communications
+(HPCC), 2010 12th IEEE International Conference on, pp. 695-700.
+F. Valeur, G. Vigna, C. Kruegel, and R. A. Kemmerer, "Comprehensive
+approach to intrusion detection alert correlation," Dependable and
+Secure Computing, IEEE Transactions on, vol. 1, pp. 146-169, 2004.
+J. Levera, B. Baran, and R. Grossman, "Experimental studies using
+median polish procedure to reduce alarm rates in data cubes of intrusion
+data," in Intelligence and Security Informatics, Proceedings. vol. 3073
+Berlin: Springer-Verlag Berlin, 2004, pp. 457-466.
+S. S. Xiao, Y. G. Zhang, X. J. Liu, and J. J. Gao, "Alert Fusion Based on
+Cluster and Correlation Analysis," in Ichit 2008: International
+
+[10]
+
+[11]
+[12]
+
+[13]
+
+[14]
+
+[15]
+
+[16]
+
+[17]
+
+Conference on Convergence and Hybrid Information Technology,
+Proceedings Los Alamitos: Ieee Computer Soc, 2008, pp. 163-168.
+M. Xu, T. Wu, J. F. Tang, and Ieee, "An IDS Alert Fusion Approach
+Based on Happened Before Relation," in 2008 4th International
+Conference on Wireless Communications, Networking and Mobile
+Computing, Vols 1-31 New York: Ieee, 2008, pp. 12604-12607.
+A. Valdes, K. Skinner, W. Lee, L. Mé, and A. Wespi, "Probabilistic
+Alert Correlation" in Recent Advances in Intrusion Detection,
+Proceedings." vol. 2212: Springer Berlin Heidelberg, 2001, pp. 54-68.
+P. A. Porras, M. W. Fong, and A. Valdes, "A mission-impact-based
+approach to INFOSEC alarm correlation," in Recent Advances in
+Intrusion Detection, Proceedings. vol. 2516 Berlin: Springer-Verlag
+Berlin, 2002, pp. 95-114.
+A. Siraj, R. B. Vaughn, and Ieee, "Multi-level alert clustering for
+intrusion detection sensor data," in NAFIPS 2005 - 2005 Annual
+Meeting of the North American Fuzzy Information Processing Society
+New York: Ieee, 2005, pp. 748-753.
+Y. G. Zhang, S. S. Mao, X. Zhuang, and X. Peng, "Using Cluster and
+Correlation to Construct Attack Scenarios," in Proceedings of the 2008
+International Conference on Cyberworlds Los Alamitos: Ieee Computer
+Soc, 2008, pp. 471-476.
+X. Peng, Y. G. Zhang, S. S. Xiao, Z. Wu, J. Q. Cui, L. M. Chen, and D.
+B. Xiao, "An Alert Correlation Method Based on Improved Cluster
+Algorithm," in Paciia: 2008 Pacific-Asia Workshop on Computational
+Intelligence and Industrial Application, Vols 1-3, Proceedings Los
+Alamitos: Ieee Computer Soc, 2008, pp. 328-333.
+J. Ma, Z. T. Li, and W. M. Li, "Real-Time Alert Stream Clustering and
+Correlation for Discovering Attack Strategies," in Fifth International
+Conference on Fuzzy Systems and Knowledge Discovery, Vol 4,
+Proceedings Los Alamitos: Ieee Computer Soc, 2008, pp. 379-384.
+S. Reza and A. G. Ali, "Real-time alert correlation using stream data
+mining techniques," in Proceedings of the 20th national conference on
+Innovative applications of artificial intelligence - Volume 3 Chicago,
+Illinois: AAAI Press, 2008.
+
+APPENDIX
+Attack Model 1:
+1-687-8:SQL xp_cmdshell - program execution
+1-686-13:SQL xp_reg* - registry access
+1-683-7:SQL sp_password - password change
+1-1387-11:SQL raiserror possible buffer overflow
+Attack Model 2:
+1-1419-12:SNMP trap udp
+1-1413-13:SNMP private access udp
+1-566-6:POLICY PCAnywhere server response
+105-2-1:(spo_bo) Back Orifice Client Traffic detected
+1-634-5:SCAN Amanda client-version request
+1-1504-8:MISC AFS acces
+Attack Model 3:
+128-4-1:(spp_ssh) Protocol mismatch
+119-21-1:(http_inspect) MULTIPLE CONTENT LENGTH
+1-1939-5:MISC bootp hardware address length overflo
+1-11976-4:VOIP-SIP overflow in URI type - SIP
+1-1729-8:CHAT IRC channel join
+Attack Model 4:
+1-1394-12:SHELLCODE x86 inc ecx NOOP
+129-12-1:Consecutive TCP small segments exceeding
+threshold
+1-1990-2:CHAT MSN user search
+1-540-12:CHAT MSN message
+1-1986-7:CHAT MSN outbound file transfer request
+1-1988-6:CHAT MSN outbound file transfer accept
+
+Attack Model 5:
+120-3-1:(http_inspect)
+NO
+CONTENT-LENGTH
+TRANSFER-ENCODING IN HTTP RESPONSE
+129-16-1:FIN number is greater than prior FIN
+129-5-1:Bad segment, adjusted size <= 0
+
+OR
+
+Attack Model 6:
+1-11974-2:VOIP-SIP response too small
+1-11969-2:VOIP-SIP inbound 401 unauthorized message
+1-12007-2:VOIP-SIP outbound 401 Unauthorized message
+Attack Model 7:
+120-3-1:(http_inspect)
+NO
+CONTENT-LENGTH
+OR
+TRANSFER-ENCODING IN HTTP RESPONSE
+129-12-1:Consecutive TCP small segments exceeding
+threshold
+129-5-1:Bad segment, adjusted size <= 0
+129-7-1:Limit on number of overlapping TCP packets
+reached
+Attack Model 8:
+125-5-1:(ftp_telnet) FTP command parameters contained
+potential string format
+1-491-10:FTP Bad login
+1-2179-9:FTP PASS format string attempt
+1-2417-5:FTP format string attempt
+Attack Model 9:
+120-3-1:(http_inspect)
+NO
+CONTENT-LENGTH
+TRANSFER-ENCODING IN HTTP RESPONSE
+125-8-1:(ftp_telnet) FTP bounce attempt
+1-3441-4:FTP PORT bounce attempt
+
+OR
+
+Attack Model 10:
+120-3-1:(http_inspect)
+NO
+CONTENT-LENGTH
+OR
+TRANSFER-ENCODING IN HTTP RESPONSE
+129-5-1:Bad segment, adjusted size <= 0
+1-17276-2:MISC Multiple vendor Antivirus magic byte
+detection evasion attempt
+Attack Model 11:
+1-1394-12:SHELLCODE x86 inc ecx NOOP
+1-1390-8:SHELLCODE x86 inc ebx NOOP
+133-34-1:(dcerpc2)
+Connection-oriented
+DCE/RPC
+Request: Fragment length on non-last fragment (36) less
+than maximum negotiated fragment transmit size for client
+(4280)
+1-2923-8:NETBIOS SMB repeated logon failure
+Attack Model 12:
+125-2-1:(ftp_telnet) Invalid FTP Command
+125-1-1:(ftp_telnet) TELNET CMD on FTP Command Channel
+125-9-1:(ftp_telnet) Evasive (incomplete) TELNET CMD on
+FTP Command Channel
+Attack Model 13:
+1-1394-12:SHELLCODE x86 inc ecx NOOP
+129-16-1:FIN number is greater than prior FIN
+1-648-10:SHELLCODE x86 NOOP
+1-15306-4:WEB-CLIENT Portable Executable binary file
+transfer
+1-16313-6:POLICY download of executable content x-header
+Attack Model 14:
+129-12-1:Consecutive TCP small segments exceeding
+threshold
+129-2-1:Data on SYN packet
+124-3-1:(smtp) Attempted response buffer overflow: 596
+chars
+1-567-11:POLICY SMTP relaying denied
+
+1269
+1263
+1197
+
+

@@ -1,0 +1,267 @@
+Expert Systems with Applications 40 (2013) 315­322
+
+Contents lists available at SciVerse ScienceDirect
+
+Expert Systems with Applications
+journal homepage: www.elsevier.com/locate/eswa
+
+Advanced probabilistic approach for network intrusion forecasting and detection
+Seongjun Shin a, Seungmin Lee b,, Hyunwoo Kim c, Sehun Kim d
+a
+
+The Attached Institute of ETRI, P.O. Box 1, Yuseong-gu, Daejeon 305-600, South Korea Technology Strategy Research Division, ETRI, 218 Gajeong-ro, Yuseong-gu, Daejeon 305-700, South Korea c School of Business, Kyungil University, 50, Gamasil-gil, Hayang-eup, Gyeongsan, Gyeongbuk 712-701, South Korea d Internet Security Lab., Department of Industrial and Systems Engineering, School of Information Technologies, KAIST 373-1, Guseong-dong, Yuseong-gu, Daejeon 305-701, South Korea
+b
+
+a r t i c l e
+Keywords: Intrusion forecasting Markov chain Anomaly detection DDoS detection
+
+i n f o
+
+a b s t r a c t
+Recently, as damage caused by Internet threats has increased significantly, one of the major challenges is to accurately predict the period and severity of threats. In this study, a novel probabilistic approach is proposed effectively to forecast and detect network intrusions. It uses a Markov chain for probabilistic modeling of abnormal events in network systems. First, to define the network states, we perform Kmeans clustering, and then we introduce the concept of an outlier factor. Based on the defined states, the degree of abnormality of the incoming data is stochastically measured in real-time. The performance of the proposed approach is evaluated through experiments using the well-known DARPA 2000 data set and further analyzes. The proposed approach achieves high detection performance while representing the level of attacks in stages. In particular, our approach is shown to be very robust to training data sets and the number of states in the Markov model. Ó 2012 Elsevier Ltd. All rights reserved.
+
+1. Introduction As the potential damage caused by Internet threats has become more serious, the need for defending against these threats has increased significantly. An intrusion detection system (IDS) is one of the most widely deployed systems to effectively detect and respond to attacks. It operates a series of procedures that collects data from networks or hosts, manipulates the data, detects abnormality using various analysis techniques and executes responsive action according to predefined policies. According to the source of the input data, it is generally classified as a host-based IDS (HIDS) or a network-based IDS (NIDS) (Mukherjee, Heberlein, & Levitt, 1994). The NIDS collects and analyzes the traffic data transmitted over the network and decides whether or not a current event is normal activity. On the other hand, the HIDS consists of an agent on a host that identifies intrusions by analyzing system calls, application logs, filesystem modifications and so on. Since the HIDS basically uses the audit data stored in a host, it can detect abnormal activities more accurately than the NIDS (Dreger, Kreibich, Paxson, & Sommer, 2005). However, as recent Internet attacks have become more sophisticated over a wide area, dependence on NIDS has increased for detecting these attacks effectively. The NIDS can execute intrusion
+ Corresponding author. Tel.: +82 42 860 1775; fax: +82 42 860 6504.
+E-mail address: todtom@etri.re.kr (S. Lee). 0957-4174/$ - see front matter Ó 2012 Elsevier Ltd. All rights reserved. http://dx.doi.org/10.1016/j.eswa.2012.07.057
+
+detection with security measures reflecting overall network information, while the HIDS mainly operates within a host. However, the current NIDS cannot Internet attacks in advance because the system responds to the attacks only after the attacks inflict serious damage. Since Internet attacks extensively propagate in stages, it is very important to forecast attacks and to warn against attacks early. For example, the 7Á7 DDoS attacks lasted between a few minutes and 10 h, with an average duration of about 3 h in July 2009. Due to this, a large number of Internet services were shut down for many hours in Korea (Park, 2010). Therefore, a new mechanism that can forecast network states and provide detailed information should be added to the current NIDS that detects only the possibility of an attack without early warnings. In this paper, a novel probabilistic approach called the advanced probabilistic approach for network-based IDS (APAN) is proposed to forecast and detect network intrusions effectively. APAN cannot only detect the presence of attack; it also provides the degree of risk on a probability scale. To compute the probability that an attack will occur in a network, APAN builds a Markov chain model that consists of three main phases: in the first phase, K-means clustering is first performed to define the network states, and the concept of an outlier factor is introduced. Next, based on the defined states, a Markov model including the state transition probability matrix and initial probability distribution is built under practical assumptions. In the third phase, the degree of abnormality of incoming data is stochastically measured using the model in real-time. This work is a new attempt to apply a Markov model
+
+316
+
+S. Shin et al. / Expert Systems with Applications 40 (2013) 315­322
+
+to network data for predicting the period and severity of the Internet threats. Experimental results show that the proposed approach achieves very robust, high detection performance while representing the level of threats in stages. Therefore, this allows APAN to be effectively integrated with the existing network-based intrusion detection systems. This paper is organized as follows: In Section 2, the literature related to probabilistic modeling is discussed. Basic foundations of a Markov chain and considerations for applying it to network data are described in Section 3. The detailed structure of the APAN framework is proposed in Section 4. In Section 5, the proposed framework is verified through experiments using the well-known DARPA 2000 data set and further analyses. This study concludes with a summary in final section.
+
+3. Markov chain and problem statement In this section, a Markov chain and its main properties are briefly described. Then, the problems to be solved are reviewed for applying the Markov chain to network intrusion detection. 3.1. Markov chain A Markov chain is a stochastic process that predicts a change in the future using analysis on transitional characteristics from one state to another state. It describes a system with state transition probability and provides a powerful method for analyzing the operation of a system composed of finite states. For example, Fig. 1 depicts a system having a set of states, S = {A, B, C}, where `state' means a different and specific situation the system can be in. The process starts in one of three states and transits successively from one state to another with defined probability pij and this probability does not depend on which states the system was in before the current one. Provided that St is the state of the system at time t, the possible choices of St form a set S called the state space of the chain, and a Markov chain is a discrete-time stochastic process satisfying the following two main assumptions (Doob, 1953): Assumption 1. In the case of a first-order Markov chain, the state of a system at time t + 1 depends on only the state at time t. Moreover, the previous states leading to the state at time t does not influence the state at time t + 1.
+
+2. Related works Probabilistic modeling is an approach that can represent evidence of intrusions in terms of the probability, thus enabling system administrators to understand the degree of risk on a probability scale. This has a remarkable advantage compared to other detection methods that merely determine either a normal state or an anomaly. Numerous existing techniques belong to the category of the probabilistic modeling approach. Among them, the Markov chain model has been widely used in the area of the intrusion detection (Ye, 2000; Ye, Chen, & Borror, 2004). The Markov model examines the state of a system at fixed intervals. When an event occurs, the Markov model computes the probability that a series of events occurs at a given time interval. If the computed probability is significantly low, these events can be suspected to be abnormal. Ye (2000) derived a Markov model of a norm profile using the historic data obtained from the audit data stored in the host and calculated the probability of state transition from the training data of normal activities. The lower the probability computed by the Markov model, the less likely it is that this event conforms to a norm profile. Different from a first-order Markov model in which the next state is determined only by the present state, a high-order Markov model uses recent historical data, or the last several states, in determining the next state (Ju & Vardi, 1999). However, this high-order Markov model has a significant drawback in that a large number of computing resources is needed to build a norm profile. A Markov model has several advantages: computation for building the Markov model is quite simple, once the state transition probability matrix and initial probability matrix is built. Moreover, the Markov model can decrease the false positive rate excellently since it is capable of filtering out undesired noises in the sequence of events and providing more stable and generic characteristics for the target system (Ye et al., 2004). Compared to other probabilistic techniques such as Hotelling's T2 test and the chi-square multivariate test, the Markov model has been shown to have better performance (Ye, Li, Chen, Emran, & Xu, 2001). Consequently, it can be concluded that Markov model using ordering property of data set is more effective than other probabilistic techniques in detecting intrusions. However, most research on the Markov chain have so far been mainly focused on host-based intrusion detection (Ju & Vardi, 1999; Ye, 2000; Ye et al., 2001), because the states to be defined in the Markov chain can be rather easily derived from audit data stored in a host. Unlike with this host data, it is very difficult or maybe impossible to represent network states using network traffic data gathered from the complex networked systems. This study proposes an advanced probabilistic approach for building a Markov model using the network data.
+
+PđStţ1 ź itţ1 jSt ź it ; StŔ1 ź itŔ1 ; . . . ; S0 ź i0 Ţ ź PđStţ1 ź itţ1 jSt ź it Ţ
+Here, t and t + 1 mean the sampling time at which a state is defined, and the interval time between t and t + 1 can be either regular or irregular. Assumption 2. A state transition from time t to time t + 1 is independent of time. This assumption can be represented as follows:
+
+PđStţ1 ź itţ1 jSt ź it Ţ ź PđStţ1 ź jjSt ź iŢ ź pij ;
+where pij is the probability that a system transits from state i to state j in a time interval [t, t + 1]. 3.2. Problem statement A Markov chain analyzes the operation of a system with a state transition probability. Therefore, systems such as hosts and networks should be able to be expressed as finite states and sequences
+
+Fig. 1. State transition in Markov chain.
+
+S. Shin et al. / Expert Systems with Applications 40 (2013) 315­322
+
+317
+
+of the states. In a HIDS, its states have been usually defined using the type of audit events or system call. For example, there are 284 different types of audit events in a security extension, called a basic security module (BSM) and each record in the audit log has one state out of 284 states (Qian & Xin, 2007). Similarly, the network behaviors should be defined as states of the Markov chain, but there have been few attempts so far to do this. To develop a Markov model using network data, the following two problems should be solved. First, two matrices, a state transition probability matrix and an initial probability distribution matrix, should be clearly defined to build a Markov model. Note that such model should include the states denoting the abnormality as well as the normality, whereas only a normal profile is generally obtained in an area of anomaly detection. That is, the abnormality of events within the online data cannot be identified if the model is derived such that it is capable of representing the transition between only normal states during the training process. Second, to be successively integrated with the existing intrusion detection system, the proposed model should be robust to the factors used in developing the model. When building a Markov model, there are several factors to be defined. Therefore, if the performance of the model is significantly sensitive to the selection of these factors, the proposed method will be limited in practical use. 4. Proposed framework In this section, a novel framework, APAN, is developed which uses a Markov chain for the probabilistic modeling of network events. The main object of APAN is to describe the state of the network with its probability and then to decide the abnormality of the network on the basis of this probability. APAN is composed of three main phases: in the first phase, the network states, including the outlying state, are newly defined. Based on these states, the state transition probability matrix and the initial probability distribution of the Markov model is built in the next phase. In the third phase, the chance of abnormal activity for online data is stochastically computed in real-time. Fig. 2 is a pictorial diagram showing the overview of the proposed framework. 4.1. Phase 1 ­ Defining the states This phase performs a cluster analysis on temporal network data to represent network behavior with states. Let a finite set S = {S1, S2, . . . , Si} be the set of the states of the system. As shown in Fig. 3, both the normal and outlying states are calculated using the following methods. First, the normal states are obtained from the result of the Kmeans clustering analysis on the normal training data set. If the network data set is divided into K subsets, K states of network are generated. As a result, the state of each observation can be represented by the cluster it belongs to. Provided that the input obser-
+
+LC 1 LC2 Training Dataset LCK LC3 Outlying State
+
+Fig. 3. States for modeling Markov chain.
+
+vation at time t is x(t), St denoting the state of system at time t is defined as follows:
+
+St ź LC xđtŢ ;
+where LCx(t) denotes the label of the cluster that x(t) belongs to, and St is an element of set S. Second, an outlying state is introduced to define the abnormality. Since only a normal data set is used in building the Markov chain model, the outlying state is needed to represent unusualness in the test data set in addition to the normal states generated by the K-means clustering. If an observation is within the scope of a decision rule, the outlying state is assigned as the state of this observation. In order to measure the degree of likeness between the incoming data and the normal states, the outlier factor (OF) is introduced here to measure how far incoming observation departs from others clusters. OF(x) is defined by the 2-power means of distances between an incoming observation and all of the clusters. Let C = {C1, C2, . . . , CK} be clusters generated through the result of the clustering analysis on the training data set and OF(x) be the outlier factor of incoming observation x. Then, OF(x) is computed as follows:
+
+OF đxŢ ź
+
+qffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffi ffi PK 2 d đ C Ŕ x Ţ i iź 1 K
+
+:
+
+In the above equation, d(Ci Ŕ x) denotes Euclidean distance between Ci and x.
+
+vffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffiffi u n uX dđC i Ŕ xŢ ź t đC ik Ŕ xk Ţ2 ;
+kź1
+
+where n is the number of attributes of observation, Cik and xk are the kth attribute of centroid of Ci and x, respectively. Moreover, for a given x, dm is defined as a distance between x and the centroid of the cluster that is closest to the x.
+
+dm ź min fdđx Ŕ C i Ţg:
+16i6K
+
+Consequently, the state of input observation x at time t is defined by following decision formula.
+
+Training data set
+
+K-means Clustering
+
+Clusters (C1, C2, , CK) Outlier Factor
+
+1st Phase Normal States (S1, S2, , SK)
+
+2nd Phase Building a Markov chains model
+
+Outlying State Test data set Decision Rule Normal State 3rd Phase Calculate Probability
+
+Fig. 2. Overview of the proposed framework.
+
+318
+
+S. Shin et al. / Expert Systems with Applications 40 (2013) 315­322
+
+Xt ź
+
+
+
+Outlying state; dm P OF đxŢ; Normal state; otherwise:
+
+Assumption 2. The probability that a system transits from an outlying state to an outlying state is very small.
+
+Note that the outlier factor is calculated using the result of the clustering analysis; the result can be changed by the variations of training data sets and the number of clusters in K-means clustering. That is, the outlier factor adaptively works with these variations. Consequently, the decision rule based on the outlier factor will not be much affected by the selection of training data sets or the number of states. This will be shown experimentally in Section 5. 4.2. Phase 2 ­ Building a state transition probability matrix A Markov model can be represented by a state transition probability matrix and initial probability distribution. Based on the assumptions of a Markov chain, a state transition probability in time interval [t, t + 1] is only depends on the state at time t. Let M and N denote the state of the system at time t and time t + 1, respectively, and K denotes the number of states in the system. Then state transition probability, pMN, is computed as follows (Ye, 2000; Ye et al., 2001):
+
+P 22 % 0:
+Generally, the number of outliers is significantly smaller than that of normal data, thus the probability of transition to an outlying state is expected to be small. Besides, it is desirable that the state transition probability of transiting to an outlying state have a significantly low or high value since the main concept of the proposed method represents abnormal events with a singular probability. Due to these facts, assumptions 1 and 2 are believed to be reasonable. Assumption 3. The probability that a system transits from an outlying state to a normal state is proportional to the number of members belonging to each state. As stated above, P21 is identical to an initial probability distribution Q.
+
+P 21 đ1; iŢ ź
+
+Ni ; N
+
+i ź 1; 2; . . . ; K
+
+pMN ź
+
+nMN nMN ź ; NM nM1 ţ nM2 ţ Á Á Á ţ nMK
+
+4.3. Phase 3 ­ Computing the probability of event occurrence
+
+đ 1Ţ
+The main motivation of APAN is that a sequence of states containing one or more abnormal events is expected to have a lower probability value than a sequence of states composed of only normal events. That is, the higher the value of this computed probability, the more likely the sequence of states will result from normal events. Therefore, the probability that a series of events occurs should be computed in the final phase of APAN. Once a state transition probability matrix is built, the probability of event occurrence can be computed easily. Let St be the state of a system at time t and P(StŔN StŔN+1, . . . , St) be the probability that a state sequence with size N occurs in the context of a Markov chain. Then, the probability is computed by the chain rule of probability as follows (Ye et al., 2004):
+
+where nMN represents the number of state transitions from state M to state N in the training data set and NM represents the total number of data items that has state M. The state transition probability matrix P is the matrix of which element is a state transition probability, and the matrix is expressed by the (K Â K) matrix form as follows:
+
+2
+
+p11
+
+p12 p22 . . . pK 2
+
+ÁÁÁ ÁÁÁ .. .
+
+p1K
+
+3 đ 2Ţ
+
+6p 6 21 Pź6 6 . 4 . . pK 1
+
+p2K 7 7 7: . 7 . . 5
+
+Á Á Á pKK
+
+In addition to the state transition probability matrix, the initial probability distribution Q is defined as follows:
+
+PđStŔN ; StŔNţ1 ; . . . ; St Ţ ź qStŔN
+
+1 Y pStŔi StŔiţ1 ; iźN
+
+đ3Ţ
+
+Q ź ˝q1 q2 Á Á Á qK T
+i qi ź N ; N
+
+i ź 1; 2; . . . ; K
+
+;
+
+where pij is the state transition probability defined by PAPAN, and qi is the initial probability at time i. 5. Experiments In this section, we evaluate the performance of the proposed model with experiments using the well-known DARPA 2000 data set. Moreover, we verify its robustness by additional experiments. 5.1. Attack model Recently, DDoS attacks among the many cyber threats have most seriously damaged many companies and organizations. In a DDoS attack model, a large number of compromised hosts, called `zombie hosts' or `agents', send useless packets through the intended users to make the computer's resources unavailable. As all the available resources in systems and networks are consumed, a victim can no longer provide legitimate users with intended services. Generally, DDoS attacks are performed in the following steps.  Selection of handlers and agents.  Compromising and communication.  Attack. In the selection step of handlers and agents, an attacker searches more than one handler and a large number of agents to
+
+where Ni and N are the total number of data item that has state i and the total number of data item used as training dataset, respectively. In this phase, a new transition probability matrix PAPAN is developed, which is composed of four sub-matrices as follow:
+
+P APAN ź
+
+
+
+P 11 đK Â K Ţ P 12 đK Â 1Ţ P 21 đ1 Â K Ţ P22
+
+ ;
+
+where a sub-matrix P11 denotes the transition probability matrix among normal states and is computed using the result of the clustering analysis on the training data set and Eqs. (1) and (2). K is the number of clusters used in the clustering analysis. P12 with a (K Â 1) dimension is the matrix showing the probability that a system transits from a normal state to an outlying state. Furthermore, P21 denotes the probability that the system transits from an outlying state to a normal state. It has a (1 Â K) dimension. P22 is the probability that the system transits from an outlying state to an outlying state. The initial probability distribution QAPAN equals the distribution Q, besides qK+1 = 0. However, as the matrix cannot be obtained using only the normal data set, the following three assumptions are introduced here: Assumption 1. The probability that a system transits from a normal state to an outlying state is very small.
+
+P 12 đi; 1Ţ % 0;
+
+i ź 1; 2; . . . ; K :
+
+S. Shin et al. / Expert Systems with Applications 40 (2013) 315­322
+
+319
+
+help attack. The attacker then gains access to the handlers and agents by exploiting their vulnerabilities. In the next step, the attacker installs a daemon program to perform the attack and communicates with the handlers to command when the attack launches. Finally, the agents receive the command launch for the DDoS attack. We performed our experiments using DARPA 2000 data set which has been used as a standard corpora for evaluation of computer network intrusion detection systems (MIT Lincoln Laboratory, 2000). This data set is a set of network traffic data collected by the Information Systems Technology Group (IST) of MIT Lincoln Laboratory. The data set was collected during a DDoS attack composed of five sequential phases: four preliminary phases and one actual attack phase. Here, phases 1, 2, 3, and 5, excepting phase 4, are known to have a network traffic data pattern deviating from a normal profile. 5.2. Feature selection To detect the DDoS attack proactively, Lee, Kim, Kwon, Han, and Kim (2007) constructed nine features to use in analyzing the characteristics of the network during a DDoS attack. By quantifying the randomness and occurrence of several fields in the TCP header, the features excellently revealed the abnormal pattern in the network data. Thus, these features are used in this experiment as follows:      Entropy of source IP address and port number. Entropy of destination IP address and port number. Entropy of packet type. Occurrence rate of packet type (ICMP, UDP, TCP SYN). Number of packets per unit time.
+
+To confirm the validity of the proposed method, two test data sets are used; one includes both normal and attack data, and the other does not include any attack data.  Test data set 1 (with attack): Tuesday, 7 March 2000, 9:25 AM­12:35 PM.  Test data set 2 (no attack): Monday, 1 March 1999, 9:00 AM­3:00 PM. Here, the test data set 1 contains a DDoS attack composed of 5 phases as follows: the preliminary phases (phase 1­phase 4) and the actual attack phase (phase 5).      Phase Phase Phase Phase Phase 1: 2: 3: 4: 5: 30 m 50 s­31 m 16 s. 46 m 22 s­57 m 20 s. 72 m 25 s­74 m 16 s. 89 m 16 s­90 m 8 s. 125 m 30 s­140 m 34 s.
+
+Let n be independent symbols with probability of choice Pi. Then the entropy H denoting the randomness of variables in a certain interval is calculated as follows:
+n X H ź Ŕ Pi log2 Pi : iź 1
+
+5.3. Performance of APAN The proposed Markov model was built during the training process using no attack data collected by IST as follows:  Training data set (no attack): Thursday, 18 March 1999, 9:00 AM­12:00 PM. First, K normal states are defined after K-means clustering was performed on this data set, where K was set to 8. As a result, the state transition probability matrix P11 and initial probability distribution matrix Q can be easily calculated using the number of members belonging to each normal state. Similarly, the matrices of transition probability between normal states and outlying state, P12, P21 and P22, can be also obtained from the assumptions introduced in previous section. These results are shown in Table 1. In this experiment, two significantly small values, 10Ŕ10 and 10Ŕ15, instead of zero values, are used to preclude a zero probability. If there is no pair of data that corresponds to the current state i and the next state j in the training data set, the state transition probability pij in P11 is zero. In this case, 10Ŕ10 is used as the value of pij. Moreover, it is assumed that the probability that a normal or an outlying state transits to an outlying state is very small, i.e. about zero. Unlike the previous case, 10Ŕ15 is assigned to the value of pij in P12 and P22 in order to give smaller weight to abnormal activities than to normal activities.
+
+The ultimate goal of APAN is to identify an unusual pattern in a network, resulting in the early detection of a potential attack. In this experiment, these unusual patterns will be revealed in the preliminary phases as well as in the attack phase during the DDoS. The probability that a state sequence with size N occurs can be computed using (3). Fig. 4 depicts the results. According to the probabilistic representation of test data set 1, the probability has significantly low values at phases 1, 2, 3 and 5. Note that there is no data transmission for a DDoS attack in phase 4 since intrusive activities are carried only within the agents. Thus, only normal data traffic is observed in phase 4 and has high values. As shown in Fig. 4(b), since test data set 2 has no attack, transition probabilities do not show any unusual pattern. Like other conventional intrusion detection schemes (Jiang, Song, Wang, Han, & Li, 2006; Kumar & Spafford, 1994; Mukkamala, Janoski, & Sung, 2002; Peddabachigari, Abraham, & Thomas, 2004; Sarasamma, Zhu, & Huff, 2005), the probability calculated through APAN can also be used to decide whether the test data x is normal or abnormal. That is, if the probability that a sequence of states occurs is less than a certain value, here known as threshold probability PT, this sequence is suspected to include abnormal events. As shown in Fig. 4(a), if PT is set to 10Ŕ30, three preliminary phases, and one actual attack phase are classified as an abnormal event. In this study, `detection' means that an IDS identifies a phase showing an unusual pattern from normal data. Therefore, in the DARPA
+Table 1 State transition probability matrix of APAN (K = 8).
+
+P APAN ź
+
+
+
+P 11 P 21
+
+P 12 P 22
+
+
+
+0:2121 6 0 6 6 6 0:0038 6 6 0:0003 6 P 11 ź 6 6 0 6 6 0 6 6 4 0 0
+
+2
+
+0 0:7273 0:0606 0 0 0:0526 0:4211 0:4211 0:0526 0:0526
+
+7 7 7 0:0014 0:7606 0:2314 0:0021 0:0005 0:0002 0 7 7 0:0021 0:4013 0:5891 0:0066 0:0003 0 0:0003 7 7 7 0:0227 0:4091 0:4773 0:0909 0 0 0 7 7 0 0:3333 0:5 0 0:1667 0 0 7 7 7 0 0 1 0 0 0 0 5 0 1
+T
+
+0 0
+
+0 0
+
+3
+
+0
+
+0
+
+0
+
+0
+
+0
+
+P 12 ź ˝ 0 0 0 0 0 0 0 0 
+
+P 21 ź ˝ 0:0032 0:0018 0:6280 0:3620 0:0042 P22 ź 0
+
+0:0006 0:0001 0:0001 
+
+320
+
+S. Shin et al. / Expert Systems with Applications 40 (2013) 315­322
+
+Fig. 4. Probabilistic representation of two test data sets (N = 25).
+
+2000 data set, the phases of intrusive activities to be detected are 1, 2, 3 and 5. For example, if the phases 1, 2 and 3 are detected and phase 5 is not, the detection rate is 3/4. Fig. 5 shows the receiver operator characteristic (ROC) curve of test data set 1. ROC curve has been commonly used in the field of IDS in order to display tradeoff between detection rate and false alarm rate according to the change of internal thresholds (Bradley, 1997). It is very helpful in choosing the optimal value of a variable. In Fig. 5, PT varies from 10Ŕ10 to 10Ŕ100, and an optimal value was selected as 10Ŕ30. This result shows very excellent performance in terms of both detection rate and false positive rate. However, to be more practical, the proposed method should be robust to factors affecting the Markov model. Such factors can be the number of states and the training data set. Therefore, additional experiments were performed to determine the influence of these two factors. In the previous experiments, the number of state was temporarily selected to build a Markov model, in other words, to derive the state transition probability matrix and initial probability distribution. If a different number of states are used, the states of each record naturally changes, resulting in the change of PAPAN. To be robust to the number of states, its effect should be minimized. To investigate this, an additional experiment was performed. Fig. 6 depicts the results according to the number of states: 4, 10, and 16. Here, it is clear that APAN excellently separates abnormal activities from normal activities, irrespective of the number of states. Therefore, we can conclude that the proposed method is robust to the number states. Next, to evaluate the effect of the training data set on the probability that an abnormal event occurs, another experiment is performed using the following two training sets.  Training data set 1 (no attack): Tuesday, 2 March 1999, 9:00 AM­ 3:00 PM.  Training data set 2 (no attack): Tuesday, 16 March 1999, 9:00 AM­2:00 PM. Fig. 7 illustrates the results according to the different training data sets. It indicates that the two graphs are similar. Therefore, the proposed method is shown to also be very robust to training data sets.
+
+Fig. 5. ROC curve for APAN.
+
+Through these two additional experiments, APAN is proved to be robust to the selection of both the number of states and training data sets. Note that the state of incoming data is optimally determined by the outlier factor, which is calculated according to the training data sets during phase 1. That is, if there is a change in the normal profile due to the change of the number of states or the training data set, the outlier factor will also be changed, reflecting the change of the normal profile. This makes APAN insensitive to the variations of training data sets and the number of states. Therefore, in real environments, APAN enables system administrators to understand the degree of risk on a probabilistic scale and to effectively defend against potential attacks. For example, most cyber emergency response teams (CERTs) being currently operated by government agencies issue various levels of warning for a cyber attack as shown in Fig. 8: Green (Low Risk), BLUE (Guarded Risk), YELLOW (Elevated Risk), ORANGE (High Risk), RED (Severe Risk). The probabilistic representation of APAN can be very useful in determining the warning levels. On the basis of the Markov model, the low probability suggests that a series of abnormal events will probably occur.
+
+S. Shin et al. / Expert Systems with Applications 40 (2013) 315­322
+
+321
+
+Fig. 6. Experimental results according to the number of states K.
+
+Fig. 7. Experimental results according to the selection of training data set.
+
+Fig. 8. Usage of probability computed by APAN.
+
+322
+
+S. Shin et al. / Expert Systems with Applications 40 (2013) 315­322
+
+6. Conclusion To detect Internet attacks in advance, the importance of intrusion forecasting in a network intrusion system is growing rapidly. In this paper, a novel probabilistic approach, called APAN, is proposed for effectively predicting potential attacks. The approach consists of three main phases using a Markov chain for probabilistic modeling. First, K-means clustering is performed to define network states, and then the concept of the outlier factor is newly introduced. Next, based on the defined states, a Markov model including a state transition probability matrix and initial probability distribution is built. Finally, the degree of abnormality of incoming data is stochastically measured using the model in real-time. The performance of the proposed approach is evaluated through experiments using the well-known DARPA 2000 data set. Our approach achieves high detection performance while representing the degree of risk on a probability scale. In particular, the method is shown to be insensitive to variations of training data sets and the number of states in the Markov model. This robustness results from the outlier factor, which allows APAN to adaptively respond to a change in the normal profile. Therefore, the proposed approach is expected to be effectively integrated with the existing networkbased intrusion detection systems, which will lead to earlier detection for attacks. Future work will include combining various probabilistic techniques to improve the accuracy of predictions. Moreover, a new forecasting method using differences between each attack protocol should be developed. This will enable more precise detection for specific attacks. Acknowledgements This research was supported by the MKE(The Ministry of Knowledge Economy), Korea, under the CYBER SECURITY RESEARCH CENTER supervised by the NIPA(National IT Industry Promotion Agency), (NIPA-C1000-1101-0001).
+
+References
+Bradley, A. P. (1997). The use of the area under the ROC curve in the evaluation of machine learning algorithms. Pattern Recognition, 30(7), 1145­1159. Doob, J. L. (1953). Stochastic processes. John Wiley & Sons. Dreger, H., Kreibich, C., Paxson, V., & Sommer, R. (2005). Enhancing the accuracy of network-based intrusion detection with host-based context. Lecture Notes in Computer Science, 3548, 206­221. Jiang, S., Song, X., Wang, H., Han, J., & Li, Q. (2006). A clustering-based method for unsupervised intrusion detections. Pattern Recognitions Letter, 27(7), 802­810. Ju, W. H., & Vardi, Y. (1999). A hybrid high-order markov chain model for computer intrusion detection. National Institute of Statistical Sciences. Technical report no. 92. Kumar, S., & Spafford, E. H. (1994). A pattern matching model for misuse intrusion detection. In Proceedings of the 17th national computer security conference (pp. 11­21). Lee, K., Kim, J., Kwon, K. H., Han, Y., & Kim, S. (2007). DDoS attack detection method using cluster analysis. Expert Systems with Applications, 34(3), 1659­1665. MIT Lincoln Laboratory (2000). DARPA intrusion detection scenario specific datasets. <http://www.ll.mit.edu/mission/communications/ist/CST/index.html>. Mukherjee, B., Heberlein, L. T., & Levitt, K. N. (1994). Network intrusion detection. IEEE Network, 8(3), 26­41. Mukkamala, S., Janoski, G., & Sung, A. H. (2002). Intrusion detection using neural networks and support vector machines. In Proceedings of IEEE international joint conference on neural networks (pp. 1702­1707). Park, W. H. (2010). A study on risk analysis and assessment of damages to cyber attack. In Proceedings of conference on information science and application (pp. 1­6). Peddabachigari, S., Abraham, A., & Thomas, J. (2004). Intrusion detection systems using decision trees and support vector machines. International Journal of Applied Science and Computations. Qian, Q., & Xin, M. (2007). Research on hidden markov model for system call anomaly detection. In Workshop on intelligence and security informatics (pp. 152­159). Sarasamma, S. T., Zhu, Q. A., & Huff, J. (2005). Hierarchical Kohonenen net for anomaly detection in network security. IEEE Transactions on Systems, Man, and Cybernetics ­ Part B: Cybernetics, 35(2), 302­312. Ye, N. (2000). A Markov chain model of temporal behavior for anomaly detection. In Proceedings of the 2000 IEEE workshop on information assurance and security (pp. 171­174). Ye, N., Li, X., Chen, Q., Emran, S. M., & Xu, M. (2001). Probabilistic techniques for intrusion detection based on computer audit data. IEEE Transactions on Systems, Man, and Cybernetics ­ Part A: Systems and Humans, 31(4), 266­274. Ye, N., Chen, Q., & Borror, C. M. (2004). EWMA forecast of normal system activity for computer intrusion detection. IEEE Transactions on Reliability, 53(4), 557­566.
+
+

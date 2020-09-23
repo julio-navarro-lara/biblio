@@ -1,0 +1,1135 @@
+2012 9th International ISC Conference on Information Security and Cryptology
+
+Real-Time Attack Scenario Detection via Intrusion
+Detection Alert Correlation
+Zeinab Zali, Massoud Reza Hashemi, Hossein Saidi
+
+Isfahan University of Technology
+Electrical and Computer Engineering
+Isfahan, Iran
+z.zali@ec.iut.ac.ir, hashemim@cc.iut.ac.ir, hsaidi@cc.iut.ac.ir
+alert as a symptom of a low-level attack. Alert correlation
+system receives alerts from various IDS sensors and after
+analyzing them, it gives us a high level view of the security
+situation of the network. This analysis includes methods for
+alert aggregation, alert fusion, alert reduction, removing false
+alerts, missed alerts discovery and extracting alerts correlations
+and its objective is detecting or predicting attempted attack
+scenarios. After reviewing existing methods we propose a new
+method with the main objection of real-time extraction of the
+attack scenarios.
+
+Abstract— Alert correlation systems attempt to discover the
+relations among alerts produced by one or more intrusion
+detection systems to determine the attack scenarios and their
+main motivations. The main purpose of this paper is to propose a
+new IDS alert correlation method to detect attack scenarios in
+real-time. The proposed method is based on causal approach due
+to the strength of causal methods in practice. Most of causal
+methods can be deployed offline but not in real-time due to time
+and memory limitations. In the proposed method the knowledge
+base of attack patterns is represented in a graph model called
+Causal Relations Graph. In offline, we construct some trees
+related to alerts probable correlations. In real-time for each
+received alert, we can find its correlations with previously
+received alerts by performing a search only in the corresponding
+tree. Thus processing time of each alert decreases significantly. In
+addition, the proposed method is immune to the deliberately
+slowed attacks. To verify the proposed method, it was
+implemented in C++ and we used DARPA2000 dataset to test it.
+Experimental results show the correctness of the proposed alert
+correlation and its efficiency with respect to the run time.
+
+Some methods such as Probabilistic or neural networks
+methods, classify or correlate the alerts based on the similarity
+of their chosen common features [1, 2, 3]. This class of
+methods is useful for preprocessing steps of alert correlation
+such as alerts classification, false alerts detection or alert
+reduction; nevertheless, they are not sufficient (effective) for
+attack scenarios detection.
+Some research works have attempted to design and
+implement a language for describing known attack scenarios
+[4, 5, 6]. Although these languages provide standard ways to
+describe the attack scenarios, they limit the user to identify
+specific and known scenarios. Thus, if a scenario is slightly
+different from the defined scenarios it will not be detected in
+this way.
+
+Keywords-component; Attack, Intrusion, Attack Scenario,
+Intrusion Detection System, Alert, Alert Correlation, Graph
+
+I.
+
+INTRODUCTION
+
+Computer networks are an essential part of today's
+information society. These networks are usually connected to
+the global internet network. Since security had not been
+considered as one of the original internet design goals, in recent
+decades securing networks against attacks has become very
+important. Nowadays various security systems and tools such
+as Intrusion Detection Systems (IDS) are deployed in networks
+to provide security. When an IDS observes any suspicious
+event representing an unauthorized access, or any kind of
+abusive or harmful activity which may result in damaging
+systems and computer networks, it produces some alerts. But
+extracting useful information from these alerts is not that easy:
+(1) IDS may flag a large number of alerts every day, thus
+results in flooding alerts and overwhelming the security
+officers. (2) Among the alerts produced by IDS false alerts are
+mixed with true ones. (3) IDS cannot detect all the attempts of
+attacks and may miss some alerts. (4) There are some causal
+relationships between continuous steps of an attack scenario,
+but IDS does not detect correlations among the alerts.
+Therefore, analyzing the alerts is necessary for extracting
+useful information about intrusion attempts from thousands of
+alerts produced by one or more IDSs. We can assume each
+
+978-1-4673-2386-4/12/$31.00 ©2012 IEEE
+
+In comparison with attack description languages, causal
+approaches [7, 8, 9, 10] have particularly important advantages.
+By using a knowledge base of low level attacks and their
+prerequisites and consequences, it is possible to detect any
+correlated sequences of low level attacks. Precise and complete
+definition of the knowledge base is the main requirement of
+these methods. Most of the casual approaches are
+implementable only in offline. For real-time applications we
+need to consider a time window for received alerts. But in this
+way we will not be able to detect slowed or hidden attacks. For
+example the attacker can prevent correlating the attack scenario
+alerts by increasing the time intervals between the successive
+steps of the attack scenario or alternatively by filling the time
+window with useless and misleading alerts. So in real-time
+applications we should use some measures in the knowledge
+base description and also the correlation algorithm to address
+this problem.
+Due to the strength of the causal methods in practice, we
+construct our method based on these methods and propose a
+suitable model and algorithm for real-time applications. The
+
+95
+
+proposed method uses the “attack graph” idea which has been
+used in TVA approach [11].
+
+attack consequence Conditions. Every AS has four variables
+including source IP address, source port number, destination IP
+address and destination port number. Every participant
+Condition variable in Prerequisites and Consequences sets is
+one of the four AS variables. For example the Alert Signature
+as1 which is related to Sadmind vulnerability exploit is
+represented
+as
+as1 = ({RPCService(dstIP),OSSolaris( dstIP),
+
+The causal methods have a knowledge base which is
+usually considered as a table of records [12, 8]. In our proposed
+method the knowledge base is represented as a graph called
+Causal Relations Graph. This graph contains the low-level
+attack patterns in the form of their prerequisites and
+consequences. In addition, it is a clear representation of causal
+relations among the low-level attacks. A new search is
+performed upon the arrival of each new alert, in the correlation
+phase. The search time in real time is decreased significantly
+by constructing some trees in offline, before the correlation
+system start up.
+
+SadmindService(dstIP)},{RootAccess(dstIP)})
+
+C. Definition 3 Causal Relation Graph (CRG)
+CRG is a directed graph with labeled edges and two types
+of vertices.
+
+In [8], looking for correlated alerts with a given alert is
+performed using a query to the previously received alert tables.
+This method has a high run time and is useful only for offline
+applications. It should be noted that some optimization is
+proposed in [13] for this method. In other real-time causal
+methods (except for the TVA method), the search leads to a
+nested loop for pervious received alerts. The method presented
+in [12] looks in previous correlated sets of alerts for an alert set
+which can be correlated to the new given alert. Finding out the
+desired set is equivalent to an np-hard problem and so heuristic
+algorithms should be used to solve it. The proposed method in
+this paper uses the benefits of the TVA model, but it does not
+require to extracting the vulnerability graph of topological
+network.
+
+1) AS: It is considered a vertex in CRG for every AS
+existed in a specific IDS.
+2) Conditions: It is considered a vertex in CRG for every
+defined Condition participant in at least one AS.
+There are also two types of edges in CRG.
+1) Prerequisite edges: There is some edges in CRG from
+every Condition vertices related to prerequisites of an AS to
+that AS vertex.
+2) Consequence edges: There is an edge in CRG from
+every AS vertex to all the Condition vertices related to their
+consequences.
+The label of each edge is the Condition variable that can be
+source IP address, source port number, destination IP address
+or destination port number of related AS. Please notice that
+there is not any edge between any pair of Conditions or pair of
+ASs. We should define an AS for every attack pattern that
+exists in IDS. A complete knowledge base about low level
+attacks is required for producing Alert Signature sets. For
+constructing the CRG, a vertex is considered for every AS
+related to an attack pattern in the knowledge base. There is also
+a Condition vertex for every Condition in AS definitions in
+CRG. As vertices are added to the graph, related edges link the
+graph vertices according to the definition. Fig. 1 represents a
+part of CRG which includes vertices related to as1 .
+
+II. CAUSAL RELATION GRAPH MODEL
+The proposed model has been defined based on a graph
+called Causal Relation Graph (CRG). Describing the CRG
+requires defining Condition and Alert Signature (AS) concepts.
+We can represent prerequisites or consequences of a low level
+attack using a set of Conditions. Each attack pattern in IDS
+which produces a kind of alert is considered as the
+representative of a low level attack event. Therefore every
+attack pattern is defined with its prerequisites and
+consequences which themselves are compositions of
+Conditions. Our definition for some concepts are alike
+concepts in some other literatures including [12, 13, 14, 18],
+but they are not exactly the same. So in the following we
+provide our definition for these concepts according to our
+proposed model and algorithm which are capable of real-time
+alert correlation and implicit classification and aggregation of
+large volumes of alerts.
+
+c2
+
+dstPort
+dstIP
+
+c1
+dstIP
+
+A. Definition 1: Condition
+Every Condition represents satisfaction of a condition or
+property for an IP address or a port number, i.e. a predicate
+with an IP address or a port number variable. For example
+OSSolaris(VictimIP) says that the Operating System of a host
+with victimIP IP address is Solaris. For another example
+RootAccess(victimIP) means there is the capability of root
+access to a host with victimIP address.
+
+c3
+dstIP
+
+as1
+
+as0
+
+c5
+dstIP
+
+c6
+dstIP
+
+srcIP
+
+as2
+
+dstIP
+c4
+
+dstIP
+
+dstIP
+
+dstPort
+c7
+
+dstIP
+c8
+
+as1 = RPC sadmind query with root
+credential attempt UDP
+c1= RPCService
+c2= OSSolaris
+c3= SadmindService
+c4= RootAccess
+
+B. Definition 2: Alert Signature (AS)
+Each AS is defined as AS= (Prerequisites, Consequences).
+Prerequisites is the set of all required Conditions for launching
+the attack related to AS and Consequences is the set of all the
+
+Figure 1. A part of sample CRG
+
+96
+
+using (1), repeated alerts will be excluded. In (2), ai .t and
+a j .t are respectively ai and a j generation time (timestamp)
+
+D. Definition 4: Causal Relation Queue Tree (CRQT)
+This tree is a data structure based on CRG. For
+constructing CRQT, we consider a queue with the length of q
+for every CRG vertex. The elements which are placed in
+queues of AS and Condition vertices are respectively alerts and
+Condition variables (IP address or port number). Then for
+every AS vertex, as x , two trees with root as x are extracted
+from CRG.
+
+and δ is a constant timing threshold. Relation 2 replaces an
+alert with the previous one if both of them are related to same
+attack destined to same destination. The equality of source
+addresses requirement is not mentioned in (2). This criterion is
+considered for aggregating alerts related to cooperation
+between two attackers. Consider ai is the qi ’s element of asi
+vertex queue.
+
+1) Forward Queue Tree (FQT): If a breadth first search is
+done starting from vertex as x and in the direction of edges’
+direction, a tree called FQT is obtained. Please notice that the
+tree vertices are a subset of CRG vertices. It is sufficient to
+have some pointers linking the desired vertices of the CRG to
+construct every FQT.
+2) Backward Queue Tree (BQT): This tree is constructed
+in the same way as FQT is constructed, with the difference that
+the search is done in the reverse direction of CRG edges.
+The ideas of CRG and FQT (BQT) are not the same as the
+ones in [11,18]. These are the main concepts of our distinct
+model. We use them efficiently in our real time correlation.
+
+After constructing Queue Trees, the alert correlation system
+is ready to receive alerts and perform alert correlation. For this
+purpose any arriving alert in real time, enters the queue of
+corresponding AS vertex. Every alert in IDS has a unique ID.
+On the other hand there is exactly one AS in CRG for every
+type of alert in IDS. Therefore we can construct an index of
+alert IDs which maps each type of alert to its related vertex in
+CRG. In this way upon the arrival of each alert, the
+corresponding vertex is specified without consuming time.
+Over time, all the vertices queues and implicitly Queue Trees
+are gradually filled. Simultaneously with the arrival of alerts,
+alert analysis and correlation is performed.
+
+2) Step 2: After the arrival of alert ai to asi queue, all the
+consequent Conditions queues will be updated as will be
+explained in the following. As was described in definition 1,
+every Condition has one of the IP address or port number
+variables. If the label of the connected edge to the Condition
+vertex is source or destination IP address, the value of the
+element entering into the Condition queue should be
+respectively source or destination IP address of AS ai .
+Similarly the values should be port numbers if the edges’ labels
+are port numbers. If there are not any other elements in the
+queue with the stated value, the element will be added to the
+queue.
+3) Step 3: To extract correlated alerts with alert ai (i.e. the
+scenario which has led to ai ), a breadth first search should be
+done. This search is started from the root of the BQT with the
+root asi and the qi th element of asi queue. In each phase two
+continueous edges will be traversed. In this search ai will be
+correlated with a r if edges ( as i , c k ) and (ck , asr ) are
+traversed continuously, such that there is q k th element in
+Condition c k queue, that matches with alert ai and the
+matched element will be matched with element a r in as r
+queue. A Condition element is matched with alert ai in one of
+the following situations.
+a) If the variable of Condition element is IP address
+(port number) and the label of edge connecting Condition
+vertex to AS vertex is destination IP address (destination port
+number), then the value of Condition element will be equal to
+ai destination IP address (destination port number).
+
+A. Attack Scenario extraction algorithm
+1) Step1: With the arrival of each alert ai ,the CRG vertex
+related to AS asi is determined. If in the queue of the
+determined AS vertex, alert a j exists which is replaceable
+with ai then alert a j will be dequeued and ai will replace it.
+Otherwise ai is added to the queue. We can consider various
+criteria to examine the possibility of replacing two alerts.
+Relations (1) and (2) are two such criteria that their validity
+satisfies a j is replaceable with ai .
+
+As alerts arrive and correlations are extracted, results can
+be entered in a graph like the graph proposed in [18]. The
+graph in [18] has two types of edges, but we construct a graph
+which has only correlation edges. We call it attack scenario
+graph.
+
+III. THE PROPOSED ALGORITHM USING CRG
+The proposed model for representing our knowledge base
+about low level attacks related to distinct IDS was described in
+previous section. In this section, we focus on the proposed
+algorithm for real time alert correlation and attack scenario
+extraction using the proposed model.
+
+(a i .dstIP = a j .dstIP)&(ai .srcIP = a j .srcIP)
+
+(ai .dstIP = a j .dstIP ) & ( ai .t − a j .t < δ )
+
+b) If the variable of Condition element is IP address
+(port number) and the label of edge connecting Condition
+vertex to AS vertex is source IP address (destination port
+number), then the value of condition element will be equal to
+ai source IP address (destination port number).
+
+The pseudo code of correlation algorithm is shown in Fig.
+2. Fig. 3 shows attack scenario graph construction pseudo
+code.
+
+(1)
+(2)
+
+When a new alert ai is correlated to alert a j (which has
+
+In these relations, dstIp and srcIP are respectively
+destination IP address and source IP address of the alert . By
+
+already received), if a j has already been added to the result
+
+97
+
+graph, it is sufficient to add vertex ai and an edge between a j
+
+Procedure CRG_Alert_Correlation
+Input: Correlation Relations Graph CRG(AS ∪ C, E), |AS|=n,
+|C|=m
+Array CQ of m queue of condition variables
+Array ASQ of n queue of alerts
+Array BQT of n Backward Queue Tree
+( BQT[i](AS i ∪ Ci , Ei ) is traced tree of backward BFS search
+
+and ai to it. If a j has not been added to the result graph,
+vertices ai and a j and the edge between them should be added
+to the result graph. The result graph at any moment can include
+more than one connected graph, each one is an extracted attack
+scenario detected via our real time system.
+IV.
+
+from i'th Alert Signature vertex of CRG, ∀ i
+
+anew s.t ASig(anew)=asi, 1 ≤ i ≤ n
+The initial Result Graph RG(V,E)
+Output: The updated ResultGraph RG(V,E)
+Begin_Method
+1. if ASQ[i] Contains an old aold s.t anew is a replaced of aold
+replace aold with anew
+anew.event_id ← aold.event_id
+else
+Enqueue anew into ASQ[i]
+2. for each cj ∈ C s.t (asi,cj) ∈ E
+cv ← an condition variable s.t is matched with anew
+if cv does not exist in CQ[j]
+Enqueue cv into CQ[j]
+3. start from root of BQT[i]
+for each k & l
+if ASQ[k] contains ak & CQ[l] contains cvl s.t
+(anew,cvl) ∈ Ei & (cvl,ak) ∈ Ei
+& match(anew,cvl) & match(cvl,ak)
+RG ← Insert_into_RG(RG,ak,anew)
+return RG
+End_Method
+
+MISSED ALERT DETECTION AND ATTACK SCENARIO
+PREDICTION USING CRG
+
+With the arrival of each new alert the consequence
+Conditions queues of an AS vertex are updated. If the attack
+related to that alert was launched with the same prerequisites as
+defined in the Alert Signature, all its prerequisites would be
+satisfied. So when an alert is received, there will be a matched
+element with it in all the prerequisite Condition queues of that
+alert. Therefore, if there is no such an element in one of the
+prerequisite Conditions queues it can be assumed that an alert
+has been missed. This is the base of missed alert detection
+solution. If we assume that all the definitions of Alert
+Signatures are accurate and correct, this solution will be useful.
+If the attacker achieves the prerequisite Condition in another
+way different from the Alert Signature definition, our
+assumption for missed alert will not be correct.
+To predict the attacks which their alerts have not yet been
+received, we can use Forward Queue Trees. A search should be
+done in FQT starting from the AS vertex of the new alert. In
+this way the edges leading to Conditions that are not satisfied
+so far, will be traversed. In this search we can traverse only the
+edges with highest probability values among the others, i.e. the
+edges which are connected to AS vertices that their related low
+level attacks are correlated with a high probability. We can
+assume such probabilities in CRG. Papers [15, 16] have
+proposed probability methods for attack incident prediction.
+We can use their proposed method in our model.
+
+Figure 2. The pseudo code of correlation algorithm via CRG model
+Procedure Insert_into_RG
+Input: alert, correlated_alert
+Initial Attack Scenario Graph ASG(V,E),
+V is an array of alerts
+Output: updated Result Graph ASG(V,E)
+Begin_Method
+1. alert_vertex ← NULL
+correlated_alert_vertex ← NULL
+for each v ∈ V
+if v.event_id=alert.event_id
+alert_vertex ← v
+else if v.event_id=correlated_alert.event_id
+correlated_alert_vertex ← v
+2. if alert_vertex!=NULL & correlated_alert_vertex!=NULL
+if (alert_vertex, correlated_alert_vertex) ∉ E
+insert (alert_vertex, correlated_alert_vertex) into E
+else if (alert_vertex=NULL &
+correlated_alert_vertex=NULL)
+initialize alert_vertex for alert and insert it into V
+initialize correlated_alert_vertex for correlated_alert
+and insert it into V
+insert (alert_vertex, correlated_alert_vertex) into E
+else if alert_vertex=NULL
+initialize alert_vertex for alert and insert it into V
+insert (alert_vertex, correlated_alert_vertex) into E
+else if correlated_alert_vertex=NULL
+initialize correlated_alert_vertex for correlated_alert
+and insert it into V
+insert (alert_vertex, correlated_alert_vertex) into E
+return ASG
+End_Method
+
+Ideas presented in this section show that the proposed
+model provides the ability to implement an algorithm for
+missed alerts detection and attack prediction. We will elaborate
+more on the algorithms based on these ideas and their results in
+our future publications.
+V.
+
+n ≤ i ≤1)
+
+ANALYSIS OF PROPOSED MODEL AND ALGORITHM
+
+In addition to proper alert correlation, the most important
+goal that CRG method follows is real time attack scenario
+detection simultaneously to IDS alert generation. Therefore the
+algorithm should be efficient in time and memory. Time is the
+key parameter in real time applications. If a system has a
+precise result but high response time, it is useless for real time
+applications. In the following we explain how the proposed
+method is efficient in time and memory.
+With the arrival of each new alert, the time for searching
+the correlated alerts at most equals to the time for searching all
+the edges of related BQT and their vertices’ queues. This time
+is at most 2q × (m + n) , where m is the number of all the CRG
+Condition vertices, n is all the AS vertices and q is maximum
+length of each queue. On the other hand, the required time for
+adding the correlation result to the attack scenario graph equals
+to the time it takes to search the existing alerts in it.
+
+Figure 3. pseudo code of attack scenario graph construction
+
+98
+
+By creating an index on the alerts ID numbers in result
+graph, it is not required to search in attack scenario graph.
+
+constructing such an attack graph is another hard problem in
+network security. Also, the size of this graph is larger than
+CRG, because there is a vertex for every vulnerability on each
+host in this graph. Another advantage of CRG compared to the
+method in [11] is related to the queue length. In [11] the queue
+length of each alert vertex is one and so there is no choice but
+to replace a new alert with the earlier one. Therefore, two same
+low level attacks which are launched from different sources are
+assumed as two cooperating attacks, although each one may be
+related to a different attack scenario. According to (1), in CRG
+method two alerts of the same attack type destined to same
+destination are replaced if their source addresses are the same
+too. Two attacks destined to same destination are considered
+cooperation by using criteria (2), if they happen at a short
+interval from each other.
+
+The proposed method uses BQTs for alert correlation. The
+number of these trees equals to the number of ASs, i.e. n. So it
+is required to have n trees in memory that each one of them has
+at most n+m pointers. On the other hand there should be also
+n+m queues in the memory with the maximum length of q.
+Therefore, the total required memory for the system
+is n × (n + m) + q × (n + m) . So the memory complexity of
+algorithm is O(n 2 ) .Please notice that the result graph occupies
+a fixed amount of system memory.
+It should be mentioned that the vertex queue can be
+considered as time window in some methods like [17].As was
+previously stated considering time window in some real time
+applications is one of their weaknesses. However considering
+a separate queue for each of the vertices is as a separate
+window for each type of alert, whiles in other methods usually
+one window is considered for all the alerts. In addition, in CRG
+only one alert is saved in the queue among all the replaceable
+alerts. This results in alert aggregation and prevents rapid
+filling of the queues. Therefore, the proposed method reduces
+the limitations of time window. It should be noted that over
+time, most of the existing alerts in queues are not useful
+anymore and they can be removed. However there is the
+possibility of keeping the alerts in the queues for even more
+than one day. Thus there is not any concern for slowed attacks.
+Choosing a criterion for removing earlier alerts depends on the
+average number of received alerts, the accuracy of IDS alert
+generation and the network conditions. The network condition
+is important in terms of traffic, network sensitivity level and
+the amount of threatening risks of network. The removal
+criterion can be decided based on the practical situation.
+
+Keeping the alerts in the queues for a long time may result
+in problems such as correlation of two irrelevant scenarios. So
+considering a criterion for alerts expiration time is necessary.
+Reference [11] uses some temporal constraints to periodically
+dequeue some alerts. The method of [11] has a linear time
+complexity, but CRG’s complexity is O(nq) . This is because
+the queue length can be more than one in CRG. Despite the
+presence of the parameter q in the time order of the algorithm,
+implementation results show that the processing time for a real
+time system is quite acceptable.
+As mentioned earlier the result graph in our method is
+constructed so that it does not have any redundancy and so
+compression is not required for it. For all the attacks which are
+replaced with each other, there is only one vertex in the result
+graph. To be informed of number of repeated attempts, we can
+consider a distinct field for each result graph vertex. The value
+of this field should be equal to the number of alerts replaced
+with each other.
+
+CRG is alike the attack graph in [18], but the nature of the
+vertices is totally different in CRG. The graph data structure is
+also different in CRG. The knowledge which is represented via
+CRG model includes causal relations of low level attacks
+which are also used in offline method [8]. Also, this knowledge
+is the same as the one used in [7,12]. The graph in [11,18] is
+also a model of network topological structure and its
+vulnerabilities. The CRG model and algorithm which is
+proposed to use casual relations knowledge base, have some
+advantages compared to the casual relation based methods
+described in [7,8,12].The method in [8] can only be used for
+offline applications. Even in offline mode, [8] is not time
+efficient and needs some optimizations [19]. Correlation
+problem in [12] has been converted to a set coverage problem
+which is np-hard. So even though it is introduced as a real time
+method, the time complexity of the solution is not suitable for
+real time applications.
+
+VI.
+
+EXPERIMENTAL RESULTS
+
+We have implemented the proposed method in C++ under
+Linux and have tested it with the DARPA 2000 intrusion
+detection evaluation dataset [MIT Lincoln Lab 2000]. DARPA
+2000 dataset is often used to evaluate correlation systems.
+Sufficient knowledge and skill is required for writing a
+knowledge base to construct the CRG. For using any IDS as
+alert generator for our system, we require a knowledge base
+that includes all the Alert Signatures of that IDS. The definition
+of each Alert Signature should include the prerequisites and
+consequences conditions corresponding to definition 2. Since
+producing such a knowledge base for each IDS requires time
+and a skilled security team, we are forced to use a prepared
+knowledge base. The only knowledge base that was available
+at the time of our project is the one that Ning et al. have used
+for TIAA [20]. Two knowledge bases have been provided for
+TIAA. The first one is for RealSecure IDS. This knowledge
+base has only 28 Alert Signatures [9]. The second one is for
+Snort and that is a relatively complete knowledge base. This
+includes about 3000 Alert Signatures.
+
+The method proposed in [11] has an advantage compared to
+CRG which is related to the nature of the queue graph
+proposed in [11]. In queue graph only the alerts related to
+vulnerability of given network is analyzed. In other words an
+implicit alert validation takes place during correlation process.
+So the search is performed on only valid alerts and useless
+alerts related to irrelevant or unsuccessful attacks are excluded
+from the search procedure. However it should be noted that
+
+DARPA 2000 includes two DDOS attack scenarios. Fig. 4
+represents the first scenario’s steps and Fig.5 represents the
+second one. There are 5 steps in each scenario as you see. MIT
+Lincoln Lab has sniffed the traffic results from launching each
+
+99
+
+of the scenarios using two sensors, one sensor on inside
+network and another one on DMZ network. Our results for
+both of the networks were successful and satisfactory. As most
+of the previous literature, we also state the inside sensor results
+here.
+
+IPSweep
+
+Probe using Sadmind "ping" option
+
+Fig. 6 shows the result graph of snort alerts correlation for
+the first scenario. We expect the result graph to include all the
+low level attacks related to various steps of the scenario. Every
+connected sub-graph represents an extracted scenario. In
+graphs (a) to (e) there are only two steps of LLDOS 1.0. These
+imperfect scenarios are those unsuccessful attacks which have
+terminated in intermediate steps. As you can see in Fig.4, at the
+third step three vulnerable hosts are detected and exploited.
+Every sub-graph (h) to (j) in Fig 6. represents attack scenario
+destined to one of these victim hosts. You can see scenario (h)
+in details in Fig. 7. Only the last step has not been extracted.
+The reason is that the related alert is missed by snort.
+
+Breaking into Mill, Lock, and Pascal
+using sadmind exploit
+
+Installing DDoS Software via telnet,
+rcp and rsh
+
+Starting a DDoS via a telnet session
+and the DDoS itself
+Mill IPAddress: 172.16.115.20
+Lock IPAddress: 172.16.112.10
+Pascal IP Address: 172.16.112.50
+
+Fig. 8 represents result graph of RealSecure alerts
+correlation for the first scenario. As you can see, almost all the
+key steps of the scenario have been extracted. The extracted
+scenario is more complete than the scenario extracted from
+snort alerts because of more accurate RealSecure knowledge
+base. On the other hand, only three successful scenarios have
+been extracted for RealSecure and the failed scenarios have not
+been extracted. The reason is the differences among the two
+IDSs. RealSecure itself is more accurate than Snort. It removes
+some unsuccessful attacks. The first step is not represented in
+Fig. 8, because RealSecure does not produce ICMP alerts.
+
+Figure 4. DARPA 2000’s first attack scenario
+
+Perform HInfo query against Mill
+(which is a DNS server)
+
+Break in Mill via exploiting sadmid vulnerability
+
+The result of alert correlation for the second DARPA 2000
+scenario is not much accurate and complete. The reason is that
+the attacker tries to hide the steps in second scenario and
+launch the attack scenario with more skill than the first
+scenario.
+
+Upload mstream DDoS and attack script to Mill
+using FTP
+
+VII. PERFORMANCE EVALUATION
+
+Run Mstream master on Mill and Try to break in
+two more machines via Mill
+
+Since the main goal of the proposed method is its capability
+for real time application, the time evaluation of the system is
+very important. We have tested the system on Pentium III dual
+core 2.2GHz server with 1 GB RAM running Suse 11. The
+CRG used in our evaluations, has 903 condition vertices and
+2895 AS vertices for snort and 31 condition vertices and 28 AS
+vertices for RealSecure.
+
+Lunch mstream DDoS against fial victim via
+telnet to DDoS master machine
+
+Figure 5. DARPA 2000’s second attack scenario
+
+The diagrams of Fig. 9 and 10 show alert processing time.
+Fig. 9 shows the average processing time of each 25
+consecutive snort alerts. The horizontal axis represents the
+number of received alerts until the arrival time of a new alert.
+As you can see the processing time does not depend on the
+number of received alerts and over time after start of the
+system, system performance has not decreased. Fig. 10 shows
+the maximum process time of every 25 consecutive alerts. As
+you see the maximum process time of all the processed alerts is
+about 0.35ms. In Fig. 9 and Fig. 10, Alerts which their process
+time is much more than others, are related to the AS vertices
+that have many connected edges to other vertices.
+
+We can see the CRG size effect on process time in the
+diagram of Fig. 11. Although snort has about 3800 vertices and
+RealSecure has about 60 vertices, their diagrams are about
+close together. As it was stated in section V. the time
+complexity of the algorithm depends on graph size, so the
+process time of snort alerts would be much more than
+RealSecure ones.
+Different evaluation results are because of almost equal
+average number of connected edges to a vertex in both of the
+CRGs. In practice the number of connected edges to each
+vertex affects the process time, while in algorithm time order
+calculation, maximum number of searchable edges for each
+vertex is considered as the total number of CRG’s vertices.
+According to diagrams, alert process time in the proposed
+method is reasonable and suitable for real time application.
+
+Fig. 11 shows the process time of snort and RealSecure
+alerts in one diagram. This diagram has been drawn according
+to the number of existing alerts in queues at the arrival time of
+a new alert.
+
+100
+
+384
+169
+
+384
+173
+
+408
+170
+
+384
+177
+
+585
+285
+(b)
+
+585
+233
+(a)
+384
+166
+
+408
+174
+
+408
+201
+
+408
+178
+
+384
+179
+585
+324
+(d)
+
+585
+287
+(c)
+384
+197
+
+585
+440
+(e)
+
+408
+198
+
+384
+195
+
+585
+404
+(f)
+
+SP
+S: 202.77.162.213
+D:172.16.112.50
+
+408
+196
+585
+366
+(g)
+
+SAO
+S: 202.77.162.213
+D: 172.16.112.50
+
+384
+167
+
+408
+168
+
+384
+189
+
+408
+190
+
+384
+193
+
+408
+194
+
+585
+230
+
+1957
+231
+
+585
+360
+
+1957
+361
+
+585
+363
+
+1957
+364
+
+2256
+483
+
+1911
+485
+
+2256
+518
+
+1911
+520
+
+2256
+539
+
+1911
+541
+
+610
+593
+(i)
+
+610
+588
+(h)
+
+FS
+S: 202.77.162.213
+D: 172.16.112.50
+
+408
+180
+
+SP
+S: 202.77.162.213
+D: 172.16.115.20
+
+SP
+S: 202.77.162.213
+D:172.16.112.10
+
+SAO
+S: 202.77.162.213
+D:172.16.115.20
+
+SAO
+S: 202.77.162.213
+D: 172.16.112.10
+
+EAO
+S: 202.77.162.213
+D:172.16.112.50
+Rsh
+S: 172.16.112.50
+D: 202.77.162.213
+
+610
+595
+(j)
+
+MZ
+S: 202.77.162.213
+D: 172.16.112.50
+
+Figure 6. The result graph of snort alerts correlation for LLDOS 1.0 Inside
+traffic (In each connected subgraph, every ellipse represents an alert. The
+upper number in the ellipse is ID number of snort related AS, the lower
+number is the incidence number of alert)
+
+Rsh
+S: 172.16.115.20
+D: 202.77.162.213
+MZ
+S: 202.77.162.213
+D: 172.16.115.20
+SDoS
+S: 78.111.82.41
+D: 131.84.1.31
+
+Rsh
+S: 172.16.112.10
+D: 202.77.162.213
+
+MZ
+S: 202.77.162.213
+D :172.16.112.10
+
+SP: Sadmind_Ping
+FS: FTP_Sys
+
+SAO: Sadmind_Amslverify_overview
+ICMP PING
+S:202.77.162.213
+D:172.16.115.20
+
+ICMP Echo Reply
+S:172.16.115.20
+D: 202.77.162.213
+
+Rsh: Rsh
+MZ: Mstream_Zombie
+EAO: Email_Almail_Overflow
+SDoS: Stream_DoS
+
+Step 1
+
+Figure 8. The result graph of RealSecure alerts correlation for LLDOS 1.0
+Inside traffic
+
+RPC portmap sadmind
+request UDP
+S: 202.77.162.213
+D: 172.16.115.20
+
+RPC sadmind UDP PING
+S: 202.77.162.213
+D: 172.16.115.20
+
+VIII. CONCLUSION AND FUTURE WORK
+In this paper we first proposed a suitable model for
+representing a knowledge base of causal relations between low
+level attacks, and then proposed an efficient algorithm for realtime attack scenario detection. The proposed method is based
+on causal approach due to the strength of causal methods in
+practice; in addition it benefits from the advantages of TVA
+model [11]. Therefore in addition to proper alert correlation,
+Our proposed algorithm has polynomial time and memory
+complexity (of degree 2) in terms of the number of CRG
+vertices and so is independent of the number of received alerts.
+Also experimental results approved the correctness of our
+algorithm for alert correlation and its efficiency in real-time. It
+should be noted that the completeness and accuracy of the
+knowledge base is required in our method as in any other
+causal method. As a future work, we will investigate the
+efficiency of our proposed model for attack prediction and
+missed alert detection.
+
+Step 2
+RPC sadmind query with
+root credentials attempt
+S: 202.77.162.213
+D: 172.16.115.20
+
+RPC sadmind UDP overflow
+attempt
+S:202.77.162.213
+D: 172.16.115.20
+Step 3
+
+RSERVICES rsh root
+S: 172.16.115.20
+D: 202.77.162.213
+
+Step 4
+
+Figure 7. Scenario attack (h) of Fig. 6 in detailes. You can see source and
+destination addresses in this figure
+
+101
+
+Figure 9. Average processing time per 25 consecutive alerts
+
+Figure 10. Maximum processing time per 25 consecutive alerts
+[8]
+
+[9]
+[10]
+[11]
+[12]
+
+Figure 11. Processing time per number of alerts in vertices queues (for snort
+and RealSecure)
+
+REFERENCES
+[1]
+[2]
+[3]
+[4]
+
+[5]
+[6]
+[7]
+
+[13]
+
+Cuppens, F., “Managing alerts in a multi-intrusion detection
+environment”, Proceedings of 17th Computer Security Applications
+Conference, ACSAC 2001, pp. 22-31, 10-14 Dec. 2001.
+Staniford, S., Hoagland, J.A., McAlerney, J.M., “Practical automated
+detection of stealthy portscans”, Journal of. Computer Security, Vol. 10,
+No. 1-2, pp. 105-136., 2002.
+Valdes, A., Skinner, K., “Probabilistic alert correlation”, Proceedings of
+the 4th International Symposium on Recent Advances in Intrusion
+Detection, RAID 2001, pp. 54–68, 2001.
+Cuppens, F., Ortalo, R., “LAMBDA: a language to model a database for
+detection of attacks”, Proceedings of the 3th International Workshop on
+the Recent Advances in Intrusion Detection, RAID 2000, pp. 197–216,
+Sept. 2000.
+Eckmann, S., Vigna, G., Kemmerer, R., “STATL: An attack language
+for state-based intrusion detection”, Journal of Computer Security, Vol.
+10, No. 1/2, pp. 71–104, 2002.
+Dain, O., Cunningham, R., “Building scenarios from a heterogeneous
+alert stream”, Proceedings of the 2001 IEEE Workshop on Information
+Assurance and Security, pp. 231–235, June 2001.
+Templeton, S.J., Levitt, K., “A requires/provides model for computer
+attacks”, Proceedings of the 2000 Workshop on New Security
+Paradigms, Ballycotton, County Cork, Ireland , pp. 31-38, Sep. 2000.
+
+[14]
+
+[15]
+[16]
+[17]
+[18]
+[19]
+[20]
+
+102
+
+Ning, P., Cui, Y., Reeves, D. S., “Constructing attack scenarios through
+correlation of intrusion alerts”, Proceedings of the 9th ACM Conference
+on Computer and Communications Security, Washington, D.C., pp.
+245–254, Nov. 2002.
+Xu, D., Ning, P., “Alert correlation through triggering events and
+common resources”, Proceedings of the 20th Annual Computer Security
+Applications Conference, ACSAC 2004, pp. 360-369, Dec 2004.
+Cuppens, F.; Miege, A., “Alert correlation in a cooperative intrusion
+detection framework”, Proceedings of IEEE Security and Privacy
+Symposium, pp. 202-215, 2002.
+Wang, L., Liu A., Jajodia, S., “Using attack graphs for correlating,
+hypothesizing, and predicting intrusion alerts”, Journal of Computer
+Communications, Vol. 29, No. 15, pp. 2917–2933, 2006.
+Zhou, J., Heckman, M., Reynolds, B., Carlson, A., Bishop, M.,
+“Modeling network intrusion detection alerts for correlation,” ACM
+Trans. on Information and System Security, Vol. 10, No. 1, pp. 1–31,
+Feb. 2007.
+Xu, D., Correlation Analysis of Intrusion Alerts, PHD Thesis,
+Department of Computer Science, University of North Carolina State,
+2006.
+Pandey, N.K.; Gupta, S.K.; Leekha, S.; Zhou, J., “ACML: Capability
+based attack modeling language”, Proceedings of 4th International
+Conference on Assurance and Security, ISIAS 2008, pp.147-154, Sept.
+2008.
+Qin, X., Lee, W., “Discovering novel attack strategies from INFOSEC
+alerts”, Proceedings of the 9th European Symposium on Research in
+Computer Security ESORICS 2004, Sophia Antipolis, Sept. 2004.
+Zhang, S., Li, J., Chen, X., Fan, L., “Building network attack graph for
+alert causal correlation”, Journal of Computers & Security, , Vol. 27,
+No. 5-6, pp. 188-196, Oct. 2008.
+Valeur, F., Vigna, G., Kruegel, C., Kemmerer, R., “A comprehensive
+approach to intrusion detection alert correlation”, IEEE Trans. on
+Dependable and Secure Computing, Vol. 1, No. 3, July 2004.
+Topological Vulnerability Analysis: A Powerful New Approach For
+Network Attack Prevention, Detection, and Response
+Xu, D., Correlation Analysis of Intrusion Alerts, PHD Thesis,
+Department of Computer Science, University of North Carolina State,
+2006.
+Ning, P., Cui, Y., Reeves, D. S., “Techniques and tools for analyzing
+intrusion alerts”, ACM Trans. on Information and Systems Security, Vol.
+7, No. 2, pp. 274-318, May 2004.
+
+

@@ -1,0 +1,2014 @@
+SECURITY AND COMMUNICATION NETWORKS
+Security Comm. Networks (2016)
+Published online in Wiley Online Library (wileyonlinelibrary.com). DOI: 10.1002/sec.1483
+
+RESEARCH ARTICLE
+
+Extracting fuzzy attack patterns using an online fuzzy
+adaptive alert correlation framework
+Fatemeh Faraji Daneshgar1,2 and Maghsoud Abbaspour1*
+1
+2
+
+Department of Software Engineering, Faculty of Computer Science and Engineering, Shahid Beheshti University, Evin, Tehran, Iran
+Network Department, Institute for Research in Fundamental Sciences (IPM), Shahid Bahonar Square, Tehran, Iran
+
+ABSTRACT
+The tremendous numbers of alerts provided by intrusion detection systems have made the alert correlation a vital issue. Despite of the considerable number of proposed methods, the online alert correlation is still an open issue. In this paper we
+proposed an online model for alert correlation. Our model consists of two modules: (1) the online fuzzy clustering module
+which clusters alerts into fuzzy events based on their similarity and historical relevance; (2) the fuzzy inter event pattern
+mining which provides the ﬁrst module with the historical relevance of alerts by mining frequent fuzzy patterns among
+them. Using these two modules, our approach is as fast as similarity based approaches suitable for online alert correlation
+while it is able to extract complex attack scenarios like ofﬂine time consuming data mining based approaches. Furthermore,
+observing the frequent events makes our approach capable of detecting scenarios including wrapping tricks which tries to
+fake the source or destination IPs. The experimental results with the well-known dataset DARPA2000 and the ISCX UNB
+intrusion detection evaluation dataset proved mentioned claims. Copyright © 2016 John Wiley & Sons, Ltd.
+KEYWORDS
+intrusion detection system; alert correlation; fuzzy clustering
+*Correspondence
+Department of Software Engineering, Faculty of Computer Science and Engineering, Shahid Beheshti University, Evin, Tehran, Iran.
+E-mail: maghsoud@sbu.ac.ir
+
+1. INTRODUCTION
+Given the large popularity of the internet and widespread
+use of automated attacks tools on one hand, and signiﬁcant
+increase of new life trend’s dependency on the internetbased information systems on the other hand, computer
+network security has become a big challenge.
+Multiple complementary security devices such as intrusion detection systems (IDSs) and other preventive security
+mechanisms (e.g. access control, authentication and ﬁrewalls) are widely deployed to ensure the integrity, conﬁdentiality and availability of computer and network
+resources/services.
+Computer security practitioners often deploy multiple
+security products and solutions in order to increase the detection rates by exploiting their mutual complementarities. As a
+consequence, huge amounts of low level alerts are daily
+reported making the task of the security administrators timeconsuming and inefﬁcient. Another fact intensifying these
+downsides is almost 99% of alerts are false positive [1].
+Furthermore, it is very challenging for security ofﬁcers
+to fully learn the security threats in their networks as well
+
+Copyright © 2016 John Wiley & Sons, Ltd.
+
+as over the Internet. To address these problems alert correlation techniques have been developed [2,3]. Alert correlation is the task of analyzing the alerts triggered by one or
+multiple IDSs in order to provide a synthetic and highlevel view of the interesting malicious events targeting
+the information system. Alert correlation approaches aim
+either at reducing the number of triggered alerts by eliminating redundant and irrelevant ones [4] or detecting multistep attacks [5] where the different alerts may
+correspond to the execution of an attack plan consisting
+in several steps.
+Even though other aspects of alert correlation (false positive reduction, alert aggregation and alert prioritization) are
+also worthwhile, extracting attack scenarios can assist the
+security ofﬁcer in detecting an ongoing attack and ceasing
+the further progress of attacker’s nefarious intention.
+Alert causality analysis which works on extracting
+attack scenarios can be considered within the three categories: (1) scenario-based correlation: in these approaches
+[6,7], causality relationships between alerts are speciﬁed
+in terms of known attack scenarios; (2) prerequisite and
+consequence based correlation: these approaches [5,8–10]
+
+Fuzzy adaptive alert correlation
+
+are based on the observation that the majority of alerts are
+related, i.e. they either represent the early stages of an attack or intermediate steps of more advanced attack behavior. Therefore, pairwise relationships between alerts are
+speciﬁed in rules; (3) statistical correlation methods: in this
+group [11–14] two alerts are correlated if they are statistically related to each other based on their co-occurrence
+within a time window.
+Also there are some studies which are combination of
+two categories; for example the combination of second
+and third category can be deﬁned [15,16]. In [15] to correlate each new alert with previous alerts, the system ﬁrst
+tries to ﬁnd the correlation probability based on its
+predeﬁned fuzzy rules. Then, if there is no matching rule
+with the required matching threshold, it uses the AIRS,
+an Artiﬁcial Immune System based algorithm. In [16] both
+prior knowledge and statistical relationship are used to extract attack scenarios.
+The ﬁrst two categories rely on expert knowledge, and
+they are generally limited in their ability to integrate
+novel alerts. Moreover, accurately deﬁning all possible
+relationships among existing alerts can be prohibitively
+tedious and time-consuming, and thus not always feasible. So recent researches in this area have concentrated
+on utilizing different data mining approaches to facilitate
+alert correlation process or they have tried to hybridize
+statistical approaches with one of two other categories
+to beneﬁt the strength of both [15–17]. But the main
+downsize of statistical analysis is high computational
+cost, which makes them impractical for online
+computation.
+Although much researches have been done in alert correlation area, very few of them are able to operate in realtime [13,18]. Most of the proposed solutions are ofﬂine
+tools that can be run periodically on a data base of alerts.
+Therefore considering the huge volume of alert streams
+in large network, a real time alert correlation that is capable
+of extracting attack strategies using statistical analysis
+without scarifying computational time is an open issue in
+real time alert correlation yet.
+Online clustering is an efﬁcient technique that could
+be applied in online alert correlation. Given a data stream
+as input, online clustering approaches form clusters based
+on the similarities between data stream’s elements. Many
+researches in literature [14,19–22] have applied similarity
+based analysis to aggregate alerts and extract attack patterns. Similarity based approaches are computationally efﬁcient but they are not capable of reveal complex
+relationship between alerts. To overcome this weakness
+some researchers have tried to tack a causality criterion
+into account in similarity investigation process. For example Zhu et al. [14] have used the Alert Correlation
+Matrix (ACM) to keep track of statistical relationship between alerts. But this matrix should be initialized by domain knowledge. Considering the huge number and
+dynamic nature of alerts, initializing such matrix is time
+consuming and error prone. Therefore, an online clustering approach which contains a causal relationship
+Security Comm. Networks (2016) © 2016 John Wiley & Sons, Ltd.
+DOI: 10.1002/sec
+
+F. Faraji Daneshgar and M. Abbaspour
+
+criterion independent of expert’s knowledge could be
+promising. In this paper, we propose an online adaptive
+fuzzy clustering framework which contains a causal relationship criterion. This criterion is maintained using the
+correlation strength matrix which initialize as an identity
+matrix (1 for same alert types and zero for different
+ones). This matrix will be updated adaptively according
+to environmental security events.
+Managing the continuous alert stream is one of the
+challenging issues in online alert correlation. In most previous works, the sliding time window scheme is used to
+limit pair wise comparison (in ofﬂine similarity based)
+or aggregation (in online alert stream processing). For example in a study by Sadoddin [13] when a pattern does
+not receive new alert for a user speciﬁed time window,
+the pattern is considered to be completed. It means alerts
+within a time window are candidates for correlation. But
+determining this sharp boundary is too risky especially in
+dynamic and complex nature of computer networks. Instead of using a ﬁxed time window, in this paper we
+use a fading model to determine the right time the patterns should get stable. In this scheme the required time
+for a pattern after receiving last alert (without receiving
+new one) to get stable is dependent on pattern’s activity
+during its life. The more the pattern is active, the more
+time it would have before getting stable.
+Moreover, crisp nature of all existing approaches to extract attack patterns can be pointed out as another challenging issue. Assigning an incoming alert to exactly one of the
+existing patterns is too controversial. While aiming fuzzy
+logic in such situations has been promising in other ﬁelds
+and may help achieve softer and more accurate decision
+making in alert correlation, too. Similarity is a fuzzy concept and allowing an incoming alert to belong to any
+existing pattern based on its similarity degree or generating
+new pattern if existing ones are not persuading enough is a
+good idea that might allow more precise attack patterns to
+be generated.
+Inspired by mentioned ideas, in this paper we propose a
+new online adaptive fuzzy alert correlation framework
+which aiming two ofﬂine and online module enlists the
+strength of statistical analysis and similarity based analysis
+together. In online module, an online fuzzy clustering approach is proposed in which one of the similarity features
+is alert correlation strength that is modiﬁed incrementally
+through ofﬂine statistical analysis module. In ofﬂine module we propose a fuzzy inter transaction item set mining
+approach that using input fuzzy patterns (the output of ﬁrst
+module) could extract frequent patterns within and among
+input fuzzy patterns. Discovering frequent pattern results
+in promoting the correlation strength of involving alerts.
+Therefore these alerts will cluster in the same attack pattern
+with higher probability in future. Attack patterns generated
+by the ﬁrst module are the output of our system that is time
+computationally efﬁcient; the second module tries to reveal
+the relationship between alerts in ofﬂine mode. The discovered relationships will promote the correlation strength of
+corresponding alerts. So we utilized statistical analysis
+
+F. Faraji Daneshgar and M. Abbaspour
+
+beneﬁts gradually without paying its computational cost in
+online mode.
+Our contributions are:
+• A new fuzzy online clustering method is proposed to
+generate fuzzy attack scenarios based on similarity
+between alerts. Like other similarity based approaches
+this module is too fast and can process alert streams
+online.
+• We extended an inter transaction frequent item set
+mining approach [23] to support fuzzy item sets for
+frequent fuzzy pattern mining module. This module
+is responsible to detect the alerts which are irrelevant
+based on their features like IP addresses, but have statistical relationships (like Stream-DOS alert in DDOS
+that attacker spoofed IP addresses in order to hide attack sources).
+• Adaptive nature of our framework, make it independent of any expert knowledge. Furthermore the statistical analysis is done in an ofﬂine manner. So the
+online attack scenario extraction is done and just is reinforced by ofﬂine inter pattern frequent item set mining module. So we have utilized the beneﬁt of
+complex statistical analysis without sustaining its time
+consuming natures online.
+• We used a fading model to determine the right time
+to close the attack pattern. In fading models, the
+freshness of pattern decreases using a fading function. Unlike the sliding time window models that
+close a pattern after a predetermined time that pattern does not receive new alert, closing patterns
+using fading models are dependent on the pattern
+properties like the number and membership degrees
+of its alerts.
+The rest of this article is organized as follow: in
+section 2, some related works are reviewed. General architecture of our framework and details of its modules
+are provided in section 3. Section 4 reports the experimental results that are obtained from the DARPA
+2000 and ISCX UNB intrusion detection evaluation
+datasets.
+
+2. RELATED WORKS
+Alert correlation is a multistep and multi objective problem. Valeure [24] proposed a comprehensive framework
+that includes some modules, each responsible for a speciﬁc
+aspect of alert correlation. In other works, however, just a
+subset of these objectives is considered. One of the most
+important and subtle aspects of alert correlation is multistep attack scenario extraction, as more IDSs produce just
+elementary malicious events while most of attacks performed through multiple steps where each step can be reported by an alert. Existing alert correlation techniques in
+this category can be roughly divided into four classes
+[25,26]. The ﬁrst class includes techniques based on
+
+Fuzzy adaptive alert correlation
+
+predeﬁned attack scenarios, which construct attack scenarios through matching alerts to predeﬁned scenario templates. These studies have used formal models for
+specifying attack scenarios [7,27,28] or have employed
+machine learning techniques to learn this knowledge
+[20]. Specifying scenarios for all possible attacks requires
+extensive prior knowledge and can be labor intensive. Machine learning techniques to extract attack scenarios need
+labeled alerts. Labeling alerts also is a time consuming
+and error prone process. The major limitation of this category of methods is that they are restricted to known attack
+scenarios. Furthermore, attack sub goals may be satisﬁed
+by different exploits making the number of scenarios unmanageable. This problem is mitigated by second category
+of works, Rule-based correlation methods [5,8–10,15], by
+providing a ﬁner grained correlation method. In these
+methods relationships between alerts are speciﬁed by rules.
+In other words, alert ‘A’ is correlated with alert ‘B’ if the
+ﬁrst one prepares for the second alert in a precondition–
+post condition relationship. The third category of works
+is statistical correlation [11,13–16] in which two alerts
+are correlated if they are statistically related to each other.
+Qin [11] used Bayesian network to model the causality relationship between alerts. In this work, statistical patterns
+among the aggregated alerts, i.e. hyper alerts, are analyzed
+based on the assumption that alerts are causally related if
+there is a strong statistical dependency among them. The
+degree of relevance of alerts is evaluated by calculating
+the conditional probability among each pair of hyper alerts.
+The approach builds the attack scenarios by evaluating the
+causal relationship between each pair of hyper alerts.
+The last category of proposed alert correlation methods
+is temporal correlation [12,17]. In these approaches two
+alerts are correlated with each other based on their temporal relationships. For example, Granger Causality Test
+(GCT) is used to analyze the causality relationships between alerts [12]. GCT is a time series-based statistical
+analysis method that aims to test if a time series variable
+X correlates with another time series variable Y by
+performing a statistical hypothesis test. To apply time series analysis to the problem of alert correlation, hyper alerts
+are constructed by aggregating all the alerts which have
+same values of all features except some time differences.
+Time series variables are modeled for all hyper alerts based
+on the number of alerts per time unit and GCT is used to
+verify whether variable X provides any signiﬁcant information about variable Y. If yes, alert of type X may be
+the cause of the alert Y.
+Obviously, the methods in each category have their own
+strengths and weaknesses. The scenario-based and rule-base
+methods are restricted to knowledgebase which should be
+hard-coded in the system or learned through labeled data.
+While the statistical and temporal methods are capable of correlating alerts which may contribute to unknown attacks. On
+the other hand, these techniques seem to be much more time
+consuming comparing to knowledgebase methods in practice.
+In addition, statistical and temporal techniques are highly sensitive to deliberate delays or planned noisy alerts in the
+Security Comm. Networks (2016) © 2016 John Wiley & Sons, Ltd.
+DOI: 10.1002/sec
+
+F. Faraji Daneshgar and M. Abbaspour
+
+Fuzzy adaptive alert correlation
+
+middle of actual attack scenarios. Our work is a hybrid
+method such that the ﬁrst module is an online clustering
+method which works based on alert similarities and the
+method used in second module falls in statistical alert correlation methods. Considering the time consuming nature of statistical methods, to make our framework be applicable in
+online mode, the second module works in ofﬂine mode.
+The duty of this module is to adapt the correlation strength
+matrix (which is used in online clustering module) with environmental events.
+Furthermore, using two similarity based and statistical based modules alleviates the mentioned downside
+of statistical methods (sensitivity to deliberate delays
+or planned noisy alerts). Because alerts are clustered in
+ﬁrst modules and then the frequent inter patterns are
+extracted in second module. Our correlation strength
+matrix is like the ACM introduced by Zhu et al. [14].
+This data structure which maintains the correlation
+strength of each two types of alerts should be initialized
+by expert in their study. Even under the assumption of
+availability of expert, acquiring this knowledge is
+time-consuming and error prone. In our framework this
+matrix is initialized as an identity matrix and then will
+be updated incrementally whit frequent patterns extracted by second module.
+The idea of using frequent pattern mining to extract attack patterns is proposed by Sadoddin and Ghorbani [13].
+In these works, co-occurrence of alerts within speciﬁed
+time windows is used as an important feature for the statistical analysis of alerts. This involves pairwise comparison
+between alerts because every two alerts are candidates to
+be correlated in a newly emerging pattern. Pairwise comparison between alerts poses serious challenges on
+learning-based correlation techniques in large scale networks, in which a throughput of 5000 alerts per minute is
+expectable. Dealing with this problem, Sadoddin and
+Ghorbani [13] proposed a framework for real-time alert
+correlation which incorporates an incremental mining of
+frequent structured patterns.
+Despite of interesting use of frequent item set mining in
+real time alert correlation domain, some issues remain unresolved. At ﬁrst, all of attacks that occur in computer
+
+networks are not frequent. This approach can report just
+frequent parts of scenarios. Furthermore, there are some attacks that the attacker has spoofed the source IP address.
+For example stream-DOS which the attacker uses compromised Zombie machines with spoofed IP addresses in order to ﬂood his/her ﬁnal target. Creating patterns
+considering just alert’s source and destination IP addresses,
+results in separating this part of scenario as a separated pattern (as it is the case in their experiments). At last, frequent
+item set mining is not rapid enough to be applied in real
+time frameworks. Considering these issues, in our frame
+work, alerts are clustered to construct the attack patterns
+in real time, then these clustered are processed by second
+modules using an inter event frequent pattern mining approach. Considering each cluster as an event, the frequent
+inter event patterns contain those alerts that were not similar enough to belong in same cluster, but they frequently
+occur simultaneously, like stream-DOS that does not fall
+in same cluster with the rest of DDOS pattern because of
+its different IP addresses. So each extracted frequent inter
+event pattern will promote the correlation strength between
+involving alerts to increase the probability of falling in
+same clustered in future.
+
+3. PROPOSED INCREMENTAL
+REAL-TIME FUZZY ALERT
+CORRELATION FRAMEWORK
+Considering the fact that false and irrelevant alerts from a
+low level IDS are inevitable, the main goal of an alert correlation system is to extract attack models to explain the
+output in a concise and understandable way. Extracting
+attack models which are interleaved together and to other
+false or irrelevant alerts gets even more sophisticated when
+online processing of alert streams is the topic of discussion.
+Figure 1 is depicted our proposed online adaptive fuzzy
+alert correlation framework which includes two main modules, the ‘online incremental fuzzy clustering’ module and
+the ‘fuzzy frequent pattern mining’ module. The online
+fuzzy clustering module gets alert stream generated
+through multiple sensors scattered around the network as
+
+Figure 1. The online adaptive fuzzy alert correlation framework.
+
+Security Comm. Networks (2016) © 2016 John Wiley & Sons, Ltd.
+DOI: 10.1002/sec
+
+F. Faraji Daneshgar and M. Abbaspour
+
+input and evolve fuzzy clusters named fuzzy attack events
+based on similarities among alerts.
+These fuzzy events along with detailed information as
+(containing hyper alerts, membership degree, graphical
+representation, IP addresses and etc.) are presented to the
+administrator as system output. Also these events are the
+input for second module which is about to extract frequent
+inter-event fuzzy patterns.
+One of the most important features for clustering alerts in
+the ﬁrst module is correlation strength between alerts types.
+This knowledge is maintained by correlation strength matrix.
+The most innovative aspect of our framework is related to
+adapting this matrix with events happening in environment.
+The correlation strength matrix is initialized as identity matrix,
+and it is the second module’s responsibility to adjust it based
+on observing frequent fuzzy inter event patterns in the network. This module gets the generated fuzzy events as input
+and maintains a tree data structure, named the fuzzy inter-event
+pattern tree (fuzzy IEP-tree). The fuzzy IEP-tree is then used to
+extract frequent fuzzy inter-event patterns. Frequent patterns
+indicate the alerts that statistically happened together. When
+a new fuzzy event is generated by the ﬁrst module, three actions are taken in second module: (1) the new fuzzy event is
+added to the fuzzy IEP-tree (fuzzy IEP-tree construction and
+maintenance), (2) the fuzzy IEP-tree is traversed to extract
+new frequent fuzzy patterns. If there is any, it updates the correlation strength among alert types in frequent fuzzy patterns.
+Then a ﬂag of those nodes in IEP-tree related to frequent patterns is set to prevent those patterns to present as fuzzy frequent patterns again(IEP-tree Traversing). (3) A repository of
+N latest fuzzy events is kept; when a new fuzzy event is arrived
+the oldest fuzzy event is removed from repository and also
+from the IEP-tree. It means the effect of fuzzy event in IEP-tree
+is not permanent and will be removed when it gets old enough.
+
+
+
+
+
+w E; t j ¼
+
+(
+
+Fuzzy adaptive alert correlation
+
+3.1. The online incremental fuzzy clustering
+module
+Clustering approaches, in which objects are organized in
+some clusters based on their similarities, have been applied
+to alert aggregation. In such approaches, clustering not only
+results in reducing the number of alerts but also has good effects on reducing false alerts. Furthermore, if causality relationships between alerts be considered similarity criteria
+deﬁnition, as it has been done by Zhu et al. [14], clustering
+approaches will be applicable to attack scenario extraction
+as well. In this section an online fuzzy clustering method
+has been presented which a statistical criterion named Correlation Strength has been taken into account in addition to
+common similarity criteria as Source IP, Destination IP and
+so on. This statistical criterion is an indicator of the state of
+relevance and cooperation of alarms in constructing multi
+step attacks. Incoming alerts attach to appropriate clusters
+based on their similarity degrees and the clusters are constructed incrementally. Before detailing the online fuzzy clustering algorithm we need some deﬁnitions:
+Deﬁnition 1. considering A the set of network alerts, a
+fuzzy event is deﬁned as E = <t,{a1,a2,a3},{m1,m2,m3},W>,
+that t is an integer timestamp indicating the time that the fuzzy
+event is created, ai ∈ A, mi ∈ R are the membership degree of
+ai and w ∈ R is activity weight which is deﬁned later.
+Deﬁnition 2. the activity weight of a fuzzy event,
+reﬂecting its maturity level, is initialized by the membership degree of the ﬁrst alert associated with that event.
+Then it continues to decrease according to a fading function. Whenever a new alert is added to the event, the activity weight is increased by the membership degree of that
+alerts. Equation 1 shows the mentioned rules of change.
+
+Mem
+j¼0
+ ðalert0 Þ;
+
+f t j  t j1 w E; t j1 ; event E dose
+ not receive new alert in tj
+f t j  t j1 w E; t j þ Mem alertj event E receives alertj in tj
+
+Therefore the behavior of alerts and relationships among them
+through the time are reﬂected in Correlation Strength Matrix
+so that fuzzy clustering module can generate fuzzy attack patterns adaptively. In fact, in virtue of frequent pattern mining
+module, fuzzy clustering module is capable of adjusting itself
+with environmental changes; it means that if attack patterns
+change during the time so that some alert types participate in
+new attack patterns or old attack patterns utilize new alert
+types, clustering module could cope with this changes.
+The process of mining fuzzy frequent patterns is based
+on a data mining approach named frequent inter transaction
+item set mining [23]. This method does not support fuzzy
+frequent patterns, So we have modiﬁed it and changed the
+frequent patterns to fuzzy frequent patterns. In continue,
+‘fuzzy online clustering’ and ‘fuzzy frequent inter event
+pattern mining’ modules are detailed.
+
+)
+; f ðt Þ ¼ λat
+
+(1)
+
+That tj and tj  1 are two consecutive timestamps. Mem
+(alert) is the membership degree of alert to the event
+which is computed by online fuzzy clustering and ‘λ’
+and ‘a’ are the constant values related to the fading function f.
+Deﬁnition 3. a fuzzy event E is said to be stable if its
+activity weight w goes under a predeﬁned threshold ξ
+(w < ξ) or the life time of cluster exceeds the predeﬁned
+threshold maxtl. The second criterion ensures that all
+events will get stable. When the fuzzy event gets stable
+its timestamp t is set to a discretized time value.
+Figure 2.a illustrates the fading function curve for
+a = 0.2 and λ = 1.2. Furthermore the changes of the activity weight of an example fuzzy event through the times
+Security Comm. Networks (2016) © 2016 John Wiley & Sons, Ltd.
+DOI: 10.1002/sec
+
+F. Faraji Daneshgar and M. Abbaspour
+
+Fuzzy adaptive alert correlation
+
+Figure 2. a) The fading function, b) the activity weight of an example fuzzy event with a = 0.2 and λ = 1.2.
+
+are depicted in Figure 2.b. The activity weight of fuzzy
+event (Figure 2.b) is decreasing according to fading function until t = 15.30 in which the event receives a new alert
+and so its activity weight is increased by the alerts membership degree. The dotted line depicts the ξ value. So the
+event gets stable in t = 58.
+Considering mentioned deﬁnitions, the online incremental
+fuzzy clustering algorithm, Fuzzy-IOC, is outlined in Figure 3.
+This algorithm is a kind of similarity-based approaches.
+However, because of using the causal relationship criterion
+—correlation strength—it is able to extract multi step attack scenarios. In this algorithm the similarity of each alert
+with active (unstable) fuzzy events is computed based on:
+(1) The similarity of source and destination IP addresses
+of alert with each fuzzy event. If the source (destination) IP of alert is found in set of all IP addresses of
+alerts belonging to event, the SrcMem(DstMem) is
+set to 1, otherwise is set to zero. The ﬁnal IP similarity
+of an alert to a fuzzy event is the mean of SrcMem and
+DstMem (lines 8–16).
+(2) The correlation strength between an alert and a fuzzy
+event, TypeMem, is the maximum correlation strength
+of alert with all alerts belonging to that event (line 17).
+(3) The time acts as a negative factor for computing the
+similarity, so that the more the time interval between the arrival time of last alert of event and the
+alert’s time (TimeDiff), the less the similarity is
+based on Equation 2 (lines 18–19).
+Security Comm. Networks (2016) © 2016 John Wiley & Sons, Ltd.
+DOI: 10.1002/sec
+
+Figure 3. The fuzzy-SOC algorithm.
+
+
+TMF ðTimeDiff Þ ¼
+
+1λ
+
+0
+
+TimeDiff
+
+TimDiff ≤Maxtl
+otherwize
+
+
+
+(2)
+
+The ﬁnal membership degree of alert to the event is
+computed as equation 3 (line 20).
+
+mem ¼
+
+IPsimilarity þ CorrelationStrength þ Timesimilarity
+2
+
+(3)
+
+The alert is assigned to each events which the corresponding membership degree (line23). If the sum of
+membership degree of alert to events (Membershipsum)
+is less than 1, a new event is created and the alert is
+assigned to it with 1-Membershipsum membership degree
+(lines 24–26).
+
+F. Faraji Daneshgar and M. Abbaspour
+
+Fuzzy adaptive alert correlation
+
+3.2. Fuzzy frequent inter event pattern
+mining module
+The output of the ﬁrst module which is the fuzzy event
+queue is considered as input for the second module. The
+goal of this module is to extract the frequent fuzzy patterns
+from event queue. To this end we have used the frequent
+inter transaction item set mining approach, proposed by
+Chiu [23] with a little modiﬁcation to support fuzzy frequent patterns. In this approach a data structure named,
+IEP-tree† is constructed and maintained from incoming
+data stream. For the sake of clarity and simplicity, in this
+section the modiﬁed algorithm is brieﬂy described with
+an example and the complete algorithms are described in
+Appendix A.
+3.2.1. Problem statement and definitions
+As described in previous section, a fuzzy event E is, in
+the form of <tid, A, M, w>, where tid is the timestamp indicating the created time of event, A is called item-set and
+is composed of some alerts, M the corresponding membership degree of each alert and w the activity weight. The activity weight is used to determine the right time of an event
+getting stable and it is not important anymore and it is
+discarded in this module.
+So a fuzzy event in this module is a triplex of <tid,A,
+M>. A set of fuzzy events is called the fuzzy event queue.
+For example in Figure 4, an example fuzzy event queue E
+is given, and it contains seven events E1…E7 where E1 is
+<{1}, {A, D, E},{0.98,0.87,0.66}> and means that event
+{A, D, E} occurs at tid = 1 and its items belong to it with
+0.98, 0.87 and 0.66 certainty respectively.
+Deﬁnition 4.
+extended itemset—Let <u, Tu, Mu>
+and <v, Tv, Mv> be two events in a fuzzy event queue.
+An extended itemset Tu, with respected to v is Tu(u  v)
+= { i1(u  v),…, is(u  v) }, where s is the number of items
+in Tu.
+For example, in the queue as shown in Figure 4, an extended itemset of the event E6 with respect to the event E2
+is {B(4), D(4), G(4)}.
+Deﬁnition 5. For a fuzzy event <d1, Td1, Md1> in an
+event queue E, a mega-event, MGd1, is deﬁned as <d1,
+TMD1,Mmd1> such that TMD1 is a set of extended itemsets
+in E with respect to d1, i.e. TMd1 = Td1(0)∪Td2(d2  d1)∪
+…
+∪Tdk(dk  d1),
+and
+Mmd1 = ∏Md1 × ∏Md2×
+… × ∏Mdk, where <d1, Td1,Md1>, <d2, Td2,Md2>,…,
+<dk, Tdk,Mdk> are consecutive events in E, di < di + 1,
+i < k, and dk  d1 ≤ maxspan, maxspan is a user-speciﬁed
+maximum distance
+For example, the event queue as shown in Figure 4 contains six mega-event with maxspan = 1,
+MG1 = <1,{A(0), D(0), E(0), B(1), E(1), C(1)},0.05>
+MG2 = <2,{B(0), E(0), C(0), D(1)},0.08>
+†
+
+Inter event pattern.
+
+Figure 4. An example fuzzy event queue with seven fuzzy
+events.
+
+MG3
+MG4
+MG5
+MG6
+
+=
+=
+=
+=
+
+<3,{D(0), D(1), E(1)},0.25>
+<4, {D(0), E(0), A(1), D(1)}, 0.24>
+<5,{A(0), D(0), B(1), D(1), G(1)},0.19>
+<6,{B(0), D(0), G(0), F(1)},0.22>.
+
+Deﬁnition 6.
+A fuzzy inter-event pattern <list, X,
+M> is a pattern with:
+• X is a set of extended items, {x1(d1), x2(d2),…,xk
+(dk)}, where d1 = 0, dk ≤ maxspan, di < dj, and
+1 ≤ i < j ≤ k.
+• Let Ex = {MGp1, MGp2,…,MGpm} be the set of
+mega-events in E containing X, the index list of the
+pattern X, denoted by X.list, is <p1, p2, …, pm>.
+• M is a list of memberships so that for each element in
+list, it is computed as M ¼ ∏kj¼1 M dj ðxjÞ that Mdj(xj)
+means the membership correspond to xj in dth
+j event.
+For example, for extended items X = {A(0), D(0), B(1)}
+from Figure 4, Because the mega-item-set MG1 (<1,{A(0),
+D(0), E(0), B(1), E(1), C(1)},0.05>) and mega-item-set
+MG5 (<5,{A(0), D(0), B(1), D(1), G(1)},0.02>) contain
+X, list would be {1, 5}. in inter event pattern <{1,5},{A
+(0), D(0), B(1)},M>, the M(1) is computed as
+0.98 × 0.87 × 0.5 = 0.42 and M(2) is computed as
+0.99 × 0.82 × 0.75 = 0.60.
+Deﬁnition 7. frequent pattern Given a pattern
+P = <list,X,M> and a user-speciﬁed minimum support
+threshold minsup, the support of P, sup(P), is deﬁned as
+lenðM Þ
+
+∑i¼1 M i . We can say that P is a frequent pattern if sup
+(P) ≥ minsup.
+Consider the example P = <{1,5},={A(0), D(0), B(1)},
+{0.42,0.60}>, sup(p) = 0.8. Because sup(P) ≥ 0.4, P is a
+frequent pattern.
+
+3.2.2. The fuzzy IEP-tree construction and
+maintenance
+Each node in a fuzzy IEP-tree is a pattern composed of
+two ﬁelds: list and children, where the ﬁrst ﬁeld list is an
+index list which stores the time stamp when the pattern occurs among events, and the second ﬁeld children is a list
+Security Comm. Networks (2016) © 2016 John Wiley & Sons, Ltd.
+DOI: 10.1002/sec
+
+Fuzzy adaptive alert correlation
+
+that links to its child patterns. The root of an IEP-tree is a
+null pattern Ø.
+The key operation in fuzzy IEP-tree that extends candidates frequent patterns is join operation. The ‘join’ operation is performed on a frequent length-l pattern with a
+frequent length-1 pattern to generate a set of length-(l + 1)
+candidate patterns c.
+Deﬁnition 14. join operation Let the index list of the
+length-l pattern patternl = <listl,{x1(d1), x2(d2),…, xl(dl)},
+{m1…mm}> be listl = <p1, p2, …, pm> and the index list
+of the length-1 pattern pattern1 = <list1,{y1(0)},{n1…nn}>
+be list1 = <q1, q2, …, qn>, where d1 = 0, dl ≤ maxspan, xi
+(di) < xj(dj), and 1 ≤ i ≤ j ≤ l. By joining these two patterns, a
+set of the length-(l + 1) pattern <listl+1,Xl+1,Ml+1> is produced such that:
+• The itemset Xl+1 is{x1(d1), x2(d2)… xl(dl), y1(dl
++ k)}, for all k satisfying k ≤ maxspan-dl and y1(dl
++ k) > xl(dl).
+• The index list listl+1 can be obtained by the formula,
+patternl.list∩ left_shiftk(pattern1.list), where shiftk
+(pattern1.list) = <q1  k, q2  k… qn  k>.
+• Let R = {r1…rt} and P = {p1…pt} be the index of elements of patternl.list and left_shiftk(pattern1.list) belong to patternl.list∩left_shiftk(pattern1.list). The
+membership list Ml+1 can be obtained by patternl.
+membership(R) . × pattern1.membership(P) which
+. × means the element by element product.
+For example, suppose that maxspan = 3. By joining a
+length-3 pattern X = {{A(0), B(1), E(1)},{0.65,0.33,
+0.89,0.75}} with X.list = <1, 5, 7, 10> and another length-1
+pattern ﬁ1 = {{D(0)},{0.2,0.58,0.45,0.98,0.87,0.45}} with ﬁ1.
+list = <1, 2, 3, 7, 12, 13>, two patterns are produced, i.e.
+c1 = {A(0), B(1), E(1), D(2)} and c2 = {A(0), B(1), E(1), D(3)}
+because D(2) and D(3) are larger than E(1) when maxspan = 3.
+We can obtain c1.list by performing X.list∩ left_shift2(ﬁ1.list),
+i.e. <1, 5, 7, 10> ∩ < (1  2), (2  2), (3  2), (7  2),
+(12  2), (13  2)>, and thereby c1.list = <1, 5, 10>. Similarly, c2.list = <10> can be obtained by using the same
+method. Furthermore for c1, R = {1,2,4} and P = {3,4,5}, so
+c1.membership = { 0.65,0.33,0.75} . × {0.45,0.98,0.87} =
+{0.29,0.32,0.65}. Similarly for c2, c2.membership = {0.34}.
+In Construction Process, each alert x in incoming event is
+checked whether the alert is already a length-1 pattern in the
+IEP-tree. If that was the case, the index list of the length-1
+pattern is updated by adding a time stamp tid and the membership degree of x, m, is added to membership list of pattern.
+Otherwise, a new length-1 pattern {{x (0)},{m} } is created,
+and its index list list{x(0)} contains only one time stamp tid.
+After that, a set of frequent length-1 patterns, ﬁ1_set is obtained. For each frequent length-1 pattern, some candidate
+patterns are generated according to join operation with remaining frequent length-1 patterns. Then each candidate pattern is checked if it is already in the tree, if that was the case,
+its timestamp and membership will be added to the pattern
+otherwise, if the pattern is frequent will be added to the tree
+as a new branch.
+Security Comm. Networks (2016) © 2016 John Wiley & Sons, Ltd.
+DOI: 10.1002/sec
+
+F. Faraji Daneshgar and M. Abbaspour
+
+Figure 5 shows the IEP-tree construction Process stepby-step for event queue E shown in Figure 4. In step 1
+the fuzzy event E1 is processed and three length-1 patterns
+A(0), D(0) and E(0) is added to the tree.
+In step 2 (adding the fuzzy event E2), two patterns B(0)
+and c(0) are simply added as a new branch but the pattern
+E(0) as there exists such pattern in tree, the its timestamp
+and membership are added to existing pattern E(0). Supposing minsup = 1, the E(0) is a frequent pattern. The only candidate pattern {E(0),E(1)} is not frequent, so it is discarded.
+In step 3, adding the fuzzy event E3 results in modiﬁcation
+of list and membership of pattern D(0). Now D(0) and E(0)
+are frequent length-1 patterns. Two candidate patterns {D(0),
+E(0)} and {D(0),E(1)} are created with list {1} and {2} respectively but they are discarded as they are not frequent.
+In step 4, after adding E4 again patterns D(0) and E(0) are
+modiﬁed and are processed for generating candidate patterns
+because they are frequent. For pattern D(0) three candidate
+patterns <{D(0),E(0)},{1,4},{ 0.57,0.3}>, <{D(0),E(1)},
+{1,3}, {0.41,0.8}> and <{D(0),D(1)}, {3}, {0.27}> are created in which the { D(0),E(1)} is frequent and added to the
+tree. For E(0) pattern the candidate pattern <{E(0),D(1)},
+{2}, {0.4}> is created and it is not frequent too.
+In step 5, pattern A(0) also joined to the frequent length1 patterns and among generated candidate patterns, the {A
+(0),D(0) is frequent and is added to the tree.
+In step 6, two patterns are added to the A(0) branch of
+the IEP-tree, and in step 7, just a length-1 pattern f(0) is
+added with no change to other part of the tree.
+3.2.3. The fuzzy IEP-tree traversing
+After processing each incoming fuzzy event, this method
+will traverse the fuzzy IEP-tree to extract fuzzy frequent inter
+event patterns. As mentioned earlier, these extracted frequent
+patterns result in promoting the correlation strength among involving alerts in correlation strength matrix. In fact, updating
+correlation strength with regards to seen patterns in environment, adapt the clustering module with environment. In this
+sub section, two strategies, preﬁx pruning and hash pruning,
+are developed for ﬁltering non-closed patterns while traversing fuzzy IEP-tree in DFS manner. The preﬁx pruning strategy ﬁlters most non-closed patterns, and the hash pruning
+strategy is to hash the rest patterns for sub pattern check in
+the same bucket to obtain the closed patterns.
+For preﬁx pruning, the strategy is designed according to
+the deﬁnition of IEP-tree and DFS manner. Each length-l pattern pl of the IEP-tree is the l preﬁx of its child pattern cpl + 1.
+According to the deﬁnition of closed, if a pattern pl is closed,
+there exists no super pattern of p whose support is equal to the
+support of pl. In ITP-tree, any child pattern cpl+1 of pl are a
+super pattern of pl, because the child pattern of pl is a preﬁx
+pattern of pl. Thus, if the other condition of closed, i.e. sup
+(pl) = sup(cpl + 1), is hold during DFS, pl is not a closed pattern and will not be generated.
+The preﬁx pruning strategy is able to ﬁlter non-closed
+patterns in the same branch of IEP-tree. To further ﬁlter
+non-closed patterns in different branches, hash pruning is
+employed. Let pl.list be <a1, a2 … an>. For each pattern
+
+F. Faraji Daneshgar and M. Abbaspour
+
+Fuzzy adaptive alert correlation
+
+Figure 5. The IEP-tree construction process.
+
+pl which is not ﬁltered by preﬁx pruning strategy, pl is
+hashed according to three features of pl. The ﬁrst feature
+is sup(pl), and the second one is the ﬁrst time stamp in
+pl.list.
+The third feature is the distance between a1 and a2,
+i.e. a2  a1. For the patterns in the same bucket, each
+pattern is checked if it is the sub pattern of the other patterns of the same bucket. The checking process starts
+from the patterns with the shortest length in the bucket.
+After performing these processes, the rest of the frequent
+patterns in the buckets are the closed patterns.
+Table I depicts the extracted fuzzy inter event patterns.
+Among these patterns, we are just interested in patterns
+whit two features: (1) length(pattern.T) > 1 and (2) distinct(pattern.list) > 1. The ﬁrst feature indicates that more
+than one alert should be involved in pattern and the second
+
+Table I. The frequent fuzzy enter event patterns.
+id
+
+Pattern
+
+1
+2
+3
+4
+5
+6
+7
+8
+
+<{A(0)}, {1,5}, {0.98, 0.99}>
+<{A(0),D(0)},{1,5}, {0.85,0.81}>
+<{A(0),D(0),B(1)}, {1,5}, {0.42,0.60}>
+<{A(0),B(1)}, {1,5},{0.49,0.74}>
+<B(0), {2,6}, {0.5, 0.75}>
+<D(0), {1,3,4,5}, {0.87, 0.85,0.32,0.32}>
+< D(0),E(1)}, {1,3}, {0.41,0.8}>
+< E(0), {1,2,4}, {0.66,0.48,0.45}>
+
+feature guarantees that the pattern is placed among events
+(module 1’s cluster). The extracted patterns are ﬁlters
+based on these two features because we want to promote
+the correlation strength between alerts (feature1) that are
+Security Comm. Networks (2016) © 2016 John Wiley & Sons, Ltd.
+DOI: 10.1002/sec
+
+F. Faraji Daneshgar and M. Abbaspour
+
+Fuzzy adaptive alert correlation
+
+clustered in different clusters (feature2). In Table I, the patterns 3, 4 and 7 are considered as interesting patterns.
+The correlation strength matrix maintains a number
+between each two alerts indicating the probability that
+two alerts participate in an attack scenario. We use statistical relationships of alerts to adjust the correlation strength
+between them, so that involving in a fuzzy frequent pattern
+results in promoting the correlation strength. The correlation strength is updated through equation (4), which adds
+the mean value of pattern’s membership list to the old correlation strengths for each two alerts a1 and a2 involved in
+a fuzzy frequent pattern. The maximum value 1 is considered for correlation strength between alerts with highest
+correlation.
+CSða1; a2Þ ¼
+
+(4)
+
+maxð1; meanðCSða1; a2Þ; meanðpattern:membershipÞÞ
+
+4. EXPERIMENTAL RESULT
+In this section, we ﬁrst examine our framework ability to extract attack scenarios with the empty strength matrix (without
+expert or statistical knowledge) using DARPA 2000 [29]
+dataset, a well-known IDS evaluation dataset introduced by
+MIT Lincoln Laboratory. It consists of two multi-step attack
+scenarios LLDOS1.0 and LLDOS2.0.2. Both scenarios perform a distributed denial of service attack with different
+stealth levels. We used the alert log ﬁle [30] generated by
+RealSecure IDS. Then to investigate how the statistical
+knowledge helps to extract the scenarios, the alerts are
+replayed. This time the strength matrix is not empty and is
+tuned by module2 (fuzzy frequent pattern mining), So that
+the comparison of results shed light to the effect of statistical
+knowledge that automatically is gained from the environmental events. Furthermore as the DARPA dataset is old and
+there are many problems in it, another experiment is done
+using the ISCX UNB Intrusion Detection Evaluation Dataset
+[31]. In this experiment the strength matrix trained in previous experiment is used to show the ability of our framework
+to adapt to new alerts.
+4.1. Extracting LLDOS1.0 scenario
+The LLDOS1.0 scenario performs its task in ﬁve steps:
+• Step1—the attacker(202.077.162.213) scans the network by sending ICMP echo-requests to many ip
+addresses and listening for replies to determine which
+hosts are ‘up’. (actually this step is not an adversary
+action and RealSecure does not raise any alert for this)
+• Step2—the attacker then uses the ‘ping’ option of the
+Sadmined exploit program to determine which of the
+hosts selected in previous step are running the Sadmind
+service. The ‘Sadmind-ping’ alerts are result of this step.
+• Step 3—the attacker tries to break into hosts which are
+found in previous step using Remote-to-Root exploit
+several times against each host. The ‘SadmindSecurity Comm. Networks (2016) © 2016 John Wiley & Sons, Ltd.
+DOI: 10.1002/sec
+
+Amslverify-Overﬂow’ and ‘Admind’ alerts are produced
+in response to this step.
+• Step 4—The attacker uses telnet and rpc to install a DDos
+program in the compromised machines. RealSecure
+raises ‘Rsh’, ‘TelnetTerminalType’, ‘TelnetXDisplay’,
+‘TelnetEnvAll’ and ‘MStreamZombie’ alerts for this step.
+• Step 5—the attacker telnets to the DDOS master machine and launches the ‘stream-DoS’ against ﬁnal victim of the attack.
+The LLDOS1.0 alert log ﬁle includes 922 alerts of 22
+different types for the trafﬁc corresponding to inside segment of the DARPA simulation network. Table II listed
+the alert types in this data set.
+We simulated this dataset as an alert stream so that the system time is set to the ﬁrst alerts time and each alerts arrives
+according it’s time. To show the cooperation of two modules
+in addition to overall efﬁciency of our framework, We organized our experiments in two phases. In phase 1, the scenario
+is extracted while the correlation strength matrix is initialized
+as identity matrix. In phase 2, the correlation strength matrix
+is set to the correlation strength matrix which adapted through
+phase 1. Table III shows the generated events in phase 1. Remember that each fuzzy event consists of three elements tid
+(time identiﬁer), Item (alerts belonging to event) and Membership (the degree which alert belongs to event).
+Because the correlation matrix is initialized as identity
+matrix, these patterns are clustered considering the similarity of their IP Addresses and created Time.
+As it is presented in Table III, module 1 created ﬁve
+events for LLDOS1. The ﬁrst event is the main that corresponds to LLDOS1.0 scenario. Figure 6 illustrated the
+graphical representation of the ﬁrst event with source and
+Table II. List of alert types in LLDOS1.0 data set.
+Id
+
+alertType
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+
+FTP_User
+Email_Ehlo
+FTP_Syst
+FTP_Pass
+RIPExpire
+RIPAdd
+TelnetTerminaltype
+HTTP_Shells
+Admind
+Sadmind_Ping
+Email_Almail_Overﬂow
+HTTP_Java
+Sadmind_Amslverify_Overﬂow
+Rsh
+Mstream_Zombie
+HTTP_Cisco_Catalyst_Exec
+SSH_Detected
+Email_Debug
+TelnetXdisplay
+TelnetEnvAll
+Stream_DoS
+Port_Scan
+
+F. Faraji Daneshgar and M. Abbaspour
+
+Fuzzy adaptive alert correlation
+
+Table III. The created events for LLDOS1.0 scenario using module 1 with initialized correlation matrix (phase 1).
+tid
+
+Item
+
+Membership
+
+1
+
+{O2M:Admind,M2M:EmailAlmailOverﬂow,
+O2M:EmailDebug,M2M:EmailEhlo,
+M2M:FTPPass,M2M:FTPSyst,
+M2M:FTPUser,O2O:HTTPCisco,
+O2O:HTTPJava,O2M:HTTPShells,
+M2M:MstreamZombie,M2M:Rsh,
+M2M:SSHDetected, O2M:SadmindAmslverifyOverﬂow,
+O2M:SadmindPing,O2O:TelnetEnvAll,
+M2M:TelnetTerminaltype, O2O:TelnetXdisplay}
+{O2O:RIPAdd, O2O:RIPExpire}
+{O2O:Admind,O2O:Sadmind_Ping}
+{O2O:TelnetEnvAll,O2O:TelnetXdisplay}
+{O2O:Port_Scan, O2O:Stream_DoS}
+
+0.9294 0.9839 0.7500 0.9799 0.9857 0.9844
+0.9700 0.6250 0.9375 0.9322 0.8750 0.9706
+0.7500 0.9643 0.7500 0.5000 0.9629 0.5000
+
+2
+3
+4
+5
+
+Figure 6. The graphical representation of the main event in
+LLDOS1.0 using module 1 with initialized correlation matrix.
+
+destination addresses of each hyper alert. The membership
+degrees are omitted in this ﬁgure for the sake of simplicity.
+Also, the IP Addresses correspond to each node is prepared
+as system output for administrator. Some of these IP
+addresses are shown in Table IV.
+
+0.5000
+0.7500
+0.5000
+0.2500
+
+1.0000
+0.5000
+0.5000
+1.0000
+
+Three hyper alerts O2M:Admind, O2M:Sadmind-Ping
+and O2M:SadmindAmsOverﬂow are initiated from Node1,
+which is the attacker to three hosts(zombies) forming the
+Node2. It is corresponds to step 2 and step 3 of LLDOS1.0
+scenario. The M2M:Rsh hyper alert from node19 to itself
+indicates the communications between the attacker and
+zombies. These hyper alerts along with Two single alerts
+O2O:TelnetEnvAll and O2O: TelnetXdisplay and one hyper alert M2M: TelnetTerminaltype perform the fourth step
+of scenario. The other hyper alerts, probably, are because
+of background trafﬁc and are not too important. The ﬁfth
+and most important step of LLDOS1.0 scenario, StreamDOS, is clustered as another event in event5. The reason
+is the spoofed IP address used for the ﬂooding step. This
+problem was observed in previous works [13,14] too. In
+our framework, the second module is responsible for
+extracting frequent fuzzy inter event patterns and promoting the correlation strength between their alerts.
+The adapted correlation strength matrix after phase 1 is
+illustrated in Table V. It can be observed that the correlation strength between Stream-DoS (column 21) and some
+other alerts like FTP_User, Email_Ehlo, FTP_Syst,
+FTP_Pass, RIPExpire and TelnetTerminaltype is increased. The generated events by module 1 with adapted
+correlation strength matrix are listed in Table VI. As we
+can see, the complete scenario is clustered in event1.
+4.2. Extracting LLDOS2.0.2 scenario
+
+Table IV. The IP addresses correspond to each node of event1.
+Node
+1
+2
+18
+19
+21
+22
+23
+
+IP Addresses
+202.077.162.213
+172.016.112.010, 172.016.112.050, ’172.016.115.020
+172.016.112.010, 172.016.112.050, 255.255.255.255
+172.016.112.010, 172.016.112.050, 172.016.115.020,
+202.077.162.213
+172.016.115.020
+202.077.162.213, 135.008.060.182, 135.013.216.191,
+172.016.112.149, 172.016.112.194, 172.016.112.207, …
+135.008.060.182, 135.013.216.191, 172.016.112.050,
+172.016.112.100, 172.016.112.194, …
+
+Unlike LLDOS1.0 in which several hosts are compromised
+by the attacker, in LLDOS2.0.2 the attacker ﬁrst breaks in
+a host and then compromises other host using that host.
+This scenario is done in ﬁve steps:
+• Step1—the attacker (202.077.162.213) probes a machine (172.016.115.020) and breaks in it via
+exploiting the sadmin vulnerability. The ‘SadmindAmslverify-Overﬂow’ and ‘Admind’ alerts are raised
+in this step.
+• Step2—the attacker uploads mstream DDoS software
+to the compromised machine using FTP. The
+Security Comm. Networks (2016) © 2016 John Wiley & Sons, Ltd.
+DOI: 10.1002/sec
+
+F. Faraji Daneshgar and M. Abbaspour
+
+Fuzzy adaptive alert correlation
+
+Table V. The correlation strength matrix after phase 1.
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+8
+
+9
+
+10
+
+11
+
+12
+
+13
+
+14
+
+15
+
+16
+
+17
+
+18
+
+19
+
+20
+
+21
+
+22
+
+1
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+0
+1
+0.82
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0.43
+0
+0
+0
+0
+0
+
+0
+0
+1
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+0
+0
+0
+1
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+1.86
+0.94
+1.96
+0.98
+1
+0
+6.21
+0.46
+0.46
+0
+0.49
+0.46
+0.48
+0.48
+0.43
+0
+0
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+1
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+0
+1
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+1.63
+1.55
+3.30
+1.71
+0
+0
+3.02
+1
+0
+0
+0.45
+0
+0
+0.45
+0.40
+0
+0.46
+0
+0
+0
+0
+0
+
+1.60
+1.52
+3.23
+1.68
+0
+0
+2.97
+0
+1
+0
+0.45
+0
+0
+0.44
+0.40
+0
+0.46
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+1
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+0.88
+0.80
+3.69
+0.94
+0
+0
+5.58
+0
+0
+0
+1
+0
+0
+0
+0
+0
+0.48
+0
+0
+0
+0
+0
+
+1.64
+1.56
+3.35
+1.73
+0
+0
+3.06
+0
+0
+0
+0.46
+1
+0
+0.45
+0.41
+0
+0.46
+0
+0
+0
+0
+0
+
+1.72
+1.65
+7.15
+1.83
+0
+0
+9.86
+0
+0
+0
+0.47
+0
+1
+0.46
+0.42
+0
+0.48
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+1
+0
+0
+0
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+1
+0
+0
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+1
+0
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+1
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+1
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+1
+0
+0
+0
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+1
+0
+0
+
+0.48
+0.48
+0.49
+0.49
+1
+0
+0.94
+0.46
+0.46
+0
+0.49
+0.46
+0.48
+0.48
+0.43
+0
+0
+0
+0
+0
+1
+0
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+1
+
+Table VI. The created events for LLDOS1.0 scenario using module 1 with adapted correlation matrix (phase 2).
+tid
+
+Item
+
+1
+
+{O2M:Admind,M2M:EmailAlmailOverﬂow, O2M:EmailDebug,M2M:EmailEhlo,
+M2M:FTPPass,M2M:FTPSyst,
+M2M:FTPUser,O2O:HTTPCisco,O2O:HTTPJava,O2M:HTTPShells,
+M2M:MstreamZombie,2O:Port_Scan,O2O:RIPAdd,O2O:RIPExpire,
+M2M:Rsh,M2M:SSHDetected, O2M:SadmindAmslverifyOverﬂow,
+M2M:SadmindPing,O2O:Stream_DoS,O2O:TelnetEnvAll,M2M:TelnetTerminaltype,
+O2O:TelnetXdisplay}
+{O2O:TelnetEnvAll, O2O:TelnetXdisplay}
+
+2
+
+Membership
+0.9515
+0.9799
+0.9700
+0.9573
+0.2464
+0.9921
+0.5000
+0.5000
+
+0.9937
+0.9857
+0.6250
+0.8750 0.2500
+0.9706
+0.7500
+0.9629 0.5000
+0.5000
+
+0.7500
+0.9844
+0.9848
+0.5000
+0.7500
+0.3750
+
+‘FTP_Put’ and ‘MStreamZombie’ alerts are pertinent
+to this step.
+• Step 3—the attacker tries to break in two more hosts
+using the compromised machine and just one attempt
+succeeds (172.016.112.050). Again the ‘SadmindAmslverify-Overﬂow’ and ‘Admind’ alert are raised.
+• Step 4—The attacker telnets to the ﬁrst compromised
+machines (and it telnets to the second machine) and
+launches the ‘mstreamDDoS’ attack against ﬁnal target. ‘StreamDos’ alert raised by RealSecure is related
+to this step.
+
+This experiment also showed the capability of our
+framework to extract attack scenarios with cooperation of
+two modules in which one of them extracts fuzzy attack
+events on line, while the other prepares statistical information to extract the complete scenario. In fact, taking the statistical relationships of alerts into account, generated attack
+patterns not only get more complete but also more concise,
+and it brings more convenience and higher efﬁciency for
+network administrator.
+
+The generated events using initialized and adapted
+correlation strength matrix are illustrated in Tables VII
+and VIII respectively. As it was seen in LLDOS1.0 scenario, the last part of scenario is falling apart from other
+parts in phase 1 because of the IP spooﬁng technique the
+attacker used. In phase 2 the problem is resolved by
+adapting the correlation strength matrix.
+
+Now suppose that the system is trained with previous attacks and now a zero day one is occurred. We used the network trace related to 13 June of the ISCX UNB Intrusion
+Detection Evaluation Dataset [31] which is an instance of
+island-hopping attack scenario. As shown in Figure 7, in
+this scenario the attacker creates a malicious PDF ﬁle using
+Metasploit (for example), and embeds a Meterpreter
+
+Security Comm. Networks (2016) © 2016 John Wiley & Sons, Ltd.
+DOI: 10.1002/sec
+
+4.3. Extracting island-hopping scenario
+
+F. Faraji Daneshgar and M. Abbaspour
+
+Fuzzy adaptive alert correlation
+
+Table VII. The created events for LLDOS2.0.2 scenario using module 1 with initialized correlation matrix (phase 1).
+tid
+
+Item
+
+Membership
+
+1
+
+{O2O:Admind, M2M:Email_Ehlo, O2O:Email_Turn,
+M2M:FTP_Pass, O2O:FTP_Put, M2M:FTP_Syst,
+M2M:FTP_User,M2M:HTTP_Java,M2M:Mstream_Zombie,
+O2O:Sadmind_Amslverify_Overﬂow, O2O:TCP_Urgent_Data,
+M2M:TelnetEnvAll, M2M:TelnetTerminaltype,
+M2M:TelnetXdisplay}
+{O2O:FTP_Pass, O2O:FTP_Put, O2O:FTP_User}
+{ O2O:Admind, O2O:Sadmind-Amslverify-Overﬂow}
+{O2O:FTP_Put, O2O:Mstream_Zombie}
+{O2O:TelnetEnvAll, O2O:TelnetXdisplay}
+{O2O:Port_Scan, O2O:Stream_DoS}
+{O2O:Stream_DoS}
+
+0.6250 0.9394 0.5000 0.9722 0.5000
+0.9615 0.9722 0.9211 0.8333 0.7500
+0.5000 0.7500 0.9892 0.6250
+
+2
+3
+4
+5
+6
+7
+
+0.50001 0.5000
+0.7500 0.5000
+0.5000 0.5000
+0.5000 0.7500
+1 0.2500
+0.7500
+
+Table VIII. The created events for LLDOS2.0.2 scenario using module 1 with adapted correlation matrix (phase 2).
+id
+
+AlertName
+
+1
+
+{O2O:Admind,M2M:Email_Ehlo,O2O:Email_Turn,O2O:EventCollector_Info,
+M2M:FTP_Pass,M2M:FTP_Put, M2M:FTP_Syst,
+M2M:FTP_User,O2O:HTTP_ActiveX, M2M:HTTP_Java,M2M:Mstream_Zombie,
+O2O:Port_Scan,
+O2O:Sadmind_Amslverify_Overﬂow,O2O:Stream_DoS,O2O:TCP_Urgent_Data,
+M2M:TelnetEnvAll, M2M:TelnetTerminaltype, M2M:TelnetXdisplay}
+{O2O:Admind, O2O:Sadmind_Amslverify_Overﬂow}
+
+2
+
+Figure 7. The island-hopping attack scenario.
+
+reverse TCP shell on port 5555 inside it. Then, the attacker
+sends a system upgrade email including the PDF ﬁle on
+behalf of admin@[…] to all the users of the test bed.
+Through user5, who initiates the ﬁrst session, the attacker
+starts to scan potential hosts on two subnets 192.168.1.0/
+24 and 192.168.2.0/24. User12 is identiﬁed as running
+Windows XP SP1 with a vulnerable SMB authentication
+protocol on port 445. The attacker exploits this vulnerability to capture user12, and a scan is performed from this
+user to the server subnet (192.168.5.0/24). This scan identiﬁes a Windows Server 2003 running an internal Web application using MS SQL Server as its backend database
+with only port 80 opened.
+
+AlertClass
+0.7500 0.9443 0.5000
+0.9737 1.0000 0.9615
+0.5000 0.8843 0.9500
+0.5000 0.7500 0.2500
+0.7500 1.0000
+
+0.8500
+0.9737
+0.8333
+0.5000
+
+0.5000 0.5000
+
+A remote desktop connection to user12 is created to
+access the Web application and is tunneled back to the
+attacking machine using the previously established
+Meterpreter session. Finally the server is compromised using
+Web application hacking techniques such as SQL injection.
+We replayed network log ﬁles using Colasoft Packet
+Player and generated alerts using snort5.2.2; the generated
+alerts are shown in Table IX.
+This experiment also contain two phases. In phase 1, the
+scenario is extracted while the correlation strength matrix
+is tuned during two previous experiments but there is no
+knowledge about island-hopping scenario. In phase 2, the
+correlation strength matrix is adapted through phase 1.
+The extracted scenarios are shown in Tables X and XI
+for phase 1 and 2 respectively. It is clear that again using
+statistical knowledge our framework is able to extract complete and meaningful attack scenarios. Because of the lack
+of space we used the alert’s Id instead of their name in hyper alerts name.
+As it mentioned earlier, although much researches have
+been done in alert correlation area, very few of them are
+able to operate in real-time [13,18]. The existing real-time
+alert correlation frameworks have used statistical
+approaches like frequent structure mining [13] or Bayesian
+networks [18] to extract attack patterns. Obviously, statistical approaches are time consuming and are not suitable
+to use in real-time applications. The proposed framework
+in this paper contains two separated module that module
+1 is a simple and quick online clustering which can operate
+Security Comm. Networks (2016) © 2016 John Wiley & Sons, Ltd.
+DOI: 10.1002/sec
+
+F. Faraji Daneshgar and M. Abbaspour
+
+Fuzzy adaptive alert correlation
+
+Table IX. List of alert types generated by snort for ISCX UNB-13 June network trace.
+id
+
+AlertName
+
+AlertClass
+
+1
+2
+3
+
+FILE_IMAGE Directshow GIF logical height overﬂow attempt
+FILE_IMAGE Directshow GIF logical width overﬂow attempt
+OS_WINDOWS DCERPC NCACN-IP_TCP srvsvc NetrPathCanonicalize
+overﬂow attempt
+OS-WINDOWS DCERPC NCACN-IP-TCP srvsvc NetrpPathCanonicalize
+path canonicalization stack overﬂow attempt
+POLICY_OTHER PHP uri tag injection attempt
+
+Attempted User Privilege Gain
+Attempted User Privilege Gain
+Attempted Administrator Privilege Gain
+
+4
+3
+
+Table X. The created events for island-hopping scenario using
+module 1 without related statistical strength matrix (phase 1).
+tid
+
+Item
+
+Membership
+
+1
+2
+
+{M2M:1, M2M:2 }
+{ M2M:1, M2M:2, O2O:3,
+O2O:4}
+{ O2O:3, O2O:4, O2O:5}
+
+0.7500 0.7500
+0.2500 0.2500 0.8700 0.6800
+
+3
+
+0.2300 0.3200 0.5400
+
+Table XI. The created events for island-hopping scenario using
+module 1 with related statistical strength matrix (phase 2).
+tid
+
+Item
+
+Membership
+
+1
+2
+
+{M2M:1, M2M:2 }
+{ M2M:1, M2M:2, O2O:3,
+O2O:4}
+{ O2O:3, O2O:4, O2O:5}
+
+0.7500 0.7500
+0.2500 0.2500 0.8700 0.6800
+
+3
+
+0.2300 0.3200 0.5400
+
+real-time and the statistical computations are done in
+second module in ofﬂine mode and prepare the information
+for the ﬁrst module. So our proposed framework is quick
+enough to be real-time, and at the same time, it is equipped
+with statistical computation to extract and maintain the
+environment’s knowledge and be adaptive.
+As the experimental results showed, our framework can
+extract complete attack patterns even with some tricks like
+IP spooﬁng (LLDOS 2.0.2) which to the best of our knowledge has not been seen in previous works.
+
+5. CONCLUSION
+In this paper we proposed a fuzzy adaptive alert correlation
+framework that consists of two modules, the ‘online fuzzy
+clustering’ and ‘fuzzy frequent pattern mining’. The online
+fuzzy clustering module provides the administrator with
+online and rapid fuzzy event consisting of some hyper
+alerts which belong to an attack scenario. Furthermore,
+the fuzzy frequent pattern mining module maintains the
+statistical relationships among alert type which help the online clustering module with taking the correlation strength
+into account for similarity computing along with commonly used features like IP addresses and etc.
+The cooperation of mentioned modules in our framework makes it possible to have statistical analysis and yet
+Security Comm. Networks (2016) © 2016 John Wiley & Sons, Ltd.
+DOI: 10.1002/sec
+
+Attempted Administrator Privilege Gain
+Web Application Attack
+
+can respond online. There are some points that need further
+investigation. For example adapting the parameter, N,
+which identiﬁes the right time to prune a fuzzy event from
+the fuzzy IEP-tree. It can be considered as future work to
+estimate this parameter from environmental signs.
+Although our framework needs some parameter tuning,
+these parameters are somehow straightforward and trivial
+for network administrator. For example which number of
+repeating a pattern makes it frequent (minsup) or adjusting
+the parameter related to fading function (α and λ) which is
+simpler than determining a time window as it is done in
+previous works.
+
+REFERENCES
+1. Perdisci R, Giacinto G, Roli F. Alarm clustering for intrusion detection systems in computer networks. Engineering Applications of Artiﬁcial Intelligence 2006; 19
+(4):429–438.
+2. Di Pietro R, Mancini LV. Intrusion Detection Systems,
+Vol. 38. Springer Science & Business Media, 2008.
+3. Xu D, Ning P. Correlation analysis of intrusion alerts.
+Intrusion Detection Systems 2008; 38:65–92.
+4. Debar H, Wespi A. Aggregation and correlation of
+intrusion-detection alerts. In Recent Advances in Intrusion
+Detection. Springer: Berlin Heidelberg, 2001; 85–103.
+5. Ning P, Cui Y, Reeves DS. Constructing attack scenarios through correlation of intrusion alerts. In Proceedings of the 9th ACM conference on Computer and
+communications security, ACM, 2002.
+6. Morin B, Mé L, Debar H, Ducassé M. A logic-based
+model to support alert correlation in intrusion detection. Information Fusion 2009; 10(4):285–299.
+7. Totel E, Vivinis B, Mé L. A language driven intrusion
+detection system for event and alert correlation. In
+Proceedings at the 19th IFIP International Information Security Conference, Kluwer Academic, Toulouse.
+2004; 209–224.
+8. Cheung S, Lindqvist U, Fong MW. Modeling multistep cyber attacks for scenario recognition. In DARPA
+information survivability conference and exposition,
+2003. Proceedings. IEEE, 2003.
+
+F. Faraji Daneshgar and M. Abbaspour
+
+9. Cuppens F, Miege A. Alert correlation in a cooperative
+intrusion detection framework. In Security and Privacy, 2002. Proceedings. 2002 IEEE Symposium on.
+IEEE, 2002.
+10. Templeton SJ, Levitt K. A requires/provides model for
+computer attacks. In Proceedings of the 2000 workshop on New security paradigms, 2001. ACM.
+11. Qin X. A probabilistic-based framework for infosec
+alert correlation, 2005, Citeseer.
+12. Qin X, Lee W. Statistical causality analysis of infosec
+alert data. In Recent Advances in Intrusion Detection.
+Springer: Berlin Heidelberg, 2003; 73–93.
+13. Sadoddin R, Ghorbani AA. An incremental frequent
+structure mining framework for real-time alert correlation. Computers & Security 2009; 28(3):153–173.
+14. Zhu B, Ghorbani AA. Alert Correlation for Extracting Attack Strategies IJ Network Security 3.3. 2006; 244–258.
+15. Bateni M, Baraani A, Ghorbani A. Using artiﬁcial immune system and fuzzy logic for alert correlation. IJ
+Network Security 2013; 15(3):190–204.
+16. Farhadi H, AmirHaeri M, Khansari M. Alert correlation and prediction using data mining and HMM. The
+ISC International Journal of Information Security
+2015; 3(2):77–101.
+17. Ahmadinejad SH, Jalili S, Abadi M. A hybrid model
+for correlating alerts of known and unknown attack
+scenarios and updating attack graphs. Computer Networks 2011; 55(9):2221–2240.
+18. Ren H, Stakhanova N, Ghorbani AA. An online
+adaptive approach to alert correlation. In Detection
+of Intrusions and Malware, and Vulnerability Assessment. Springer-Verlag: Berlin Heidelberg, 2010;
+153–172.
+19. Dain OM, Cunningham RK. Building scenarios from a
+heterogeneous alert stream. In Proceedings of the 2001
+IEEE workshop on Information Assurance and Security. West Point, NY, USA, 2001.
+20. Dain O, Cunningham RK. Fusing a heterogeneous alert
+stream into scenarios. In Proceedings of the 2001 ACM
+workshop on Data Mining for Security Applications. Philadelphia, PA, 2001.
+21. Ning P, Xu D. Learning attack strategies from intrusion
+alerts. In Proceedings of the 10th ACM conference on
+Computer and communications security. ACM, 2003.
+22. Valdes A, Skinner K. Probabilistic alert correlation. In
+Recent Advances in Intrusion Detection. Springer: Berlin
+Heidelberg, 2001.
+23. Chiu S-C, Li H-F, Huang J-L, You H-H. Incremental
+mining of closed inter-transaction itemsets over data
+stream sliding windows. Journal of Information Science 2011; 37(2):208–220.
+
+Fuzzy adaptive alert correlation
+
+24. Valeur F, Vigna G, Kruegel C, Kemmerer RA. Comprehensive approach to intrusion detection alert correlation.
+Dependable and Secure Computing, IEEE Transactions
+on 2004; 1(3):146–169.
+25. Elshoush HT, Osman IM. Alert correlation in collaborative intelligent intrusion detection systems—a
+survey. Applied Soft Computing 2011; 11
+(7):4349–4365.
+26. Sadoddin R, Ghorbani A. Alert correlation survey:
+framework and techniques. In Proceedings of the
+2006 International Conference on Privacy, Security
+and Trust: Bridge the Gap Between PST Technologies
+and Business Services. ACM, 2006.
+27. Cuppens F, Ortalo R. Lambda: a language to model a
+database for detection of attacks. In Recent Advances
+in Intrusion Detection. Springer: Berlin Heidelberg,
+2000.
+28. Eckmann ST, Vigna G, Kemmerer RA. STATL: an
+attack language for state-based intrusion detection.
+Journal of Computer Security 2002; 10(1):71–103.
+29. Darpa 2000 intrusion detection evaluation dataset. MIT Lincoln Laboratory, 2000; Available from: http://www.ll.mit.
+edu/IST/ideval/data/2000/2000\_data\_ index.htm (2000).
+30. Ning P. TIAA: A Toolkit for Intrusion Alert Analysis.
+2005.
+31. Shiravi A, Shirvani H, Tavallaee M, Ghorbani AA. Toward developing a systematic approach to generate
+benchmark datasets for intrusion detection. Computers
+& Security 2012; 31(3):357–374.
+
+APPENDIX A
+The Fuzzy-DSM_CIEP,
+Fuzzy_IEP-tre-Construction
+and Fuzzy-IEP-Maintenance
+are given:
+
+Security Comm. Networks (2016) © 2016 John Wiley & Sons, Ltd.
+DOI: 10.1002/sec
+
+Fuzzy adaptive alert correlation
+
+Security Comm. Networks (2016) © 2016 John Wiley & Sons, Ltd.
+DOI: 10.1002/sec
+
+F. Faraji Daneshgar and M. Abbaspour
+
+

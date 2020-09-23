@@ -1,0 +1,1215 @@
+200
+
+IEEE Transactions on Consumer Electronics, Vol. 62, No. 2, May 2016
+
+A Multi-stage Attack Mitigation Mechanism for
+Software-defined Home Networks
+Shibo Luo, Jun Wu, Member, IEEE, Jianhua Li, and Longhua Guo
+
+Abstract —Software-defined Home Networks (SDHN) is a
+key development trend of smart home which is proposed to
+realize multi-home visual sharing. With the improved
+openness and programming ability, SDHN faces increased
+network threat than traditional home networks. Especially,
+because of the diversity and heterogeneity of smart home
+products, multi-stage attack is more convenient to be
+performed in SDHN. To mitigate multi-stage attack in SDHN,
+some significant problems are needed to be addressed. The
+first problem is security assessment along with attack events.
+The second one is countermeasure selection problem based on
+security assessment result and security policy. The third one is
+attack mitigation countermeasure deployment problem
+according to current network context to meet the
+countermeasure decision instantly. In this paper, a multi-stage
+attack mitigation mechanism is proposed for SDHN using
+Software-Defined Networking (SDN) and Network Function
+Virtualization (NFV). Firstly, an evidence-driven security
+assessment method using SDN factors and NFV-based
+detection is designed to perform security assessment along
+with observed security events. Secondly, an attack mitigation
+countermeasure selection method is proposed. The evaluation
+shows that the proposed mechanism is effective for multi-stage
+attack mitigation in SDHN1.
+Index Terms —Software-defined home networks, Network
+function virtualization, Attack graph, Multi-stage attack
+mitigation.
+
+I. INTRODUCTION
+In recent years, smart home becomes a hot issue in
+consumer electronics [1], [2]. Smart home is usually used to
+define a residence which has smart appliances, computers,
+smart TVs, and entertainment audio & video systems [3], [4].
+These smart appliances are capable of communicating with
+
+1
+This work is supported by National Natural Science Foundation of China
+(Grant No. 61401273 and 61431008), Doctoral Scientific Fund Project of the
+Ministry of Education of China (No. 20130073130006).
+Shibo Luo is with the School of Electronic Information and Electrical
+Engineering, Shanghai Jiao Tong University, Shanghai, China (e-mail:
+luoshibo.pla@sjtu.edu.cn).
+Jun Wu is with the School of Electronic Information and Electrical
+Engineering, Shanghai Jiao Tong University, Shanghai, China (e-mail:
+junwuhn@sjtu.edu.cn).
+Jianhua Li is with the School of Electronic Information and Electrical
+Engineering, Shanghai Jiao Tong University, Shanghai, China (e-mail:
+lijh888@sjtu.edu.cn).
+Longhua Guo is with the School of Electronic Information and Electrical
+Engineering, Shanghai Jiao Tong University, Shanghai, China (e-mail:
+staring@sjtu.edu.cn).
+
+Contributed Paper
+Manuscript received 03/30/16
+Current version published 06/29/16
+Electronic version published 06/29/16
+
+one another and can be controlled remotely from any location
+in the world by phone or Internet [5], [6].
+As smart home automation products flood the market, they
+become easy targets for network attackers [7]. Among the
+attacks, some are specific to smart home. Especially, some of
+the attacks maybe produce physical harm to the home system
+or people’s security. For example, an adversary could
+fabricate messages to the Energy Services Interface requesting
+that all devices within the home get switched on or switched
+off. These could threaten the lives of the resident family if life
+support equipment is hacked by this mean. Furthermore, when
+smart home interconnects these automation products and
+opens access to remote devices through Internet, it leads the
+home networks to face increased security threat because local
+vulnerabilities will introduce new security holes [8]. This
+makes multi-stage attack the most harmful one to smart homes.
+Moreover, diversity and heterogeneity of connected smart
+devices introduce various management and interoperability
+problems [8]. It makes the home networks more convenient to
+multi-stage attack. An effective multi-stage attack mitigation
+scheme is needed.
+On the other hand, Software-Defined Networking (SDN)
+has attracted great attentions as emerging future network
+architecture, whose control plane is decoupled from
+forwarding and directly programmable. This feature is of great
+help to simplify policy enforcement and network
+configuration and evolution [9].
+Besides SDN, Network Function Virtualization (NFV) is
+also an attractive new technology to network management. It
+enables network appliances, such as firewalls, Deep Packet
+Inspection (DPI), and Intrusion Detection Systems (IDS), to
+be deployed in software as virtualized components
+provisioned in general-purpose hardware systems [10], [11].
+And until now, the key challenges in the implementation of
+NFV are conquered as illustrated in [11], in which the key
+obstacle is the performance of the smart home automatics
+products to process network flows. The overhead of handling
+interrupts in operation system exceeds the time spent
+processing packets, packet copies in operation system
+introduce a high cost, and the overhead in network I/O in
+virtualized settings is enormous. NFV has brought benefits to
+home networks. For example, by facilitating the virtualization
+of the home networks through high-throughput last-mile
+access capability, NFV brings down the complexity of IPTV
+services [10].
+SDN and NFV paradigms are excellent matches to
+address the problems in smart home. In recent years, many
+researches focus on the integration of SDN and smart home
+networks named Software-defined Home Networks (SDHN)
+[3], [4]. A SDHN system is proposed to realize multi-home
+
+0098 3063/16/$20.00 © 2016 IEEE
+
+S. Luo et al.: A Multi-stage Attack Mitigation Mechanism for Software-defined Home Networks
+
+visual sharing which has attracted increased attention in the
+market [3]. The devices in the scheme enable on-demand
+provisioning for protocol-agnostic home networking. Thus it
+releases home users from manually configuring devices and
+installing software applications and provides a high degree
+of flexibility for intra-home and inter-home networking.
+Although it brings home networks several advantages
+such as convenience and efficiency, SDHN also causes some
+hidden security problems. Because of the existence of
+application APIs in SDHN, attackers have more chances to
+compromise SDHN than traditional networks. In addition,
+the heterogeneity of SDHN makes security assessment more
+difficult. Thus, providing an unrivalled security service is a
+critical issue for SDHN [12]-[14].
+There are already some researches focusing on the
+security issue about smart home networks. Some researchers
+introduce lightweight and secure session key establishment
+scheme for smart home. The mechanism provides important
+security attributes including prevention of various popular
+attacks, such as denial-of-service and eavesdropping attacks
+[15]. Some other researchers design a secure access gateway
+for home area networks which can monitor and control the
+smart devices in real-time and secure them. But all of them
+focus on isolated security issue in smart home networks, no
+researches focus on the special features in SDHN [16].
+The distinct features brought by SDN and NFV facilitate
+the attack mitigation in SDHN. Intuitively, SDN provides
+the advantage to monitor the entire network including all
+network events including attack evidences, and then the
+security application above the controller can measure the
+current security state of the network and make a
+countermeasure decision. When the security application
+makes a countermeasure decision, it can notify the controller
+to deploy the security mitigation plan utilizing its
+programmability and NFV’s virtualization property.
+There are three important problems need to be addressed
+in the above intuition. The first one is security assessment
+problem along with attack events. In security assessment
+field, the attack graph is a dominant method [17]-[19]. But
+most of them do not focus on SDN. The second one is
+countermeasure selection problem based on security
+assessment result and security policy. Some researchers
+have focused on countermeasure selection [17]-[19]. Most
+of them are special to their own context and cannot be
+applied to smart home networks directly. The third one is
+attack mitigation countermeasure deployment problem
+according to current network context to meet the
+countermeasure decision instantly. As a result, a multi-stage
+attack mitigation mechanism to solve the above problems is
+badly needed in SDHN.
+At the same time, with the increased significant security
+requirements, network appliances are gradually equipped in
+home networks. Especially, IDS for home networks has
+attracted a lot of attentions [20]-[22]. For example, a
+specification-based IDS was proposed for home networks in
+smart grids [20]. The normal behavior of the home networks
+is defined through selected specifications which are
+extracted from the IEEE 802.15.4 standard in IDS. Also,
+
+201
+
+some intrusion detection schemes were proposed for the key
+devices in home networks. For example, an IDS solution
+was proposed for home-router defending against mid-stream
+injection attacks [22]. The facts make it practical to address
+the aforementioned problems inheriting traditional home
+networks security appliances in home networks.
+This paper studies the three important problems and
+proposes an effective multi-stage attack mitigation scheme.
+The rest of the paper is organized as follows: The multistage attack mitigation mechanism for SDHN is described in
+Section II. Security assessment driven by evidences using
+SDN and NFV is discussed in Section III. And
+countermeasure selection solution based on SDN and NFV
+is discussed in Section IV. Evaluate of the proposed scheme
+is illustrated in Section V. and the paper is concluded in
+Section VI.
+II. THE PROPOSED ATTACK MITIGATION MECHANISM
+A. Proposed Architecture for SDHN
+With the development of modern information technologies,
+customers pay more attention to network capability and
+security in home networks. Based on the SDN-enabled future
+home-networking [3], the enhanced architecture which has the
+system ability to monitor comprehensive network events and
+deploy the network security functions instantly is proposed. It
+is beneficial to mitigate multi-stage attack in SDHN. The
+proposed architecture is shown in Fig. 1.
+There are two important features in the architecture. The
+first one is that the SDN controller is enhanced. It not only
+controls the smart devices but also control the other network
+appliances such as IDS, firewall and logger. The second one
+is that the smart devices and network appliances have the
+ability to install Virtual Network Function (VNF). It is
+practical because of the improvement of the capabilities of the
+processors and storages in current smart devices and network
+appliances.
+
+Fig. 1. SDN/NFV-based smart home networks architecture. It has the
+ability to monitor comprehensive network events and deploy the network
+security functions instantly.
+
+202
+
+More details about the SDN controller and smart devices
+are illustrated in Fig. 2.
+Besides the common components of SDN controller such as
+northbound interface and southbound interface, there are other
+eight components in the enhanced SDN controller.
+The VNF registry functional entity maintains all the
+information about the VNFs that registered initiate. The
+information includes function, required resource, cost, effect
+and etc. The VNF discovery functional entity provides VNF
+selection and negotiation capabilities. It interacts with the
+VNF registry functional entity to select the VNFs that match
+security criteria. The SDN controller management functional
+entity collects the network information from the control panel.
+Also it notifies the controller to perform the security policy.
+The VFN management functional entity collects the security
+events from the VFN nodes in the domain. Also it notifies the
+VFN nodes to perform the security policy. The evidencedriven security assessment functional entity is triggered by
+attack evidences, and measures the current security state along
+with the evidences. When it judges that the system is in
+danger, it triggers the attack countermeasure functional entity
+to decide mitigation plan. The attack countermeasure
+functional entity decides the attack mitigation plan obeyed the
+security policy sent from the security applications. And it
+enforces the security polices in virtual network functions
+management functional entity and SDN controller
+management functional entity. The network events collector
+functional entity monitors the network defense appliances
+such as IDS, firewall, and sends the events to evidence-driven
+security assessment functional entity. Controller stores various
+types of VNFs such IDS, firewall and logging. The form of
+VNFs is binary code or interpreted language scripts. And in
+proposed switches, besides table flow, there exists several
+VNF containers. The VNF container maybe is virtual machine
+or interpreter in form.
+
+Fig. 2. Details of proposed SDN controller and smart devices. SDN
+controller and smart devices integrate the features of SDN with NFV to
+protect smart home networks.
+
+IEEE Transactions on Consumer Electronics, Vol. 62, No. 2, May 2016
+
+B. Workflow of Attack Mitigation
+The workflow of proposed attack mitigation framework is
+illustrated in Fig. 3. The SDN controller and VNF
+management entity register their resources and send their
+status to network. Then the system has the global view of
+network topology and VNFs. When an event is collected by
+network events collector, an evidence-driven security
+assessment process using attack graph model and posterior
+inference is triggered. Based on the assessment result, security
+countermeasure selection process using constrained
+optimization algorithm decide an attack mitigation plan. At
+last, the system enforces the security policies of SDN
+controller and VNF management according to the attack
+mitigation plan.
+
+Fig. 3. Workflow of attack mitigation mechanism. SDN controller acts as
+the brain and information collector and NFV acts as security measures.
+
+III. EVIDENCE-DRIVEN SECURITY ASSESSMENT USING
+SDN FACTORS AND NFV BASED DETECTION
+A. Mechanism of Evidence-Driven Security Assessment using
+SDN Factors and NFV-based Detection
+The mechanism of evidence-driven security assessment
+using SDN factors and NFV based detection is illustrated in
+Fig. 4.
+In the mechanism, SDN controller collects topology and
+vulnerabilities information instantly. The information mainly
+includes network nodes, connectivity and vulnerabilities lies
+in the network nodes. It is easy to do the job for SDN
+controller because its central control role in the network.
+Then SDN controller generates the attack graph with
+current probabilities using later algorithms.
+Traditional network defense appliances and NFV-based
+network defense appliances detect real-time security events in
+the network and send them to SDN controller. Then SDN
+controller measures the current security level driven by these
+evidences using the algorithms of evidence-driven security
+assessment discussed in later section.
+
+S. Luo et al.: A Multi-stage Attack Mitigation Mechanism for Software-defined Home Networks
+
+By this means, attack graph with new probabilities is
+generated. It can denote the current security level of the
+network.
+
+203
+
+is conducted. Since an action will change its
+consequent network state only when it succeeds, Φ is
+also the probability that an action set its consequent
+node variables to be True.
+Consequently, a typical network attack graph is like the one
+illustrated in Fig. 5:
+
+Fig. 4. Mechanism of evidence-driven security assessment using SDN
+factors and NFV based detection. The mechanism is comprehensive and
+dynamic.
+
+B. Proposed Attack Graph
+Abstractly, an attack graph is a collection of scenarios
+showing how a malicious agent can compromise the integrity
+of a target system. Attack graph is used as the method to
+measure static network security level defined as follows.
+Definition 1: A network attack graph is a 7-tuple directed
+
+Fig. 5. A typical network attack graph. It shows all possible scenarios that
+how an attacker achieves to the goal.
+
+acyclic graph AG = ( S, S0 , G, A, E, Δ, Φ ) , where:
+
+and a2 will be conducted (with probabilities defined in  ),
+
+
+
+S = {si | i = 1,..., N s } is a finite set of state nodes. The
+
+and further make the network state transfer to s2 , s3 and s4
+
+value of each node variable si can be either True or
+
+(with probabilities defined in Φ ).
+The existences of an edge between two nodes imply that
+there is a causal dependency between their states, signified by
+the decomposition at each node. AND-decomposition
+signifies that the compromised state of a node implies that all
+nodes in its parent set have also been compromised. Similarly,
+OR-decomposition signifies that at least one parent node is in
+the true state.
+
+
+
+False, denoting whether it is in a state that has been
+taken over by the attacker;
+S0  S is a set of state the attacker initially takes
+
+
+
+over (with certain probabilities). Graphically it is the
+set of the root nodes of AG;
+G  S is a set of attack goals;
+
+
+
+A = {ai | i = 1,..., N a } is a finite set of action nodes.
+
+The value of each node variable ai can be either True
+
+
+
+In Fig. 5, the initial state is s1 . Then intrusion actions a1
+
+or False, denoting whether an intrusion action has
+been conducted by the attacker;
+E = ( E1  E2 ) is a finite set of edges which link
+nodes together. Here E1  S  A is the set of edges
+which denote an action can only be conducted given
+that all the prerequisite state are taken over by the
+attacker, E2  A  S is the set of edges which denotes
+an action may consequently let the attacker take over
+some other state. Generally Pre( n) and Con( n ) are
+used to denote the prerequisite nodes and consequent
+nodes of node n respectively;
+
+
+
+ = { : (Pre( ai ), ai )  [0,1]} is the local conditional
+
+
+
+probability distribution that an action will be
+conducted given that its prerequisite is satisfied.
+Φ = { : ( ai , Con( ai ))  [0,1]} is the local conditional
+probability distribution that an action will succeed if it
+
+C. Principle of Evidence-Driven Security Assessment
+There are many methods to propose schemes to extrapolate
+network security state according to the security evidence. And
+the probabilistic method is a predominant one. The basic idea
+lies in the scheme is as following:
+Use a list of parameters in attack graph to delegate the
+security state of network. When new evidences come, the
+values of the list of parameters will vary, and then new
+security state of network is extrapolated.
+It is a posterior inference problem. And the evidence-driven
+security assessment is as same as the problem. According the
+probabilistic method, there are three problems need to be
+addressed to measure the security along with evidence. They
+are how to calculate Pr( ai ) and Pr( si ) separately, and how to
+calculate the posterior probability with evidences Pr( ai | E) .
+Based on the previous research [17], these probabilities are
+calculated as follows:
+Pr( ai ) = 2  B_AV  B_AC  B_AU
+
+(1)
+
+204
+
+IEEE Transactions on Consumer Electronics, Vol. 62, No. 2, May 2016
+
+In the equation, B_AV represents access vector, B_AC
+represents access complexity, and B_AU represents
+authentication instances.
+Pr( si ) = 0.98
+
+Pr( ai | E) = Pr(E | ai )  Pr( ai ) / Pr(E)
+
+(2)
+(3)
+
+Pr(E) and Pr( ai ) are the prior unconditional probability
+
+values of the corresponding nodes. Pr(E | ai ) is the
+conditional probability of joint occurrence of ai ,...., am given
+the states of a j . Since evidence nodes in E are mutually
+independent,
+
+Pr(E | ai ) =  i Pr( ai | a j )
+
+and
+
+reach a target in attack graph are below a certain threshold,
+and at the same time the cost to deploy attack mitigation
+controls is the minimum value in all mitigation plans.
+Definition 3: Let M = {mi | i = 1,..., N a } be the attack
+mitigation controls for actions A = {ai | i = 1,..., N a } . An
+attack mitigation plan is represented by a Boolean
+vector T = {ti | i = 1,..., N a } , where ti = True represents mi is
+adopted in the plan and ti
+
+= False represents mi is not
+
+adopted in the plan.
+Suppose there are p paths for target in attack graph, and T is
+the attack mitigation plan. And Threshold is the maximum
+value allowed after perform attack mitigation plan. Then
+probability of successful attack for i - th path is Pi (T ) . And
+the total cost for attack mitigation plan T is Cost i (T ) .
+To achieve the goal of attack mitigation plan, the values
+must obey the policy:
+
+Pr( ai | a j ) =  i Pr( ai ) .
+
+IV. ATTACK MITIGATION USING SDN CONTROL AND NFV
+DEPLOYMENT
+
+A. Mechanism of Attack Mitigation using SDN Control and
+NFV Deployment
+The mechanism of attack mitigation using SDN control and
+NFV deployment is illustrated in Fig. 6.
+
+Pi (T )  Threshold, i = 1, ..., p
+
+(5)
+
+and
+Minimize Cost(T )
+
+(6)
+
+This is a constrained optimization problem and many
+algorithms can be applied directly to solve constrained
+optimization problem [23].
+Fig. 6. Mechanism of attack mitigation using SDN control and NFV
+deployment. The mechanism is context-aware and dynamic.
+
+Based on the attack graph driven by evidences as
+aforementioned, SDN controller respects all the VNFs that
+have been registered before and decides attack mitigation plan
+for current situation obeyed predefined security policy. The
+algorithms for how to decide attack mitigation plan is
+discussed in later section. Then, SDN controller gets the
+attack mitigation plan and installs the VNF instances into the
+selected network nodes. VFN can be realized as binary codes
+or interpreted language scripts. After these steps, mobile
+network can defend against the threats and reach secure status.
+B. Principle of Attack mitigation
+Definition 2: Let mi ( pi , costi ) is an attack mitigation
+
+control for action ai . And pi is the factor that decrease the
+successful probability of ai . And costi is the cost to deploy
+the attack mitigation control. Then:
+Pr( a j
+
+| mi ) = Pr( a j )  pi
+
+(4)
+
+The goal of attack mitigation plan is to deploy enough
+attack mitigation controls so that all of the probabilities to
+
+V. EVALUATION AND DISCUSSION
+
+In this section, a case is studied to evaluate the proposed
+scheme and the practicability analysis for the implementation
+of this scheme is discussed. Firstly, experimental setup for
+multi-stage attack mitigation is illustrated. In the experiment,
+the attacker generates a multi-stage attack penetrating into the
+internal smart home networks through a home router that can
+be accessed form the Internet and then travels to the
+microwave ovens to harm the physical world. Next, attack
+graph and mitigation plan decision for attack mitigation are
+provided.
+A. Experimental Setup for Multi-stage Attack Mitigation
+The SDHN model illustrated in Fig. 1 is used for the
+evaluation case. The network is divided into three zones. The
+access zone includes home router and surveillance camera that
+can be accessed from internet directly. The entertainment zone
+includes personal computer, smart TV, video system, and etc.
+The living zone includes smart washing machine, smart
+microwave oven, and etc.
+To protect the boundary of the zones, a DMZ tri-homed
+firewall is installed. With the firewall, the home router and the
+surveillance camera located in the access network are separated
+from the entertainment zone. The firewall confirms that users in
+Internet cannot access the devices in entertainment zone directly.
+
+S. Luo et al.: A Multi-stage Attack Mitigation Mechanism for Software-defined Home Networks
+
+In order to accommodate the surveillance camera’s transaction,
+it is allowed to access the video system in entertainment zone.
+And the home router can access the personal computer directly.
+To manage the video data, a SQL server is running on the video
+system. The living zone is managed by the personal computer.
+A smart microwave oven locates in the living zone. It is
+dangerous because of its physical harm and is the target for
+attack in the case.
+TABLE I
+NETWORK CONNECTIVITY
+From
+
+To
+
+Protocol
+
+Internet
+Home router
+Internet
+Surveillance camera
+Surveillance camera
+Video system
+Personal
+Home router
+computer
+Personal
+Video system
+computer
+Smart microwave
+Personal computer
+oven
+
+HTTP, IMAP, SMTP
+HTTP
+SQL
+Basic network protocols
+Basic network protocols
+Basic network protocols
+
+TABLE II
+INITIAL LIST OF VULNERABILITIES IN CASE NETWORK
+Host
+Surveillance
+camera
+(192.168.1.10)
+
+Home
+router
+(192.168.1.20)
+Video
+system
+(192.168.1.200)
+
+Personal computer
+(192.168.1.100)
+
+Smart microwave
+oven
+(10.10.1.254)
+
+Vulnerability
+IIS
+vulnerability
+in WebDAV
+service
+Remote code
+execution in
+SMTP
+Error message
+information
+leakage
+SQL Injection
+Heap
+corruption in
+OpenSSH
+Inproper
+cookies
+handler in
+OpenSSH
+Remote code
+execution in
+Linux
+
+CVE#
+
+Type of Attack
+
+CVE 20091535
+
+Remote-2-local
+authentication
+bypass
+
+CVE 20040840
+
+Remote-2-root
+
+CVE 20083060
+
+Account
+information theft
+
+CVE 20085416
+
+Remote-2-root
+
+CVE 20030693
+
+Local-2-root
+
+CVE 20074752
+
+Authentication
+bypass
+
+CVE 20150235
+
+Remote-2-root
+
+The network connectivity is illustrated in Table I. CVE
+(Common Vulnerabilities & Exposures) database nominates
+the common vulnerabilities and exposures which helps share
+data between different independent vulnerability databases
+and monitoring tools. The list of initial vulnerabilities in the
+case network model is listed in Table II.
+These vulnerabilities can produce several attack scenarios.
+The results of attack are ranging from information leakage to
+system compromise. And there exists attack paths that the
+attacker can compromise the smart microwave oven from the
+Internet.
+Also the countermeasures to decrease the exploitation
+successful probability of the listed vulnerabilities are listed. In
+
+205
+
+the case, there are seven countermeasures to defend special
+vulnerability exploitation. And the effect and cost of the
+countermeasures are not identical. Each countermeasure along
+with its effect and cost are listed in Table III.
+TABLE III
+LIST OF COUNTERMEASURES FOR VULNERABILITIES IN CASE NETWORK
+Action
+a1
+a2
+a3
+a3
+a4
+a5
+a6
+a7
+
+CVE#
+
+Control
+
+Effect
+
+Cost
+
+CVE 2004-0840
+CVE 2009-1535
+CVE 2003-0693
+CVE 2003-0693
+CVE 2008-5416
+CVE 2007-4752
+CVE 2015-0235
+CVE 2008-3060
+
+C1
+C2
+C3
+C4
+C5
+C6
+C7
+C8
+
+0.4
+0.4
+0.4
+0.25
+0.4
+0.4
+0.4
+0.4
+
+10
+10
+10
+40
+10
+10
+10
+10
+
+It is necessary to point out that the “Effect” column in Table
+III represents that when deploy the countermeasure, the
+corresponding exploitation successful probability will
+decrease to the level equal to the former probability multiple
+the “Effect” value. In addition, the case assumes the IDS
+produces an alert that the attacker want compromise the
+personal computer on the video system using CVE 2003-0693
+exploitation. If without IDS, the features of network
+monitored by other devices can also be analyzed to acquire the
+capability of the home networks. The analysis result helps
+produce an alert. Also, a threshold that all the probability to
+achieve compromising the smart microwave oven should be
+below is set. The value of the threshold is 0.02. It means the
+maximum value of total probabilities of all paths is below 0.02.
+Generated Attack Graph
+In the initial network state, no security event is detected,
+and the static attack graph in the initial state is illustrated in
+Fig. 7.
+B.
+
+Fig. 7. Attack graph generated from case network. Smart microwave oven
+is the attack target.
+
+In Fig. 7, there are eight state nodes
+
+( S1 - S )
+8
+
+and seven
+
+action nodes ( a1 - a7 ) . Each state node represents a current
+state of the network. And each action node represents
+vulnerability exploitation in the initial list of vulnerability in
+
+206
+
+IEEE Transactions on Consumer Electronics, Vol. 62, No. 2, May 2016
+
+unconditional transfer probability between nodes. Also there
+is a security event detected.
+When the attacker wants perform action 3 to compromise
+personal computer on video system, the IDS discovers the
+action and alert to the security service. The goal of attack
+mitigation is to defend the smart microwave oven. Using the
+method aforementioned, the unconditional transfer
+probabilities for each edge in static and dynamic environment
+are calculated respectively as listed in Table IV.
+TABLE IV
+UNCONDITIONAL PROBABILITIES OF (P1-P8) IN ATTACK GRAPH
+Stage
+
+Pre-evidence
+stage
+Post-evidence
+stage
+Stage
+
+Pre-evidence
+stage
+Post-evidence
+stage
+
+P1
+
+P2
+
+P3
+
+P4
+
+P5
+
+P6
+
+P7
+
+P8
+
+0.9
+8
+0.9
+9
+
+0.9
+8
+0.9
+9
+
+0.4
+5
+0.4
+9
+
+0.4
+7
+0.5
+2
+
+0.9
+8
+0.9
+9
+
+0.9
+8
+0.9
+9
+
+0.9
+8
+0.9
+9
+
+0.5
+3
+0.6
+1
+
+P9
+
+P10
+
+P11
+
+P12
+
+P13
+
+P14
+
+P15
+
+0.9
+8
+1.0
+0
+
+0.7
+7
+0.8
+6
+
+0.4
+2
+0.4
+8
+
+0.9
+8
+0.9
+9
+
+0.9
+8
+0.9
+9
+
+0.3
+5
+0.4
+2
+
+0.3
+7
+0.4
+6
+
+mitigation plans except the countermeasures c6 and c8are
+illustrated in Fig. 8 with their probabilities and in Fig. 9 with
+their cost.
+In all of the possible mitigation plans, besides the selected
+countermeasure, there are also some other countermeasures
+that both the probabilities of the two attack paths are below
+the threshold. But the cost of the proposed countermeasure is
+the lowest one among them.
+
+0.20
+
+Probabilities of Attack Paths
+
+case network. Each edge labeled with ( P1 - P15 ) represents
+
+Probability of Attack Path 1
+Probability of Attack Path 2
+
+0.15
+
+0.10
+
+0.05
+
+0.00
+0
+
+5
+
+10
+
+15
+
+20
+
+25
+
+30
+
+35
+
+40
+
+45
+
+50
+
+55
+
+60
+
+Countermeasure Index
+
+Fig. 8. Total probabilities of the two attack paths of all the
+countermeasures.
+
+C.
+
+is calculated as follows when the attack evidence is observed:
+P1total = P1  P4  P7  P10  P12  P14 = 0.182
+
+(7)
+
+120
+Total Cost
+
+100
+
+Total Cost
+
+Attack Mitigation Plan Decision
+According to the attack graph, there are two paths that the
+attacker can compromise the smart microwave oven.
+In the first path, the attacker can compromise the home
+router, the personal computer and the smart microwave oven
+sequentially. The success probability of this attack path P1total
+
+80
+60
+40
+20
+0
+
+In the second path, the attacker can compromise the
+surveillance camera, the video system, and the personal
+computer and the smart microwave oven sequentially. And
+the success probability of this attack path P2 total is calculated
+as follows when the attack evidence is observed:
+P2total = P2  P3  P5  P8  P9  P10  P12  P15 = 0.104 (8)
+
+To mitigate the detected attack, using the constrained
+optimization algorithm, the exact attack mitigation plan for
+post-evidence stage is generated.
+In the result attack mitigation plan, the countermeasures
+include C3 and C4. When the countermeasures are applied to
+the mobile network, the success probabilities of the two attack
+paths decrease to 0.018 and 0.010 separately calculated as
+follows. They are all below the threshold defined in previous
+section. The total cost of the countermeasure Cost Total is 50.
+To verify the algorithm, the entire possible countermeasures
+are listed. To simplify the illustration, all the possible
+
+0
+
+5
+
+10
+
+15
+
+20
+
+25
+
+30
+
+35
+
+40
+
+45
+
+50
+
+55
+
+60
+
+Countermeasure Index
+
+Fig. 9. Total cost of all the countermeasures.
+
+VI. CONCLUSION
+
+In this paper, a multi-stage attack mitigation scheme for
+SDHN using SDN and NFV is provided. It extends the classic
+SDHN architecture to a comprehensive one that leverages the
+advantages of SDN and NFV to mitigate multi-stage attacks,
+including global view, central control, programmability, and
+instant deployment. In the comprehensive architecture,
+security functions are deployed widely in the network and the
+features of global view and central control for the security
+architecture are provided. By these means, the architecture
+provides agile policy and effective response functions. An
+evidence-driven security assessment mechanism and
+algorithms are proposed to solve the dynamic security
+assessment problem. It can measure the current security level
+of SDHN based on the threat information. The attack
+mitigation problem is approved essentially a constrained
+
+S. Luo et al.: A Multi-stage Attack Mitigation Mechanism for Software-defined Home Networks
+
+optimization problem and attack mitigation mechanism is
+provided. The evaluation shows that proposed scheme is
+effective for attack mitigation of SDHN.
+REFERENCES
+[1]
+
+[2]
+
+[3]
+[4]
+[5]
+
+[6]
+[7]
+
+[8]
+
+[9]
+[10]
+[11]
+
+[12]
+[13]
+
+[14]
+[15]
+
+[16]
+[17]
+[18]
+
+M. Usman, V. Muthukkumarasamy, and X. Wu, “Mobile agent-based
+cross-layer anomaly detection in smart home sensor networks using
+fuzzy logic,” IEEE Trans. Consumer Electronics, vol. 61, no.2, pp. 197205, May 2015.
+J. Wang, Z. Zhang, B. Li, S. Lee, and R.S. Sherratt , “An enhanced fall
+detection system for elderly person monitoring using consumer home
+networks,” IEEE Trans. Consumer Electronics, vol. 60, no. 1, pp. 23-29,
+Feb. 2014.
+J. Jo, S. Lee, and J. Kim, “Software-defined home networking devices
+for multi-home visual sharing,” IEEE Trans. Consumer Electronics, vol.
+60, no. 3, pp. 534-539, Aug. 2014.
+Ei, H., and W. V.W.S., “Bandwidth allocation and pricing for SDNenabled home networks,” in Proc. 2015 IEEE International Conference
+on Communications, London, UK, pp. 5342-5347, Jun. 2015.
+H. Kumar, H. Gharakheili, and V. Sivaraman, “User control of quality of
+experience in home networks using SDN,” in Proc. 2013 IEEE
+International
+Conference
+on
+Advanced
+Networks
+and
+Telecommuncations Systems, Kattankulathur, Indian, pp. 1-6, Dec. 2013.
+L. Costa, N. Almeida, A. Correa, R. Lopes, and M. Zuffo, “Accessible
+display design to control home area networks,” IEEE Trans. Consumer
+Electronics, vol. 59, no. 2, pp. 422-427, May 2013.
+N. Komninos, E. Philippou, and A. Pitsillides, “Survey in Smart Grid
+and Smart Home Security: Issues, Challenges and Countermeasures,”
+IEEE Communication Survey & Tutorials, vol. 16, no. 4, pp. 1933-1954,
+Fourth Quarter 2014.
+N. Liu, J. Zhang, H. Zhang, and W. Liu, “Security Assessment for
+Communication Networks of Power Control Systems Using Attack
+Graph and MCDM,” IEEE Trans. on Power Delivery, vol. 23, no. 3, pp.
+1492–1500, Jun. 2010.
+D. Kreutz, F. Ramos, P. Verı´ssimo, E. Rothenberg, S. Azodolmolky,
+and S. Uhlig, “Software-defined networking: A comprehensive survey,”
+in Proc. of the IEEE, vol. 103, no. 1, pp. 14-76, Jan. 2015.
+B. Han, V. Gopalakrishnan, L. Ji, and S. Lee, “Network function
+virtualization: challenges and opportunities for innovations,” IEEE
+Communications Magazine, vol. 53, no. 2, pp. 90-97, Feb. 2015.
+T. Wood, K. Ramakrishnan, J. Hwang, G. Liu, and W. Zhang, “Toward
+a software-based network: integrating software defined networking and
+network function virtualization,” IEEE Network Magazine, vol. 29, no.
+3, pp. 36–41, 2015.
+S. Junggab, R. Hussain, H. Kim, and H. Oh, “SC-DVR: a secure cloud
+computing based framework for DVR service,” IEEE Trans. Consumer
+Electronics, vol. 60, no. 3, pp. 368-374, Aug. 2014.
+F. Almenares, P. Arias, A. Marin, D. Diaz-Sanchez, and R. Sanchez,
+“Overhead of using secure wireless communications in mobile
+computing,” IEEE Trans. Consumer Electronics, vol. 59, no. 2, pp. 335342, May 2013.
+D. He, N. Kumar, and J. Lee, “Secure pseudonym-based near field
+communication protocol for the consumer internet of things,” IEEE
+Trans. Consumer Electronics, vol. 61, no. 1, pp. 56-62, Feb. 2015.
+P. Kumar, A. Gurtov, J. Iinatti, M. Ylianttila, and M. Sain, “Lightweight
+and secure session-key establishment scheme in smart home
+environments,” IEEE Sensors Journal, vol. 16, no. 1, pp. 254-264, Sep.
+2015.
+T. Kim, L. Bauer, J. Newsome, A. Perrig, and J. Walker, “Access right
+assignment mechanisms for secure home networks,” Journal of
+Communications and Networks, vol. 13, no. 2, pp. 175-186, Apr. 2011.
+N. Idika, and B. Bhargava, “Extending attack graph-based
+securitymetrics and aggregating their application,” IEEE Trans.
+Dependable and Secure Computing, vol. 9, no. 1, pp. 75-85, Jan. 2012.
+N. Poolsappasit, R. Dewri, and I. Ray, “Dynamic security risk
+management using Bayesian attack graphs,” IEEE Trans. Dependable
+and Secure Computing, vol. 9, no. 1, pp. 1545-5971, Jan. 2012.
+
+207
+
+[19] C. Chung, P. Khatkar, T. Xing, J. Lee, and D. Huang, “NICE: network
+intrusion detection and countermeasure selection in virtual network
+systems,” IEEE Trans. Dependable and Secure Computing, vol. 10, no.
+4, pp. 198-211, Jul. 2013.
+[20] P. Jokar, H. Nicanfar, V. C. M. Leung, “Specification-based Intrusion
+Detection for home area networks in smart grids,” in Proc. of 2011 IEEE
+International Conference on Smart Grid Communications
+(SmartGridComm), Brussels, Belgium, pp. 208-213, 2011.
+[21] M. Usman, V. Muthukkumarasamy, X. W. Wu, “Mobile agent-based
+cross-layer anomaly detection in smart home sensor networks using
+fuzzy logic,” IEEE Transactions on Consumer Electronics, vol. 61, no. 2,
+pp. 197-205, 2015.
+[22] S. Myers, S. Stamm, “Practice & prevention of home-router mid-stream
+injection attacks,” in Proc. of eCrime Researchers Summit, Atlanta,
+USA, pp. 1-14, 2008.
+[23] Y. Zhou, and J. He, “A runtime analysis of evolutionary algorithms for
+constrained optimization problems,” IEEE Trans. Evolutionary
+Computation, vol. 11, no. 5, pp. 608-619, Oct. 2007.
+BIOGRAPHIES
+Shibo Luo was born in Hunan, China, in 1977. He is
+currently pursuing the Ph.D. degree in Shanghai Jiao
+Tong University, Shanghai, China. He participates in
+many national projects, such as National Natural Science
+Foundation of China, National “973” Planning of the
+Ministry of Science and Technology, China, etc. His
+research interests include SDN network security, network
+service composition, etc.
+Jun Wu (S’08-M’12) was born in Hunan, China, in 1979.
+He is an Associate Professor of Electronic Information
+and Electrical Engineering, Shanghai Jiao Tong
+University, China. He received his Ph.D. Degree in
+Information and Telecommunication Studies at Waseda
+University, Japan. He has been a Guest Editor for the
+IEEE Sensors Journal and a TPC Member of several
+international conferences including WINCON 2011,
+GLOBECOM 2015, etc. He is a member of IEEE. His research interests
+include the advanced computation and communications techniques of smart
+sensors, wireless communication systems, industrial control systems, wireless
+sensor networks, smart grids, etc.
+Jianhua Li was born in Jiangxi, China, in 1965. He is a
+professor/Ph.D. supervisor and the dean of School of
+Information Security Engineering, Shanghai Jiao Tong
+University, Shanghai, China. He received his BS, MS
+and Ph.D. degrees from Shanghai Jiao Tong University,
+in 1986, 1991 and 1998, respectively. He was the chief
+expert in the information security committee experts of
+National High Technology Research and Development
+Program of China (863 Program) of China. His research
+interests include information security, signal process, computer network
+communication, etc.
+Longhua Guo was born in Shanxi, China, in 1991. He
+received the B.S. degree in electronic information
+engineering from Tianjin University, Tianjin, China, in
+2013 and is currently pursuing the Ph.D. degree in
+Shanghai Jiao Tong University, Shanghai, China. He
+participates in many national projects, such as National
+Natural Science Foundation of China, National “973”
+Planning of the Ministry of Science and Technology,
+China, etc. His research interests include sensor network
+security, social network analysis, etc.
+
+
